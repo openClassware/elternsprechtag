@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local Configuration ###
+application-local.properties
+
+### Vaadin ###
+src/main/frontend/generated
