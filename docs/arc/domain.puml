@@ -1,0 +1,109 @@
+@startuml elternsprechtag
+
+' ==========================================================
+' Domain-Diagramm (schlanke Variante): Elternsprechtag
+' Attribut-Markierung:  ! = erforderlich,  ? = optional
+' Beziehungs-Multiplizitaet: 1, 0..1, 0..*, 1..*
+' ==========================================================
+
+left to right direction
+hide circle
+skinparam classAttributeIconSize 0
+
+enum SprechtagStatusEnum {
+  Entwurf
+  Veröffentlicht
+  Geschlossen
+}
+
+enum TerminStatusEnum {
+  Frei
+  Gebucht
+  Gesperrt
+}
+
+enum BuchungStatusEnum {
+  Aktiv
+  Storniert
+}
+
+class Account {
+  + id! : UUID
+  + username! : String
+  + password! : String
+}
+
+class Sprechtag {
+  + id! : UUID
+  + titel! : String
+  + datum! : Date
+  + startzeit! : Time
+  + endzeit! : Time
+  + slotdauerMin! : Integer
+  + zugangstoken! : String
+  + ort? : String
+  + hinweis? : String
+  + status! : SprechtagStatusEnum
+}
+
+class Klasse {
+  + id! : UUID
+  + bezeichnung! : String
+}
+
+class Lehrer {
+  + id! : UUID
+  + vorname! : String
+  + nachname! : String
+  + kuerzel! : String
+}
+
+class Fach {
+  + id! : UUID
+  + bezeichnung! : String
+  + kuerzel? : String
+}
+
+class Lehrauftrag {
+  + id! : UUID
+}
+
+class Termin {
+  + id! : UUID
+  + startzeit! : DateTime
+  + endzeit! : DateTime
+  + status! : TerminStatusEnum
+}
+
+class Buchung {
+  + id! : UUID
+  + erstelltAm! : DateTime
+  + status! : BuchungStatusEnum
+  + schuelerName! : String
+  + elternName! : String
+  + notiz? : String
+}
+
+Account "1" --> "0..*" Sprechtag : erstellt
+Sprechtag "0..*" --> "1..*" Klasse : umfasst
+
+Klasse "1" --> "0..*" Lehrauftrag : Unterricht in
+Fach "1" --> "0..*" Lehrauftrag : unterrichtet als
+Lehrer "1" --> "0..*" Lehrauftrag : erteilt
+
+Sprechtag "1" --> "0..*" Termin : bietet
+Lehrer "1" --> "0..*" Termin : hält
+
+Termin "1" --> "0..1" Buchung : gebucht als
+Lehrauftrag "1" --> "0..*" Buchung : betrifft
+
+Sprechtag ..> SprechtagStatusEnum
+Termin ..> TerminStatusEnum
+Buchung ..> BuchungStatusEnum
+
+legend left
+  !  = erforderlich
+  ?  = optional
+endlegend
+
+@enduml
