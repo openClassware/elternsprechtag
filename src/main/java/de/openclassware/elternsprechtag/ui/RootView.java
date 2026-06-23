@@ -1,17 +1,29 @@
 package de.openclassware.elternsprechtag.ui;
 
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.Main;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
-import jakarta.annotation.security.RolesAllowed;
+import jakarta.annotation.security.PermitAll;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
-@Route("")
-@RolesAllowed("ORGANIZER")
-public class RootView extends Main {
+@PermitAll
+@Route(value = "", autoLayout = false)
+public class RootView extends Div implements BeforeEnterObserver {
 
-    public RootView() {
+  @Override
+  public void beforeEnter(BeforeEnterEvent event) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        add(new H1("Welcome!"));
+    boolean isOrganizer =
+        authentication != null
+            && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ORGANIZER"));
 
+    if (isOrganizer) {
+      event.forwardTo(OrganizerView.class);
     }
+    // weitere Rollen hier ergänzen, z.B. event.forwardTo(TeacherView.class);
+  }
 }

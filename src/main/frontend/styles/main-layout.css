@@ -1,0 +1,77 @@
+/* Header of the main application layout (BEM: block "main-header"). */
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+
+/* Left side: logo + product title. */
+.main-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.main-header__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background-color: var(--aura-accent-color);
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 8px;
+}
+
+.main-header__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Right side: school, current user, logout. */
+.main-header__user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.main-header__school {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.main-header__divider {
+  width: 1px;
+  height: 1.5rem;
+  background-color: #e5e7eb;
+}
+
+.main-header__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background-color: #e5e7eb;
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 50%;
+}
+
+.main-header__username {
+  color: #111827;
+  font-weight: 500;
+}
