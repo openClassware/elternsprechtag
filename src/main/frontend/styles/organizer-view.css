@@ -1,0 +1,14 @@
+.organizer-view {
+}
+
+.organizer-view__greeting {
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.organizer-view__intro {
+    font-size: 15px;
+    color: #5a6069;
+    margin-bottom: 5px;
+}

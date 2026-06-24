@@ -24,6 +24,5 @@ public class RootView extends Div implements BeforeEnterObserver {
     if (isOrganizer) {
       event.forwardTo(OrganizerView.class);
     }
-    // weitere Rollen hier ergänzen, z.B. event.forwardTo(TeacherView.class);
   }
 }

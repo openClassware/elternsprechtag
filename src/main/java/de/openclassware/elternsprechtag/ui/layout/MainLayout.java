@@ -1,10 +1,12 @@
 package de.openclassware.elternsprechtag.ui.layout;
 
+import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Header;
+import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -17,11 +19,21 @@ import jakarta.annotation.security.RolesAllowed;
 @CssImport("./styles/main-layout.css")
 public class MainLayout extends VerticalLayout implements RouterLayout {
 
-  private final MainLayoutPresenter presenter;
+  private final Main content = new Main();
 
   public MainLayout(MainLayoutPresenter presenter) {
-    this.presenter = presenter;
-    add(new MainLayoutHeader(presenter));
+    addClassName("main-layout");
+    content.addClassName("main-layout__content");
+    setPadding(false);
+    add(new MainLayoutHeader(presenter), content);
+  }
+
+  @Override
+  public void showRouterLayoutContent(HasElement routerLayoutContent) {
+    content.getElement().removeAllChildren();
+    if (routerLayoutContent != null) {
+      content.getElement().appendChild(routerLayoutContent.getElement());
+    }
   }
 
   static final class MainLayoutHeader extends Header {

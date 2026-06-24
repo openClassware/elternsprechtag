@@ -1,0 +1,26 @@
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 26px;
+}
+
+.card__icon {
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    height: 42px;
+    width: 42px;
+    padding: 10px;
+    background-color: #e5e7eb;
+    margin-bottom: 48px;
+    --vaadin-icon-size: 12px
+}
+
+.card__header {
+    font-size: 19px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.card__description {
+    font-size: 15px;
+}
