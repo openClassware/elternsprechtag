@@ -35,6 +35,7 @@ public class OrganizerView extends Main {
             VaadinIcon.PLUS,
             "Neuen Elternsprechtag anlegen",
             "Datum, Zeitfenster, und Lehrkräfte festlegen - in wenigen Schritten startklar.");
+    card.primary();
     return card;
   }
 

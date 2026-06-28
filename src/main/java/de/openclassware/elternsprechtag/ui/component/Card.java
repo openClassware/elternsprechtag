@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.ui.component;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
@@ -8,9 +9,18 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 @CssImport("./styles/card.css")
 public class Card extends Div {
 
-  public Card(VaadinIcon icon, String heading, String description) {
+  private Icon icon;
+
+  public Card(VaadinIcon vaadinIcon, String heading, String description) {
     addClassName("card");
-    add(createIcon(icon), createHeading(heading), createDescription(description));
+    this.icon = createIcon(vaadinIcon);
+    add(icon, createHeading(heading), createDescription(description), createLink());
+  }
+
+  private Component createLink() {
+    Icon icon = new Icon(VaadinIcon.ARROWS_LONG_RIGHT);
+    icon.addClassName("card__link");
+    return icon;
   }
 
   private Icon createIcon(VaadinIcon vaadinIcon) {
@@ -31,5 +41,9 @@ public class Card extends Div {
     description.addClassName("card__description");
     description.setText(text);
     return description;
+  }
+
+  public void primary() {
+    addClassName("card--primary");
   }
 }

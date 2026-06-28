@@ -1,16 +1,30 @@
 .card {
+    --link-color: var(--aura-accent-color);
+    --icon-color: #6b7280;
+    --icon-bg-color: #f1f2f5;
+
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     padding: 26px;
+    position: relative;
+}
+
+.card--primary {
+    --link-color:  #ffffff;
+    --icon-color:  #e5e7eb;
+    --icon-bg-color: #4383f4;
+
+    background-color: var(--aura-accent-color);
+    color: #ffffff;
 }
 
 .card__icon {
-    border: 1px solid #e5e7eb;
     border-radius: 4px;
     height: 42px;
     width: 42px;
     padding: 10px;
-    background-color: #e5e7eb;
+    color: var(--icon-color);
+    background-color: var(--icon-bg-color);
     margin-bottom: 48px;
     --vaadin-icon-size: 12px
 }
@@ -23,4 +37,12 @@
 
 .card__description {
     font-size: 15px;
+    max-width: 75%;
+}
+
+.card__link {
+    color: var(--link-color);
+    position: absolute;
+    bottom: 22px;
+    right: 24px;
 }
