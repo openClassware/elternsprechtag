@@ -1,0 +1,31 @@
+.no-next-elternsprechtage {
+    border: 1px dashed #e5e7eb;
+    border-radius: 12px;
+    background: #fbfcfd;
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 28px;
+}
+
+.no-next-elternsprechtage__icon {
+    margin-bottom: 18px;
+    background: #4383f4;
+    color: #ffffff;
+    border-radius: 50%;
+    height: 42px;
+    width: 42px;
+    padding: 10px;
+}
+
+.no-next-elternsprechtage__title {
+    font-size: 19px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.no-next-elternsprechtage__description {
+    max-width: 37%;
+    margin-bottom: 22px;
+}

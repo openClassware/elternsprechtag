@@ -12,3 +12,8 @@
     color: #5a6069;
     margin-bottom: 5px;
 }
+
+.organizer-view__next-elternsprechtage-heading {
+    margin: 15px 0 5px 0;
+    font-size: 17px;
+}

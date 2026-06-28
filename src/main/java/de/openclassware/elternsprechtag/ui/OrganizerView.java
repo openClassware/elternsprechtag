@@ -1,29 +1,47 @@
 package de.openclassware.elternsprechtag.ui;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Main;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.ui.component.Card;
+import de.openclassware.elternsprechtag.ui.component.NoNextElternsprechtage;
 import de.openclassware.elternsprechtag.ui.layout.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
 @Route(value = "organizers", layout = MainLayout.class)
 @RolesAllowed("ORGANIZER")
 @CssImport("./styles/organizer-view.css")
-public class OrganizerView extends Main {
+public class OrganizerView extends Div {
 
   private final OrganizerPresenter presenter;
 
   OrganizerView(OrganizerPresenter presenter) {
     this.presenter = presenter;
     addClassName("organizer-view");
-    add(createGreeting(), createIntro(), createCard());
+    add(
+        createGreeting(),
+        createIntro(),
+        createCards(),
+        createNextElternsprechtageHeading(),
+        createNoNextElternsprechtage());
   }
 
-  private HorizontalLayout createCard() {
+  private Component createNextElternsprechtageHeading() {
+    H2 ihreElternsprechtage = new H2("Ihre Elternsprechtage");
+    ihreElternsprechtage.addClassName("organizer-view__next-elternsprechtage-heading");
+    return ihreElternsprechtage;
+  }
+
+  private Component createNoNextElternsprechtage() {
+    NoNextElternsprechtage noNextElternsprechtage = new NoNextElternsprechtage();
+    return noNextElternsprechtage;
+  }
+
+  private HorizontalLayout createCards() {
     HorizontalLayout cards = new HorizontalLayout();
     cards.add(createElternsprechtagCard(), manageElternsprechtagCard());
     return cards;
