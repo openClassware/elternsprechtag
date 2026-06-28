@@ -7,15 +7,18 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.Route;
+import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.ui.component.Card;
 import de.openclassware.elternsprechtag.ui.component.NoNextElternsprechtage;
 import de.openclassware.elternsprechtag.ui.layout.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
-@Route(value = "organizers", layout = MainLayout.class)
-@RolesAllowed("ORGANIZER")
+@Route(value = OrganizerView.ROUTE, layout = MainLayout.class)
+@RolesAllowed(Roles.ORGANIZER)
 @CssImport("./styles/organizer-view.css")
 public class OrganizerView extends Div {
+
+  public static final String ROUTE = "organizers";
 
   private final OrganizerPresenter presenter;
 

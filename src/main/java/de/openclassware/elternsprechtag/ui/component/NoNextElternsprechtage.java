@@ -1,11 +1,13 @@
 package de.openclassware.elternsprechtag.ui.component;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 
 @CssImport("./styles/no-next-elternsprechtage.css")
 public class NoNextElternsprechtage extends Div {
@@ -20,7 +22,12 @@ public class NoNextElternsprechtage extends Div {
     button.setIcon(VaadinIcon.PLUS.create());
     button.setText("Ersten Elternsprechtag anlegen");
     button.setThemeVariants(ButtonVariant.PRIMARY);
+    button.addClickListener(_ -> button.getUI().ifPresent(this::navigateToEditSprechtag));
     return button;
+  }
+
+  private void navigateToEditSprechtag(UI ui) {
+    ui.navigate(EditSprechtagView.ROUTE);
   }
 
   private Div createDescription() {

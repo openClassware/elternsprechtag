@@ -14,4 +14,5 @@ class OrganizerPresenter {
         return authenticationContext.getPrincipalName().orElse("?");
     }
 
+
 }

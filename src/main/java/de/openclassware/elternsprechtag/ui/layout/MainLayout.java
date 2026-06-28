@@ -12,9 +12,10 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.RouterLayout;
+import de.openclassware.elternsprechtag.security.Roles;
 import jakarta.annotation.security.RolesAllowed;
 
-@RolesAllowed("ORGANIZER")
+@RolesAllowed(Roles.ORGANIZER)
 @Layout
 @CssImport("./styles/main-layout.css")
 public class MainLayout extends VerticalLayout implements RouterLayout {

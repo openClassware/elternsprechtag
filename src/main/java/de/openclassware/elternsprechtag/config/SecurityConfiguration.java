@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.config;
 
 import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
+import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.ui.LoginView;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -36,7 +37,7 @@ public class SecurityConfiguration {
   @Bean
   public UserDetailsService userDetailsService() {
     UserDetails userDetails =
-        User.withUsername(organizerUsername).password(organizerPassword).roles("ORGANIZER").build();
+        User.withUsername(organizerUsername).password(organizerPassword).roles(Roles.ORGANIZER).build();
 
     return new InMemoryUserDetailsManager(userDetails);
   }

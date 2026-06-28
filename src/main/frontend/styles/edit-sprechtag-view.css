@@ -1,0 +1,44 @@
+.edit-sprechtag-view {
+
+}
+
+.edit-sprechtag-view__header {
+    padding: 1.5rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.edit-sprechtag-view__bottom-button-bar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1.5rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.edit-sprechtag-view__draft-button {
+    margin-left: auto;
+}
+
+.general-info-panel {
+    padding: 1.5rem 1.5rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.general-info-panel > :first-child {
+    flex: 0 0 240px;
+}
+
+.general-info-panel__form {
+    flex: 1;
+    min-width: 0;
+}
+
+.general-info-panel__titel {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.general-info-panel__description {
+    font-size: 13px;
+    color: #8A909A;
+}
