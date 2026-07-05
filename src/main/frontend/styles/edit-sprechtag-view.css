@@ -39,6 +39,6 @@
 }
 
 .general-info-panel__description {
-    font-size: 13px;
-    color: #8A909A;
+    font-size: 15px;
+    font-weight: 500;
 }
