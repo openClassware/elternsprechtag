@@ -1,4 +1,4 @@
-package de.openclassware.elternsprechtag.ui.layout;
+package de.openclassware.elternsprechtag.ui.layouts;
 
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.button.Button;
@@ -17,7 +17,7 @@ import jakarta.annotation.security.RolesAllowed;
 
 @RolesAllowed(Roles.ORGANIZER)
 @Layout
-@CssImport("./styles/main-layout.css")
+@CssImport("./styles/layouts/main-layout.css")
 public class MainLayout extends VerticalLayout implements RouterLayout {
 
   private final Main content = new Main();

@@ -1,4 +1,4 @@
-package de.openclassware.elternsprechtag.ui.component;
+package de.openclassware.elternsprechtag.ui.components;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -9,7 +9,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 
-@CssImport("./styles/no-next-elternsprechtage.css")
+@CssImport("./styles/components/no-next-elternsprechtage.css")
 public class NoNextElternsprechtage extends Div {
 
   public NoNextElternsprechtage() {

@@ -8,9 +8,9 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.security.Roles;
-import de.openclassware.elternsprechtag.ui.component.Card;
-import de.openclassware.elternsprechtag.ui.component.NoNextElternsprechtage;
-import de.openclassware.elternsprechtag.ui.layout.MainLayout;
+import de.openclassware.elternsprechtag.ui.components.Card;
+import de.openclassware.elternsprechtag.ui.components.NoNextElternsprechtage;
+import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
 @Route(value = OrganizerView.ROUTE, layout = MainLayout.class)

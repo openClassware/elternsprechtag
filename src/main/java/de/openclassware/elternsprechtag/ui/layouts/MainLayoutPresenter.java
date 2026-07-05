@@ -1,4 +1,4 @@
-package de.openclassware.elternsprechtag.ui.layout;
+package de.openclassware.elternsprechtag.ui.layouts;
 
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;

@@ -18,8 +18,8 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.security.Roles;
-import de.openclassware.elternsprechtag.ui.component.FormPanel;
-import de.openclassware.elternsprechtag.ui.layout.MainLayout;
+import de.openclassware.elternsprechtag.ui.components.FormPanel;
+import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.util.UUID;

@@ -1,11 +1,11 @@
-package de.openclassware.elternsprechtag.ui.component;
+package de.openclassware.elternsprechtag.ui.components;
 
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import lombok.Getter;
 
-@CssImport("./styles/form-panel.css")
+@CssImport("./styles/components/form-panel.css")
 public class FormPanel extends Div {
 
     private final Div title;

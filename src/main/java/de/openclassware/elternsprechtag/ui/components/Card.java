@@ -1,4 +1,4 @@
-package de.openclassware.elternsprechtag.ui.component;
+package de.openclassware.elternsprechtag.ui.components;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -6,7 +6,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 
-@CssImport("./styles/card.css")
+@CssImport("./styles/components/card.css")
 public class Card extends Div {
 
   private Icon icon;
