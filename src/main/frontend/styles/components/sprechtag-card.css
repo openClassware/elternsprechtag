@@ -1,0 +1,42 @@
+.sprechtag-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 26px;
+}
+
+.sprechtag-card__date {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--aura-accent-color);
+    background: color-mix(in srgb, #1f6bf2 9%, #fff);
+    border-radius: 4px;
+    width: 52px;
+    height: 58px;
+}
+
+.sprechtag-card__top {
+    display: flex;
+    gap: 14px;
+}
+
+.sprechtag-card__month {
+    font-size: 10px;
+}
+
+.sprechtag-card__day-of-month {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.sprechtag-card__title {
+    font-size: 15px;
+    font-weight: 500;
+    word-wrap: break-word;
+}
+
+.sprechtag-card__year {
+    font-size: 13px;
+    color: #8A909A;
+}
