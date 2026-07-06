@@ -57,7 +57,7 @@ public class Sprechtag {
     @JoinTable(
             name = "sprechtage_klassen",
             joinColumns = @JoinColumn(name = "sprechtag_id"),
-            inverseJoinColumns = @JoinColumn(name = "klasse_íd")
+            inverseJoinColumns = @JoinColumn(name = "klasse_id")
     )
     private List<Klasse> klassen = new ArrayList<>();
 

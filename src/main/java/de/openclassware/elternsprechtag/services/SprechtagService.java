@@ -18,4 +18,8 @@ public class SprechtagService {
         .sorted(Comparator.comparing(Sprechtag::getStartDate))
         .toList();
   }
+
+  public Sprechtag save(Sprechtag sprechtag) {
+    return sprechtagRepository.save(sprechtag);
+  }
 }

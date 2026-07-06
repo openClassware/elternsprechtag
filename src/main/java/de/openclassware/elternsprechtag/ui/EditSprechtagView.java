@@ -16,15 +16,19 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.domain.Klasse;
+import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.ui.components.FormPanel;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
-
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.UUID;
 
 @Route(value = EditSprechtagView.ROUTE, layout = MainLayout.class)
@@ -34,7 +38,18 @@ public class EditSprechtagView extends Div {
 
   public static final String ROUTE = "sprechtag";
 
-  private EditSprechtagPresenter presenter;
+  private final EditSprechtagPresenter presenter;
+  private final Binder<Sprechtag> binder = new Binder<>(Sprechtag.class);
+
+  private TextField titel;
+  private TextField location;
+  private TextArea description;
+  private DatePicker datePicker;
+  private ComboBox<Integer> slotInMinutes;
+  private TimePicker startTime;
+  private TimePicker endTime;
+  private CheckboxGroup<Klasse> klassen;
+  private TextField accessToken;
 
   public EditSprechtagView(EditSprechtagPresenter presenter) {
     this.presenter = presenter;
@@ -46,6 +61,59 @@ public class EditSprechtagView extends Div {
         createClassesPanel(),
         createAccessTokenPanel(),
         createBottomButtonBar());
+    configureBinder();
+  }
+
+  private void configureBinder() {
+    binder
+        .forField(titel)
+        .asRequired("Titel ist erforderlich")
+        .bind(Sprechtag::getTitel, Sprechtag::setTitel);
+    binder.forField(location).bind(Sprechtag::getLocation, Sprechtag::setLocation);
+    binder.forField(description).bind(Sprechtag::getDescription, Sprechtag::setDescription);
+    binder
+        .forField(datePicker)
+        .asRequired("Datum ist erforderlich")
+        .bind(Sprechtag::getStartDate, Sprechtag::setStartDate);
+    binder
+        .forField(startTime)
+        .asRequired("Startzeit ist erforderlich")
+        .bind(Sprechtag::getStartTime, Sprechtag::setStartTime);
+    binder
+        .forField(endTime)
+        .asRequired("Endzeit ist erforderlich")
+        .bind(Sprechtag::getEndTime, Sprechtag::setEndTime);
+
+    binder.forField(slotInMinutes).bind(Sprechtag::getSlotInMinutes, Sprechtag::setSlotInMinutes);
+
+    binder.forField(accessToken).bind(Sprechtag::getAccessToken, Sprechtag::setAccessToken);
+
+    binder
+        .forField(klassen)
+        .withValidator(
+            klassen -> klassen != null && !klassen.isEmpty(), "Mindestens eine Klasse auswählen")
+        .withConverter(set -> (List<Klasse>) new ArrayList<>(set), LinkedHashSet::new)
+        .bind(Sprechtag::getKlassen, Sprechtag::setKlassen);
+
+    binder.withValidator(
+        sprechtag ->
+            sprechtag.getStartTime() == null
+                || sprechtag.getEndTime() == null
+                || sprechtag.getEndTime().isAfter(sprechtag.getStartTime()),
+        "Endzeit muss nach der Startzeit liegen");
+  }
+
+  private void save(SprechtagStatusEnum status) {
+    Sprechtag sprechtag = new Sprechtag();
+    if (binder.writeBeanIfValid(sprechtag)) {
+      sprechtag.setStatus(status);
+      presenter.save(sprechtag);
+      navigateToOrganizerView();
+    }
+  }
+
+  private void navigateToOrganizerView() {
+    getUI().ifPresent(ui -> ui.navigate(OrganizerView.ROUTE));
   }
 
   private Component createAccessTokenPanel() {
@@ -53,17 +121,19 @@ public class EditSprechtagView extends Div {
     panel.setTitle("Zugang");
     panel.setDescription("Mit diesem Code buchen Eltern ihre Termine.");
     FormLayout formLayout = panel.getFormLayout();
-    TextField accessToken = new TextField();
+    accessToken = new TextField();
     accessToken.setLabel("Zugangscode");
     accessToken.setReadOnly(true);
     accessToken.setHelperText("Wird automatisch erzeugt - bei Bedarf neu generieren");
     accessToken.setValue(UUID.randomUUID().toString());
 
     FormRow firstRow = new FormRow();
-    firstRow.add(accessToken,3);
+    firstRow.add(accessToken, 3);
     Button regenerateAccessTokenButton = new Button();
     regenerateAccessTokenButton.setIcon(VaadinIcon.REFRESH.create());
     regenerateAccessTokenButton.setText("Neu generieren");
+    regenerateAccessTokenButton.addClickListener(
+        e -> accessToken.setValue(UUID.randomUUID().toString()));
     firstRow.add(regenerateAccessTokenButton, 1);
 
     formLayout.add(firstRow);
@@ -75,14 +145,14 @@ public class EditSprechtagView extends Div {
     panel.setTitle("Klassen");
     panel.setDescription("Welche Klassen nehmen am Sprechtag teil?");
 
-    CheckboxGroup<Klasse> checkboxGroup = new CheckboxGroup<>();
-    checkboxGroup.setItems(presenter.findAllKlassen());
-    checkboxGroup.setHelperText("0 Klassen ausgewählt");
-    checkboxGroup.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
-    checkboxGroup.setRenderer(new TextRenderer<>(Klasse::getName));
-    checkboxGroup.addValueChangeListener(
-        e -> checkboxGroup.setHelperText(e.getValue().size() + " Klassen ausgewählt"));
-    panel.getFormLayout().add(checkboxGroup);
+    klassen = new CheckboxGroup<>();
+    klassen.setItems(presenter.findAllKlassen());
+    klassen.setHelperText("0 Klassen ausgewählt");
+    klassen.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
+    klassen.setRenderer(new TextRenderer<>(Klasse::getName));
+    klassen.addValueChangeListener(
+        e -> klassen.setHelperText(e.getValue().size() + " Klassen ausgewählt"));
+    panel.getFormLayout().add(klassen);
 
     return panel;
   }
@@ -93,7 +163,7 @@ public class EditSprechtagView extends Div {
     panel.setDescription("Titel und Eckdaten, die Eltern und Lehrkräfte sehen können");
 
     FormRow firstRow = new FormRow();
-    TextField titel = new TextField();
+    titel = new TextField();
     titel.setLabel("Titel");
     titel.setRequiredIndicatorVisible(true);
     titel.setSizeFull();
@@ -102,19 +172,13 @@ public class EditSprechtagView extends Div {
     firstRow.add(titel, 2);
 
     FormRow secondRow = new FormRow();
-    TextField location = new TextField();
+    location = new TextField();
     location.setLabel("Ort");
-    location.setRequiredIndicatorVisible(true);
     location.setPlaceholder("z. B. Hauptgebäude, Aula");
-    secondRow.add(location);
-    ComboBox<SprechtagStatusEnum> status = new ComboBox<>();
-    status.setLabel("Status");
-    status.setItems(SprechtagStatusEnum.values());
-    status.setValue(SprechtagStatusEnum.ENTWURF);
-    secondRow.add(status);
+    secondRow.add(location, 2);
 
     FormRow thirdRow = new FormRow();
-    TextArea description = new TextArea();
+    description = new TextArea();
     description.setLabel("Beschreibung");
     description.setPlaceholder("Hinweis für Eltern, z. B. Anfahrt, Ablauf, Anmeldeschluss ...");
     description.setMinRows(3);
@@ -133,34 +197,28 @@ public class EditSprechtagView extends Div {
     FormLayout formLayout = panel.getFormLayout();
     FormRow firstRow = new FormRow();
 
-    DatePicker datePicker = new DatePicker();
+    datePicker = new DatePicker();
     datePicker.setLabel("Datum");
     datePicker.setRequiredIndicatorVisible(true);
 
-    ComboBox<String> slot = new ComboBox<>();
-    slot.setLabel("Slot-Länge");
-    slot.setItems(
-        "5 Minuten",
-        "10 Minuten",
-        "15 Minuten",
-        "20 Minuten",
-        "25 Minuten",
-        "30 Minuten",
-        "35 Minuten");
-    slot.setValue("15 Minuten");
+    slotInMinutes = new ComboBox<>();
+    slotInMinutes.setLabel("Slot-Länge");
+    slotInMinutes.setItems(5, 10, 15, 20, 25, 30);
+    slotInMinutes.setValue(15);
+    slotInMinutes.setRenderer(new TextRenderer<>(minutes -> minutes + " Minuten"));
 
-    firstRow.add(datePicker, slot);
+    firstRow.add(datePicker, slotInMinutes);
 
-    TimePicker starttime = new TimePicker();
-    starttime.setLabel("Startzeit");
-    starttime.setRequiredIndicatorVisible(true);
+    startTime = new TimePicker();
+    startTime.setLabel("Startzeit");
+    startTime.setRequiredIndicatorVisible(true);
 
-    TimePicker endtime = new TimePicker();
-    endtime.setLabel("Endzeit");
-    endtime.setRequiredIndicatorVisible(true);
+    endTime = new TimePicker();
+    endTime.setLabel("Endzeit");
+    endTime.setRequiredIndicatorVisible(true);
 
     FormRow secondRow = new FormRow();
-    secondRow.add(starttime, endtime);
+    secondRow.add(startTime, endTime);
 
     formLayout.add(firstRow, secondRow);
     return panel;
@@ -185,6 +243,7 @@ public class EditSprechtagView extends Div {
     button.setText("Sprechtag anlegen");
     button.setIcon(VaadinIcon.CHECK.create());
     button.setThemeVariants(ButtonVariant.PRIMARY);
+    button.addClickListener(_ -> save(SprechtagStatusEnum.VEROEFFENTLICHT));
     return button;
   }
 
@@ -192,6 +251,7 @@ public class EditSprechtagView extends Div {
     Button button = new Button();
     button.setText("Als Entwurf speichern");
     button.addClassName("edit-sprechtag-view__draft-button");
+    button.addClickListener(_ -> save(SprechtagStatusEnum.ENTWURF));
     return button;
   }
 
@@ -199,6 +259,7 @@ public class EditSprechtagView extends Div {
     Button button = new Button();
     button.setText("Abbrechen");
     button.setThemeVariants(ButtonVariant.TERTIARY);
+    button.addClickListener(_ -> navigateToOrganizerView());
     return button;
   }
 }
