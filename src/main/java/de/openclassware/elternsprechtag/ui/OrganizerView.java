@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.ui;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
@@ -64,7 +65,12 @@ public class OrganizerView extends Div {
             "Neuen Elternsprechtag anlegen",
             "Datum, Zeitfenster, und Lehrkräfte festlegen - in wenigen Schritten startklar.");
     card.primary();
+    card.addClickListener(_ -> card.getUI().ifPresent(this::navigateToEditSprechtag));
     return card;
+  }
+
+  private void navigateToEditSprechtag(UI ui) {
+    ui.navigate(EditSprechtagView.ROUTE);
   }
 
   private Card manageElternsprechtagCard() {

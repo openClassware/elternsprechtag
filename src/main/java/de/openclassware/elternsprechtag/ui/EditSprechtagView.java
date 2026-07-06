@@ -16,7 +16,10 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
+import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.Route;
+import de.openclassware.elternsprechtag.domain.Klasse;
+import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.ui.components.FormPanel;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
@@ -31,7 +34,10 @@ public class EditSprechtagView extends Div {
 
   public static final String ROUTE = "sprechtag";
 
-  public EditSprechtagView() {
+  private EditSprechtagPresenter presenter;
+
+  public EditSprechtagView(EditSprechtagPresenter presenter) {
+    this.presenter = presenter;
     addClassName("edit-sprechtag-view");
     add(
         createHeader(),
@@ -69,10 +75,11 @@ public class EditSprechtagView extends Div {
     panel.setTitle("Klassen");
     panel.setDescription("Welche Klassen nehmen am Sprechtag teil?");
 
-    CheckboxGroup<String> checkboxGroup = new CheckboxGroup<>();
-    checkboxGroup.setItems("5a", "5b", "5c", "6b", "7a", "7b", "8a", "8b", "9a", "9b");
+    CheckboxGroup<Klasse> checkboxGroup = new CheckboxGroup<>();
+    checkboxGroup.setItems(presenter.findAllKlassen());
     checkboxGroup.setHelperText("0 Klassen ausgewählt");
     checkboxGroup.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
+    checkboxGroup.setRenderer(new TextRenderer<>(Klasse::getName));
     checkboxGroup.addValueChangeListener(
         e -> checkboxGroup.setHelperText(e.getValue().size() + " Klassen ausgewählt"));
     panel.getFormLayout().add(checkboxGroup);
@@ -100,8 +107,10 @@ public class EditSprechtagView extends Div {
     location.setRequiredIndicatorVisible(true);
     location.setPlaceholder("z. B. Hauptgebäude, Aula");
     secondRow.add(location);
-    ComboBox<String> status = new ComboBox<>();
+    ComboBox<SprechtagStatusEnum> status = new ComboBox<>();
     status.setLabel("Status");
+    status.setItems(SprechtagStatusEnum.values());
+    status.setValue(SprechtagStatusEnum.ENTWURF);
     secondRow.add(status);
 
     FormRow thirdRow = new FormRow();
@@ -138,6 +147,7 @@ public class EditSprechtagView extends Div {
         "25 Minuten",
         "30 Minuten",
         "35 Minuten");
+    slot.setValue("15 Minuten");
 
     firstRow.add(datePicker, slot);
 
