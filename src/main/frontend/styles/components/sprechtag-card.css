@@ -19,6 +19,8 @@
 .sprechtag-card__top {
     display: flex;
     gap: 14px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 13px;
 }
 
 .sprechtag-card__month {
@@ -39,4 +41,15 @@
 .sprechtag-card__year {
     font-size: 13px;
     color: #8A909A;
+}
+
+.sprechtag-card__bottom {
+    padding-top: 13px;
+}
+
+.sprechtag-card__timespan {
+    color: #5A6069;
+    font-size: 13px;
+    display: flex;
+    gap: 5px;
 }

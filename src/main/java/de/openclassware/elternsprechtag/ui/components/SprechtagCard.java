@@ -3,7 +3,10 @@ package de.openclassware.elternsprechtag.ui.components;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Locale;
 
@@ -18,8 +21,23 @@ public class SprechtagCard extends Div {
     top.add(createDate(sprechtag), createTitle(sprechtag));
 
     Div bottom = new Div();
+    bottom.addClassName("sprechtag-card__bottom");
+    bottom.add(createTimespan(sprechtag));
 
     add(top, bottom);
+  }
+
+  private Component createTimespan(Sprechtag sprechtag) {
+    Div timespan = new Div();
+    timespan.addClassName("sprechtag-card__timespan");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+    timespan.add(
+        VaadinIcon.CLOCK.create(),
+        new Span(
+            sprechtag.getStartTime().format(formatter)
+                + " - "
+                + sprechtag.getEndTime().format(formatter)));
+    return timespan;
   }
 
   private Component createTitle(Sprechtag sprechtag) {
