@@ -39,7 +39,7 @@ public class OrganizerView extends Div {
   }
 
   private Component createNextElternsprechtageHeading() {
-    H2 ihreElternsprechtage = new H2("Ihre Elternsprechtage");
+    H2 ihreElternsprechtage = new H2(getTranslation("organizer.next-heading"));
     ihreElternsprechtage.addClassName("organizer-view__next-elternsprechtage-heading");
     return ihreElternsprechtage;
   }
@@ -62,8 +62,8 @@ public class OrganizerView extends Div {
     Card card =
         new Card(
             VaadinIcon.PLUS,
-            "Neuen Elternsprechtag anlegen",
-            "Datum, Zeitfenster, und Lehrkräfte festlegen - in wenigen Schritten startklar.");
+            getTranslation("organizer.card.new.title"),
+            getTranslation("organizer.card.new.description"));
     card.primary();
     card.addClickListener(_ -> card.getUI().ifPresent(this::navigateToEditSprechtag));
     return card;
@@ -77,22 +77,22 @@ public class OrganizerView extends Div {
     Card card =
         new Card(
             VaadinIcon.LIST,
-            "Bestehende verwalten",
-            "Termine, Buchungen und Zeitpläne Ihrer laufenden Sprechtage im Blick behalten.");
+            getTranslation("organizer.card.manage.title"),
+            getTranslation("organizer.card.manage.description"));
     return card;
   }
 
   private Div createGreeting() {
     Div greeting = new Div();
     greeting.addClassName("organizer-view__greeting");
-    greeting.setText(String.format("Guten Tag, %s", presenter.getUsername()));
+    greeting.setText(getTranslation("organizer.greeting", presenter.getUsername()));
     return greeting;
   }
 
   private Div createIntro() {
     Div intro = new Div();
     intro.addClassName("organizer-view__intro");
-    intro.setText("Was möchten Sie heute tun?");
+    intro.setText(getTranslation("organizer.intro"));
     return intro;
   }
 }

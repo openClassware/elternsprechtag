@@ -51,10 +51,10 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
       Div brand = new Div();
       brand.addClassName("main-header__brand");
 
-      Span logo = new Span("E");
+      Span logo = new Span(getTranslation("main.brand.logo"));
       logo.addClassName("main-header__logo");
 
-      H1 title = new H1("Elternsprechtag");
+      H1 title = new H1(getTranslation("main.brand.title"));
       title.addClassName("main-header__title");
 
       brand.add(logo, title);
@@ -81,7 +81,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
       username.addClassName("main-header__username");
 
       Button logout = new Button();
-      logout.setText("Abmelden");
+      logout.setText(getTranslation("main.logout"));
       logout.setIcon(VaadinIcon.SIGN_OUT.create());
       logout.addClickListener(event -> presenter.logout());
 

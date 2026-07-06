@@ -67,21 +67,21 @@ public class EditSprechtagView extends Div {
   private void configureBinder() {
     binder
         .forField(titel)
-        .asRequired("Titel ist erforderlich")
+        .asRequired(getTranslation("edit-sprechtag.validation.titel-required"))
         .bind(Sprechtag::getTitel, Sprechtag::setTitel);
     binder.forField(location).bind(Sprechtag::getLocation, Sprechtag::setLocation);
     binder.forField(description).bind(Sprechtag::getDescription, Sprechtag::setDescription);
     binder
         .forField(datePicker)
-        .asRequired("Datum ist erforderlich")
+        .asRequired(getTranslation("edit-sprechtag.validation.datum-required"))
         .bind(Sprechtag::getStartDate, Sprechtag::setStartDate);
     binder
         .forField(startTime)
-        .asRequired("Startzeit ist erforderlich")
+        .asRequired(getTranslation("edit-sprechtag.validation.startzeit-required"))
         .bind(Sprechtag::getStartTime, Sprechtag::setStartTime);
     binder
         .forField(endTime)
-        .asRequired("Endzeit ist erforderlich")
+        .asRequired(getTranslation("edit-sprechtag.validation.endzeit-required"))
         .bind(Sprechtag::getEndTime, Sprechtag::setEndTime);
 
     binder.forField(slotInMinutes).bind(Sprechtag::getSlotInMinutes, Sprechtag::setSlotInMinutes);
@@ -91,7 +91,8 @@ public class EditSprechtagView extends Div {
     binder
         .forField(klassen)
         .withValidator(
-            klassen -> klassen != null && !klassen.isEmpty(), "Mindestens eine Klasse auswählen")
+            klassen -> klassen != null && !klassen.isEmpty(),
+            getTranslation("edit-sprechtag.validation.klasse-required"))
         .withConverter(set -> (List<Klasse>) new ArrayList<>(set), LinkedHashSet::new)
         .bind(Sprechtag::getKlassen, Sprechtag::setKlassen);
 
@@ -100,7 +101,7 @@ public class EditSprechtagView extends Div {
             sprechtag.getStartTime() == null
                 || sprechtag.getEndTime() == null
                 || sprechtag.getEndTime().isAfter(sprechtag.getStartTime()),
-        "Endzeit muss nach der Startzeit liegen");
+        getTranslation("edit-sprechtag.validation.end-after-start"));
   }
 
   private void save(SprechtagStatusEnum status) {
@@ -118,20 +119,20 @@ public class EditSprechtagView extends Div {
 
   private Component createAccessTokenPanel() {
     FormPanel panel = new FormPanel();
-    panel.setTitle("Zugang");
-    panel.setDescription("Mit diesem Code buchen Eltern ihre Termine.");
+    panel.setTitle(getTranslation("edit-sprechtag.zugang.title"));
+    panel.setDescription(getTranslation("edit-sprechtag.zugang.description"));
     FormLayout formLayout = panel.getFormLayout();
     accessToken = new TextField();
-    accessToken.setLabel("Zugangscode");
+    accessToken.setLabel(getTranslation("edit-sprechtag.field.zugangscode.label"));
     accessToken.setReadOnly(true);
-    accessToken.setHelperText("Wird automatisch erzeugt - bei Bedarf neu generieren");
+    accessToken.setHelperText(getTranslation("edit-sprechtag.field.zugangscode.helper"));
     accessToken.setValue(UUID.randomUUID().toString());
 
     FormRow firstRow = new FormRow();
     firstRow.add(accessToken, 3);
     Button regenerateAccessTokenButton = new Button();
     regenerateAccessTokenButton.setIcon(VaadinIcon.REFRESH.create());
-    regenerateAccessTokenButton.setText("Neu generieren");
+    regenerateAccessTokenButton.setText(getTranslation("edit-sprechtag.button.regenerate"));
     regenerateAccessTokenButton.addClickListener(
         e -> accessToken.setValue(UUID.randomUUID().toString()));
     firstRow.add(regenerateAccessTokenButton, 1);
@@ -142,16 +143,16 @@ public class EditSprechtagView extends Div {
 
   private Component createClassesPanel() {
     FormPanel panel = new FormPanel();
-    panel.setTitle("Klassen");
-    panel.setDescription("Welche Klassen nehmen am Sprechtag teil?");
+    panel.setTitle(getTranslation("edit-sprechtag.klassen.title"));
+    panel.setDescription(getTranslation("edit-sprechtag.klassen.description"));
 
     klassen = new CheckboxGroup<>();
     klassen.setItems(presenter.findAllKlassen());
-    klassen.setHelperText("0 Klassen ausgewählt");
+    klassen.setHelperText(getTranslation("edit-sprechtag.klassen.helper", 0));
     klassen.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
     klassen.setRenderer(new TextRenderer<>(Klasse::getName));
     klassen.addValueChangeListener(
-        e -> klassen.setHelperText(e.getValue().size() + " Klassen ausgewählt"));
+        e -> klassen.setHelperText(getTranslation("edit-sprechtag.klassen.helper", e.getValue().size())));
     panel.getFormLayout().add(klassen);
 
     return panel;
@@ -159,28 +160,28 @@ public class EditSprechtagView extends Div {
 
   private Component createGeneralInfoPanel() {
     FormPanel panel = new FormPanel();
-    panel.setTitle("Allgemein");
-    panel.setDescription("Titel und Eckdaten, die Eltern und Lehrkräfte sehen können");
+    panel.setTitle(getTranslation("edit-sprechtag.general.title"));
+    panel.setDescription(getTranslation("edit-sprechtag.general.description"));
 
     FormRow firstRow = new FormRow();
     titel = new TextField();
-    titel.setLabel("Titel");
+    titel.setLabel(getTranslation("edit-sprechtag.field.titel.label"));
     titel.setRequiredIndicatorVisible(true);
     titel.setSizeFull();
-    titel.setPlaceholder("z. B. Frühjahrs-Sprechtag 2026");
+    titel.setPlaceholder(getTranslation("edit-sprechtag.field.titel.placeholder"));
 
     firstRow.add(titel, 2);
 
     FormRow secondRow = new FormRow();
     location = new TextField();
-    location.setLabel("Ort");
-    location.setPlaceholder("z. B. Hauptgebäude, Aula");
+    location.setLabel(getTranslation("edit-sprechtag.field.ort.label"));
+    location.setPlaceholder(getTranslation("edit-sprechtag.field.ort.placeholder"));
     secondRow.add(location, 2);
 
     FormRow thirdRow = new FormRow();
     description = new TextArea();
-    description.setLabel("Beschreibung");
-    description.setPlaceholder("Hinweis für Eltern, z. B. Anfahrt, Ablauf, Anmeldeschluss ...");
+    description.setLabel(getTranslation("edit-sprechtag.field.beschreibung.label"));
+    description.setPlaceholder(getTranslation("edit-sprechtag.field.beschreibung.placeholder"));
     description.setMinRows(3);
     thirdRow.add(description, 2);
 
@@ -192,29 +193,30 @@ public class EditSprechtagView extends Div {
 
   private Component createTimingPanel() {
     FormPanel panel = new FormPanel();
-    panel.setTitle("Termin & Zeiten");
-    panel.setDescription("Datum, Zeitfenster und Länge eines Gesprächtermins.");
+    panel.setTitle(getTranslation("edit-sprechtag.timing.title"));
+    panel.setDescription(getTranslation("edit-sprechtag.timing.description"));
     FormLayout formLayout = panel.getFormLayout();
     FormRow firstRow = new FormRow();
 
     datePicker = new DatePicker();
-    datePicker.setLabel("Datum");
+    datePicker.setLabel(getTranslation("edit-sprechtag.field.datum.label"));
     datePicker.setRequiredIndicatorVisible(true);
 
     slotInMinutes = new ComboBox<>();
-    slotInMinutes.setLabel("Slot-Länge");
+    slotInMinutes.setLabel(getTranslation("edit-sprechtag.field.slot.label"));
     slotInMinutes.setItems(5, 10, 15, 20, 25, 30);
     slotInMinutes.setValue(15);
-    slotInMinutes.setRenderer(new TextRenderer<>(minutes -> minutes + " Minuten"));
+    slotInMinutes.setRenderer(
+        new TextRenderer<>(minutes -> getTranslation("edit-sprechtag.slot.item", minutes)));
 
     firstRow.add(datePicker, slotInMinutes);
 
     startTime = new TimePicker();
-    startTime.setLabel("Startzeit");
+    startTime.setLabel(getTranslation("edit-sprechtag.field.startzeit.label"));
     startTime.setRequiredIndicatorVisible(true);
 
     endTime = new TimePicker();
-    endTime.setLabel("Endzeit");
+    endTime.setLabel(getTranslation("edit-sprechtag.field.endzeit.label"));
     endTime.setRequiredIndicatorVisible(true);
 
     FormRow secondRow = new FormRow();
@@ -224,10 +226,10 @@ public class EditSprechtagView extends Div {
     return panel;
   }
 
-  private static Div createHeader() {
+  private Div createHeader() {
     Div header = new Div();
     header.addClassName("edit-sprechtag-view__header");
-    header.add(new H2("Neuen Elternsprechtag anlegen"));
+    header.add(new H2(getTranslation("edit-sprechtag.header.title")));
     return header;
   }
 
@@ -240,7 +242,7 @@ public class EditSprechtagView extends Div {
 
   private Button createCreateButton() {
     Button button = new Button();
-    button.setText("Sprechtag anlegen");
+    button.setText(getTranslation("edit-sprechtag.button.create"));
     button.setIcon(VaadinIcon.CHECK.create());
     button.setThemeVariants(ButtonVariant.PRIMARY);
     button.addClickListener(_ -> save(SprechtagStatusEnum.VEROEFFENTLICHT));
@@ -249,7 +251,7 @@ public class EditSprechtagView extends Div {
 
   private Button createSaveAsDraftButton() {
     Button button = new Button();
-    button.setText("Als Entwurf speichern");
+    button.setText(getTranslation("edit-sprechtag.button.draft"));
     button.addClassName("edit-sprechtag-view__draft-button");
     button.addClickListener(_ -> save(SprechtagStatusEnum.ENTWURF));
     return button;
@@ -257,7 +259,7 @@ public class EditSprechtagView extends Div {
 
   private Button createCancelButton() {
     Button button = new Button();
-    button.setText("Abbrechen");
+    button.setText(getTranslation("edit-sprechtag.button.cancel"));
     button.setThemeVariants(ButtonVariant.TERTIARY);
     button.addClickListener(_ -> navigateToOrganizerView());
     return button;

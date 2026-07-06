@@ -19,10 +19,10 @@ public class LoginView extends Div implements BeforeEnterObserver {
 
   public LoginView() {
     LoginI18n.Form i18nForm = new LoginI18n.Form();
-    i18nForm.setTitle("Anmeldung");
-    i18nForm.setUsername("Nutzername");
-    i18nForm.setPassword("Passwort");
-    i18nForm.setSubmit("Anmelden");
+    i18nForm.setTitle(getTranslation("login.title"));
+    i18nForm.setUsername(getTranslation("login.username"));
+    i18nForm.setPassword(getTranslation("login.password"));
+    i18nForm.setSubmit(getTranslation("login.submit"));
 
     LoginI18n loginI18n = new LoginI18n();
     loginI18n.setForm(i18nForm);

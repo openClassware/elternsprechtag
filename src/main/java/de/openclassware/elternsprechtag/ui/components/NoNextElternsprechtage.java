@@ -20,7 +20,7 @@ public class NoNextElternsprechtage extends Div {
   private Button createButton() {
     Button button = new Button();
     button.setIcon(VaadinIcon.PLUS.create());
-    button.setText("Ersten Elternsprechtag anlegen");
+    button.setText(getTranslation("no-next.button"));
     button.setThemeVariants(ButtonVariant.PRIMARY);
     button.addClickListener(_ -> button.getUI().ifPresent(this::navigateToEditSprechtag));
     return button;
@@ -32,15 +32,14 @@ public class NoNextElternsprechtage extends Div {
 
   private Div createDescription() {
     Div description = new Div();
-    description.setText(
-        "Legen Sie Ihren ersten Elternsprechtag an - Datum und Zeitfenster sind in wenigen Schritten festgelegt");
+    description.setText(getTranslation("no-next.description"));
     description.addClassName("no-next-elternsprechtage__description");
     return description;
   }
 
   private Div createTitel() {
     Div titel = new Div();
-    titel.setText("Noch keine Elternsprechtage");
+    titel.setText(getTranslation("no-next.title"));
     titel.addClassName("no-next-elternsprechtage__title");
     return titel;
   }
