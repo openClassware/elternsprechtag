@@ -1,9 +1,13 @@
+.manage-sprechtag-view__breadcrumb {
+    padding: 1.5rem 1.5rem 0;
+}
+
 .manage-sprechtag-view__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.5rem 1.5rem 0;
+    padding: 0.5rem 1.5rem 0;
 }
 
 .manage-sprechtag-view__filter-row {

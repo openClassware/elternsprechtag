@@ -27,6 +27,7 @@ import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
+import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
 import de.openclassware.elternsprechtag.ui.components.FormPanel;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
@@ -47,6 +48,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private final Binder<Sprechtag> binder = new Binder<>(Sprechtag.class);
 
   private Sprechtag editing;
+  private Breadcrumb breadcrumb;
   private H2 headerTitle;
   private Button createButton;
 
@@ -125,6 +127,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     }
     editing = sprechtag.get();
     binder.readBean(editing);
+    breadcrumb.setCurrentText(getTranslation("edit-sprechtag.breadcrumb.title-edit"));
     headerTitle.setText(getTranslation("edit-sprechtag.header.title-edit"));
     createButton.setText(getTranslation("edit-sprechtag.button.save"));
   }
@@ -262,8 +265,11 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private Div createHeader() {
     Div header = new Div();
     header.addClassName("edit-sprechtag-view__header");
+    breadcrumb = new Breadcrumb();
+    breadcrumb.addLink(getTranslation("breadcrumb.uebersicht"), OrganizerView.class);
+    breadcrumb.addCurrent(getTranslation("edit-sprechtag.breadcrumb.title"));
     headerTitle = new H2(getTranslation("edit-sprechtag.header.title"));
-    header.add(headerTitle);
+    header.add(breadcrumb, headerTitle);
     return header;
   }
 

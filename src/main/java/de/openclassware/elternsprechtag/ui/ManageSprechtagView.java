@@ -13,6 +13,7 @@ import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
+import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
 import de.openclassware.elternsprechtag.ui.components.SprechtagFilterBar;
 import de.openclassware.elternsprechtag.ui.components.SprechtagTable;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
@@ -37,7 +38,15 @@ public class ManageSprechtagView extends Div {
     this.sprechtage = presenter.findAllSprechtage();
     addClassName("manage-sprechtag-view");
     this.table = new SprechtagTable(sprechtage);
-    add(createHeader(), createFilterRow(), table);
+    add(createBreadcrumb(), createHeader(), createFilterRow(), table);
+  }
+
+  private Component createBreadcrumb() {
+    Breadcrumb breadcrumb = new Breadcrumb();
+    breadcrumb.addClassName("manage-sprechtag-view__breadcrumb");
+    breadcrumb.addLink(getTranslation("breadcrumb.uebersicht"), OrganizerView.class);
+    breadcrumb.addCurrent(getTranslation("manage-sprechtag.header.title"));
+    return breadcrumb;
   }
 
   private Div createHeader() {
