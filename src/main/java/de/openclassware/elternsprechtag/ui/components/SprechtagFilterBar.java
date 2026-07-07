@@ -19,7 +19,8 @@ public class SprechtagFilterBar extends Div {
           new Option("manage-sprechtag.filter.alle", null),
           new Option("manage-sprechtag.filter.aktiv", SprechtagStatusEnum.VEROEFFENTLICHT),
           new Option("manage-sprechtag.filter.entwuerfe", SprechtagStatusEnum.ENTWURF),
-          new Option("manage-sprechtag.filter.abgeschlossen", SprechtagStatusEnum.ABGESCHLOSSEN));
+          new Option("manage-sprechtag.filter.abgeschlossen", SprechtagStatusEnum.ABGESCHLOSSEN),
+          new Option("manage-sprechtag.filter.abgesagt", SprechtagStatusEnum.ABGESAGT));
 
   /**
    * @param activeStatus the status whose tab is initially active, or {@code null} for "Alle".
