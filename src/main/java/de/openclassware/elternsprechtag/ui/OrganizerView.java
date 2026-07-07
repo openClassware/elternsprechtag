@@ -45,7 +45,7 @@ public class OrganizerView extends Div {
   }
 
   private Component createNoNextElternsprechtage() {
-    List<Sprechtag> sprechtage = presenter.findAllSprechtage();
+    List<Sprechtag> sprechtage = presenter.findActiveAndDraftSprechtage();
     if (sprechtage.isEmpty()) {
       return new NoNextElternsprechtage();
     }
