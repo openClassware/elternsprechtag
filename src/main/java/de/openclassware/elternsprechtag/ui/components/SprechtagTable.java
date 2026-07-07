@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.ui.components;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
@@ -8,6 +9,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -78,7 +80,7 @@ public class SprechtagTable extends Div {
         createTime(sprechtag),
         createKlassen(sprechtag),
         new StatusBadge(sprechtag.getStatus()),
-        createMenu());
+        createMenu(sprechtag));
     return row;
   }
 
@@ -121,10 +123,28 @@ public class SprechtagTable extends Div {
     return klassen;
   }
 
-  private Component createMenu() {
+  private Component createMenu(Sprechtag sprechtag) {
     Div menu = new Div();
     menu.addClassName("sprechtag-table__menu");
     menu.add(VaadinIcon.ELLIPSIS_DOTS_V.create());
+
+    ContextMenu contextMenu = new ContextMenu(menu);
+    contextMenu.setOpenOnClick(true);
+    contextMenu.addItem(
+        createMenuItemContent(VaadinIcon.EDIT, "manage-sprechtag.menu.edit"),
+        event -> navigateToEdit(sprechtag));
+
     return menu;
+  }
+
+  private Component createMenuItemContent(VaadinIcon icon, String translationKey) {
+    Div content = new Div();
+    content.addClassName("sprechtag-table__menu-item");
+    content.add(icon.create(), new Span(getTranslation(translationKey)));
+    return content;
+  }
+
+  private void navigateToEdit(Sprechtag sprechtag) {
+    getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + sprechtag.getId()));
   }
 }

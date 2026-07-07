@@ -86,6 +86,18 @@
     height: 18px;
 }
 
+.sprechtag-table__menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sprechtag-table__menu-item vaadin-icon {
+    width: 16px;
+    height: 16px;
+    color: #8a909a;
+}
+
 .sprechtag-table__empty {
     padding: 48px 24px;
 }
