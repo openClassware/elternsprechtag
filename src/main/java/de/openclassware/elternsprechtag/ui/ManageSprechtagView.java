@@ -1,6 +1,5 @@
 package de.openclassware.elternsprechtag.ui;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -28,20 +27,28 @@ public class ManageSprechtagView extends Div {
 
   public static final String ROUTE = "sprechtage";
 
-  private final List<Sprechtag> sprechtage;
+  private final ManageSprechtagPresenter presenter;
   private final SprechtagTable table;
+  private final TextField search;
+  private final Div filterRow;
 
+  private List<Sprechtag> sprechtage;
+  private SprechtagFilterBar filterBar;
   private SprechtagStatusEnum statusFilter;
   private String searchQuery = "";
 
   public ManageSprechtagView(ManageSprechtagPresenter presenter) {
+    this.presenter = presenter;
     this.sprechtage = presenter.findAllSprechtage();
     addClassName("manage-sprechtag-view");
-    this.table = new SprechtagTable(sprechtage);
-    add(createBreadcrumb(), createHeader(), createFilterRow(), table);
+    this.table = new SprechtagTable(sprechtage, this::onStatusChange);
+    this.search = createSearch();
+    this.filterBar = new SprechtagFilterBar(sprechtage, statusFilter, this::onStatusSelected);
+    this.filterRow = createFilterRow();
+    add(createBreadcrumb(), createHeader(), filterRow, table);
   }
 
-  private Component createBreadcrumb() {
+  private Breadcrumb createBreadcrumb() {
     Breadcrumb breadcrumb = new Breadcrumb();
     breadcrumb.addClassName("manage-sprechtag-view__breadcrumb");
     breadcrumb.addLink(getTranslation("breadcrumb.uebersicht"), OrganizerView.class);
@@ -56,32 +63,31 @@ public class ManageSprechtagView extends Div {
     return header;
   }
 
-  private Component createNewButton() {
+  private Button createNewButton() {
     Button newButton = new Button(getTranslation("manage-sprechtag.new-button"));
     newButton.addClassName("manage-sprechtag-view__new-button");
     newButton.setIcon(VaadinIcon.PLUS.create());
     newButton.addThemeVariants(ButtonVariant.PRIMARY);
-    newButton.addClickListener(
-        _ -> getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE)));
+    newButton.addClickListener(_ -> getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE)));
     return newButton;
   }
 
   private Div createFilterRow() {
-    Div filterRow = new Div();
-    filterRow.addClassName("manage-sprechtag-view__filter-row");
-    filterRow.add(new SprechtagFilterBar(sprechtage, this::onStatusSelected), createSearch());
-    return filterRow;
+    Div row = new Div();
+    row.addClassName("manage-sprechtag-view__filter-row");
+    row.add(filterBar, search);
+    return row;
   }
 
-  private Component createSearch() {
-    TextField search = new TextField();
-    search.addClassName("manage-sprechtag-view__search");
-    search.setPlaceholder(getTranslation("manage-sprechtag.search.placeholder"));
-    search.setPrefixComponent(VaadinIcon.SEARCH.create());
-    search.setClearButtonVisible(true);
-    search.setValueChangeMode(ValueChangeMode.EAGER);
-    search.addValueChangeListener(event -> onSearch(event.getValue()));
-    return search;
+  private TextField createSearch() {
+    TextField field = new TextField();
+    field.addClassName("manage-sprechtag-view__search");
+    field.setPlaceholder(getTranslation("manage-sprechtag.search.placeholder"));
+    field.setPrefixComponent(VaadinIcon.SEARCH.create());
+    field.setClearButtonVisible(true);
+    field.setValueChangeMode(ValueChangeMode.EAGER);
+    field.addValueChangeListener(event -> onSearch(event.getValue()));
+    return field;
   }
 
   private void onStatusSelected(SprechtagStatusEnum status) {
@@ -91,6 +97,20 @@ public class ManageSprechtagView extends Div {
 
   private void onSearch(String query) {
     this.searchQuery = query == null ? "" : query.trim().toLowerCase(Locale.GERMANY);
+    applyFilters();
+  }
+
+  private void onStatusChange(Sprechtag sprechtag, SprechtagStatusEnum newStatus) {
+    presenter.changeStatus(sprechtag.getId(), newStatus);
+    reload();
+  }
+
+  private void reload() {
+    this.sprechtage = presenter.findAllSprechtage();
+    SprechtagFilterBar newFilterBar =
+        new SprechtagFilterBar(sprechtage, statusFilter, this::onStatusSelected);
+    filterRow.replace(filterBar, newFilterBar);
+    filterBar = newFilterBar;
     applyFilters();
   }
 

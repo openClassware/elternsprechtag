@@ -22,14 +22,21 @@ public class SprechtagFilterBar extends Div {
           new Option("manage-sprechtag.filter.abgeschlossen", SprechtagStatusEnum.ABGESCHLOSSEN));
 
   /**
+   * @param activeStatus the status whose tab is initially active, or {@code null} for "Alle".
    * @param onSelect receives the selected status to filter by, or {@code null} for "Alle".
    */
-  public SprechtagFilterBar(List<Sprechtag> sprechtage, Consumer<SprechtagStatusEnum> onSelect) {
+  public SprechtagFilterBar(
+      List<Sprechtag> sprechtage,
+      SprechtagStatusEnum activeStatus,
+      Consumer<SprechtagStatusEnum> onSelect) {
     addClassName("sprechtag-filter");
 
     List<Div> tabs = new ArrayList<>();
     for (Option option : OPTIONS) {
       Div tab = createTab(option, sprechtage);
+      if (option.status() == activeStatus) {
+        tab.addClassName("sprechtag-filter__tab--active");
+      }
       tab.addClickListener(
           _ -> {
             tabs.forEach(other -> other.removeClassName("sprechtag-filter__tab--active"));
@@ -39,7 +46,6 @@ public class SprechtagFilterBar extends Div {
       tabs.add(tab);
       add(tab);
     }
-    tabs.getFirst().addClassName("sprechtag-filter__tab--active");
   }
 
   private Div createTab(Option option, List<Sprechtag> sprechtage) {

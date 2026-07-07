@@ -9,9 +9,11 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @CssImport("./styles/components/sprechtag-table.css")
@@ -19,9 +21,19 @@ public class SprechtagTable extends Div {
 
   private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
-  private final Div body = new Div();
+  /** Display order of the status actions offered in the row menu. */
+  private static final List<SprechtagStatusEnum> TRANSITION_ORDER =
+      List.of(
+          SprechtagStatusEnum.VEROEFFENTLICHT,
+          SprechtagStatusEnum.ABGESCHLOSSEN,
+          SprechtagStatusEnum.ABGESAGT);
 
-  public SprechtagTable(List<Sprechtag> sprechtage) {
+  private final Div body = new Div();
+  private final BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange;
+
+  public SprechtagTable(
+      List<Sprechtag> sprechtage, BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange) {
+    this.onStatusChange = onStatusChange;
     addClassName("sprechtag-table");
     body.addClassName("sprechtag-table__body");
     add(createHead(), body);
@@ -134,7 +146,33 @@ public class SprechtagTable extends Div {
         createMenuItemContent(VaadinIcon.EDIT, "manage-sprechtag.menu.edit"),
         event -> navigateToEdit(sprechtag));
 
+    for (SprechtagStatusEnum target : TRANSITION_ORDER) {
+      if (sprechtag.getStatus().allowedTransitions().contains(target)) {
+        contextMenu.addItem(
+            createMenuItemContent(iconFor(target), labelKeyFor(target)),
+            event -> onStatusChange.accept(sprechtag, target));
+      }
+    }
+
     return menu;
+  }
+
+  private VaadinIcon iconFor(SprechtagStatusEnum target) {
+    return switch (target) {
+      case VEROEFFENTLICHT -> VaadinIcon.PLAY;
+      case ABGESCHLOSSEN -> VaadinIcon.CHECK;
+      case ABGESAGT -> VaadinIcon.BAN;
+      case ENTWURF -> VaadinIcon.PENCIL;
+    };
+  }
+
+  private String labelKeyFor(SprechtagStatusEnum target) {
+    return switch (target) {
+      case VEROEFFENTLICHT -> "manage-sprechtag.menu.activate";
+      case ABGESCHLOSSEN -> "manage-sprechtag.menu.complete";
+      case ABGESAGT -> "manage-sprechtag.menu.cancel";
+      case ENTWURF -> "manage-sprechtag.menu.edit";
+    };
   }
 
   private Component createMenuItemContent(VaadinIcon icon, String translationKey) {
