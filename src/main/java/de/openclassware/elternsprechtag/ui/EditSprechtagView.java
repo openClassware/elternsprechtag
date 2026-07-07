@@ -18,6 +18,10 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.renderer.TextRenderer;
+import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasUrlParameter;
+import com.vaadin.flow.router.NotFoundException;
+import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
@@ -29,17 +33,22 @@ import jakarta.annotation.security.RolesAllowed;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Route(value = EditSprechtagView.ROUTE, layout = MainLayout.class)
 @RolesAllowed(Roles.ORGANIZER)
 @CssImport("./styles/edit-sprechtag-view.css")
-public class EditSprechtagView extends Div {
+public class EditSprechtagView extends Div implements HasUrlParameter<String> {
 
   public static final String ROUTE = "sprechtag";
 
   private final EditSprechtagPresenter presenter;
   private final Binder<Sprechtag> binder = new Binder<>(Sprechtag.class);
+
+  private Sprechtag editing;
+  private H2 headerTitle;
+  private Button createButton;
 
   private TextField titel;
   private TextField location;
@@ -104,11 +113,35 @@ public class EditSprechtagView extends Div {
         getTranslation("edit-sprechtag.validation.end-after-start"));
   }
 
+  @Override
+  public void setParameter(BeforeEvent event, @OptionalParameter String sprechtagId) {
+    if (sprechtagId == null) {
+      return; // Anlege-Modus
+    }
+    Optional<Sprechtag> sprechtag = parseId(sprechtagId).flatMap(presenter::findById);
+    if (sprechtag.isEmpty()) {
+      event.rerouteToError(NotFoundException.class, "Sprechtag not found: " + sprechtagId);
+      return;
+    }
+    editing = sprechtag.get();
+    binder.readBean(editing);
+    headerTitle.setText(getTranslation("edit-sprechtag.header.title-edit"));
+    createButton.setText(getTranslation("edit-sprechtag.button.save"));
+  }
+
+  private Optional<UUID> parseId(String id) {
+    try {
+      return Optional.of(UUID.fromString(id));
+    } catch (IllegalArgumentException e) {
+      return Optional.empty();
+    }
+  }
+
   private void save(SprechtagStatusEnum status) {
-    Sprechtag sprechtag = new Sprechtag();
-    if (binder.writeBeanIfValid(sprechtag)) {
-      sprechtag.setStatus(status);
-      presenter.save(sprechtag);
+    Sprechtag target = editing != null ? editing : new Sprechtag();
+    if (binder.writeBeanIfValid(target)) {
+      target.setStatus(status);
+      presenter.save(target);
       navigateToOrganizerView();
     }
   }
@@ -229,7 +262,8 @@ public class EditSprechtagView extends Div {
   private Div createHeader() {
     Div header = new Div();
     header.addClassName("edit-sprechtag-view__header");
-    header.add(new H2(getTranslation("edit-sprechtag.header.title")));
+    headerTitle = new H2(getTranslation("edit-sprechtag.header.title"));
+    header.add(headerTitle);
     return header;
   }
 
@@ -241,12 +275,12 @@ public class EditSprechtagView extends Div {
   }
 
   private Button createCreateButton() {
-    Button button = new Button();
-    button.setText(getTranslation("edit-sprechtag.button.create"));
-    button.setIcon(VaadinIcon.CHECK.create());
-    button.setThemeVariants(ButtonVariant.PRIMARY);
-    button.addClickListener(_ -> save(SprechtagStatusEnum.VEROEFFENTLICHT));
-    return button;
+    createButton = new Button();
+    createButton.setText(getTranslation("edit-sprechtag.button.create"));
+    createButton.setIcon(VaadinIcon.CHECK.create());
+    createButton.setThemeVariants(ButtonVariant.PRIMARY);
+    createButton.addClickListener(_ -> save(SprechtagStatusEnum.VEROEFFENTLICHT));
+    return createButton;
   }
 
   private Button createSaveAsDraftButton() {

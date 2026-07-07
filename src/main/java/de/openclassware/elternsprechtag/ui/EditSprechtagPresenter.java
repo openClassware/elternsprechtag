@@ -3,6 +3,8 @@ package de.openclassware.elternsprechtag.ui;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import de.openclassware.elternsprechtag.services.KlassenService;
 import de.openclassware.elternsprechtag.services.SprechtagService;
@@ -22,6 +24,10 @@ public class EditSprechtagPresenter {
 
   public Sprechtag save(Sprechtag sprechtag) {
     return sprechtagService.save(sprechtag);
+  }
+
+  public Optional<Sprechtag> findById(UUID id) {
+    return sprechtagService.findById(id);
   }
 
 }

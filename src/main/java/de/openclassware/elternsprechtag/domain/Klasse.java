@@ -14,10 +14,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Klasse {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false, unique = true)
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @Column(name = "name", nullable = false, unique = true)

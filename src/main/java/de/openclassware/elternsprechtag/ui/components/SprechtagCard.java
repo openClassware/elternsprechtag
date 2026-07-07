@@ -6,6 +6,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.Locale;
@@ -25,6 +26,12 @@ public class SprechtagCard extends Div {
     bottom.add(createTimespan(sprechtag));
 
     add(top, bottom);
+
+    addClickListener(_ -> navigateToSprechtagEditView(sprechtag));
+  }
+
+  private void navigateToSprechtagEditView(Sprechtag sprechtag) {
+    getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + sprechtag.getId()));
   }
 
   private Component createTimespan(Sprechtag sprechtag) {
