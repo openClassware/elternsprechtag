@@ -14,10 +14,11 @@
 .sprechtag-table__head {
     padding-top: 12px;
     padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .sprechtag-table__row {
-    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .sprechtag-table__head-cell {

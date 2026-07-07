@@ -1,6 +1,8 @@
 package de.openclassware.elternsprechtag.ui;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
@@ -35,17 +37,31 @@ public class ManageSprechtagView extends Div {
     this.sprechtage = presenter.findAllSprechtage();
     addClassName("manage-sprechtag-view");
     this.table = new SprechtagTable(sprechtage);
-    add(
-        createHeader(),
-        new SprechtagFilterBar(sprechtage, this::onStatusSelected),
-        table);
+    add(createHeader(), createFilterRow(), table);
   }
 
   private Div createHeader() {
     Div header = new Div();
     header.addClassName("manage-sprechtag-view__header");
-    header.add(new H2(getTranslation("manage-sprechtag.header.title")), createSearch());
+    header.add(new H2(getTranslation("manage-sprechtag.header.title")), createNewButton());
     return header;
+  }
+
+  private Component createNewButton() {
+    Button newButton = new Button(getTranslation("manage-sprechtag.new-button"));
+    newButton.addClassName("manage-sprechtag-view__new-button");
+    newButton.setIcon(VaadinIcon.PLUS.create());
+    newButton.addThemeVariants(ButtonVariant.PRIMARY);
+    newButton.addClickListener(
+        _ -> getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE)));
+    return newButton;
+  }
+
+  private Div createFilterRow() {
+    Div filterRow = new Div();
+    filterRow.addClassName("manage-sprechtag-view__filter-row");
+    filterRow.add(new SprechtagFilterBar(sprechtage, this::onStatusSelected), createSearch());
+    return filterRow;
   }
 
   private Component createSearch() {
