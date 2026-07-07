@@ -21,7 +21,7 @@ public class SprechtagCard extends Div {
 
     Div bottom = new Div();
     bottom.addClassName("sprechtag-card__bottom");
-    bottom.add(createTimespan(sprechtag));
+    bottom.add(createTimespan(sprechtag), new StatusBadge(sprechtag.getStatus()));
 
     add(top, bottom);
 

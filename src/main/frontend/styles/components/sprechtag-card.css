@@ -25,6 +25,10 @@
 
 .sprechtag-card__bottom {
     padding-top: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 .sprechtag-card__timespan {
