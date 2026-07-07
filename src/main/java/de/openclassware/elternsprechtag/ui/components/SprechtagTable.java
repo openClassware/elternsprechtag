@@ -3,6 +3,7 @@ package de.openclassware.elternsprechtag.ui.components;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.domain.Klasse;
@@ -16,10 +17,22 @@ public class SprechtagTable extends Div {
 
   private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
+  private final Div body = new Div();
+
   public SprechtagTable(List<Sprechtag> sprechtage) {
     addClassName("sprechtag-table");
-    add(createHead());
-    sprechtage.stream().map(this::createRow).forEach(this::add);
+    body.addClassName("sprechtag-table__body");
+    add(createHead(), body);
+    setSprechtage(sprechtage);
+  }
+
+  public void setSprechtage(List<Sprechtag> sprechtage) {
+    body.removeAll();
+    if (sprechtage.isEmpty()) {
+      body.add(createEmptyState());
+      return;
+    }
+    sprechtage.stream().map(this::createRow).forEach(body::add);
   }
 
   private Component createHead() {
@@ -39,6 +52,21 @@ public class SprechtagTable extends Div {
     Span cell = new Span(getTranslation(translationKey));
     cell.addClassName("sprechtag-table__head-cell");
     return cell;
+  }
+
+  private Component createEmptyState() {
+    Div empty = new Div();
+    empty.addClassName("sprechtag-table__empty");
+
+    H3 title = new H3(getTranslation("manage-sprechtag.empty.title"));
+    title.addClassName("sprechtag-table__empty-title");
+
+    Div description = new Div();
+    description.addClassName("sprechtag-table__empty-description");
+    description.setText(getTranslation("manage-sprechtag.empty.description"));
+
+    empty.add(title, description);
+    return empty;
   }
 
   private Component createRow(Sprechtag sprechtag) {

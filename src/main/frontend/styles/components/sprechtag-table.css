@@ -84,3 +84,18 @@
     width: 18px;
     height: 18px;
 }
+
+.sprechtag-table__empty {
+    padding: 48px 24px;
+}
+
+.sprechtag-table__empty-title {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.sprechtag-table__empty-description {
+    font-size: 14px;
+    color: #8a909a;
+}
