@@ -9,7 +9,9 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
+import de.openclassware.elternsprechtag.ui.components.SprechtagFilterBar;
 import de.openclassware.elternsprechtag.ui.components.SprechtagTable;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
@@ -26,11 +28,17 @@ public class ManageSprechtagView extends Div {
   private final List<Sprechtag> sprechtage;
   private final SprechtagTable table;
 
+  private SprechtagStatusEnum statusFilter;
+  private String searchQuery = "";
+
   public ManageSprechtagView(ManageSprechtagPresenter presenter) {
     this.sprechtage = presenter.findAllSprechtage();
     addClassName("manage-sprechtag-view");
     this.table = new SprechtagTable(sprechtage);
-    add(createHeader(), table);
+    add(
+        createHeader(),
+        new SprechtagFilterBar(sprechtage, this::onStatusSelected),
+        table);
   }
 
   private Div createHeader() {
@@ -47,15 +55,27 @@ public class ManageSprechtagView extends Div {
     search.setPrefixComponent(VaadinIcon.SEARCH.create());
     search.setClearButtonVisible(true);
     search.setValueChangeMode(ValueChangeMode.EAGER);
-    search.addValueChangeListener(event -> filter(event.getValue()));
+    search.addValueChangeListener(event -> onSearch(event.getValue()));
     return search;
   }
 
-  private void filter(String query) {
-    String needle = query == null ? "" : query.trim().toLowerCase(Locale.GERMANY);
+  private void onStatusSelected(SprechtagStatusEnum status) {
+    this.statusFilter = status;
+    applyFilters();
+  }
+
+  private void onSearch(String query) {
+    this.searchQuery = query == null ? "" : query.trim().toLowerCase(Locale.GERMANY);
+    applyFilters();
+  }
+
+  private void applyFilters() {
     List<Sprechtag> filtered =
         sprechtage.stream()
-            .filter(sprechtag -> sprechtag.getTitel().toLowerCase(Locale.GERMANY).contains(needle))
+            .filter(sprechtag -> statusFilter == null || sprechtag.getStatus() == statusFilter)
+            .filter(
+                sprechtag ->
+                    sprechtag.getTitel().toLowerCase(Locale.GERMANY).contains(searchQuery))
             .toList();
     table.setSprechtage(filtered);
   }
