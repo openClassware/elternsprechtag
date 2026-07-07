@@ -1,0 +1,20 @@
+.date-badge {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--aura-accent-color);
+    background: color-mix(in srgb, #1f6bf2 9%, #fff);
+    border-radius: 4px;
+    width: 52px;
+    height: 58px;
+}
+
+.date-badge__month {
+    font-size: 10px;
+}
+
+.date-badge__day-of-month {
+    font-size: 22px;
+    font-weight: bold;
+}

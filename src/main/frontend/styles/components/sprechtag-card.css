@@ -5,32 +5,11 @@
     cursor: pointer;
 }
 
-.sprechtag-card__date {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: var(--aura-accent-color);
-    background: color-mix(in srgb, #1f6bf2 9%, #fff);
-    border-radius: 4px;
-    width: 52px;
-    height: 58px;
-}
-
 .sprechtag-card__top {
     display: flex;
     gap: 14px;
     border-bottom: 1px solid #e5e7eb;
     padding-bottom: 13px;
-}
-
-.sprechtag-card__month {
-    font-size: 10px;
-}
-
-.sprechtag-card__day-of-month {
-    font-size: 22px;
-    font-weight: bold;
 }
 
 .sprechtag-card__title {

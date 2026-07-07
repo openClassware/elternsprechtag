@@ -8,8 +8,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
-import java.util.Locale;
 
 @CssImport("./styles/components/sprechtag-card.css")
 public class SprechtagCard extends Div {
@@ -19,7 +17,7 @@ public class SprechtagCard extends Div {
 
     Div top = new Div();
     top.addClassName("sprechtag-card__top");
-    top.add(createDate(sprechtag), createTitle(sprechtag));
+    top.add(new DateBadge(sprechtag), createTitle(sprechtag));
 
     Div bottom = new Div();
     bottom.addClassName("sprechtag-card__bottom");
@@ -56,20 +54,6 @@ public class SprechtagCard extends Div {
     year.setText(sprechtag.getStartDate().getYear() + "");
     Div div = new Div();
     div.add(title, year);
-    return div;
-  }
-
-  private Component createDate(Sprechtag sprechtag) {
-    Div dayOfMonth = new Div();
-    dayOfMonth.setText(sprechtag.getStartDate().getDayOfMonth() + "");
-    dayOfMonth.addClassName("sprechtag-card__day-of-month");
-    Div month = new Div();
-    month.addClassName("sprechtag-card__month");
-    month.setText(
-        sprechtag.getStartDate().getMonth().getDisplayName(TextStyle.SHORT, Locale.GERMANY));
-    Div div = new Div();
-    div.addClassName("sprechtag-card__date");
-    div.add(dayOfMonth, month);
     return div;
   }
 }
