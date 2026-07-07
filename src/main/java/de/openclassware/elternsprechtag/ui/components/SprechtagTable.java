@@ -14,6 +14,7 @@ import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @CssImport("./styles/components/sprechtag-table.css")
@@ -30,10 +31,14 @@ public class SprechtagTable extends Div {
 
   private final Div body = new Div();
   private final BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange;
+  private final Consumer<Sprechtag> onDuplicate;
 
   public SprechtagTable(
-      List<Sprechtag> sprechtage, BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange) {
+      List<Sprechtag> sprechtage,
+      BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange,
+      Consumer<Sprechtag> onDuplicate) {
     this.onStatusChange = onStatusChange;
+    this.onDuplicate = onDuplicate;
     addClassName("sprechtag-table");
     body.addClassName("sprechtag-table__body");
     add(createHead(), body);
@@ -145,6 +150,9 @@ public class SprechtagTable extends Div {
     contextMenu.addItem(
         createMenuItemContent(VaadinIcon.EDIT, "manage-sprechtag.menu.edit"),
         event -> navigateToEdit(sprechtag));
+    contextMenu.addItem(
+        createMenuItemContent(VaadinIcon.COPY, "manage-sprechtag.menu.duplicate"),
+        event -> onDuplicate.accept(sprechtag));
 
     for (SprechtagStatusEnum target : TRANSITION_ORDER) {
       if (sprechtag.getStatus().allowedTransitions().contains(target)) {

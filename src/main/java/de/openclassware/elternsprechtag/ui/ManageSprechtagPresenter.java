@@ -21,4 +21,8 @@ public class ManageSprechtagPresenter {
   public void changeStatus(UUID id, SprechtagStatusEnum newStatus) {
     sprechtagService.changeStatus(id, newStatus);
   }
+
+  public UUID duplicate(UUID id) {
+    return sprechtagService.duplicate(id).getId();
+  }
 }

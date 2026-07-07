@@ -19,6 +19,7 @@ import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 @Route(value = ManageSprechtagView.ROUTE, layout = MainLayout.class)
 @RolesAllowed(Roles.ORGANIZER)
@@ -41,7 +42,7 @@ public class ManageSprechtagView extends Div {
     this.presenter = presenter;
     this.sprechtage = presenter.findAllSprechtage();
     addClassName("manage-sprechtag-view");
-    this.table = new SprechtagTable(sprechtage, this::onStatusChange);
+    this.table = new SprechtagTable(sprechtage, this::onStatusChange, this::onDuplicate);
     this.search = createSearch();
     this.filterBar = new SprechtagFilterBar(sprechtage, statusFilter, this::onStatusSelected);
     this.filterRow = createFilterRow();
@@ -103,6 +104,11 @@ public class ManageSprechtagView extends Div {
   private void onStatusChange(Sprechtag sprechtag, SprechtagStatusEnum newStatus) {
     presenter.changeStatus(sprechtag.getId(), newStatus);
     reload();
+  }
+
+  private void onDuplicate(Sprechtag sprechtag) {
+    UUID copyId = presenter.duplicate(sprechtag.getId());
+    getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + copyId));
   }
 
   private void reload() {

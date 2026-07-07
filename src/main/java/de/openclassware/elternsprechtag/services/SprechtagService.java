@@ -3,6 +3,7 @@ package de.openclassware.elternsprechtag.services;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.repositories.SprechtagRepository;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -42,5 +43,24 @@ public class SprechtagService {
     }
     sprechtag.setStatus(newStatus);
     return sprechtagRepository.save(sprechtag);
+  }
+
+  public Sprechtag duplicate(UUID id) {
+    Sprechtag original =
+        sprechtagRepository
+            .findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Sprechtag nicht gefunden: " + id));
+    Sprechtag copy = new Sprechtag();
+    copy.setTitel(original.getTitel());
+    copy.setStartDate(original.getStartDate());
+    copy.setStartTime(original.getStartTime());
+    copy.setEndTime(original.getEndTime());
+    copy.setSlotInMinutes(original.getSlotInMinutes());
+    copy.setLocation(original.getLocation());
+    copy.setDescription(original.getDescription());
+    copy.setAccessToken(UUID.randomUUID().toString());
+    copy.setStatus(SprechtagStatusEnum.ENTWURF);
+    copy.setKlassen(new ArrayList<>(original.getKlassen()));
+    return sprechtagRepository.save(copy);
   }
 }
