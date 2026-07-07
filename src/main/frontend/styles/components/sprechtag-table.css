@@ -1,0 +1,86 @@
+.sprechtag-table {
+    --sprechtag-table-columns: 90px minmax(0, 1fr) 150px 130px 150px 40px;
+}
+
+.sprechtag-table__head,
+.sprechtag-table__row {
+    display: grid;
+    grid-template-columns: var(--sprechtag-table-columns);
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+}
+
+.sprechtag-table__head {
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.sprechtag-table__row {
+    border-top: 1px solid #e5e7eb;
+}
+
+.sprechtag-table__head-cell {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8a909a;
+}
+
+.sprechtag-table__title-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.sprechtag-table__title {
+    font-size: 15px;
+    font-weight: 500;
+    word-wrap: break-word;
+}
+
+.sprechtag-table__location {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #8a909a;
+}
+
+.sprechtag-table__location vaadin-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.sprechtag-table__time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #5a6069;
+}
+
+.sprechtag-table__time vaadin-icon {
+    width: 15px;
+    height: 15px;
+    color: #8a909a;
+}
+
+.sprechtag-table__klassen {
+    font-size: 14px;
+    color: #5a6069;
+}
+
+.sprechtag-table__menu {
+    display: flex;
+    justify-content: center;
+    color: #8a909a;
+    cursor: pointer;
+}
+
+.sprechtag-table__menu vaadin-icon {
+    width: 18px;
+    height: 18px;
+}

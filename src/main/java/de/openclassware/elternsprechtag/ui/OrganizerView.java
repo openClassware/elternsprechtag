@@ -79,7 +79,12 @@ public class OrganizerView extends Div {
             VaadinIcon.LIST,
             getTranslation("organizer.card.manage.title"),
             getTranslation("organizer.card.manage.description"));
+    card.addClickListener(_ -> card.getUI().ifPresent(this::navigateToManageSprechtag));
     return card;
+  }
+
+  private void navigateToManageSprechtag(UI ui) {
+    ui.navigate(ManageSprechtagView.ROUTE);
   }
 
   private Div createGreeting() {
