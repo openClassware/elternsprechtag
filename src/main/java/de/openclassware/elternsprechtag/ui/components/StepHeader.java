@@ -10,6 +10,10 @@ import com.vaadin.flow.component.html.Span;
 public class StepHeader extends Div {
 
   public StepHeader(int number, String title) {
+    this(number, title, null);
+  }
+
+  public StepHeader(int number, String title, String suffix) {
     addClassName("step-header");
 
     Span numberBadge = new Span(String.valueOf(number));
@@ -19,5 +23,11 @@ public class StepHeader extends Div {
     titleElement.addClassName("step-header__title");
 
     add(numberBadge, titleElement);
+
+    if (suffix != null && !suffix.isBlank()) {
+      Span suffixElement = new Span(suffix);
+      suffixElement.addClassName("step-header__suffix");
+      add(suffixElement);
+    }
   }
 }

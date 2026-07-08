@@ -10,8 +10,11 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
@@ -49,6 +52,10 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   private TextField elternName;
   private TextField schuelerName;
   private Select<Klasse> klasse;
+  private TextArea notiz;
+
+  private Div footerStatus;
+  private Button bookButton;
 
   /** Stub subject offering for the UI-only booking flow (no persistence yet). */
   private record Fachangebot(String shortName, String name, String teacher, Set<LocalTime> belegt) {}
@@ -105,7 +112,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
           createHeader(),
           createInfo(published),
           createAngaben(published),
-          createBuchung(published));
+          createBuchung(published),
+          createNotiz());
     } else if (sprechtag.isPresent() && sprechtag.get().getStatus() == SprechtagStatusEnum.ABGESAGT) {
       add(createMessage("elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
     } else {
@@ -169,10 +177,14 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     elternName = new TextField(getTranslation("elternsprechtag.angaben.name.label"));
     elternName.setPlaceholder(getTranslation("elternsprechtag.angaben.name.placeholder"));
     elternName.setRequiredIndicatorVisible(true);
+    elternName.setValueChangeMode(ValueChangeMode.EAGER);
+    elternName.addValueChangeListener(event -> refreshFooter());
 
     schuelerName = new TextField(getTranslation("elternsprechtag.angaben.kind.label"));
     schuelerName.setPlaceholder(getTranslation("elternsprechtag.angaben.kind.placeholder"));
     schuelerName.setRequiredIndicatorVisible(true);
+    schuelerName.setValueChangeMode(ValueChangeMode.EAGER);
+    schuelerName.addValueChangeListener(event -> refreshFooter());
 
     klasse = new Select<>();
     klasse.setLabel(getTranslation("elternsprechtag.angaben.klasse.label"));
@@ -183,6 +195,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
             .sorted(Comparator.comparing(Klasse::getName))
             .toList());
     klasse.setRequiredIndicatorVisible(true);
+    klasse.addValueChangeListener(event -> refreshFooter());
 
     FormLayout form = new FormLayout();
     form.addClassName("elternsprechtag-view__form");
@@ -370,6 +383,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     refreshFachGrid();
     refreshSlotArea();
     refreshSummary();
+    refreshFooter();
   }
 
   private void refreshSummary() {
@@ -429,6 +443,83 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
     row.add(badge, info, remove);
     return row;
+  }
+
+  private Component createNotiz() {
+    Div card = new Div();
+    card.addClassName("elternsprechtag-view__notiz");
+
+    Div body = new Div();
+    body.addClassName("elternsprechtag-view__notiz-body");
+    body.add(
+        new StepHeader(
+            4,
+            getTranslation("elternsprechtag.notiz.step-title"),
+            getTranslation("elternsprechtag.notiz.optional")));
+
+    notiz = new TextArea();
+    notiz.addClassName("elternsprechtag-view__notiz-field");
+    notiz.setPlaceholder(getTranslation("elternsprechtag.notiz.placeholder"));
+    notiz.setWidthFull();
+    notiz.setMaxLength(500);
+    body.add(notiz);
+
+    card.add(body, createFooter());
+    refreshFooter();
+    return card;
+  }
+
+  private Component createFooter() {
+    Div footer = new Div();
+    footer.addClassName("elternsprechtag-view__footer");
+
+    footerStatus = new Div();
+    footerStatus.addClassName("elternsprechtag-view__footer-status");
+
+    bookButton = new Button();
+    bookButton.setIcon(VaadinIcon.ARROW_RIGHT.create());
+    bookButton.setIconAfterText(true);
+    bookButton.addThemeVariants(ButtonVariant.PRIMARY);
+    bookButton.addClickListener(
+        event -> Notification.show(getTranslation("elternsprechtag.footer.notification")));
+
+    footer.add(footerStatus, bookButton);
+    return footer;
+  }
+
+  private void refreshFooter() {
+    if (footerStatus == null) {
+      return;
+    }
+    int count = selection.size();
+    bookButton.setEnabled(bookingValid());
+    bookButton.setText(
+        count == 0
+            ? getTranslation("elternsprechtag.footer.button.empty")
+            : getTranslation("elternsprechtag.footer.button", countLabel(count)));
+    footerStatus.setText(footerStatusText(count));
+  }
+
+  private String footerStatusText(int count) {
+    if (count == 0) {
+      return getTranslation("elternsprechtag.footer.empty");
+    }
+    String selected = getTranslation("elternsprechtag.footer.selected", countLabel(count));
+    if (!namesFilled()) {
+      return selected + " — " + getTranslation("elternsprechtag.footer.blocker.angaben");
+    }
+    if (klasse.getValue() == null) {
+      return selected + " — " + getTranslation("elternsprechtag.footer.blocker.klasse");
+    }
+    return selected;
+  }
+
+  private boolean bookingValid() {
+    return !selection.isEmpty() && namesFilled() && klasse.getValue() != null;
+  }
+
+  private boolean namesFilled() {
+    return !elternName.getValue().isBlank() && !schuelerName.getValue().isBlank();
   }
 
   private Component metaItem(VaadinIcon icon, String text) {
