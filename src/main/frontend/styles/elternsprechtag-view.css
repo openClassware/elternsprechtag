@@ -12,7 +12,7 @@
     display: flex;
     align-items: center;
     width: 100%;
-    max-width: 560px;
+    max-width: 720px;
 }
 
 .elternsprechtag-header__school {
@@ -25,7 +25,7 @@
 .elternsprechtag-view__card {
     box-sizing: border-box;
     width: 100%;
-    max-width: 560px;
+    max-width: 720px;
     background-color: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
@@ -72,6 +72,11 @@
     color: #6b7280;
     line-height: 1.6;
     white-space: pre-line;
+}
+
+/* "Ihre Angaben" form, spaced below its step header. */
+.elternsprechtag-view__form {
+    margin-top: 1.5rem;
 }
 
 /* Cancelled / unavailable states: no header, centered message. */

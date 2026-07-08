@@ -2,20 +2,26 @@ package de.openclassware.elternsprechtag.ui;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.ui.components.StepHeader;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -32,6 +38,10 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   private final ElternsprechtagPresenter presenter;
 
+  private TextField elternName;
+  private TextField schuelerName;
+  private Select<Klasse> klasse;
+
   public ElternsprechtagView(ElternsprechtagPresenter presenter) {
     this.presenter = presenter;
     addClassName("elternsprechtag-view");
@@ -42,7 +52,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     removeAll();
     Optional<Sprechtag> sprechtag = presenter.findByAccessToken(token);
     if (sprechtag.isPresent() && sprechtag.get().getStatus() == SprechtagStatusEnum.VEROEFFENTLICHT) {
-      add(createHeader(), createInfo(sprechtag.get()));
+      add(createHeader(), createInfo(sprechtag.get()), createAngaben(sprechtag.get()));
     } else if (sprechtag.isPresent() && sprechtag.get().getStatus() == SprechtagStatusEnum.ABGESAGT) {
       add(createMessage("elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
     } else {
@@ -95,6 +105,39 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
       card.add(description);
     }
 
+    return card;
+  }
+
+  private Component createAngaben(Sprechtag sprechtag) {
+    Div card = new Div();
+    card.addClassName("elternsprechtag-view__card");
+    card.add(new StepHeader(1, getTranslation("elternsprechtag.angaben.step-title")));
+
+    elternName = new TextField(getTranslation("elternsprechtag.angaben.name.label"));
+    elternName.setPlaceholder(getTranslation("elternsprechtag.angaben.name.placeholder"));
+    elternName.setRequiredIndicatorVisible(true);
+
+    schuelerName = new TextField(getTranslation("elternsprechtag.angaben.kind.label"));
+    schuelerName.setPlaceholder(getTranslation("elternsprechtag.angaben.kind.placeholder"));
+    schuelerName.setRequiredIndicatorVisible(true);
+
+    klasse = new Select<>();
+    klasse.setLabel(getTranslation("elternsprechtag.angaben.klasse.label"));
+    klasse.setPlaceholder(getTranslation("elternsprechtag.angaben.klasse.placeholder"));
+    klasse.setItemLabelGenerator(Klasse::getName);
+    klasse.setItems(
+        sprechtag.getKlassen().stream()
+            .sorted(Comparator.comparing(Klasse::getName))
+            .toList());
+    klasse.setRequiredIndicatorVisible(true);
+
+    FormLayout form = new FormLayout();
+    form.addClassName("elternsprechtag-view__form");
+    form.setResponsiveSteps(
+        new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("640px", 2));
+    form.add(elternName, schuelerName, klasse);
+
+    card.add(form);
     return card;
   }
 
