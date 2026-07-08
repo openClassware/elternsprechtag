@@ -79,6 +79,294 @@
     margin-top: 1.5rem;
 }
 
+/* Step 2: subject picker. */
+.elternsprechtag-view__fach-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 1.5rem;
+}
+
+.elternsprechtag-view__fach {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.elternsprechtag-view__fach:hover {
+    border-color: #cbd5e1;
+}
+
+.elternsprechtag-view__fach--selected {
+    border-color: var(--aura-accent-color);
+    background-color: #f5f8ff;
+}
+
+.elternsprechtag-view__fach-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 8px;
+    background-color: #eef1f5;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.elternsprechtag-view__fach--selected .elternsprechtag-view__fach-badge {
+    background-color: var(--aura-accent-color);
+    color: #ffffff;
+}
+
+.elternsprechtag-view__fach-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.elternsprechtag-view__fach-name {
+    font-weight: 600;
+    color: #111827;
+}
+
+.elternsprechtag-view__fach-teacher {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.elternsprechtag-view__fach-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background-color: var(--aura-accent-color);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.elternsprechtag-view__fach-pill vaadin-icon {
+    width: 12px;
+    height: 12px;
+}
+
+/* Step 3: time-slot picker. */
+.elternsprechtag-view__step3-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 2rem;
+}
+
+.elternsprechtag-view__legend {
+    display: flex;
+    gap: 16px;
+}
+
+.elternsprechtag-view__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.elternsprechtag-view__legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+}
+
+.elternsprechtag-view__legend-swatch--frei {
+    background-color: #ffffff;
+}
+
+.elternsprechtag-view__legend-swatch--belegt {
+    background-color: #eef1f5;
+}
+
+.elternsprechtag-view__slot-area {
+    margin-top: 1rem;
+}
+
+.elternsprechtag-view__placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: #8a909a;
+    border: 1px dashed #e5e7eb;
+    border-radius: 10px;
+}
+
+.elternsprechtag-view__slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+}
+
+.elternsprechtag-view__slot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #111827;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.elternsprechtag-view__slot:hover {
+    border-color: var(--aura-accent-color);
+}
+
+.elternsprechtag-view__slot--belegt,
+.elternsprechtag-view__slot--belegt:hover {
+    background-color: #eef1f5;
+    color: #b0b6c0;
+    border-color: #eef1f5;
+    cursor: not-allowed;
+}
+
+.elternsprechtag-view__slot--konflikt,
+.elternsprechtag-view__slot--konflikt:hover {
+    background-color: #eef2ff;
+    color: #a5b4fc;
+    border-color: #e0e7ff;
+    cursor: not-allowed;
+}
+
+.elternsprechtag-view__slot--selected {
+    background-color: #eff4ff;
+    border-color: var(--aura-accent-color);
+    color: var(--aura-accent-color);
+}
+
+.elternsprechtag-view__slot-check {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: var(--aura-accent-color);
+    color: #ffffff;
+}
+
+.elternsprechtag-view__slot-check vaadin-icon {
+    width: 10px;
+    height: 10px;
+}
+
+.elternsprechtag-view__slot-hint {
+    margin: 12px 0 0;
+    font-size: 14px;
+    color: #8a909a;
+}
+
+/* Selected-appointments summary panel. */
+.elternsprechtag-view__summary {
+    margin-top: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.elternsprechtag-view__summary-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.elternsprechtag-view__summary-title {
+    font-weight: 600;
+    color: #111827;
+}
+
+.elternsprechtag-view__summary-count {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.elternsprechtag-view__summary-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #f0f1f3;
+}
+
+.elternsprechtag-view__summary-row:last-child {
+    border-bottom: none;
+}
+
+.elternsprechtag-view__summary-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+    background-color: #eef2ff;
+    color: var(--aura-accent-color);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.elternsprechtag-view__summary-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.elternsprechtag-view__summary-main {
+    font-weight: 600;
+    color: #111827;
+}
+
+.elternsprechtag-view__summary-sub {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.elternsprechtag-view__summary-remove {
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .elternsprechtag-view__fach-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Cancelled / unavailable states: no header, centered message. */
 .elternsprechtag-view__message {
     max-width: 480px;
