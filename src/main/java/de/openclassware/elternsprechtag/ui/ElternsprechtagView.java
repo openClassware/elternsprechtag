@@ -12,15 +12,12 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.ui.components.DateBadge;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Route(value = ElternsprechtagView.ROUTE, autoLayout = false)
 @AnonymousAllowed
@@ -45,7 +42,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     removeAll();
     Optional<Sprechtag> sprechtag = presenter.findByAccessToken(token);
     if (sprechtag.isPresent() && sprechtag.get().getStatus() == SprechtagStatusEnum.VEROEFFENTLICHT) {
-      add(createInfo(sprechtag.get()));
+      add(createHeader(), createInfo(sprechtag.get()));
     } else if (sprechtag.isPresent() && sprechtag.get().getStatus() == SprechtagStatusEnum.ABGESAGT) {
       add(createMessage("elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
     } else {
@@ -55,14 +52,24 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     }
   }
 
+  private Component createHeader() {
+    Div header = new Div();
+    header.addClassName("elternsprechtag-header");
+
+    Span name = new Span(presenter.getSchoolname());
+    name.addClassName("elternsprechtag-header__school");
+
+    header.add(name);
+    return header;
+  }
+
   private Component createInfo(Sprechtag sprechtag) {
     Div card = new Div();
     card.addClassName("elternsprechtag-view__card");
 
-    Div header = new Div();
-    header.addClassName("elternsprechtag-view__header");
-    header.add(new DateBadge(sprechtag), new H1(sprechtag.getTitel()));
-    card.add(header);
+    H1 title = new H1(sprechtag.getTitel());
+    title.addClassName("elternsprechtag-view__title");
+    card.add(title);
 
     Div meta = new Div();
     meta.addClassName("elternsprechtag-view__meta");
@@ -78,19 +85,9 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     }
     card.add(meta);
 
-    if (!sprechtag.getKlassen().isEmpty()) {
-      Div klassen = new Div();
-      klassen.addClassName("elternsprechtag-view__klassen");
-      Span label = new Span(getTranslation("elternsprechtag.klassen.label"));
-      label.addClassName("elternsprechtag-view__klassen-label");
-      Span values =
-          new Span(
-              sprechtag.getKlassen().stream()
-                  .map(Klasse::getName)
-                  .collect(Collectors.joining(", ")));
-      klassen.add(label, values);
-      card.add(klassen);
-    }
+    Paragraph intro = new Paragraph(getTranslation("elternsprechtag.intro"));
+    intro.addClassName("elternsprechtag-view__intro");
+    card.add(intro);
 
     if (sprechtag.getDescription() != null && !sprechtag.getDescription().isBlank()) {
       Paragraph description = new Paragraph(sprechtag.getDescription());
