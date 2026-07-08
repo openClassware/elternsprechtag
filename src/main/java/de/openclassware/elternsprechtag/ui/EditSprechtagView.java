@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.ui;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -61,6 +62,8 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private TimePicker endTime;
   private CheckboxGroup<Klasse> klassen;
   private TextField accessToken;
+  private TextField shareLink;
+  private String origin;
 
   public EditSprechtagView(EditSprechtagPresenter presenter) {
     this.presenter = presenter;
@@ -170,11 +173,52 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     regenerateAccessTokenButton.setIcon(VaadinIcon.REFRESH.create());
     regenerateAccessTokenButton.setText(getTranslation("edit-sprechtag.button.regenerate"));
     regenerateAccessTokenButton.addClickListener(
-        e -> accessToken.setValue(UUID.randomUUID().toString()));
+        _ -> {
+          accessToken.setValue(UUID.randomUUID().toString());
+          updateShareLink();
+        });
     firstRow.add(regenerateAccessTokenButton, 1);
 
-    formLayout.add(firstRow);
+    shareLink = new TextField();
+    shareLink.setLabel(getTranslation("edit-sprechtag.field.link.label"));
+    shareLink.setReadOnly(true);
+    shareLink.setHelperText(getTranslation("edit-sprechtag.field.link.helper"));
+
+    FormRow secondRow = new FormRow();
+    secondRow.add(shareLink, 3);
+    Button copyLinkButton = new Button();
+    copyLinkButton.setIcon(VaadinIcon.COPY.create());
+    copyLinkButton.setText(getTranslation("edit-sprechtag.button.copy-link"));
+    copyLinkButton.addClickListener(
+        _ ->
+            getUI()
+                .ifPresent(
+                    ui -> ui.getPage().executeJs("navigator.clipboard.writeText($0)", shareLink.getValue())));
+    secondRow.add(copyLinkButton, 1);
+
+    formLayout.add(firstRow, secondRow);
     return panel;
+  }
+
+  @Override
+  protected void onAttach(AttachEvent attachEvent) {
+    attachEvent
+        .getUI()
+        .getPage()
+        .executeJs("return window.location.origin")
+        .then(
+            String.class,
+            fetchedOrigin -> {
+              this.origin = fetchedOrigin;
+              updateShareLink();
+            });
+  }
+
+  private void updateShareLink() {
+    if (origin != null && shareLink != null) {
+      shareLink.setValue(
+          origin + "/" + ElternsprechtagView.ROUTE + "/" + accessToken.getValue());
+    }
   }
 
   private Component createClassesPanel() {

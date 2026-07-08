@@ -32,13 +32,16 @@ public class SprechtagTable extends Div {
   private final Div body = new Div();
   private final BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange;
   private final Consumer<Sprechtag> onDuplicate;
+  private final Consumer<Sprechtag> onShare;
 
   public SprechtagTable(
       List<Sprechtag> sprechtage,
       BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange,
-      Consumer<Sprechtag> onDuplicate) {
+      Consumer<Sprechtag> onDuplicate,
+      Consumer<Sprechtag> onShare) {
     this.onStatusChange = onStatusChange;
     this.onDuplicate = onDuplicate;
+    this.onShare = onShare;
     addClassName("sprechtag-table");
     body.addClassName("sprechtag-table__body");
     add(createHead(), body);
@@ -153,6 +156,11 @@ public class SprechtagTable extends Div {
     contextMenu.addItem(
         createMenuItemContent(VaadinIcon.COPY, "manage-sprechtag.menu.duplicate"),
         event -> onDuplicate.accept(sprechtag));
+    if (sprechtag.getStatus() == SprechtagStatusEnum.VEROEFFENTLICHT) {
+      contextMenu.addItem(
+          createMenuItemContent(VaadinIcon.LINK, "manage-sprechtag.menu.share"),
+          event -> onShare.accept(sprechtag));
+    }
 
     for (SprechtagStatusEnum target : TRANSITION_ORDER) {
       if (sprechtag.getStatus().allowedTransitions().contains(target)) {

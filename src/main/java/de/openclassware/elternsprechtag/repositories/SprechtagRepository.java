@@ -15,4 +15,7 @@ public interface SprechtagRepository extends ListCrudRepository<Sprechtag, UUID>
   @EntityGraph(attributePaths = "klassen")
   @Override
   List<Sprechtag> findAll();
+
+  @EntityGraph(attributePaths = "klassen")
+  Optional<Sprechtag> findByAccessToken(String accessToken);
 }

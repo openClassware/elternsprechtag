@@ -31,6 +31,10 @@ public class SprechtagService {
     return sprechtagRepository.findById(id);
   }
 
+  public Optional<Sprechtag> findByAccessToken(String accessToken) {
+    return sprechtagRepository.findByAccessToken(accessToken);
+  }
+
   public Sprechtag changeStatus(UUID id, SprechtagStatusEnum newStatus) {
     Sprechtag sprechtag =
         sprechtagRepository

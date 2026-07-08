@@ -1,0 +1,80 @@
+.elternsprechtag-view {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+}
+
+.elternsprechtag-view__card {
+    width: 100%;
+    max-width: 560px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.elternsprechtag-view__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.elternsprechtag-view__header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.elternsprechtag-view__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-top: 1.5rem;
+}
+
+.elternsprechtag-view__meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #5a6069;
+    font-size: 15px;
+}
+
+.elternsprechtag-view__meta-item vaadin-icon {
+    width: 16px;
+    height: 16px;
+    color: #8a909a;
+}
+
+.elternsprechtag-view__klassen {
+    margin-top: 1.25rem;
+    font-size: 15px;
+    color: #5a6069;
+}
+
+.elternsprechtag-view__klassen-label {
+    font-weight: 600;
+    color: #374151;
+    margin-right: 6px;
+}
+
+.elternsprechtag-view__description {
+    margin-top: 1.25rem;
+    color: #374151;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.elternsprechtag-view__message {
+    max-width: 480px;
+    text-align: center;
+    padding: 2rem;
+}
+
+.elternsprechtag-view__message-title {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.elternsprechtag-view__message-description {
+    color: #8a909a;
+}

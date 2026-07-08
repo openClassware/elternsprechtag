@@ -13,6 +13,7 @@ import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
+import de.openclassware.elternsprechtag.ui.components.ShareLinkDialog;
 import de.openclassware.elternsprechtag.ui.components.SprechtagFilterBar;
 import de.openclassware.elternsprechtag.ui.components.SprechtagTable;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
@@ -42,7 +43,8 @@ public class ManageSprechtagView extends Div {
     this.presenter = presenter;
     this.sprechtage = presenter.findAllSprechtage();
     addClassName("manage-sprechtag-view");
-    this.table = new SprechtagTable(sprechtage, this::onStatusChange, this::onDuplicate);
+    this.table =
+        new SprechtagTable(sprechtage, this::onStatusChange, this::onDuplicate, this::onShare);
     this.search = createSearch();
     this.filterBar = new SprechtagFilterBar(sprechtage, statusFilter, this::onStatusSelected);
     this.filterRow = createFilterRow();
@@ -109,6 +111,24 @@ public class ManageSprechtagView extends Div {
   private void onDuplicate(Sprechtag sprechtag) {
     UUID copyId = presenter.duplicate(sprechtag.getId());
     getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + copyId));
+  }
+
+  private void onShare(Sprechtag sprechtag) {
+    getUI()
+        .ifPresent(
+            ui ->
+                ui.getPage()
+                    .executeJs("return window.location.origin")
+                    .then(
+                        String.class,
+                        origin ->
+                            new ShareLinkDialog(
+                                    origin
+                                        + "/"
+                                        + ElternsprechtagView.ROUTE
+                                        + "/"
+                                        + sprechtag.getAccessToken())
+                                .open()));
   }
 
   private void reload() {
