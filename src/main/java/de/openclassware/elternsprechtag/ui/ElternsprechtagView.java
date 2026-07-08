@@ -107,13 +107,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     removeAll();
     Optional<Sprechtag> sprechtag = presenter.findByAccessToken(token);
     if (sprechtag.isPresent() && sprechtag.get().getStatus() == SprechtagStatusEnum.VEROEFFENTLICHT) {
-      Sprechtag published = sprechtag.get();
-      add(
-          createHeader(),
-          createInfo(published),
-          createAngaben(published),
-          createBuchung(published),
-          createNotiz());
+      add(createHeader(), createBookingCard(sprechtag.get()));
     } else if (sprechtag.isPresent() && sprechtag.get().getStatus() == SprechtagStatusEnum.ABGESAGT) {
       add(createMessage("elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
     } else {
@@ -134,13 +128,35 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return header;
   }
 
-  private Component createInfo(Sprechtag sprechtag) {
+  /** Single card holding the Sprechtag head plus all booking steps and the footer. */
+  private Component createBookingCard(Sprechtag sprechtag) {
+    selection.clear();
+    activeFach = null;
+    slotTimes = computeSlotTimes(sprechtag);
+
     Div card = new Div();
     card.addClassName("elternsprechtag-view__card");
 
+    Div body = new Div();
+    body.addClassName("elternsprechtag-view__body");
+    body.add(createAngaben(sprechtag), createBuchung(sprechtag), createNotiz());
+
+    card.add(createInfo(sprechtag), body, createFooter());
+
+    refreshFachGrid();
+    refreshSlotArea();
+    refreshSummary();
+    refreshFooter();
+    return card;
+  }
+
+  private Component createInfo(Sprechtag sprechtag) {
+    Div kopf = new Div();
+    kopf.addClassName("elternsprechtag-view__kopf");
+
     H1 title = new H1(sprechtag.getTitel());
     title.addClassName("elternsprechtag-view__title");
-    card.add(title);
+    kopf.add(title);
 
     Div meta = new Div();
     meta.addClassName("elternsprechtag-view__meta");
@@ -154,25 +170,25 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (sprechtag.getLocation() != null && !sprechtag.getLocation().isBlank()) {
       meta.add(metaItem(VaadinIcon.MAP_MARKER, sprechtag.getLocation()));
     }
-    card.add(meta);
+    kopf.add(meta);
 
     Paragraph intro = new Paragraph(getTranslation("elternsprechtag.intro"));
     intro.addClassName("elternsprechtag-view__intro");
-    card.add(intro);
+    kopf.add(intro);
 
     if (sprechtag.getDescription() != null && !sprechtag.getDescription().isBlank()) {
       Paragraph description = new Paragraph(sprechtag.getDescription());
       description.addClassName("elternsprechtag-view__description");
-      card.add(description);
+      kopf.add(description);
     }
 
-    return card;
+    return kopf;
   }
 
   private Component createAngaben(Sprechtag sprechtag) {
-    Div card = new Div();
-    card.addClassName("elternsprechtag-view__card");
-    card.add(new StepHeader(1, getTranslation("elternsprechtag.angaben.step-title")));
+    Div section = new Div();
+    section.addClassName("elternsprechtag-view__section");
+    section.add(new StepHeader(1, getTranslation("elternsprechtag.angaben.step-title")));
 
     elternName = new TextField(getTranslation("elternsprechtag.angaben.name.label"));
     elternName.setPlaceholder(getTranslation("elternsprechtag.angaben.name.placeholder"));
@@ -203,46 +219,39 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("640px", 2));
     form.add(elternName, schuelerName, klasse);
 
-    card.add(form);
-    return card;
+    section.add(form);
+    return section;
   }
 
   private Component createBuchung(Sprechtag sprechtag) {
-    selection.clear();
-    activeFach = null;
-    slotTimes = computeSlotTimes(sprechtag);
+    Div section = new Div();
+    section.addClassName("elternsprechtag-view__section");
 
-    Div card = new Div();
-    card.addClassName("elternsprechtag-view__card");
-
-    card.add(new StepHeader(2, getTranslation("elternsprechtag.fach.step-title")));
+    section.add(new StepHeader(2, getTranslation("elternsprechtag.fach.step-title")));
     fachGrid = new Div();
     fachGrid.addClassName("elternsprechtag-view__fach-grid");
-    card.add(fachGrid);
+    section.add(fachGrid);
 
     Div step3Head = new Div();
     step3Head.addClassName("elternsprechtag-view__step3-head");
     step3Head.add(
         new StepHeader(3, getTranslation("elternsprechtag.termin.step-title")), createLegend());
-    card.add(step3Head);
+    section.add(step3Head);
 
     slotArea = new Div();
     slotArea.addClassName("elternsprechtag-view__slot-area");
-    card.add(slotArea);
+    section.add(slotArea);
 
     Paragraph hint =
         new Paragraph(
             getTranslation("elternsprechtag.termin.hint", sprechtag.getSlotInMinutes()));
     hint.addClassName("elternsprechtag-view__slot-hint");
-    card.add(hint);
+    section.add(hint);
 
     summaryContainer = new Div();
-    card.add(summaryContainer);
+    section.add(summaryContainer);
 
-    refreshFachGrid();
-    refreshSlotArea();
-    refreshSummary();
-    return card;
+    return section;
   }
 
   private List<LocalTime> computeSlotTimes(Sprechtag sprechtag) {
@@ -446,12 +455,9 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private Component createNotiz() {
-    Div card = new Div();
-    card.addClassName("elternsprechtag-view__notiz");
-
-    Div body = new Div();
-    body.addClassName("elternsprechtag-view__notiz-body");
-    body.add(
+    Div section = new Div();
+    section.addClassName("elternsprechtag-view__section");
+    section.add(
         new StepHeader(
             4,
             getTranslation("elternsprechtag.notiz.step-title"),
@@ -462,11 +468,9 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     notiz.setPlaceholder(getTranslation("elternsprechtag.notiz.placeholder"));
     notiz.setWidthFull();
     notiz.setMaxLength(500);
-    body.add(notiz);
+    section.add(notiz);
 
-    card.add(body, createFooter());
-    refreshFooter();
-    return card;
+    return section;
   }
 
   private Component createFooter() {
