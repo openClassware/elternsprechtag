@@ -19,12 +19,14 @@ public class Buchung {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false, unique = true)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "erstellt_am", nullable = false, updatable = false)
     private LocalDateTime erstelltAm;
 
     @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
     private BuchungStatusEnum status;
 
     @Column(name = "schueler_name", nullable = false)
@@ -37,7 +39,14 @@ public class Buchung {
     private String notiz;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lehrauftrag_id")
+    @JoinColumn(name = "lehrauftrag_id", nullable = false)
     private Lehrauftrag lehrauftrag;
+
+    // ManyToOne (nicht OneToOne): pro Termin darf es höchstens eine AKTIVE Buchung geben, über die
+    // Zeit aber mehrere Datensätze (Storno gibt den Termin frei, eine spätere Buchung nutzt ihn
+    // erneut). Ein Unique-Constraint auf termin_id würde diese Wiederverwendung verhindern.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "termin_id", nullable = false)
+    private Termin termin;
 
 }

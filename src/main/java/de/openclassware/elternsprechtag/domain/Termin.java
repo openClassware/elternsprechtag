@@ -19,6 +19,7 @@ public class Termin {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false, unique = true)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "startzeit", nullable = false)
@@ -28,10 +29,19 @@ public class Termin {
     private LocalDateTime endzeit;
 
     @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
     private TerminStatusEnum status;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "lehrer_id")
     private Lehrer lehrer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sprechtag_id", nullable = false)
+    private Sprechtag sprechtag;
 
 }

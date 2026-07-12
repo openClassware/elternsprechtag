@@ -222,6 +222,8 @@
 }
 
 .elternsprechtag-view__placeholder {
+    /* Im Fach-Grid (2 Spalten) über die volle Breite spannen statt nur eine Spalte zu belegen. */
+    grid-column: 1 / -1;
     padding: 2rem;
     text-align: center;
     color: #8a909a;
