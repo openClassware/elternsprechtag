@@ -69,7 +69,7 @@ class BuchungServiceTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag();
 
     List<LehrkraftOption> optionen =
-        buchungService.ladeLehrkraftOptionen(f.sprechtag(), f.klasse());
+        buchungService.ladeLehrkraftOptionen(f.sprechtag().getId(), f.klasse().getId());
 
     assertThat(optionen).hasSize(1);
     LehrkraftOption option = optionen.get(0);

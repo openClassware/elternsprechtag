@@ -22,18 +22,17 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.services.BuchungService;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
 import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
 import de.openclassware.elternsprechtag.services.BuchungService.SlotOption;
+import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagPublic;
 import de.openclassware.elternsprechtag.ui.components.StepHeader;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,11 +48,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   private final ElternsprechtagPresenter presenter;
 
-  private Sprechtag sprechtag;
+  private SprechtagPublic sprechtag;
 
   private TextField elternName;
   private TextField schuelerName;
-  private Select<Klasse> klasse;
+  private Select<KlasseOption> klasse;
   private TextArea notiz;
 
   private Div footerStatus;
@@ -87,10 +86,10 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   @Override
   public void setParameter(BeforeEvent event, @OptionalParameter String token) {
     removeAll();
-    Optional<Sprechtag> found = presenter.findByAccessToken(token);
-    if (found.isPresent() && found.get().getStatus() == SprechtagStatusEnum.VEROEFFENTLICHT) {
+    Optional<SprechtagPublic> found = presenter.findByAccessToken(token);
+    if (found.isPresent() && found.get().status() == SprechtagStatusEnum.VEROEFFENTLICHT) {
       add(createHeader(), createBookingCard(found.get()));
-    } else if (found.isPresent() && found.get().getStatus() == SprechtagStatusEnum.ABGESAGT) {
+    } else if (found.isPresent() && found.get().status() == SprechtagStatusEnum.ABGESAGT) {
       add(createMessage("elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
     } else {
       add(
@@ -111,7 +110,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   /** Single card holding the Sprechtag head plus all booking steps and the footer. */
-  private Component createBookingCard(Sprechtag sprechtag) {
+  private Component createBookingCard(SprechtagPublic sprechtag) {
     this.sprechtag = sprechtag;
     selection.clear();
     activeLehrkraft = null;
@@ -133,25 +132,23 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return card;
   }
 
-  private Component createInfo(Sprechtag sprechtag) {
+  private Component createInfo(SprechtagPublic sprechtag) {
     Div kopf = new Div();
     kopf.addClassName("elternsprechtag-view__kopf");
 
-    H1 title = new H1(sprechtag.getTitel());
+    H1 title = new H1(sprechtag.titel());
     title.addClassName("elternsprechtag-view__title");
     kopf.add(title);
 
     Div meta = new Div();
     meta.addClassName("elternsprechtag-view__meta");
     meta.add(
-        metaItem(VaadinIcon.CALENDAR, Formats.dateLong(sprechtag.getStartDate())),
+        metaItem(VaadinIcon.CALENDAR, Formats.dateLong(sprechtag.startDate())),
         metaItem(
             VaadinIcon.CLOCK,
-            Formats.time(sprechtag.getStartTime())
-                + "–"
-                + Formats.time(sprechtag.getEndTime())));
-    if (sprechtag.getLocation() != null && !sprechtag.getLocation().isBlank()) {
-      meta.add(metaItem(VaadinIcon.MAP_MARKER, sprechtag.getLocation()));
+            Formats.time(sprechtag.startTime()) + "–" + Formats.time(sprechtag.endTime())));
+    if (sprechtag.location() != null && !sprechtag.location().isBlank()) {
+      meta.add(metaItem(VaadinIcon.MAP_MARKER, sprechtag.location()));
     }
     kopf.add(meta);
 
@@ -159,8 +156,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     intro.addClassName("elternsprechtag-view__intro");
     kopf.add(intro);
 
-    if (sprechtag.getDescription() != null && !sprechtag.getDescription().isBlank()) {
-      Paragraph description = new Paragraph(sprechtag.getDescription());
+    if (sprechtag.description() != null && !sprechtag.description().isBlank()) {
+      Paragraph description = new Paragraph(sprechtag.description());
       description.addClassName("elternsprechtag-view__description");
       kopf.add(description);
     }
@@ -168,7 +165,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return kopf;
   }
 
-  private Component createAngaben(Sprechtag sprechtag) {
+  private Component createAngaben(SprechtagPublic sprechtag) {
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
     section.add(new StepHeader(1, getTranslation("elternsprechtag.angaben.step-title")));
@@ -188,9 +185,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     klasse = new Select<>();
     klasse.setLabel(getTranslation("elternsprechtag.angaben.klasse.label"));
     klasse.setPlaceholder(getTranslation("elternsprechtag.angaben.klasse.placeholder"));
-    klasse.setItemLabelGenerator(Klasse::getName);
-    klasse.setItems(
-        sprechtag.getKlassen().stream().sorted(Comparator.comparing(Klasse::getName)).toList());
+    klasse.setItemLabelGenerator(KlasseOption::name);
+    klasse.setItems(sprechtag.klassen());
     klasse.setRequiredIndicatorVisible(true);
     klasse.addValueChangeListener(event -> onKlasseChanged());
 
@@ -204,7 +200,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return section;
   }
 
-  private Component createBuchung(Sprechtag sprechtag) {
+  private Component createBuchung(SprechtagPublic sprechtag) {
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
 
@@ -224,7 +220,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     section.add(slotArea);
 
     Paragraph hint =
-        new Paragraph(getTranslation("elternsprechtag.termin.hint", sprechtag.getSlotInMinutes()));
+        new Paragraph(getTranslation("elternsprechtag.termin.hint", sprechtag.slotInMinutes()));
     hint.addClassName("elternsprechtag-view__slot-hint");
     section.add(hint);
 
@@ -246,9 +242,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private void loadLehrkraftOptionen() {
-    Klasse selected = klasse.getValue();
+    KlasseOption selected = klasse.getValue();
     lehrkraftOptionen =
-        selected == null ? List.of() : presenter.ladeLehrkraftOptionen(sprechtag, selected);
+        selected == null
+            ? List.of()
+            : presenter.ladeLehrkraftOptionen(sprechtag.id(), selected.id());
   }
 
   private Component createLegend() {

@@ -9,7 +9,9 @@ import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.domain.TerminStatusEnum;
 import de.openclassware.elternsprechtag.repositories.BuchungRepository;
+import de.openclassware.elternsprechtag.repositories.KlassenRepository;
 import de.openclassware.elternsprechtag.repositories.LehrauftragRepository;
+import de.openclassware.elternsprechtag.repositories.SprechtagRepository;
 import de.openclassware.elternsprechtag.repositories.TerminRepository;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -32,6 +34,8 @@ public class BuchungService {
   private final TerminRepository terminRepository;
   private final LehrauftragRepository lehrauftragRepository;
   private final BuchungRepository buchungRepository;
+  private final SprechtagRepository sprechtagRepository;
+  private final KlassenRepository klassenRepository;
 
   /** Ein wählbarer Slot in der Eltern-View (aus einem materialisierten {@link Termin}). */
   public record SlotOption(UUID terminId, LocalTime zeit, boolean belegt) {}
@@ -70,7 +74,17 @@ public class BuchungService {
    * offene Session (open-in-view=false) arbeiten kann.
    */
   @Transactional(readOnly = true)
-  public List<LehrkraftOption> ladeLehrkraftOptionen(Sprechtag sprechtag, Klasse klasse) {
+  public List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId) {
+    Sprechtag sprechtag =
+        sprechtagRepository
+            .findById(sprechtagId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Sprechtag nicht gefunden: " + sprechtagId));
+    Klasse klasse =
+        klassenRepository
+            .findById(klasseId)
+            .orElseThrow(() -> new IllegalArgumentException("Klasse nicht gefunden: " + klasseId));
+
     // Alle Termine des Sprechtags einmal laden und nach Lehrer gruppieren.
     Map<UUID, List<SlotOption>> slotsByLehrer = new LinkedHashMap<>();
     for (Termin termin :

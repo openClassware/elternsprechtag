@@ -72,6 +72,19 @@ public class SprechtagService {
     private Set<KlasseOption> klassen = new LinkedHashSet<>();
   }
 
+  /** Read-Model der öffentlichen Eltern-Buchungsseite: Kopfdaten + wählbare Klassen. */
+  public record SprechtagPublic(
+      UUID id,
+      String titel,
+      LocalDate startDate,
+      LocalTime startTime,
+      LocalTime endTime,
+      String location,
+      String description,
+      Integer slotInMinutes,
+      SprechtagStatusEnum status,
+      List<KlasseOption> klassen) {}
+
   @Transactional(readOnly = true)
   public List<SprechtagRow> findAllRows() {
     return sprechtagRepository.findAll().stream()
@@ -147,8 +160,29 @@ public class SprechtagService {
     return saved.getId();
   }
 
-  public Optional<Sprechtag> findByAccessToken(String accessToken) {
-    return sprechtagRepository.findByAccessToken(accessToken);
+  @Transactional(readOnly = true)
+  public Optional<SprechtagPublic> findPublicByAccessToken(String accessToken) {
+    if (accessToken == null || accessToken.isBlank()) {
+      return Optional.empty();
+    }
+    return sprechtagRepository.findByAccessToken(accessToken).map(this::toPublic);
+  }
+
+  private SprechtagPublic toPublic(Sprechtag sprechtag) {
+    return new SprechtagPublic(
+        sprechtag.getId(),
+        sprechtag.getTitel(),
+        sprechtag.getStartDate(),
+        sprechtag.getStartTime(),
+        sprechtag.getEndTime(),
+        sprechtag.getLocation(),
+        sprechtag.getDescription(),
+        sprechtag.getSlotInMinutes(),
+        sprechtag.getStatus(),
+        sprechtag.getKlassen().stream()
+            .sorted(Comparator.comparing(Klasse::getName, String.CASE_INSENSITIVE_ORDER))
+            .map(klasse -> new KlasseOption(klasse.getId(), klasse.getName()))
+            .toList());
   }
 
   @Transactional
