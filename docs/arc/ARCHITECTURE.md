@@ -135,7 +135,7 @@ sind **noch nicht umgesetzt** — pro Punkt einzeln priorisieren.
 | F1 | Views/Components halten/empfangen JPA-Entities statt Records | strukturell | **erledigt für Read-Path + Edit-Formular** (siehe unten); Rest: `ElternsprechtagView` (Eltern-Buchungsflow) offen |
 | F2 | ~~Live-Bug LazyInitializationException~~ **Kein Bug**: `SprechtagRepository` lädt `klassen` in allen Lesepfaden per `@EntityGraph` eager — Zugriff abgesichert. Für den Read-Path durch F1 jetzt ohnehin obsolet. | hinfällig | geschlossen |
 | F3 | Datum/Zeit-Formatter (`Locale.GERMANY`, `"HH:mm"`) an mehreren Stellen dupliziert | mittel | offen (`ElternsprechtagView`, `SprechtagCard`, `SprechtagTable`) |
-| F4 | Geschäftslogik in Services komplett ungetestet | strukturell | offen (`BuchungService`, `SprechtagService`) |
+| F4 | Geschäftslogik in Services komplett ungetestet | strukturell | **erledigt**: `BuchungServiceTest` (6) + `SprechtagServiceTest` (9) via `@DataJpaTest` |
 | F5 | Presenter ist dünne Delegation, während der View Logik trägt — gegen „dummer View" | strukturell | offen (v. a. `OrganizerView`: isEmpty→Komponente, Card-Aufbau) |
 | F6 | Uneinheitliche Sichtbarkeit (public vs. package-private) bei Presentern/Views | kosmetisch | offen |
 
@@ -148,5 +148,9 @@ sind **noch nicht umgesetzt** — pro Punkt einzeln priorisieren.
   keine JPA-Entities mehr. Mapping ausschließlich in den Services. **Offen bleibt** der
   Eltern-Buchungsflow (`ElternsprechtagView` hält noch `Sprechtag`/`Klasse` — durch `@EntityGraph`
   abgesichert).
+- **F4 (Service-Tests):** `BuchungServiceTest` und `SprechtagServiceTest` (`@DataJpaTest` + H2,
+  Services via `@Import`, `@Transactional(NOT_SUPPORTED)` für echte Transaktionsgrenzen). Deckt u. a.
+  Buchungs-Atomarität (Alles-oder-nichts-Rollback), belegte Slots, Lehrer-Mismatch, Slot-
+  Materialisierung inkl. Rand-Slot, Status-Übergänge, Idempotenz und Duplizieren ab.
 - **Diagramm-Drift (trivial):** nicht existierende `Account`-Entity aus `domain.puml` entfernt
   (Auth ist bewusst in-memory, ohne DB-Account).
