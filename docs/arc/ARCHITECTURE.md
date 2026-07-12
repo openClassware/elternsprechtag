@@ -137,7 +137,7 @@ sind **noch nicht umgesetzt** — pro Punkt einzeln priorisieren.
 | F2 | ~~Live-Bug LazyInitializationException~~ **Kein Bug**: `SprechtagRepository` lädt `klassen` in allen Lesepfaden per `@EntityGraph` eager — Zugriff abgesichert. Für den Read-Path durch F1 jetzt ohnehin obsolet. | hinfällig | geschlossen |
 | F3 | Datum/Zeit-Formatter (`Locale.GERMANY`, `"HH:mm"`) an mehreren Stellen dupliziert | mittel | **erledigt**: zentrale `ui.Formats` (`time`/`dateLong`/`monthShort`) |
 | F4 | Geschäftslogik in Services komplett ungetestet | strukturell | **erledigt**: `BuchungServiceTest` (6) + `SprechtagServiceTest` (9) via `@DataJpaTest` |
-| F5 | Presenter ist dünne Delegation, während der View Logik trägt — gegen „dummer View" | strukturell | offen (v. a. `OrganizerView`: isEmpty→Komponente, Card-Aufbau) |
+| F5 | Presenter ist dünne Delegation, während der View Logik trägt — gegen „dummer View" | strukturell | **erledigt für `OrganizerView`** (View-Model `OrganizerModel`); weitere Views bei Bedarf |
 | F6 | Uneinheitliche Sichtbarkeit (public vs. package-private) bei Presentern/Views | kosmetisch | offen |
 
 **Erledigt:**

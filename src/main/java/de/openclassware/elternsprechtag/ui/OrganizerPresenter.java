@@ -20,11 +20,22 @@ class OrganizerPresenter {
   private final AuthenticationContext authenticationContext;
   private final SprechtagService sprechtagService;
 
-  String getUsername() {
+  /** View-Model der Organizer-Übersicht: alles, was der View zum Rendern braucht — ohne Logik im View. */
+  record OrganizerModel(String username, List<SprechtagRow> upcoming) {
+    boolean hasUpcoming() {
+      return !upcoming.isEmpty();
+    }
+  }
+
+  OrganizerModel load() {
+    return new OrganizerModel(username(), activeAndDraftSprechtage());
+  }
+
+  private String username() {
     return authenticationContext.getPrincipalName().orElse("?");
   }
 
-  List<SprechtagRow> findActiveAndDraftSprechtage() {
+  private List<SprechtagRow> activeAndDraftSprechtage() {
     return sprechtagService.findAllRows().stream()
         .filter(sprechtag -> AKTIVE_STATUS.contains(sprechtag.status()))
         .toList();
