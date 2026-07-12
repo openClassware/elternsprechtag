@@ -27,11 +27,8 @@ enum BuchungStatusEnum {
   Storniert
 }
 
-class Account {
-  + id! : UUID
-  + username! : String
-  + password! : String
-}
+' Auth ist bewusst in-memory (ein Organizer, ohne DB-Account) — daher keine Account-Entity.
+' Siehe ARCHITECTURE.md, Abschnitt "Auth".
 
 class Sprechtag {
   + id! : UUID
@@ -84,7 +81,6 @@ class Buchung {
   + notiz? : String
 }
 
-Account "1" --> "0..*" Sprechtag : erstellt
 Sprechtag "0..*" --> "1..*" Klasse : umfasst
 
 Klasse "1" --> "0..*" Lehrauftrag : Unterricht in
