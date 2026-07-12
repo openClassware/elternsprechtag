@@ -32,13 +32,10 @@ import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
 import de.openclassware.elternsprechtag.services.BuchungService.SlotOption;
 import de.openclassware.elternsprechtag.ui.components.StepHeader;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,10 +46,6 @@ import java.util.UUID;
 public class ElternsprechtagView extends Div implements HasUrlParameter<String> {
 
   public static final String ROUTE = "elternsprechtag";
-
-  private static final DateTimeFormatter DATE_FORMATTER =
-      DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(Locale.GERMANY);
-  private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
   private final ElternsprechtagPresenter presenter;
 
@@ -151,12 +144,12 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     Div meta = new Div();
     meta.addClassName("elternsprechtag-view__meta");
     meta.add(
-        metaItem(VaadinIcon.CALENDAR, sprechtag.getStartDate().format(DATE_FORMATTER)),
+        metaItem(VaadinIcon.CALENDAR, Formats.dateLong(sprechtag.getStartDate())),
         metaItem(
             VaadinIcon.CLOCK,
-            sprechtag.getStartTime().format(TIME_FORMATTER)
+            Formats.time(sprechtag.getStartTime())
                 + "–"
-                + sprechtag.getEndTime().format(TIME_FORMATTER)));
+                + Formats.time(sprechtag.getEndTime())));
     if (sprechtag.getLocation() != null && !sprechtag.getLocation().isBlank()) {
       meta.add(metaItem(VaadinIcon.MAP_MARKER, sprechtag.getLocation()));
     }
@@ -315,7 +308,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (chosen != null) {
       Span pill = new Span();
       pill.addClassName("elternsprechtag-view__lehrkraft-pill");
-      pill.add(VaadinIcon.CHECK.create(), new Span(chosen.zeit().format(TIME_FORMATTER)));
+      pill.add(VaadinIcon.CHECK.create(), new Span(Formats.time(chosen.zeit())));
       card.add(pill);
     }
 
@@ -358,7 +351,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   private Component createSlot(SlotOption slot) {
     Div slotEl = new Div();
     slotEl.addClassName("elternsprechtag-view__slot");
-    slotEl.add(new Span(slot.zeit().format(TIME_FORMATTER)));
+    slotEl.add(new Span(Formats.time(slot.zeit())));
 
     switch (slotState(slot)) {
       case BELEGT -> slotEl.addClassName("elternsprechtag-view__slot--belegt");
@@ -460,7 +453,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         getTranslation(
             "elternsprechtag.summary.row",
             lehrkraft.lehrerName(),
-            slot.zeit().format(TIME_FORMATTER)));
+            Formats.time(slot.zeit())));
     Div sub = new Div();
     sub.addClassName("elternsprechtag-view__summary-sub");
     sub.setText(String.join(", ", lehrkraft.faecher()));

@@ -3,9 +3,8 @@ package de.openclassware.elternsprechtag.ui.components;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
+import de.openclassware.elternsprechtag.ui.Formats;
 import java.time.LocalDate;
-import java.time.format.TextStyle;
-import java.util.Locale;
 
 @CssImport("./styles/components/date-badge.css")
 public class DateBadge extends Div {
@@ -25,7 +24,7 @@ public class DateBadge extends Div {
   private Component createMonth(LocalDate date) {
     Div month = new Div();
     month.addClassName("date-badge__month");
-    month.setText(date.getMonth().getDisplayName(TextStyle.SHORT, Locale.GERMANY));
+    month.setText(Formats.monthShort(date));
     return month;
   }
 }

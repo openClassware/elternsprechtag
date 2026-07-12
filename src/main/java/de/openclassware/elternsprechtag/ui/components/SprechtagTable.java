@@ -10,15 +10,13 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
-import java.time.format.DateTimeFormatter;
+import de.openclassware.elternsprechtag.ui.Formats;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @CssImport("./styles/components/sprechtag-table.css")
 public class SprechtagTable extends Div {
-
-  private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
   /** Display order of the status actions offered in the row menu. */
   private static final List<SprechtagStatusEnum> TRANSITION_ORDER =
@@ -126,10 +124,7 @@ public class SprechtagTable extends Div {
     time.addClassName("sprechtag-table__time");
     time.add(
         VaadinIcon.CLOCK.create(),
-        new Span(
-            sprechtag.startTime().format(TIME_FORMATTER)
-                + "–"
-                + sprechtag.endTime().format(TIME_FORMATTER)));
+        new Span(Formats.time(sprechtag.startTime()) + "–" + Formats.time(sprechtag.endTime())));
     return time;
   }
 

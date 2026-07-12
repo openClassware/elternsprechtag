@@ -7,12 +7,10 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
-import java.time.format.DateTimeFormatter;
+import de.openclassware.elternsprechtag.ui.Formats;
 
 @CssImport("./styles/components/sprechtag-card.css")
 public class SprechtagCard extends Div {
-
-  private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
   public SprechtagCard(SprechtagRow sprechtag) {
     addClassName("sprechtag-card");
@@ -39,10 +37,7 @@ public class SprechtagCard extends Div {
     timespan.addClassName("sprechtag-card__timespan");
     timespan.add(
         VaadinIcon.CLOCK.create(),
-        new Span(
-            sprechtag.startTime().format(TIME_FORMATTER)
-                + " - "
-                + sprechtag.endTime().format(TIME_FORMATTER)));
+        new Span(Formats.time(sprechtag.startTime()) + " - " + Formats.time(sprechtag.endTime())));
     return timespan;
   }
 

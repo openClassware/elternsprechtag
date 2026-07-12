@@ -106,8 +106,9 @@ als eigene, saubere Entscheidung.
   der Mehrsprachigkeit.
 - Alle UI-Texte über `getTranslation(...)` → ein Bundle `vaadin-i18n/translations.properties`.
   Keine String-Literale im Code.
-- Datum/Zeit-Formatierung gehört an **eine zentrale Stelle** (nicht inline dupliziert). Ein
-  späterer Sprachwechsel bliebe dadurch billig, ist aber nicht geplant.
+- Datum/Zeit-Formatierung läuft ausschließlich über **`ui.Formats`** (`time`, `dateLong`,
+  `monthShort`) — nicht inline duplizieren. Ein späterer Sprachwechsel bliebe dadurch billig,
+  ist aber nicht geplant.
 
 ## Tests
 
@@ -134,7 +135,7 @@ sind **noch nicht umgesetzt** — pro Punkt einzeln priorisieren.
 |---|------|---------|--------|
 | F1 | Views/Components halten/empfangen JPA-Entities statt Records | strukturell | **erledigt für Read-Path + Edit-Formular** (siehe unten); Rest: `ElternsprechtagView` (Eltern-Buchungsflow) offen |
 | F2 | ~~Live-Bug LazyInitializationException~~ **Kein Bug**: `SprechtagRepository` lädt `klassen` in allen Lesepfaden per `@EntityGraph` eager — Zugriff abgesichert. Für den Read-Path durch F1 jetzt ohnehin obsolet. | hinfällig | geschlossen |
-| F3 | Datum/Zeit-Formatter (`Locale.GERMANY`, `"HH:mm"`) an mehreren Stellen dupliziert | mittel | offen (`ElternsprechtagView`, `SprechtagCard`, `SprechtagTable`) |
+| F3 | Datum/Zeit-Formatter (`Locale.GERMANY`, `"HH:mm"`) an mehreren Stellen dupliziert | mittel | **erledigt**: zentrale `ui.Formats` (`time`/`dateLong`/`monthShort`) |
 | F4 | Geschäftslogik in Services komplett ungetestet | strukturell | **erledigt**: `BuchungServiceTest` (6) + `SprechtagServiceTest` (9) via `@DataJpaTest` |
 | F5 | Presenter ist dünne Delegation, während der View Logik trägt — gegen „dummer View" | strukturell | offen (v. a. `OrganizerView`: isEmpty→Komponente, Card-Aufbau) |
 | F6 | Uneinheitliche Sichtbarkeit (public vs. package-private) bei Presentern/Views | kosmetisch | offen |
