@@ -24,17 +24,14 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.NotFoundException;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
+import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagForm;
 import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
 import de.openclassware.elternsprechtag.ui.components.FormPanel;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,9 +43,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   public static final String ROUTE = "sprechtag";
 
   private final EditSprechtagPresenter presenter;
-  private final Binder<Sprechtag> binder = new Binder<>(Sprechtag.class);
+  private final Binder<SprechtagForm> binder = new Binder<>(SprechtagForm.class);
 
-  private Sprechtag editing;
+  private UUID editingId;
   private Breadcrumb breadcrumb;
   private H2 headerTitle;
   private Button createButton;
@@ -60,7 +57,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private ComboBox<Integer> slotInMinutes;
   private TimePicker startTime;
   private TimePicker endTime;
-  private CheckboxGroup<Klasse> klassen;
+  private CheckboxGroup<KlasseOption> klassen;
   private TextField accessToken;
   private TextField shareLink;
   private String origin;
@@ -82,39 +79,40 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     binder
         .forField(titel)
         .asRequired(getTranslation("edit-sprechtag.validation.titel-required"))
-        .bind(Sprechtag::getTitel, Sprechtag::setTitel);
-    binder.forField(location).bind(Sprechtag::getLocation, Sprechtag::setLocation);
-    binder.forField(description).bind(Sprechtag::getDescription, Sprechtag::setDescription);
+        .bind(SprechtagForm::getTitel, SprechtagForm::setTitel);
+    binder.forField(location).bind(SprechtagForm::getLocation, SprechtagForm::setLocation);
+    binder.forField(description).bind(SprechtagForm::getDescription, SprechtagForm::setDescription);
     binder
         .forField(datePicker)
         .asRequired(getTranslation("edit-sprechtag.validation.datum-required"))
-        .bind(Sprechtag::getStartDate, Sprechtag::setStartDate);
+        .bind(SprechtagForm::getStartDate, SprechtagForm::setStartDate);
     binder
         .forField(startTime)
         .asRequired(getTranslation("edit-sprechtag.validation.startzeit-required"))
-        .bind(Sprechtag::getStartTime, Sprechtag::setStartTime);
+        .bind(SprechtagForm::getStartTime, SprechtagForm::setStartTime);
     binder
         .forField(endTime)
         .asRequired(getTranslation("edit-sprechtag.validation.endzeit-required"))
-        .bind(Sprechtag::getEndTime, Sprechtag::setEndTime);
+        .bind(SprechtagForm::getEndTime, SprechtagForm::setEndTime);
 
-    binder.forField(slotInMinutes).bind(Sprechtag::getSlotInMinutes, Sprechtag::setSlotInMinutes);
+    binder
+        .forField(slotInMinutes)
+        .bind(SprechtagForm::getSlotInMinutes, SprechtagForm::setSlotInMinutes);
 
-    binder.forField(accessToken).bind(Sprechtag::getAccessToken, Sprechtag::setAccessToken);
+    binder.forField(accessToken).bind(SprechtagForm::getAccessToken, SprechtagForm::setAccessToken);
 
     binder
         .forField(klassen)
         .withValidator(
-            klassen -> klassen != null && !klassen.isEmpty(),
+            selected -> selected != null && !selected.isEmpty(),
             getTranslation("edit-sprechtag.validation.klasse-required"))
-        .withConverter(set -> (List<Klasse>) new ArrayList<>(set), LinkedHashSet::new)
-        .bind(Sprechtag::getKlassen, Sprechtag::setKlassen);
+        .bind(SprechtagForm::getKlassen, SprechtagForm::setKlassen);
 
     binder.withValidator(
-        sprechtag ->
-            sprechtag.getStartTime() == null
-                || sprechtag.getEndTime() == null
-                || sprechtag.getEndTime().isAfter(sprechtag.getStartTime()),
+        form ->
+            form.getStartTime() == null
+                || form.getEndTime() == null
+                || form.getEndTime().isAfter(form.getStartTime()),
         getTranslation("edit-sprechtag.validation.end-after-start"));
   }
 
@@ -123,13 +121,14 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     if (sprechtagId == null) {
       return; // Anlege-Modus
     }
-    Optional<Sprechtag> sprechtag = parseId(sprechtagId).flatMap(presenter::findById);
-    if (sprechtag.isEmpty()) {
+    Optional<UUID> id = parseId(sprechtagId);
+    Optional<SprechtagForm> form = id.flatMap(presenter::loadForm);
+    if (form.isEmpty()) {
       event.rerouteToError(NotFoundException.class, "Sprechtag not found: " + sprechtagId);
       return;
     }
-    editing = sprechtag.get();
-    binder.readBean(editing);
+    editingId = id.get();
+    binder.readBean(form.get());
     breadcrumb.setCurrentText(getTranslation("edit-sprechtag.breadcrumb.title-edit"));
     headerTitle.setText(getTranslation("edit-sprechtag.header.title-edit"));
     createButton.setText(getTranslation("edit-sprechtag.button.save"));
@@ -144,10 +143,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   }
 
   private void save(SprechtagStatusEnum status) {
-    Sprechtag target = editing != null ? editing : new Sprechtag();
-    if (binder.writeBeanIfValid(target)) {
-      target.setStatus(status);
-      presenter.save(target);
+    SprechtagForm form = new SprechtagForm();
+    if (binder.writeBeanIfValid(form)) {
+      presenter.save(editingId, form, status);
       navigateToOrganizerView();
     }
   }
@@ -193,7 +191,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         _ ->
             getUI()
                 .ifPresent(
-                    ui -> ui.getPage().executeJs("navigator.clipboard.writeText($0)", shareLink.getValue())));
+                    ui ->
+                        ui.getPage()
+                            .executeJs("navigator.clipboard.writeText($0)", shareLink.getValue())));
     secondRow.add(copyLinkButton, 1);
 
     formLayout.add(firstRow, secondRow);
@@ -216,8 +216,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
 
   private void updateShareLink() {
     if (origin != null && shareLink != null) {
-      shareLink.setValue(
-          origin + "/" + ElternsprechtagView.ROUTE + "/" + accessToken.getValue());
+      shareLink.setValue(origin + "/" + ElternsprechtagView.ROUTE + "/" + accessToken.getValue());
     }
   }
 
@@ -230,9 +229,11 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     klassen.setItems(presenter.findAllKlassen());
     klassen.setHelperText(getTranslation("edit-sprechtag.klassen.helper", 0));
     klassen.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
-    klassen.setRenderer(new TextRenderer<>(Klasse::getName));
+    klassen.setRenderer(new TextRenderer<>(KlasseOption::name));
     klassen.addValueChangeListener(
-        e -> klassen.setHelperText(getTranslation("edit-sprechtag.klassen.helper", e.getValue().size())));
+        e ->
+            klassen.setHelperText(
+                getTranslation("edit-sprechtag.klassen.helper", e.getValue().size())));
     panel.getFormLayout().add(klassen);
 
     return panel;

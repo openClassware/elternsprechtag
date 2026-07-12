@@ -7,20 +7,28 @@ import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.domain.TerminStatusEnum;
+import de.openclassware.elternsprechtag.repositories.KlassenRepository;
 import de.openclassware.elternsprechtag.repositories.LehrauftragRepository;
 import de.openclassware.elternsprechtag.repositories.SprechtagRepository;
 import de.openclassware.elternsprechtag.repositories.TerminRepository;
+import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,22 +39,112 @@ public class SprechtagService {
   private final SprechtagRepository sprechtagRepository;
   private final LehrauftragRepository lehrauftragRepository;
   private final TerminRepository terminRepository;
+  private final KlassenRepository klassenRepository;
 
-  public List<Sprechtag> findSprechtageSortedByStartDate() {
+  /** Read-Model einer Sprechtag-Zeile für Übersicht/Verwaltung — enthält nur, was Views rendern. */
+  public record SprechtagRow(
+      UUID id,
+      String titel,
+      LocalDate startDate,
+      LocalTime startTime,
+      LocalTime endTime,
+      String location,
+      SprechtagStatusEnum status,
+      String accessToken,
+      List<String> klassen) {}
+
+  /**
+   * Mutierbares Formularmodell zum Anlegen/Bearbeiten. Entkoppelt den Edit-View von der JPA-Entity
+   * (Binder-kompatibel: Getter/Setter, No-Args-Konstruktor).
+   */
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  public static class SprechtagForm {
+    private String titel;
+    private String location;
+    private String description;
+    private LocalDate startDate;
+    private LocalTime startTime;
+    private LocalTime endTime;
+    private Integer slotInMinutes = 15;
+    private String accessToken = UUID.randomUUID().toString();
+    private Set<KlasseOption> klassen = new LinkedHashSet<>();
+  }
+
+  @Transactional(readOnly = true)
+  public List<SprechtagRow> findAllRows() {
     return sprechtagRepository.findAll().stream()
         .sorted(Comparator.comparing(Sprechtag::getStartDate))
+        .map(this::toRow)
         .toList();
   }
 
-  @Transactional
-  public Sprechtag save(Sprechtag sprechtag) {
-    Sprechtag saved = sprechtagRepository.save(sprechtag);
-    materialisiereWennNoetig(saved);
-    return saved;
+  private SprechtagRow toRow(Sprechtag sprechtag) {
+    return new SprechtagRow(
+        sprechtag.getId(),
+        sprechtag.getTitel(),
+        sprechtag.getStartDate(),
+        sprechtag.getStartTime(),
+        sprechtag.getEndTime(),
+        sprechtag.getLocation(),
+        sprechtag.getStatus(),
+        sprechtag.getAccessToken(),
+        sprechtag.getKlassen().stream()
+            .map(Klasse::getName)
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .toList());
   }
 
-  public Optional<Sprechtag> findById(UUID id) {
-    return sprechtagRepository.findById(id);
+  @Transactional(readOnly = true)
+  public Optional<SprechtagForm> loadForm(UUID id) {
+    return sprechtagRepository.findById(id).map(this::toForm);
+  }
+
+  private SprechtagForm toForm(Sprechtag sprechtag) {
+    SprechtagForm form = new SprechtagForm();
+    form.setTitel(sprechtag.getTitel());
+    form.setLocation(sprechtag.getLocation());
+    form.setDescription(sprechtag.getDescription());
+    form.setStartDate(sprechtag.getStartDate());
+    form.setStartTime(sprechtag.getStartTime());
+    form.setEndTime(sprechtag.getEndTime());
+    form.setSlotInMinutes(sprechtag.getSlotInMinutes());
+    form.setAccessToken(sprechtag.getAccessToken());
+    form.setKlassen(
+        sprechtag.getKlassen().stream()
+            .map(klasse -> new KlasseOption(klasse.getId(), klasse.getName()))
+            .collect(Collectors.toCollection(LinkedHashSet::new)));
+    return form;
+  }
+
+  /**
+   * Legt einen Sprechtag an ({@code id == null}) oder aktualisiert einen bestehenden aus dem
+   * Formularmodell und setzt den Zielstatus. Materialisiert Termine, falls veröffentlicht wird.
+   */
+  @Transactional
+  public UUID createOrUpdate(UUID id, SprechtagForm form, SprechtagStatusEnum status) {
+    Sprechtag sprechtag =
+        id == null
+            ? new Sprechtag()
+            : sprechtagRepository
+                .findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Sprechtag nicht gefunden: " + id));
+    sprechtag.setTitel(form.getTitel());
+    sprechtag.setLocation(form.getLocation());
+    sprechtag.setDescription(form.getDescription());
+    sprechtag.setStartDate(form.getStartDate());
+    sprechtag.setStartTime(form.getStartTime());
+    sprechtag.setEndTime(form.getEndTime());
+    sprechtag.setSlotInMinutes(form.getSlotInMinutes());
+    sprechtag.setAccessToken(form.getAccessToken());
+    List<UUID> klasseIds = form.getKlassen().stream().map(KlasseOption::id).toList();
+    sprechtag.setKlassen(new ArrayList<>(klassenRepository.findAllById(klasseIds)));
+    sprechtag.setStatus(status);
+
+    Sprechtag saved = sprechtagRepository.save(sprechtag);
+    materialisiereWennNoetig(saved);
+    return saved.getId();
   }
 
   public Optional<Sprechtag> findByAccessToken(String accessToken) {
@@ -54,20 +152,18 @@ public class SprechtagService {
   }
 
   @Transactional
-  public Sprechtag changeStatus(UUID id, SprechtagStatusEnum newStatus) {
+  public void changeStatus(UUID id, SprechtagStatusEnum newStatus) {
     Sprechtag sprechtag =
         sprechtagRepository
             .findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Sprechtag nicht gefunden: " + id));
     SprechtagStatusEnum current = sprechtag.getStatus();
     if (!current.allowedTransitions().contains(newStatus)) {
-      throw new IllegalStateException(
-          "Ungültiger Statusübergang: " + current + " -> " + newStatus);
+      throw new IllegalStateException("Ungültiger Statusübergang: " + current + " -> " + newStatus);
     }
     sprechtag.setStatus(newStatus);
     Sprechtag saved = sprechtagRepository.save(sprechtag);
     materialisiereWennNoetig(saved);
-    return saved;
   }
 
   /**
@@ -134,7 +230,8 @@ public class SprechtagService {
     return starts;
   }
 
-  public Sprechtag duplicate(UUID id) {
+  @Transactional
+  public UUID duplicate(UUID id) {
     Sprechtag original =
         sprechtagRepository
             .findById(id)
@@ -150,6 +247,6 @@ public class SprechtagService {
     copy.setAccessToken(UUID.randomUUID().toString());
     copy.setStatus(SprechtagStatusEnum.ENTWURF);
     copy.setKlassen(new ArrayList<>(original.getKlassen()));
-    return sprechtagRepository.save(copy);
+    return sprechtagRepository.save(copy).getId();
   }
 }

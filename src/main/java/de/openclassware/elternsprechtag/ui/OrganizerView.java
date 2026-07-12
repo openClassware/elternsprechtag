@@ -8,8 +8,8 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.Route;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.security.Roles;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import de.openclassware.elternsprechtag.ui.components.Card;
 import de.openclassware.elternsprechtag.ui.components.NextElternsprechtage;
 import de.openclassware.elternsprechtag.ui.components.NoNextElternsprechtage;
@@ -45,7 +45,7 @@ public class OrganizerView extends Div {
   }
 
   private Component createNoNextElternsprechtage() {
-    List<Sprechtag> sprechtage = presenter.findActiveAndDraftSprechtage();
+    List<SprechtagRow> sprechtage = presenter.findActiveAndDraftSprechtage();
     if (sprechtage.isEmpty()) {
       return new NoNextElternsprechtage();
     }

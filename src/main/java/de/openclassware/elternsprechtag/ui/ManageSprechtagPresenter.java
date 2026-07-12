@@ -1,8 +1,8 @@
 package de.openclassware.elternsprechtag.ui;
 
-import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.services.SprechtagService;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +14,8 @@ public class ManageSprechtagPresenter {
 
   private final SprechtagService sprechtagService;
 
-  public List<Sprechtag> findAllSprechtage() {
-    return sprechtagService.findSprechtageSortedByStartDate();
+  public List<SprechtagRow> findAllSprechtage() {
+    return sprechtagService.findAllRows();
   }
 
   public void changeStatus(UUID id, SprechtagStatusEnum newStatus) {
@@ -23,6 +23,6 @@ public class ManageSprechtagPresenter {
   }
 
   public UUID duplicate(UUID id) {
-    return sprechtagService.duplicate(id).getId();
+    return sprechtagService.duplicate(id);
   }
 }

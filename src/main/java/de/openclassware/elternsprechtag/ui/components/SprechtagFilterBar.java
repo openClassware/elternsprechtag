@@ -3,8 +3,8 @@ package de.openclassware.elternsprechtag.ui.components;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -27,7 +27,7 @@ public class SprechtagFilterBar extends Div {
    * @param onSelect receives the selected status to filter by, or {@code null} for "Alle".
    */
   public SprechtagFilterBar(
-      List<Sprechtag> sprechtage,
+      List<SprechtagRow> sprechtage,
       SprechtagStatusEnum activeStatus,
       Consumer<SprechtagStatusEnum> onSelect) {
     addClassName("sprechtag-filter");
@@ -49,7 +49,7 @@ public class SprechtagFilterBar extends Div {
     }
   }
 
-  private Div createTab(Option option, List<Sprechtag> sprechtage) {
+  private Div createTab(Option option, List<SprechtagRow> sprechtage) {
     Div tab = new Div();
     tab.addClassName("sprechtag-filter__tab");
 
@@ -63,10 +63,10 @@ public class SprechtagFilterBar extends Div {
     return tab;
   }
 
-  private long count(Option option, List<Sprechtag> sprechtage) {
+  private long count(Option option, List<SprechtagRow> sprechtage) {
     if (option.status() == null) {
       return sprechtage.size();
     }
-    return sprechtage.stream().filter(sprechtag -> sprechtag.getStatus() == option.status()).count();
+    return sprechtage.stream().filter(sprechtag -> sprechtag.status() == option.status()).count();
   }
 }

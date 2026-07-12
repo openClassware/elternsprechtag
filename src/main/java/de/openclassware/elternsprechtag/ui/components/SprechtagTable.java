@@ -7,15 +7,13 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @CssImport("./styles/components/sprechtag-table.css")
 public class SprechtagTable extends Div {
@@ -30,15 +28,15 @@ public class SprechtagTable extends Div {
           SprechtagStatusEnum.ABGESAGT);
 
   private final Div body = new Div();
-  private final BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange;
-  private final Consumer<Sprechtag> onDuplicate;
-  private final Consumer<Sprechtag> onShare;
+  private final BiConsumer<SprechtagRow, SprechtagStatusEnum> onStatusChange;
+  private final Consumer<SprechtagRow> onDuplicate;
+  private final Consumer<SprechtagRow> onShare;
 
   public SprechtagTable(
-      List<Sprechtag> sprechtage,
-      BiConsumer<Sprechtag, SprechtagStatusEnum> onStatusChange,
-      Consumer<Sprechtag> onDuplicate,
-      Consumer<Sprechtag> onShare) {
+      List<SprechtagRow> sprechtage,
+      BiConsumer<SprechtagRow, SprechtagStatusEnum> onStatusChange,
+      Consumer<SprechtagRow> onDuplicate,
+      Consumer<SprechtagRow> onShare) {
     this.onStatusChange = onStatusChange;
     this.onDuplicate = onDuplicate;
     this.onShare = onShare;
@@ -48,7 +46,7 @@ public class SprechtagTable extends Div {
     setSprechtage(sprechtage);
   }
 
-  public void setSprechtage(List<Sprechtag> sprechtage) {
+  public void setSprechtage(List<SprechtagRow> sprechtage) {
     body.removeAll();
     if (sprechtage.isEmpty()) {
       body.add(createEmptyState());
@@ -91,59 +89,58 @@ public class SprechtagTable extends Div {
     return empty;
   }
 
-  private Component createRow(Sprechtag sprechtag) {
+  private Component createRow(SprechtagRow sprechtag) {
     Div row = new Div();
     row.addClassName("sprechtag-table__row");
     row.add(
-        new DateBadge(sprechtag),
+        new DateBadge(sprechtag.startDate()),
         createTitle(sprechtag),
         createTime(sprechtag),
         createKlassen(sprechtag),
-        new StatusBadge(sprechtag.getStatus()),
+        new StatusBadge(sprechtag.status()),
         createMenu(sprechtag));
     return row;
   }
 
-  private Component createTitle(Sprechtag sprechtag) {
+  private Component createTitle(SprechtagRow sprechtag) {
     Div title = new Div();
     title.addClassName("sprechtag-table__title-cell");
 
     Div name = new Div();
     name.addClassName("sprechtag-table__title");
-    name.setText(sprechtag.getTitel());
+    name.setText(sprechtag.titel());
     title.add(name);
 
-    if (sprechtag.getLocation() != null && !sprechtag.getLocation().isBlank()) {
+    if (sprechtag.location() != null && !sprechtag.location().isBlank()) {
       Div location = new Div();
       location.addClassName("sprechtag-table__location");
-      location.add(VaadinIcon.MAP_MARKER.create(), new Span(sprechtag.getLocation()));
+      location.add(VaadinIcon.MAP_MARKER.create(), new Span(sprechtag.location()));
       title.add(location);
     }
 
     return title;
   }
 
-  private Component createTime(Sprechtag sprechtag) {
+  private Component createTime(SprechtagRow sprechtag) {
     Div time = new Div();
     time.addClassName("sprechtag-table__time");
     time.add(
         VaadinIcon.CLOCK.create(),
         new Span(
-            sprechtag.getStartTime().format(TIME_FORMATTER)
+            sprechtag.startTime().format(TIME_FORMATTER)
                 + "–"
-                + sprechtag.getEndTime().format(TIME_FORMATTER)));
+                + sprechtag.endTime().format(TIME_FORMATTER)));
     return time;
   }
 
-  private Component createKlassen(Sprechtag sprechtag) {
+  private Component createKlassen(SprechtagRow sprechtag) {
     Span klassen = new Span();
     klassen.addClassName("sprechtag-table__klassen");
-    klassen.setText(
-        sprechtag.getKlassen().stream().map(Klasse::getName).collect(Collectors.joining(", ")));
+    klassen.setText(String.join(", ", sprechtag.klassen()));
     return klassen;
   }
 
-  private Component createMenu(Sprechtag sprechtag) {
+  private Component createMenu(SprechtagRow sprechtag) {
     Div menu = new Div();
     menu.addClassName("sprechtag-table__menu");
     menu.add(VaadinIcon.ELLIPSIS_DOTS_V.create());
@@ -156,14 +153,14 @@ public class SprechtagTable extends Div {
     contextMenu.addItem(
         createMenuItemContent(VaadinIcon.COPY, "manage-sprechtag.menu.duplicate"),
         event -> onDuplicate.accept(sprechtag));
-    if (sprechtag.getStatus() == SprechtagStatusEnum.VEROEFFENTLICHT) {
+    if (sprechtag.status() == SprechtagStatusEnum.VEROEFFENTLICHT) {
       contextMenu.addItem(
           createMenuItemContent(VaadinIcon.LINK, "manage-sprechtag.menu.share"),
           event -> onShare.accept(sprechtag));
     }
 
     for (SprechtagStatusEnum target : TRANSITION_ORDER) {
-      if (sprechtag.getStatus().allowedTransitions().contains(target)) {
+      if (sprechtag.status().allowedTransitions().contains(target)) {
         contextMenu.addItem(
             createMenuItemContent(iconFor(target), labelKeyFor(target)),
             event -> onStatusChange.accept(sprechtag, target));
@@ -198,7 +195,7 @@ public class SprechtagTable extends Div {
     return content;
   }
 
-  private void navigateToEdit(Sprechtag sprechtag) {
-    getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + sprechtag.getId()));
+  private void navigateToEdit(SprechtagRow sprechtag) {
+    getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + sprechtag.id()));
   }
 }

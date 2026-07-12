@@ -1,13 +1,13 @@
 package de.openclassware.elternsprechtag.ui;
 
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.services.KlassenService;
+import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
+import de.openclassware.elternsprechtag.services.SprechtagService;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagForm;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import de.openclassware.elternsprechtag.services.KlassenService;
-import de.openclassware.elternsprechtag.services.SprechtagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,19 +15,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class EditSprechtagPresenter {
 
-    private final KlassenService klassenService;
-    private final SprechtagService sprechtagService;
+  private final KlassenService klassenService;
+  private final SprechtagService sprechtagService;
 
-  public List<Klasse> findAllKlassen() {
-    return klassenService.findAllOrderByName();
+  public List<KlasseOption> findAllKlassen() {
+    return klassenService.findAllOptions();
   }
 
-  public Sprechtag save(Sprechtag sprechtag) {
-    return sprechtagService.save(sprechtag);
+  public Optional<SprechtagForm> loadForm(UUID id) {
+    return sprechtagService.loadForm(id);
   }
 
-  public Optional<Sprechtag> findById(UUID id) {
-    return sprechtagService.findById(id);
+  public UUID save(UUID id, SprechtagForm form, SprechtagStatusEnum status) {
+    return sprechtagService.createOrUpdate(id, form, status);
   }
-
 }

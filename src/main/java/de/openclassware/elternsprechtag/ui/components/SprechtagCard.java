@@ -5,53 +5,54 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import java.time.format.DateTimeFormatter;
 
 @CssImport("./styles/components/sprechtag-card.css")
 public class SprechtagCard extends Div {
 
-  public SprechtagCard(Sprechtag sprechtag) {
+  private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+
+  public SprechtagCard(SprechtagRow sprechtag) {
     addClassName("sprechtag-card");
 
     Div top = new Div();
     top.addClassName("sprechtag-card__top");
-    top.add(new DateBadge(sprechtag), createTitle(sprechtag));
+    top.add(new DateBadge(sprechtag.startDate()), createTitle(sprechtag));
 
     Div bottom = new Div();
     bottom.addClassName("sprechtag-card__bottom");
-    bottom.add(createTimespan(sprechtag), new StatusBadge(sprechtag.getStatus()));
+    bottom.add(createTimespan(sprechtag), new StatusBadge(sprechtag.status()));
 
     add(top, bottom);
 
     addClickListener(_ -> navigateToSprechtagEditView(sprechtag));
   }
 
-  private void navigateToSprechtagEditView(Sprechtag sprechtag) {
-    getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + sprechtag.getId()));
+  private void navigateToSprechtagEditView(SprechtagRow sprechtag) {
+    getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + sprechtag.id()));
   }
 
-  private Component createTimespan(Sprechtag sprechtag) {
+  private Component createTimespan(SprechtagRow sprechtag) {
     Div timespan = new Div();
     timespan.addClassName("sprechtag-card__timespan");
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
     timespan.add(
         VaadinIcon.CLOCK.create(),
         new Span(
-            sprechtag.getStartTime().format(formatter)
+            sprechtag.startTime().format(TIME_FORMATTER)
                 + " - "
-                + sprechtag.getEndTime().format(formatter)));
+                + sprechtag.endTime().format(TIME_FORMATTER)));
     return timespan;
   }
 
-  private Component createTitle(Sprechtag sprechtag) {
+  private Component createTitle(SprechtagRow sprechtag) {
     Div title = new Div();
     title.addClassName("sprechtag-card__title");
-    title.setText(sprechtag.getTitel());
+    title.setText(sprechtag.titel());
     Div year = new Div();
     year.addClassName("sprechtag-card__year");
-    year.setText(sprechtag.getStartDate().getYear() + "");
+    year.setText(sprechtag.startDate().getYear() + "");
     Div div = new Div();
     div.add(title, year);
     return div;

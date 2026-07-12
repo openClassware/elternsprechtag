@@ -9,9 +9,9 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
+import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
 import de.openclassware.elternsprechtag.ui.components.ShareLinkDialog;
 import de.openclassware.elternsprechtag.ui.components.SprechtagFilterBar;
@@ -34,7 +34,7 @@ public class ManageSprechtagView extends Div {
   private final TextField search;
   private final Div filterRow;
 
-  private List<Sprechtag> sprechtage;
+  private List<SprechtagRow> sprechtage;
   private SprechtagFilterBar filterBar;
   private SprechtagStatusEnum statusFilter;
   private String searchQuery = "";
@@ -103,17 +103,17 @@ public class ManageSprechtagView extends Div {
     applyFilters();
   }
 
-  private void onStatusChange(Sprechtag sprechtag, SprechtagStatusEnum newStatus) {
-    presenter.changeStatus(sprechtag.getId(), newStatus);
+  private void onStatusChange(SprechtagRow sprechtag, SprechtagStatusEnum newStatus) {
+    presenter.changeStatus(sprechtag.id(), newStatus);
     reload();
   }
 
-  private void onDuplicate(Sprechtag sprechtag) {
-    UUID copyId = presenter.duplicate(sprechtag.getId());
+  private void onDuplicate(SprechtagRow sprechtag) {
+    UUID copyId = presenter.duplicate(sprechtag.id());
     getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + copyId));
   }
 
-  private void onShare(Sprechtag sprechtag) {
+  private void onShare(SprechtagRow sprechtag) {
     getUI()
         .ifPresent(
             ui ->
@@ -127,7 +127,7 @@ public class ManageSprechtagView extends Div {
                                         + "/"
                                         + ElternsprechtagView.ROUTE
                                         + "/"
-                                        + sprechtag.getAccessToken())
+                                        + sprechtag.accessToken())
                                 .open()));
   }
 
@@ -141,12 +141,11 @@ public class ManageSprechtagView extends Div {
   }
 
   private void applyFilters() {
-    List<Sprechtag> filtered =
+    List<SprechtagRow> filtered =
         sprechtage.stream()
-            .filter(sprechtag -> statusFilter == null || sprechtag.getStatus() == statusFilter)
+            .filter(sprechtag -> statusFilter == null || sprechtag.status() == statusFilter)
             .filter(
-                sprechtag ->
-                    sprechtag.getTitel().toLowerCase(Locale.GERMANY).contains(searchQuery))
+                sprechtag -> sprechtag.titel().toLowerCase(Locale.GERMANY).contains(searchQuery))
             .toList();
     table.setSprechtage(filtered);
   }
