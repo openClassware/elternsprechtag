@@ -28,7 +28,7 @@ import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.services.BuchungService;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
-import de.openclassware.elternsprechtag.services.BuchungService.FachOption;
+import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
 import de.openclassware.elternsprechtag.services.BuchungService.SlotOption;
 import de.openclassware.elternsprechtag.ui.components.StepHeader;
 import java.time.LocalTime;
@@ -73,16 +73,16 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     KONFLIKT
   }
 
-  /** Fach-Auswahl der gewählten Klasse; erst nach Klassenwahl befüllt. */
-  private List<FachOption> fachOptionen = List.of();
+  /** Lehrkraft-Auswahl der gewählten Klasse; erst nach Klassenwahl befüllt. */
+  private List<LehrkraftOption> lehrkraftOptionen = List.of();
 
-  /** Aktuell aufgeklapptes Fach in Schritt 3. */
-  private FachOption activeFach;
+  /** Aktuell aufgeklappte Lehrkraft in Schritt 3. */
+  private LehrkraftOption activeLehrkraft;
 
   /** Gewählter Slot je Lehrauftrag (Schlüssel = lehrauftragId). */
   private final Map<UUID, SlotOption> selection = new LinkedHashMap<>();
 
-  private Div fachGrid;
+  private Div lehrkraftGrid;
   private Div slotArea;
   private Div summaryContainer;
 
@@ -121,8 +121,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   private Component createBookingCard(Sprechtag sprechtag) {
     this.sprechtag = sprechtag;
     selection.clear();
-    activeFach = null;
-    fachOptionen = List.of();
+    activeLehrkraft = null;
+    lehrkraftOptionen = List.of();
 
     Div card = new Div();
     card.addClassName("elternsprechtag-view__card");
@@ -133,7 +133,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
     card.add(createInfo(sprechtag), body, createFooter());
 
-    refreshFachGrid();
+    refreshLehrkraftGrid();
     refreshSlotArea();
     refreshSummary();
     refreshFooter();
@@ -215,10 +215,10 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
 
-    section.add(new StepHeader(2, getTranslation("elternsprechtag.fach.step-title")));
-    fachGrid = new Div();
-    fachGrid.addClassName("elternsprechtag-view__fach-grid");
-    section.add(fachGrid);
+    section.add(new StepHeader(2, getTranslation("elternsprechtag.lehrkraft.step-title")));
+    lehrkraftGrid = new Div();
+    lehrkraftGrid.addClassName("elternsprechtag-view__lehrkraft-grid");
+    section.add(lehrkraftGrid);
 
     Div step3Head = new Div();
     step3Head.addClassName("elternsprechtag-view__step3-head");
@@ -241,20 +241,21 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return section;
   }
 
-  /** Reagiert auf die Klassenwahl: lädt die echten Fächer/Termine und verwirft die Auswahl. */
+  /** Reagiert auf die Klassenwahl: lädt die echten Lehrkräfte/Termine und verwirft die Auswahl. */
   private void onKlasseChanged() {
-    loadFachOptionen();
+    loadLehrkraftOptionen();
     selection.clear();
-    activeFach = null;
-    refreshFachGrid();
+    activeLehrkraft = null;
+    refreshLehrkraftGrid();
     refreshSlotArea();
     refreshSummary();
     refreshFooter();
   }
 
-  private void loadFachOptionen() {
+  private void loadLehrkraftOptionen() {
     Klasse selected = klasse.getValue();
-    fachOptionen = selected == null ? List.of() : presenter.ladeFachOptionen(sprechtag, selected);
+    lehrkraftOptionen =
+        selected == null ? List.of() : presenter.ladeLehrkraftOptionen(sprechtag, selected);
   }
 
   private Component createLegend() {
@@ -276,71 +277,72 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return item;
   }
 
-  private void refreshFachGrid() {
-    fachGrid.removeAll();
-    if (fachOptionen.isEmpty()) {
+  private void refreshLehrkraftGrid() {
+    lehrkraftGrid.removeAll();
+    if (lehrkraftOptionen.isEmpty()) {
       Div placeholder = new Div();
       placeholder.addClassName("elternsprechtag-view__placeholder");
-      placeholder.setText(getTranslation("elternsprechtag.fach.placeholder"));
-      fachGrid.add(placeholder);
+      placeholder.setText(getTranslation("elternsprechtag.lehrkraft.placeholder"));
+      lehrkraftGrid.add(placeholder);
       return;
     }
-    fachOptionen.forEach(fach -> fachGrid.add(createFachCard(fach)));
+    lehrkraftOptionen.forEach(lehrkraft -> lehrkraftGrid.add(createLehrkraftCard(lehrkraft)));
   }
 
-  private Component createFachCard(FachOption fach) {
-    Div fachCard = new Div();
-    fachCard.addClassName("elternsprechtag-view__fach");
-    if (isActive(fach) || selection.containsKey(fach.lehrauftragId())) {
-      fachCard.addClassName("elternsprechtag-view__fach--selected");
+  private Component createLehrkraftCard(LehrkraftOption lehrkraft) {
+    Div card = new Div();
+    card.addClassName("elternsprechtag-view__lehrkraft");
+    if (isActive(lehrkraft) || selection.containsKey(lehrkraft.lehrauftragId())) {
+      card.addClassName("elternsprechtag-view__lehrkraft--selected");
     }
 
-    Span badge = new Span(fach.fachShortName());
-    badge.addClassName("elternsprechtag-view__fach-badge");
+    Span badge = new Span(lehrkraft.kuerzel());
+    badge.addClassName("elternsprechtag-view__lehrkraft-badge");
 
     Div info = new Div();
-    info.addClassName("elternsprechtag-view__fach-info");
+    info.addClassName("elternsprechtag-view__lehrkraft-info");
     Div name = new Div();
-    name.addClassName("elternsprechtag-view__fach-name");
-    name.setText(fach.fachName());
-    Div teacher = new Div();
-    teacher.addClassName("elternsprechtag-view__fach-teacher");
-    teacher.setText(fach.lehrerName());
-    info.add(name, teacher);
+    name.addClassName("elternsprechtag-view__lehrkraft-name");
+    name.setText(lehrkraft.lehrerName());
+    Div faecher = new Div();
+    faecher.addClassName("elternsprechtag-view__lehrkraft-faecher");
+    faecher.setText(String.join(", ", lehrkraft.faecher()));
+    info.add(name, faecher);
 
-    fachCard.add(badge, info);
+    card.add(badge, info);
 
-    SlotOption chosen = selection.get(fach.lehrauftragId());
+    SlotOption chosen = selection.get(lehrkraft.lehrauftragId());
     if (chosen != null) {
       Span pill = new Span();
-      pill.addClassName("elternsprechtag-view__fach-pill");
+      pill.addClassName("elternsprechtag-view__lehrkraft-pill");
       pill.add(VaadinIcon.CHECK.create(), new Span(chosen.zeit().format(TIME_FORMATTER)));
-      fachCard.add(pill);
+      card.add(pill);
     }
 
-    fachCard.addClickListener(
+    card.addClickListener(
         event -> {
-          activeFach = fach;
-          refreshFachGrid();
+          activeLehrkraft = lehrkraft;
+          refreshLehrkraftGrid();
           refreshSlotArea();
         });
-    return fachCard;
+    return card;
   }
 
-  private boolean isActive(FachOption fach) {
-    return activeFach != null && activeFach.lehrauftragId().equals(fach.lehrauftragId());
+  private boolean isActive(LehrkraftOption lehrkraft) {
+    return activeLehrkraft != null
+        && activeLehrkraft.lehrauftragId().equals(lehrkraft.lehrauftragId());
   }
 
   private void refreshSlotArea() {
     slotArea.removeAll();
-    if (activeFach == null) {
+    if (activeLehrkraft == null) {
       Div placeholder = new Div();
       placeholder.addClassName("elternsprechtag-view__placeholder");
       placeholder.setText(getTranslation("elternsprechtag.termin.placeholder"));
       slotArea.add(placeholder);
       return;
     }
-    if (activeFach.slots().isEmpty()) {
+    if (activeLehrkraft.slots().isEmpty()) {
       Div placeholder = new Div();
       placeholder.addClassName("elternsprechtag-view__placeholder");
       placeholder.setText(getTranslation("elternsprechtag.termin.empty"));
@@ -349,7 +351,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     }
     Div grid = new Div();
     grid.addClassName("elternsprechtag-view__slot-grid");
-    activeFach.slots().forEach(slot -> grid.add(createSlot(slot)));
+    activeLehrkraft.slots().forEach(slot -> grid.add(createSlot(slot)));
     slotArea.add(grid);
   }
 
@@ -378,13 +380,13 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (slot.belegt()) {
       return SlotState.BELEGT;
     }
-    SlotOption chosen = selection.get(activeFach.lehrauftragId());
+    SlotOption chosen = selection.get(activeLehrkraft.lehrauftragId());
     if (chosen != null && chosen.terminId().equals(slot.terminId())) {
       return SlotState.GEWAEHLT;
     }
-    // Konflikt: derselbe Zeitpunkt ist bereits für ein anderes Fach gewählt.
+    // Konflikt: derselbe Zeitpunkt ist bereits für eine andere Lehrkraft gewählt.
     for (Map.Entry<UUID, SlotOption> entry : selection.entrySet()) {
-      if (!entry.getKey().equals(activeFach.lehrauftragId())
+      if (!entry.getKey().equals(activeLehrkraft.lehrauftragId())
           && entry.getValue().zeit().equals(slot.zeit())) {
         return SlotState.KONFLIKT;
       }
@@ -393,17 +395,17 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private void selectSlot(SlotOption slot) {
-    selection.put(activeFach.lehrauftragId(), slot);
+    selection.put(activeLehrkraft.lehrauftragId(), slot);
     refreshAfterSelectionChange();
   }
 
   private void deselectSlot() {
-    selection.remove(activeFach.lehrauftragId());
+    selection.remove(activeLehrkraft.lehrauftragId());
     refreshAfterSelectionChange();
   }
 
   private void refreshAfterSelectionChange() {
-    refreshFachGrid();
+    refreshLehrkraftGrid();
     refreshSlotArea();
     refreshSummary();
     refreshFooter();
@@ -427,11 +429,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     head.add(title, count);
     panel.add(head);
 
-    // In Fach-Reihenfolge rendern, nicht in Auswahl-Reihenfolge.
-    for (FachOption fach : fachOptionen) {
-      SlotOption slot = selection.get(fach.lehrauftragId());
+    // In Lehrkraft-Reihenfolge rendern, nicht in Auswahl-Reihenfolge.
+    for (LehrkraftOption lehrkraft : lehrkraftOptionen) {
+      SlotOption slot = selection.get(lehrkraft.lehrauftragId());
       if (slot != null) {
-        panel.add(createSummaryRow(fach, slot));
+        panel.add(createSummaryRow(lehrkraft, slot));
       }
     }
     summaryContainer.add(panel);
@@ -443,11 +445,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         : getTranslation("elternsprechtag.summary.count.other", count);
   }
 
-  private Component createSummaryRow(FachOption fach, SlotOption slot) {
+  private Component createSummaryRow(LehrkraftOption lehrkraft, SlotOption slot) {
     Div row = new Div();
     row.addClassName("elternsprechtag-view__summary-row");
 
-    Span badge = new Span(fach.fachShortName());
+    Span badge = new Span(lehrkraft.kuerzel());
     badge.addClassName("elternsprechtag-view__summary-badge");
 
     Div info = new Div();
@@ -456,10 +458,12 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     main.addClassName("elternsprechtag-view__summary-main");
     main.setText(
         getTranslation(
-            "elternsprechtag.summary.row", fach.fachName(), slot.zeit().format(TIME_FORMATTER)));
+            "elternsprechtag.summary.row",
+            lehrkraft.lehrerName(),
+            slot.zeit().format(TIME_FORMATTER)));
     Div sub = new Div();
     sub.addClassName("elternsprechtag-view__summary-sub");
-    sub.setText(fach.lehrerName());
+    sub.setText(String.join(", ", lehrkraft.faecher()));
     info.add(main, sub);
 
     Button remove = new Button(VaadinIcon.CLOSE_SMALL.create());
@@ -467,7 +471,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     remove.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
     remove.addClickListener(
         event -> {
-          selection.remove(fach.lehrauftragId());
+          selection.remove(lehrkraft.lehrauftragId());
           refreshAfterSelectionChange();
         });
 
@@ -537,12 +541,12 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   /** Nach einem Konflikt: Optionen neu laden und ungültig gewordene Slots aus der Auswahl werfen. */
   private void handleConflict() {
-    loadFachOptionen();
+    loadLehrkraftOptionen();
     pruneSelection();
-    if (activeFach != null) {
-      activeFach = findFach(activeFach.lehrauftragId());
+    if (activeLehrkraft != null) {
+      activeLehrkraft = findLehrkraft(activeLehrkraft.lehrauftragId());
     }
-    refreshFachGrid();
+    refreshLehrkraftGrid();
     refreshSlotArea();
     refreshSummary();
     refreshFooter();
@@ -553,7 +557,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         .entrySet()
         .removeIf(
             entry -> {
-              FachOption fach = findFach(entry.getKey());
+              LehrkraftOption fach = findLehrkraft(entry.getKey());
               if (fach == null) {
                 return true;
               }
@@ -564,8 +568,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
             });
   }
 
-  private FachOption findFach(UUID lehrauftragId) {
-    return fachOptionen.stream()
+  private LehrkraftOption findLehrkraft(UUID lehrauftragId) {
+    return lehrkraftOptionen.stream()
         .filter(fach -> fach.lehrauftragId().equals(lehrauftragId))
         .findFirst()
         .orElse(null);

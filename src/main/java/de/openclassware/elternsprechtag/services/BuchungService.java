@@ -2,7 +2,6 @@ package de.openclassware.elternsprechtag.services;
 
 import de.openclassware.elternsprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.domain.BuchungStatusEnum;
-import de.openclassware.elternsprechtag.domain.Fach;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
@@ -15,9 +14,11 @@ import de.openclassware.elternsprechtag.repositories.TerminRepository;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -35,13 +36,17 @@ public class BuchungService {
   /** Ein wählbarer Slot in der Eltern-View (aus einem materialisierten {@link Termin}). */
   public record SlotOption(UUID terminId, LocalTime zeit, boolean belegt) {}
 
-  /** Ein wählbares Fach der gewählten Klasse (ein {@link Lehrauftrag}) samt Slots seines Lehrers. */
-  public record FachOption(
+  /**
+   * Eine wählbare Lehrkraft der gewählten Klasse samt ihrer Slots. {@code lehrauftragId} ist der für
+   * (Klasse, Lehrkraft) aufgelöste Lehrauftrag (Buchungs-Ziel); {@code faecher} listet die Fächer der
+   * Lehrkraft an diesem Sprechtag (nur informativ).
+   */
+  public record LehrkraftOption(
       UUID lehrauftragId,
       UUID lehrerId,
-      String fachShortName,
-      String fachName,
+      String kuerzel,
       String lehrerName,
+      List<String> faecher,
       List<SlotOption> slots) {}
 
   /** Ein einzelner gewünschter Termin: welcher Lehrauftrag (Klasse+Fach+Lehrer) zu welchem Slot. */
@@ -59,12 +64,13 @@ public class BuchungService {
   }
 
   /**
-   * Baut die Fach-Auswahl für die gewählte Klasse: je {@link Lehrauftrag} der Klasse ein Eintrag mit
-   * den (materialisierten) Slots seines Lehrers an diesem Sprechtag. Mappt vollständig auf DTOs,
-   * damit die View ohne offene Session (open-in-view=false) arbeiten kann.
+   * Baut die Lehrkraft-Auswahl für die gewählte Klasse: je Lehrkraft der Klasse ein Eintrag mit den
+   * (materialisierten) Slots ihres Lehrers, dem für (Klasse, Lehrkraft) aufgelösten Lehrauftrag und
+   * den Fächern der Lehrkraft an diesem Sprechtag. Mappt vollständig auf DTOs, damit die View ohne
+   * offene Session (open-in-view=false) arbeiten kann.
    */
   @Transactional(readOnly = true)
-  public List<FachOption> ladeFachOptionen(Sprechtag sprechtag, Klasse klasse) {
+  public List<LehrkraftOption> ladeLehrkraftOptionen(Sprechtag sprechtag, Klasse klasse) {
     // Alle Termine des Sprechtags einmal laden und nach Lehrer gruppieren.
     Map<UUID, List<SlotOption>> slotsByLehrer = new LinkedHashMap<>();
     for (Termin termin :
@@ -78,17 +84,37 @@ public class BuchungService {
                   termin.getStatus() == TerminStatusEnum.BELEGT));
     }
 
-    List<FachOption> optionen = new ArrayList<>();
-    for (Lehrauftrag lehrauftrag : lehrauftragRepository.findByKlasseOrderByFach_NameAsc(klasse)) {
+    // Fächer je Lehrkraft über alle teilnehmenden Klassen des Sprechtags (Scope: dieser Sprechtag).
+    Map<UUID, TreeSet<String>> faecherByLehrer = new LinkedHashMap<>();
+    for (Klasse teilnehmende : sprechtag.getKlassen()) {
+      for (Lehrauftrag la : lehrauftragRepository.findByKlasseOrderByFach_NameAsc(teilnehmende)) {
+        faecherByLehrer
+            .computeIfAbsent(la.getLehrer().getId(), k -> new TreeSet<>())
+            .add(la.getFach().getName());
+      }
+    }
+
+    // Lehrkräfte der gewählten Klasse dedupliziert; je Lehrkraft der Lehrauftrag mit dem
+    // alphabetisch ersten Fach (findBy... ist nach Fach-Name sortiert -> erstes putIfAbsent gewinnt).
+    Map<UUID, Lehrauftrag> auftragByLehrer = new LinkedHashMap<>();
+    for (Lehrauftrag la : lehrauftragRepository.findByKlasseOrderByFach_NameAsc(klasse)) {
+      auftragByLehrer.putIfAbsent(la.getLehrer().getId(), la);
+    }
+
+    List<Lehrauftrag> auftraege = new ArrayList<>(auftragByLehrer.values());
+    auftraege.sort(
+        Comparator.comparing(la -> la.getLehrer().getNachname(), String.CASE_INSENSITIVE_ORDER));
+
+    List<LehrkraftOption> optionen = new ArrayList<>();
+    for (Lehrauftrag lehrauftrag : auftraege) {
       Lehrer lehrer = lehrauftrag.getLehrer();
-      Fach fach = lehrauftrag.getFach();
       optionen.add(
-          new FachOption(
+          new LehrkraftOption(
               lehrauftrag.getId(),
               lehrer.getId(),
-              fach.getShortName(),
-              fach.getName(),
+              lehrer.getKuerzel(),
               lehrer.getVorname() + " " + lehrer.getNachname(),
+              new ArrayList<>(faecherByLehrer.getOrDefault(lehrer.getId(), new TreeSet<>())),
               slotsByLehrer.getOrDefault(lehrer.getId(), List.of())));
     }
     return optionen;

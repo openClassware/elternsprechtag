@@ -6,7 +6,7 @@ import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.services.BuchungService;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.services.BuchungService.FachOption;
+import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
 import de.openclassware.elternsprechtag.services.SprechtagService;
 import java.util.List;
 import java.util.Optional;
@@ -28,8 +28,8 @@ public class ElternsprechtagPresenter {
     return sprechtagService.findByAccessToken(accessToken);
   }
 
-  public List<FachOption> ladeFachOptionen(Sprechtag sprechtag, Klasse klasse) {
-    return buchungService.ladeFachOptionen(sprechtag, klasse);
+  public List<LehrkraftOption> ladeLehrkraftOptionen(Sprechtag sprechtag, Klasse klasse) {
+    return buchungService.ladeLehrkraftOptionen(sprechtag, klasse);
   }
 
   /** Persistiert den Eltern-Submit atomar. Wirft {@link BuchungService.TerminBelegtException}. */

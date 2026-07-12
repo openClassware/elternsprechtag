@@ -94,15 +94,15 @@
     margin-top: 1.5rem;
 }
 
-/* Step 2: subject picker. */
-.elternsprechtag-view__fach-grid {
+/* Step 2: teacher picker. */
+.elternsprechtag-view__lehrkraft-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     margin-top: 1.5rem;
 }
 
-.elternsprechtag-view__fach {
+.elternsprechtag-view__lehrkraft {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -115,16 +115,16 @@
     transition: border-color 0.15s, background-color 0.15s;
 }
 
-.elternsprechtag-view__fach:hover {
+.elternsprechtag-view__lehrkraft:hover {
     border-color: #cbd5e1;
 }
 
-.elternsprechtag-view__fach--selected {
+.elternsprechtag-view__lehrkraft--selected {
     border-color: var(--aura-accent-color);
     background-color: #f5f8ff;
 }
 
-.elternsprechtag-view__fach-badge {
+.elternsprechtag-view__lehrkraft-badge {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -138,12 +138,12 @@
     font-size: 0.9rem;
 }
 
-.elternsprechtag-view__fach--selected .elternsprechtag-view__fach-badge {
+.elternsprechtag-view__lehrkraft--selected .elternsprechtag-view__lehrkraft-badge {
     background-color: var(--aura-accent-color);
     color: #ffffff;
 }
 
-.elternsprechtag-view__fach-info {
+.elternsprechtag-view__lehrkraft-info {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -151,17 +151,17 @@
     min-width: 0;
 }
 
-.elternsprechtag-view__fach-name {
+.elternsprechtag-view__lehrkraft-name {
     font-weight: 600;
     color: #111827;
 }
 
-.elternsprechtag-view__fach-teacher {
+.elternsprechtag-view__lehrkraft-faecher {
     font-size: 14px;
     color: #6b7280;
 }
 
-.elternsprechtag-view__fach-pill {
+.elternsprechtag-view__lehrkraft-pill {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -174,7 +174,7 @@
     font-weight: 600;
 }
 
-.elternsprechtag-view__fach-pill vaadin-icon {
+.elternsprechtag-view__lehrkraft-pill vaadin-icon {
     width: 12px;
     height: 12px;
 }
@@ -379,7 +379,7 @@
 }
 
 @media (max-width: 640px) {
-    .elternsprechtag-view__fach-grid {
+    .elternsprechtag-view__lehrkraft-grid {
         grid-template-columns: 1fr;
     }
 }
