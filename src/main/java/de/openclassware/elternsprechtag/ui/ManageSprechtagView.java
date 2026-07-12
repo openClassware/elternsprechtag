@@ -39,7 +39,7 @@ public class ManageSprechtagView extends Div {
   private SprechtagStatusEnum statusFilter;
   private String searchQuery = "";
 
-  public ManageSprechtagView(ManageSprechtagPresenter presenter) {
+  ManageSprechtagView(ManageSprechtagPresenter presenter) {
     this.presenter = presenter;
     this.sprechtage = presenter.findAllSprechtage();
     addClassName("manage-sprechtag-view");

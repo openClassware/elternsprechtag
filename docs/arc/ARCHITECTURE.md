@@ -122,7 +122,9 @@ als eigene, saubere Entscheidung.
 
 - **CSS**: BEM (Block / Element / Modifier). Details in `/CLAUDE.md`.
 - **Views**: responsive (Mobile, Tablet, Desktop).
-- **Sichtbarkeit**: Presenter/Views wo möglich package-private halten (Kapselung).
+- **Sichtbarkeit**: Presenter sind **package-private** (nur ihr View im selben Package nutzt sie).
+  View-**Klassen** bleiben `public` (Vaadin-Route + paketübergreifende `X.ROUTE`/`X.class`-Referenzen),
+  ihre **Konstruktoren** sind package-private (nur das Framework konstruiert sie).
 
 ---
 
@@ -138,7 +140,7 @@ sind **noch nicht umgesetzt** — pro Punkt einzeln priorisieren.
 | F3 | Datum/Zeit-Formatter (`Locale.GERMANY`, `"HH:mm"`) an mehreren Stellen dupliziert | mittel | **erledigt**: zentrale `ui.Formats` (`time`/`dateLong`/`monthShort`) |
 | F4 | Geschäftslogik in Services komplett ungetestet | strukturell | **erledigt**: `BuchungServiceTest` (6) + `SprechtagServiceTest` (9) via `@DataJpaTest` |
 | F5 | Presenter ist dünne Delegation, während der View Logik trägt — gegen „dummer View" | strukturell | **erledigt für `OrganizerView`** (View-Model `OrganizerModel`); weitere Views bei Bedarf |
-| F6 | Uneinheitliche Sichtbarkeit (public vs. package-private) bei Presentern/Views | kosmetisch | offen |
+| F6 | Uneinheitliche Sichtbarkeit (public vs. package-private) bei Presentern/Views | kosmetisch | **erledigt**: Presenter package-private, View-Konstruktoren package-private |
 
 **Erledigt:**
 

@@ -13,20 +13,20 @@ import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component
-public class EditSprechtagPresenter {
+class EditSprechtagPresenter {
 
   private final KlassenService klassenService;
   private final SprechtagService sprechtagService;
 
-  public List<KlasseOption> findAllKlassen() {
+  List<KlasseOption> findAllKlassen() {
     return klassenService.findAllOptions();
   }
 
-  public Optional<SprechtagForm> loadForm(UUID id) {
+  Optional<SprechtagForm> loadForm(UUID id) {
     return sprechtagService.loadForm(id);
   }
 
-  public UUID save(UUID id, SprechtagForm form, SprechtagStatusEnum status) {
+  UUID save(UUID id, SprechtagForm form, SprechtagStatusEnum status) {
     return sprechtagService.createOrUpdate(id, form, status);
   }
 }

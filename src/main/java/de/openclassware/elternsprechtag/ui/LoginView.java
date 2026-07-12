@@ -17,7 +17,7 @@ public class LoginView extends Div implements BeforeEnterObserver {
 
   private final LoginForm login;
 
-  public LoginView() {
+  LoginView() {
     LoginI18n.Form i18nForm = new LoginI18n.Form();
     i18nForm.setTitle(getTranslation("login.title"));
     i18nForm.setUsername(getTranslation("login.username"));

@@ -10,19 +10,19 @@ import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component
-public class ManageSprechtagPresenter {
+class ManageSprechtagPresenter {
 
   private final SprechtagService sprechtagService;
 
-  public List<SprechtagRow> findAllSprechtage() {
+  List<SprechtagRow> findAllSprechtage() {
     return sprechtagService.findAllRows();
   }
 
-  public void changeStatus(UUID id, SprechtagStatusEnum newStatus) {
+  void changeStatus(UUID id, SprechtagStatusEnum newStatus) {
     sprechtagService.changeStatus(id, newStatus);
   }
 
-  public UUID duplicate(UUID id) {
+  UUID duplicate(UUID id) {
     return sprechtagService.duplicate(id);
   }
 }

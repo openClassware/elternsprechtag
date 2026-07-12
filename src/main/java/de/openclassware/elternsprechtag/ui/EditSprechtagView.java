@@ -62,7 +62,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private TextField shareLink;
   private String origin;
 
-  public EditSprechtagView(EditSprechtagPresenter presenter) {
+  EditSprechtagView(EditSprechtagPresenter presenter) {
     this.presenter = presenter;
     addClassName("edit-sprechtag-view");
     add(

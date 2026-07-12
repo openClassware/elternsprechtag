@@ -79,7 +79,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   private Div slotArea;
   private Div summaryContainer;
 
-  public ElternsprechtagView(ElternsprechtagPresenter presenter) {
+  ElternsprechtagView(ElternsprechtagPresenter presenter) {
     this.presenter = presenter;
     addClassName("elternsprechtag-view");
   }

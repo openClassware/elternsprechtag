@@ -15,29 +15,29 @@ import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component
-public class ElternsprechtagPresenter {
+class ElternsprechtagPresenter {
 
   private final SprechtagService sprechtagService;
   private final BuchungService buchungService;
   private final ElternsprechtagProperties properties;
 
-  public Optional<Sprechtag> findByAccessToken(String accessToken) {
+  Optional<Sprechtag> findByAccessToken(String accessToken) {
     if (accessToken == null || accessToken.isBlank()) {
       return Optional.empty();
     }
     return sprechtagService.findByAccessToken(accessToken);
   }
 
-  public List<LehrkraftOption> ladeLehrkraftOptionen(Sprechtag sprechtag, Klasse klasse) {
+  List<LehrkraftOption> ladeLehrkraftOptionen(Sprechtag sprechtag, Klasse klasse) {
     return buchungService.ladeLehrkraftOptionen(sprechtag, klasse);
   }
 
   /** Persistiert den Eltern-Submit atomar. Wirft {@link BuchungService.TerminBelegtException}. */
-  public List<Buchung> buchen(BuchungsAnfrage anfrage) {
+  List<Buchung> buchen(BuchungsAnfrage anfrage) {
     return buchungService.buchen(anfrage);
   }
 
-  public String getSchoolname() {
+  String getSchoolname() {
     return properties.getSchoolname();
   }
 }

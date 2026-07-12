@@ -14,6 +14,8 @@ das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTUR
 - Views sind **so dumm wie möglich**: Anzeige- und Entscheidungslogik liegt im Presenter,
   nicht im View.
 - Views/Components rufen **nie** ein Repository direkt.
+- **Sichtbarkeit**: Presenter sind package-private; View-Klassen `public` (Vaadin-Route), ihre
+  Konstruktoren aber package-private.
 
 ## Auth
 
