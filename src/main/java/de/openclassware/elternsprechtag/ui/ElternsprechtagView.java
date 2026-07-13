@@ -22,7 +22,6 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.services.BuchungService;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
@@ -36,7 +35,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Route(value = ElternsprechtagView.ROUTE, autoLayout = false)
@@ -86,15 +84,17 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   @Override
   public void setParameter(BeforeEvent event, @OptionalParameter String token) {
     removeAll();
-    Optional<SprechtagPublic> found = presenter.findByAccessToken(token);
-    if (found.isPresent() && found.get().status() == SprechtagStatusEnum.VEROEFFENTLICHT) {
-      add(createHeader(), createBookingCard(found.get()));
-    } else if (found.isPresent() && found.get().status() == SprechtagStatusEnum.ABGESAGT) {
-      add(createMessage("elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
-    } else {
-      add(
-          createMessage(
-              "elternsprechtag.unavailable.title", "elternsprechtag.unavailable.description"));
+    ElternsprechtagPresenter.ZugangsErgebnis ergebnis = presenter.pruefeZugang(token);
+    switch (ergebnis.zugang()) {
+      case BUCHBAR -> add(createHeader(), createBookingCard(ergebnis.sprechtag()));
+      case ABGESAGT ->
+          add(
+              createMessage(
+                  "elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
+      case NICHT_VERFUEGBAR ->
+          add(
+              createMessage(
+                  "elternsprechtag.unavailable.title", "elternsprechtag.unavailable.description"));
     }
   }
 

@@ -21,8 +21,31 @@ class ElternsprechtagPresenter {
   private final BuchungService buchungService;
   private final ElternsprechtagProperties properties;
 
-  Optional<SprechtagPublic> findByAccessToken(String accessToken) {
-    return sprechtagService.findPublicByAccessToken(accessToken);
+  /** Welcher Screen der Eltern-View aus dem Zugriff folgt. */
+  enum Zugang {
+    BUCHBAR,
+    ABGESAGT,
+    NICHT_VERFUEGBAR
+  }
+
+  /** Ergebnis der Zugriffsprüfung; {@code sprechtag} ist nur bei {@link Zugang#BUCHBAR} gesetzt. */
+  record ZugangsErgebnis(Zugang zugang, SprechtagPublic sprechtag) {}
+
+  /**
+   * Entscheidet aus Token + Status, welcher Screen erscheint: veröffentlicht → buchbar,
+   * abgesagt → Absage-Hinweis, sonst (unbekannt/Entwurf/abgeschlossen) → nicht verfügbar.
+   */
+  ZugangsErgebnis pruefeZugang(String accessToken) {
+    Optional<SprechtagPublic> gefunden = sprechtagService.findPublicByAccessToken(accessToken);
+    if (gefunden.isEmpty()) {
+      return new ZugangsErgebnis(Zugang.NICHT_VERFUEGBAR, null);
+    }
+    SprechtagPublic sprechtag = gefunden.get();
+    return switch (sprechtag.status()) {
+      case VEROEFFENTLICHT -> new ZugangsErgebnis(Zugang.BUCHBAR, sprechtag);
+      case ABGESAGT -> new ZugangsErgebnis(Zugang.ABGESAGT, null);
+      case ENTWURF, ABGESCHLOSSEN -> new ZugangsErgebnis(Zugang.NICHT_VERFUEGBAR, null);
+    };
   }
 
   List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId) {
