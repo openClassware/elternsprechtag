@@ -112,6 +112,14 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private Component createInfo(SprechtagPublic sprechtag) {
+    return createKopf(sprechtag, true);
+  }
+
+  /**
+   * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs- und Bestätigungsseite. Nur beim Buchen kommen
+   * die Intro-Zeile und die Beschreibung dazu.
+   */
+  private Div createKopf(SprechtagPublic sprechtag, boolean withBookingText) {
     Div kopf = new Div();
     kopf.addClassName("elternsprechtag-view__kopf");
 
@@ -131,14 +139,16 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     }
     kopf.add(meta);
 
-    Paragraph intro = new Paragraph(getTranslation("elternsprechtag.intro"));
-    intro.addClassName("elternsprechtag-view__intro");
-    kopf.add(intro);
+    if (withBookingText) {
+      Paragraph intro = new Paragraph(getTranslation("elternsprechtag.intro"));
+      intro.addClassName("elternsprechtag-view__intro");
+      kopf.add(intro);
 
-    if (sprechtag.description() != null && !sprechtag.description().isBlank()) {
-      Paragraph description = new Paragraph(sprechtag.description());
-      description.addClassName("elternsprechtag-view__description");
-      kopf.add(description);
+      if (sprechtag.description() != null && !sprechtag.description().isBlank()) {
+        Paragraph description = new Paragraph(sprechtag.description());
+        description.addClassName("elternsprechtag-view__description");
+        kopf.add(description);
+      }
     }
 
     return kopf;
@@ -474,8 +484,12 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
             session.toWuensche());
 
     try {
-      int gebucht = presenter.buchen(anfrage).size();
-      showConfirmation(gebucht);
+      // Snapshot vor removeAll(): Formularwerte werden für die Bestätigung festgehalten.
+      String kind = schuelerName.getValue().trim();
+      String klasseName = klasse.getValue().name();
+      String eltern = elternName.getValue().trim();
+      int gebucht = presenter.buchen(anfrage);
+      showConfirmation(gebucht, kind, klasseName, eltern, notizText);
     } catch (BuchungService.TerminBelegtException conflict) {
       Notification notification =
           Notification.show(getTranslation("elternsprechtag.footer.conflict"));
@@ -493,17 +507,118 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     refreshFooter();
   }
 
-  private void showConfirmation(int count) {
+  /** Bestätigungskarte im Stil der Buchungsseite: Erfolgs-Banner, Sprechtag-Kopf, Empfänger, Termine. */
+  private void showConfirmation(
+      int count, String kind, String klasseName, String eltern, String notizText) {
     removeAll();
-    Div message = new Div();
-    message.addClassName("elternsprechtag-view__message");
+    Div card = new Div();
+    card.addClassName("elternsprechtag-view__card");
+    card.add(
+        createSuccessBanner(count),
+        createKopf(sprechtag, false),
+        createConfirmBody(kind, klasseName, eltern, notizText, count));
+    add(createHeader(), card);
+  }
+
+  private Component createSuccessBanner(int count) {
+    Div banner = new Div();
+    banner.addClassName("elternsprechtag-view__confirm-success");
+
+    Span icon = new Span(VaadinIcon.CHECK_CIRCLE.create());
+    icon.addClassName("elternsprechtag-view__confirm-success-icon");
+
+    Div texts = new Div();
+    texts.addClassName("elternsprechtag-view__confirm-success-text");
     H1 title = new H1(getTranslation("elternsprechtag.success.title"));
-    title.addClassName("elternsprechtag-view__message-title");
+    title.addClassName("elternsprechtag-view__confirm-success-title");
     Paragraph description =
         new Paragraph(getTranslation("elternsprechtag.success.description", countLabel(count)));
-    description.addClassName("elternsprechtag-view__message-description");
-    message.add(title, description);
-    add(createHeader(), message);
+    description.addClassName("elternsprechtag-view__confirm-success-desc");
+    texts.add(title, description);
+
+    banner.add(icon, texts);
+    return banner;
+  }
+
+  private Component createConfirmBody(
+      String kind, String klasseName, String eltern, String notizText, int count) {
+    Div body = new Div();
+    body.addClassName("elternsprechtag-view__body");
+    body.add(createRecipient(kind, klasseName, eltern, notizText), createBookedTermine(count));
+    return body;
+  }
+
+  private Component createRecipient(String kind, String klasseName, String eltern, String notizText) {
+    Div recipient = new Div();
+    recipient.addClassName("elternsprechtag-view__confirm-recipient");
+
+    Div fuer = new Div();
+    fuer.addClassName("elternsprechtag-view__confirm-for");
+    fuer.setText(getTranslation("elternsprechtag.confirm.fuer", kind, klasseName));
+
+    Div elternLine = new Div();
+    elternLine.addClassName("elternsprechtag-view__confirm-eltern");
+    elternLine.setText(getTranslation("elternsprechtag.confirm.eltern", eltern));
+
+    recipient.add(fuer, elternLine);
+
+    if (notizText != null) {
+      Div notizBlock = new Div();
+      notizBlock.addClassName("elternsprechtag-view__confirm-notiz");
+      Span label = new Span(getTranslation("elternsprechtag.confirm.notiz"));
+      label.addClassName("elternsprechtag-view__confirm-notiz-label");
+      Paragraph text = new Paragraph(notizText);
+      text.addClassName("elternsprechtag-view__confirm-notiz-text");
+      notizBlock.add(label, text);
+      recipient.add(notizBlock);
+    }
+
+    return recipient;
+  }
+
+  private Component createBookedTermine(int count) {
+    Div panel = new Div();
+    panel.addClassName("elternsprechtag-view__summary");
+
+    Div head = new Div();
+    head.addClassName("elternsprechtag-view__summary-head");
+    Span title = new Span(getTranslation("elternsprechtag.confirm.termine.title"));
+    title.addClassName("elternsprechtag-view__summary-title");
+    Span countLabel = new Span(countLabel(count));
+    countLabel.addClassName("elternsprechtag-view__summary-count");
+    head.add(title, countLabel);
+    panel.add(head);
+
+    // In Lehrkraft-Reihenfolge, wie die Auswahl-Zusammenfassung — nur statisch (ohne Entfernen).
+    for (LehrkraftOption lehrkraft : session.optionen()) {
+      SlotOption slot = session.gewaehlterSlot(lehrkraft.lehrauftragId());
+      if (slot != null) {
+        panel.add(createConfirmRow(lehrkraft, slot));
+      }
+    }
+    return panel;
+  }
+
+  private Component createConfirmRow(LehrkraftOption lehrkraft, SlotOption slot) {
+    Div row = new Div();
+    row.addClassName("elternsprechtag-view__summary-row");
+
+    Span badge = new Span(lehrkraft.kuerzel());
+    badge.addClassName("elternsprechtag-view__summary-badge");
+
+    Div info = new Div();
+    info.addClassName("elternsprechtag-view__summary-info");
+    Div main = new Div();
+    main.addClassName("elternsprechtag-view__summary-main");
+    main.setText(
+        getTranslation("elternsprechtag.summary.row", lehrkraft.lehrerName(), Formats.time(slot.zeit())));
+    Div sub = new Div();
+    sub.addClassName("elternsprechtag-view__summary-sub");
+    sub.setText(String.join(", ", lehrkraft.faecher()));
+    info.add(main, sub);
+
+    row.add(badge, info);
+    return row;
   }
 
   private void refreshFooter() {

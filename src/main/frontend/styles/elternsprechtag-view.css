@@ -412,6 +412,73 @@
     }
 }
 
+/* Confirmation page: success banner as the first card section, mirroring the __kopf border. */
+.elternsprechtag-view__confirm-success {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f6fbf7;
+}
+
+.elternsprechtag-view__confirm-success-icon {
+    display: flex;
+    flex-shrink: 0;
+}
+
+.elternsprechtag-view__confirm-success-icon vaadin-icon {
+    width: 28px;
+    height: 28px;
+    color: #16a34a;
+}
+
+.elternsprechtag-view__confirm-success-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.elternsprechtag-view__confirm-success-desc {
+    margin: 4px 0 0;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* Recipient block above the booked-appointments panel. */
+.elternsprechtag-view__confirm-for {
+    font-weight: 600;
+    color: #111827;
+}
+
+.elternsprechtag-view__confirm-eltern {
+    margin-top: 2px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.elternsprechtag-view__confirm-notiz {
+    margin-top: 1rem;
+    padding: 12px 14px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.elternsprechtag-view__confirm-notiz-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.elternsprechtag-view__confirm-notiz-text {
+    margin: 4px 0 0;
+    color: #374151;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
 /* Cancelled / unavailable states: no header, centered message. */
 .elternsprechtag-view__message {
     max-width: 480px;

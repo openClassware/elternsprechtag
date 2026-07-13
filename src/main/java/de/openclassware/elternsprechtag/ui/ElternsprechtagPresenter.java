@@ -1,7 +1,6 @@
 package de.openclassware.elternsprechtag.ui;
 
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
-import de.openclassware.elternsprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.services.BuchungService;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
@@ -52,8 +51,11 @@ class ElternsprechtagPresenter {
     return buchungService.ladeLehrkraftOptionen(sprechtagId, klasseId);
   }
 
-  /** Persistiert den Eltern-Submit atomar. Wirft {@link BuchungService.TerminBelegtException}. */
-  List<Buchung> buchen(BuchungsAnfrage anfrage) {
+  /**
+   * Persistiert den Eltern-Submit atomar und gibt die Anzahl gebuchter Termine zurück. Wirft
+   * {@link BuchungService.TerminBelegtException}.
+   */
+  int buchen(BuchungsAnfrage anfrage) {
     return buchungService.buchen(anfrage);
   }
 

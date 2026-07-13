@@ -137,10 +137,10 @@ public class BuchungService {
   /**
    * Persistiert einen Eltern-Submit als N Buchungen — alles oder nichts. Ist auch nur ein Slot
    * nicht mehr frei, wird die gesamte Transaktion zurückgerollt und {@link TerminBelegtException}
-   * geworfen.
+   * geworfen. Gibt die Anzahl gebuchter Termine zurück; Entities verlassen die Service-Schicht nicht.
    */
   @Transactional
-  public List<Buchung> buchen(BuchungsAnfrage anfrage) {
+  public int buchen(BuchungsAnfrage anfrage) {
     List<Buchung> buchungen = new ArrayList<>();
     LocalDateTime jetzt = LocalDateTime.now();
     try {
@@ -183,7 +183,7 @@ public class BuchungService {
         buchung.setTermin(termin);
         buchungen.add(buchungRepository.save(buchung));
       }
-      return buchungen;
+      return buchungen.size();
     } catch (OptimisticLockingFailureException e) {
       // Zwei Eltern haben denselben Slot parallel gebucht — als Konflikt behandeln.
       throw new TerminBelegtException("Ein gewählter Termin wurde soeben vergeben.");

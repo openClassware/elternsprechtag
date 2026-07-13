@@ -84,11 +84,12 @@ class BuchungServiceTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag();
     Termin termin = termineSorted().get(0);
 
-    List<Buchung> result = buchungService.buchen(anfrage(f.lehrauftrag(), termin));
+    int gebucht = buchungService.buchen(anfrage(f.lehrauftrag(), termin));
 
-    assertThat(result).hasSize(1);
-    assertThat(result.get(0).getStatus()).isEqualTo(BuchungStatusEnum.ZUGESAGT);
-    assertThat(result.get(0).getElternName()).isEqualTo("Eltern Müller");
+    assertThat(gebucht).isEqualTo(1);
+    Buchung persisted = buchungRepository.findAll().get(0);
+    assertThat(persisted.getStatus()).isEqualTo(BuchungStatusEnum.ZUGESAGT);
+    assertThat(persisted.getElternName()).isEqualTo("Eltern Müller");
     assertThat(terminRepository.findById(termin.getId()).orElseThrow().getStatus())
         .isEqualTo(TerminStatusEnum.BELEGT);
     assertThat(buchungRepository.count()).isEqualTo(1);
@@ -99,10 +100,9 @@ class BuchungServiceTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag();
     List<Termin> frei = termineSorted();
 
-    List<Buchung> result =
-        buchungService.buchen(anfrage(f.lehrauftrag(), frei.get(0), frei.get(1)));
+    int gebucht = buchungService.buchen(anfrage(f.lehrauftrag(), frei.get(0), frei.get(1)));
 
-    assertThat(result).hasSize(2);
+    assertThat(gebucht).isEqualTo(2);
     assertThat(buchungRepository.count()).isEqualTo(2);
     assertThat(terminRepository.findById(frei.get(0).getId()).orElseThrow().getStatus())
         .isEqualTo(TerminStatusEnum.BELEGT);
