@@ -24,18 +24,12 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import de.openclassware.elternsprechtag.services.BuchungService;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
 import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
 import de.openclassware.elternsprechtag.services.BuchungService.SlotOption;
 import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagPublic;
 import de.openclassware.elternsprechtag.ui.components.StepHeader;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 @Route(value = ElternsprechtagView.ROUTE, autoLayout = false)
 @AnonymousAllowed
@@ -56,21 +50,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   private Div footerStatus;
   private Button bookButton;
 
-  private enum SlotState {
-    FREI,
-    BELEGT,
-    GEWAEHLT,
-    KONFLIKT
-  }
-
-  /** Lehrkraft-Auswahl der gewählten Klasse; erst nach Klassenwahl befüllt. */
-  private List<LehrkraftOption> lehrkraftOptionen = List.of();
-
-  /** Aktuell aufgeklappte Lehrkraft in Schritt 3. */
-  private LehrkraftOption activeLehrkraft;
-
-  /** Gewählter Slot je Lehrauftrag (Schlüssel = lehrauftragId). */
-  private final Map<UUID, SlotOption> selection = new LinkedHashMap<>();
+  /** Buchungs-„Warenkorb" + Entscheidungslogik; Vaadin-frei und unit-getestet. */
+  private final BookingSession session = new BookingSession();
 
   private Div lehrkraftGrid;
   private Div slotArea;
@@ -112,9 +93,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   /** Single card holding the Sprechtag head plus all booking steps and the footer. */
   private Component createBookingCard(SprechtagPublic sprechtag) {
     this.sprechtag = sprechtag;
-    selection.clear();
-    activeLehrkraft = null;
-    lehrkraftOptionen = List.of();
+    session.reset(List.of());
 
     Div card = new Div();
     card.addClassName("elternsprechtag-view__card");
@@ -232,21 +211,18 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   /** Reagiert auf die Klassenwahl: lädt die echten Lehrkräfte/Termine und verwirft die Auswahl. */
   private void onKlasseChanged() {
-    loadLehrkraftOptionen();
-    selection.clear();
-    activeLehrkraft = null;
+    session.reset(loadOptionen());
     refreshLehrkraftGrid();
     refreshSlotArea();
     refreshSummary();
     refreshFooter();
   }
 
-  private void loadLehrkraftOptionen() {
+  private List<LehrkraftOption> loadOptionen() {
     KlasseOption selected = klasse.getValue();
-    lehrkraftOptionen =
-        selected == null
-            ? List.of()
-            : presenter.ladeLehrkraftOptionen(sprechtag.id(), selected.id());
+    return selected == null
+        ? List.of()
+        : presenter.ladeLehrkraftOptionen(sprechtag.id(), selected.id());
   }
 
   private Component createLegend() {
@@ -270,20 +246,20 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   private void refreshLehrkraftGrid() {
     lehrkraftGrid.removeAll();
-    if (lehrkraftOptionen.isEmpty()) {
+    if (!session.hatOptionen()) {
       Div placeholder = new Div();
       placeholder.addClassName("elternsprechtag-view__placeholder");
       placeholder.setText(getTranslation("elternsprechtag.lehrkraft.placeholder"));
       lehrkraftGrid.add(placeholder);
       return;
     }
-    lehrkraftOptionen.forEach(lehrkraft -> lehrkraftGrid.add(createLehrkraftCard(lehrkraft)));
+    session.optionen().forEach(lehrkraft -> lehrkraftGrid.add(createLehrkraftCard(lehrkraft)));
   }
 
   private Component createLehrkraftCard(LehrkraftOption lehrkraft) {
     Div card = new Div();
     card.addClassName("elternsprechtag-view__lehrkraft");
-    if (isActive(lehrkraft) || selection.containsKey(lehrkraft.lehrauftragId())) {
+    if (session.isActive(lehrkraft) || session.istGewaehlt(lehrkraft.lehrauftragId())) {
       card.addClassName("elternsprechtag-view__lehrkraft--selected");
     }
 
@@ -302,7 +278,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
     card.add(badge, info);
 
-    SlotOption chosen = selection.get(lehrkraft.lehrauftragId());
+    SlotOption chosen = session.gewaehlterSlot(lehrkraft.lehrauftragId());
     if (chosen != null) {
       Span pill = new Span();
       pill.addClassName("elternsprechtag-view__lehrkraft-pill");
@@ -312,28 +288,24 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
     card.addClickListener(
         event -> {
-          activeLehrkraft = lehrkraft;
+          session.setActive(lehrkraft);
           refreshLehrkraftGrid();
           refreshSlotArea();
         });
     return card;
   }
 
-  private boolean isActive(LehrkraftOption lehrkraft) {
-    return activeLehrkraft != null
-        && activeLehrkraft.lehrauftragId().equals(lehrkraft.lehrauftragId());
-  }
-
   private void refreshSlotArea() {
     slotArea.removeAll();
-    if (activeLehrkraft == null) {
+    LehrkraftOption active = session.active();
+    if (active == null) {
       Div placeholder = new Div();
       placeholder.addClassName("elternsprechtag-view__placeholder");
       placeholder.setText(getTranslation("elternsprechtag.termin.placeholder"));
       slotArea.add(placeholder);
       return;
     }
-    if (activeLehrkraft.slots().isEmpty()) {
+    if (active.slots().isEmpty()) {
       Div placeholder = new Div();
       placeholder.addClassName("elternsprechtag-view__placeholder");
       placeholder.setText(getTranslation("elternsprechtag.termin.empty"));
@@ -342,7 +314,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     }
     Div grid = new Div();
     grid.addClassName("elternsprechtag-view__slot-grid");
-    activeLehrkraft.slots().forEach(slot -> grid.add(createSlot(slot)));
+    active.slots().forEach(slot -> grid.add(createSlot(slot)));
     slotArea.add(grid);
   }
 
@@ -351,7 +323,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     slotEl.addClassName("elternsprechtag-view__slot");
     slotEl.add(new Span(Formats.time(slot.zeit())));
 
-    switch (slotState(slot)) {
+    switch (session.slotState(slot)) {
       case BELEGT -> slotEl.addClassName("elternsprechtag-view__slot--belegt");
       case KONFLIKT -> slotEl.addClassName("elternsprechtag-view__slot--konflikt");
       case GEWAEHLT -> {
@@ -367,31 +339,13 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return slotEl;
   }
 
-  private SlotState slotState(SlotOption slot) {
-    if (slot.belegt()) {
-      return SlotState.BELEGT;
-    }
-    SlotOption chosen = selection.get(activeLehrkraft.lehrauftragId());
-    if (chosen != null && chosen.terminId().equals(slot.terminId())) {
-      return SlotState.GEWAEHLT;
-    }
-    // Konflikt: derselbe Zeitpunkt ist bereits für eine andere Lehrkraft gewählt.
-    for (Map.Entry<UUID, SlotOption> entry : selection.entrySet()) {
-      if (!entry.getKey().equals(activeLehrkraft.lehrauftragId())
-          && entry.getValue().zeit().equals(slot.zeit())) {
-        return SlotState.KONFLIKT;
-      }
-    }
-    return SlotState.FREI;
-  }
-
   private void selectSlot(SlotOption slot) {
-    selection.put(activeLehrkraft.lehrauftragId(), slot);
+    session.waehle(slot);
     refreshAfterSelectionChange();
   }
 
   private void deselectSlot() {
-    selection.remove(activeLehrkraft.lehrauftragId());
+    session.abwaehlen();
     refreshAfterSelectionChange();
   }
 
@@ -404,7 +358,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   private void refreshSummary() {
     summaryContainer.removeAll();
-    if (selection.isEmpty()) {
+    if (!session.hatAuswahl()) {
       return;
     }
 
@@ -415,14 +369,14 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     head.addClassName("elternsprechtag-view__summary-head");
     Span title = new Span(getTranslation("elternsprechtag.summary.title"));
     title.addClassName("elternsprechtag-view__summary-title");
-    Span count = new Span(countLabel(selection.size()));
+    Span count = new Span(countLabel(session.auswahlAnzahl()));
     count.addClassName("elternsprechtag-view__summary-count");
     head.add(title, count);
     panel.add(head);
 
     // In Lehrkraft-Reihenfolge rendern, nicht in Auswahl-Reihenfolge.
-    for (LehrkraftOption lehrkraft : lehrkraftOptionen) {
-      SlotOption slot = selection.get(lehrkraft.lehrauftragId());
+    for (LehrkraftOption lehrkraft : session.optionen()) {
+      SlotOption slot = session.gewaehlterSlot(lehrkraft.lehrauftragId());
       if (slot != null) {
         panel.add(createSummaryRow(lehrkraft, slot));
       }
@@ -462,7 +416,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     remove.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
     remove.addClickListener(
         event -> {
-          selection.remove(lehrkraft.lehrauftragId());
+          session.entferne(lehrkraft.lehrauftragId());
           refreshAfterSelectionChange();
         });
 
@@ -510,14 +464,14 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (!bookingValid()) {
       return;
     }
-    List<BuchungsWunsch> wuensche =
-        selection.entrySet().stream()
-            .map(entry -> new BuchungsWunsch(entry.getKey(), entry.getValue().terminId()))
-            .toList();
-    String notizText = notiz.getValue() == null || notiz.getValue().isBlank() ? null : notiz.getValue().trim();
+    String notizText =
+        notiz.getValue() == null || notiz.getValue().isBlank() ? null : notiz.getValue().trim();
     BuchungsAnfrage anfrage =
         new BuchungsAnfrage(
-            elternName.getValue().trim(), schuelerName.getValue().trim(), notizText, wuensche);
+            elternName.getValue().trim(),
+            schuelerName.getValue().trim(),
+            notizText,
+            session.toWuensche());
 
     try {
       int gebucht = presenter.buchen(anfrage).size();
@@ -532,38 +486,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   /** Nach einem Konflikt: Optionen neu laden und ungültig gewordene Slots aus der Auswahl werfen. */
   private void handleConflict() {
-    loadLehrkraftOptionen();
-    pruneSelection();
-    if (activeLehrkraft != null) {
-      activeLehrkraft = findLehrkraft(activeLehrkraft.lehrauftragId());
-    }
+    session.reload(loadOptionen());
     refreshLehrkraftGrid();
     refreshSlotArea();
     refreshSummary();
     refreshFooter();
-  }
-
-  private void pruneSelection() {
-    selection
-        .entrySet()
-        .removeIf(
-            entry -> {
-              LehrkraftOption fach = findLehrkraft(entry.getKey());
-              if (fach == null) {
-                return true;
-              }
-              return fach.slots().stream()
-                  .noneMatch(
-                      slot ->
-                          slot.terminId().equals(entry.getValue().terminId()) && !slot.belegt());
-            });
-  }
-
-  private LehrkraftOption findLehrkraft(UUID lehrauftragId) {
-    return lehrkraftOptionen.stream()
-        .filter(fach -> fach.lehrauftragId().equals(lehrauftragId))
-        .findFirst()
-        .orElse(null);
   }
 
   private void showConfirmation(int count) {
@@ -583,7 +510,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (footerStatus == null) {
       return;
     }
-    int count = selection.size();
+    int count = session.auswahlAnzahl();
     bookButton.setEnabled(bookingValid());
     bookButton.setText(
         count == 0
@@ -607,7 +534,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private boolean bookingValid() {
-    return !selection.isEmpty() && namesFilled() && klasse.getValue() != null;
+    return session.hatAuswahl() && namesFilled() && klasse.getValue() != null;
   }
 
   private boolean namesFilled() {
