@@ -49,6 +49,12 @@ Domain / @Entity   (JPA)              — Persistenzmodell
 - **Der View ist so dumm wie möglich.** Anzeige- und Entscheidungslogik (Filter, „leer? →
   welche Komponente", Aufbereitung) gehört in den Presenter; der View rendert nur das vom
   Presenter gelieferte View-Model.
+- **Presenter sind zustandslos** (`@Component`-Singletons). Per-View-Zustand (Filterauswahl,
+  Buchungs-„Warenkorb") lebt im View bzw. in einem vom View gehaltenen Modell — nicht im Presenter.
+- **Komplexe UI-Entscheidungslogik gehört in ein Vaadin-freies Modell** (z. B. `BookingSession`
+  für den Eltern-Buchungsflow: Slot-Zustand inkl. Zeitkonflikt, Aufräumen nach Konflikt,
+  Anfrage-Bau). Bewusst ohne Vaadin-Abhängigkeit, damit die Logik per plain JUnit testbar ist —
+  der View hält eine Instanz und rendert nur.
 - UI-Texte kommen über `getTranslation(...)`, nicht als String-Literal.
 
 ## Domänenmodell
@@ -116,7 +122,9 @@ als eigene, saubere Entscheidung.
   Test (`@DataJpaTest` / `@SpringBootTest`).
 - Priorität: `BuchungService` (Buchungs-Atomarität, `TerminBelegtException`, optimistisches
   Locking) und `SprechtagService` (Materialisierung, Status-Übergänge).
-- Views bleiben dumm → kein Vaadin-E2E, keine View-Tests nötig.
+- Views bleiben dumm → kein Vaadin-E2E, keine View-Tests nötig. **Vaadin-freie UI-Modelle**
+  (z. B. `BookingSession`) sind die Ausnahme: Sie tragen Entscheidungslogik und werden per plain
+  JUnit getestet (`BookingSessionTest`) — ohne Spring-Kontext.
 
 ## Konventionen
 
@@ -125,3 +133,19 @@ als eigene, saubere Entscheidung.
 - **Sichtbarkeit**: Presenter sind **package-private** (nur ihr View im selben Package nutzt sie).
   View-**Klassen** bleiben `public` (Vaadin-Route + paketübergreifende `X.ROUTE`/`X.class`-Referenzen),
   ihre **Konstruktoren** sind package-private (nur das Framework konstruiert sie).
+
+## Findings-Backlog
+
+Bekannte Abweichungen vom Soll und ihr Stand. Erledigte Findings bleiben als Changelog stehen.
+
+| #  | Thema                                                        | Status                |
+|----|-------------------------------------------------------------|-----------------------|
+| F1 | Read-Modelle statt Entities über die Presenter-Grenze       | ✅ erledigt           |
+| F2 | Lazy-Zugriff im View (`@EntityGraph` bereits vorhanden)      | ✅ kein Bug           |
+| F3 | Datum/Zeit zentral über `ui.Formats`                        | ✅ erledigt           |
+| F4 | Service-Tests (`BuchungService`, `SprechtagService`)        | ✅ erledigt           |
+| F5 | `OrganizerView` dumm, Logik ins View-Model                  | ✅ erledigt           |
+| F6 | Sichtbarkeit von Presentern/Views vereinheitlicht           | ✅ erledigt           |
+| F7 | Filterlogik `ManageSprechtagView` → `…Presenter.filter(…)`  | ✅ erledigt           |
+| F8 | Screen-Entscheidung Eltern-View → `…Presenter.pruefeZugang` | ✅ erledigt           |
+| F9 | Buchungs-Warenkorb + Konfliktlogik → `BookingSession` (+Test)| ✅ erledigt           |

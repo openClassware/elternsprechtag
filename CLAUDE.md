@@ -12,7 +12,9 @@ das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTUR
 - Entity→Record-Mapping passiert **ausschließlich im Service**; der Presenter reicht nur
   durch. Records liegen verschachtelt im erzeugenden Service (`XxxService.YyyOption`).
 - Views sind **so dumm wie möglich**: Anzeige- und Entscheidungslogik liegt im Presenter,
-  nicht im View.
+  nicht im View. Presenter sind **zustandslos** (Singletons) — Per-View-Zustand bleibt im View.
+- **Komplexe UI-Entscheidungslogik** (mit Zustand) gehört in ein **Vaadin-freies Modell**
+  (z. B. `BookingSession`), das der View hält — so bleibt sie per plain JUnit testbar.
 - Views/Components rufen **nie** ein Repository direkt.
 - **Sichtbarkeit**: Presenter sind package-private; View-Klassen `public` (Vaadin-Route), ihre
   Konstruktoren aber package-private.
@@ -33,6 +35,8 @@ das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTUR
 
 - Geschäftslogik lebt im Service und braucht Tests. Neue oder geänderte Service-Logik ⇒
   Test (`@DataJpaTest` / `@SpringBootTest`). Views bleiben dumm und testfrei.
+- Ausnahme: Vaadin-freie UI-Modelle (z. B. `BookingSession`) tragen Entscheidungslogik und
+  bekommen **plain-JUnit-Tests** ohne Spring-Kontext.
 
 ## Views
 
