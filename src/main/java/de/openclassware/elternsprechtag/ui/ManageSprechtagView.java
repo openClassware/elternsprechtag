@@ -19,7 +19,6 @@ import de.openclassware.elternsprechtag.ui.components.SprechtagTable;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 @Route(value = ManageSprechtagView.ROUTE, layout = MainLayout.class)
@@ -37,7 +36,6 @@ public class ManageSprechtagView extends Div {
   private List<SprechtagRow> sprechtage;
   private SprechtagFilterBar filterBar;
   private SprechtagStatusEnum statusFilter;
-  private String searchQuery = "";
 
   ManageSprechtagView(ManageSprechtagPresenter presenter) {
     this.presenter = presenter;
@@ -89,17 +87,12 @@ public class ManageSprechtagView extends Div {
     field.setPrefixComponent(VaadinIcon.SEARCH.create());
     field.setClearButtonVisible(true);
     field.setValueChangeMode(ValueChangeMode.EAGER);
-    field.addValueChangeListener(event -> onSearch(event.getValue()));
+    field.addValueChangeListener(event -> applyFilters());
     return field;
   }
 
   private void onStatusSelected(SprechtagStatusEnum status) {
     this.statusFilter = status;
-    applyFilters();
-  }
-
-  private void onSearch(String query) {
-    this.searchQuery = query == null ? "" : query.trim().toLowerCase(Locale.GERMANY);
     applyFilters();
   }
 
@@ -141,12 +134,6 @@ public class ManageSprechtagView extends Div {
   }
 
   private void applyFilters() {
-    List<SprechtagRow> filtered =
-        sprechtage.stream()
-            .filter(sprechtag -> statusFilter == null || sprechtag.status() == statusFilter)
-            .filter(
-                sprechtag -> sprechtag.titel().toLowerCase(Locale.GERMANY).contains(searchQuery))
-            .toList();
-    table.setSprechtage(filtered);
+    table.setSprechtage(presenter.filter(sprechtage, statusFilter, search.getValue()));
   }
 }
