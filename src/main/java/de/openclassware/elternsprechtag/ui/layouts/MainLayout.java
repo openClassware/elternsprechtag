@@ -81,8 +81,12 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
       username.addClassName("main-header__username");
 
       Button logout = new Button();
-      logout.setText(getTranslation("main.logout"));
       logout.setIcon(VaadinIcon.SIGN_OUT.create());
+      Span logoutLabel = new Span(getTranslation("main.logout"));
+      logoutLabel.addClassName("main-header__logout-label");
+      logout.getElement().appendChild(logoutLabel.getElement());
+      // Auf schmalen Schirmen nur das Icon sichtbar (Label per CSS ausgeblendet) — daher aria-label.
+      logout.getElement().setAttribute("aria-label", getTranslation("main.logout"));
       logout.addClickListener(event -> presenter.logout());
 
       user.add(school, divider, avatar, username, logout);

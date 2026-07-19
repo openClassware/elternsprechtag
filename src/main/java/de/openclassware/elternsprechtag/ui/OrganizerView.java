@@ -6,7 +6,6 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.ui.OrganizerPresenter.OrganizerModel;
@@ -46,8 +45,9 @@ public class OrganizerView extends Div {
     return ihreElternsprechtage;
   }
 
-  private HorizontalLayout createCards() {
-    HorizontalLayout cards = new HorizontalLayout();
+  private Component createCards() {
+    Div cards = new Div();
+    cards.addClassName("organizer-view__cards");
     cards.add(createElternsprechtagCard(), manageElternsprechtagCard());
     return cards;
   }

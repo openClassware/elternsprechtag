@@ -24,6 +24,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   box-sizing: border-box;
   width: 100%;
   padding: 0.75rem 1.5rem;
@@ -91,4 +93,18 @@
 .main-header__username {
   color: #111827;
   font-weight: 500;
+}
+
+/* Phone layout: tighten the framed card and reduce the header to the essentials. */
+@media (max-width: 640px) {
+  .main-layout {
+    margin-top: 1rem;
+  }
+
+  /* Secondary header info is redundant on small screens; logout collapses to its icon. */
+  .main-header__school,
+  .main-header__divider,
+  .main-header__logout-label {
+    display: none;
+  }
 }

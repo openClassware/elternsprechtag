@@ -18,3 +18,17 @@
     margin: 15px 0 5px 0;
     font-size: 17px;
 }
+
+/* Action cards: two side by side, stacking automatically when space runs out. */
+.organizer-view__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 10px;
+}
+
+@media (max-width: 640px) {
+    .organizer-view {
+        margin: 1.25rem;
+    }
+}
