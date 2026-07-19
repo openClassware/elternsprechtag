@@ -48,3 +48,17 @@ das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTUR
   - Block: `card`
   - Element: `card__title`
   - Modifier: `card--highlighted`
+
+## Agent skills
+
+### Issue tracker
+
+Issues und Specs leben als Markdown-Dateien unter `.scratch/<feature>/` (kein Git-Remote). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Die fünf kanonischen Standard-Rollen, unverändert. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context (`CONTEXT.md` + `docs/adr/` im Repo-Root). See `docs/agents/domain.md`.
