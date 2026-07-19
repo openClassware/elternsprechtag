@@ -14,6 +14,7 @@ import com.vaadin.flow.component.notification.Notification;
 
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -44,6 +45,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   private TextField elternName;
   private TextField schuelerName;
+  private EmailField elternEmail;
   private Select<KlasseOption> klasse;
   private TextArea notiz;
 
@@ -171,6 +173,15 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     schuelerName.setValueChangeMode(ValueChangeMode.EAGER);
     schuelerName.addValueChangeListener(event -> refreshFooter());
 
+    elternEmail = new EmailField(getTranslation("elternsprechtag.angaben.email.label"));
+    elternEmail.setPlaceholder(getTranslation("elternsprechtag.angaben.email.placeholder"));
+    elternEmail.setHelperText(getTranslation("elternsprechtag.angaben.email.helper"));
+    elternEmail.setRequiredIndicatorVisible(true);
+    elternEmail.setErrorMessage(getTranslation("elternsprechtag.angaben.email.error"));
+    elternEmail.setClearButtonVisible(true);
+    elternEmail.setValueChangeMode(ValueChangeMode.EAGER);
+    elternEmail.addValueChangeListener(event -> refreshFooter());
+
     klasse = new Select<>();
     klasse.setLabel(getTranslation("elternsprechtag.angaben.klasse.label"));
     klasse.setPlaceholder(getTranslation("elternsprechtag.angaben.klasse.placeholder"));
@@ -183,7 +194,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     form.addClassName("elternsprechtag-view__form");
     form.setResponsiveSteps(
         new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("640px", 2));
-    form.add(elternName, schuelerName, klasse);
+    form.add(elternName, schuelerName, elternEmail, klasse);
 
     section.add(form);
     return section;
@@ -480,6 +491,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         new BuchungsAnfrage(
             elternName.getValue().trim(),
             schuelerName.getValue().trim(),
+            elternEmail.getValue().trim(),
             notizText,
             session.toWuensche());
 
@@ -642,6 +654,9 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (!namesFilled()) {
       return selected + " — " + getTranslation("elternsprechtag.footer.blocker.angaben");
     }
+    if (!emailValid()) {
+      return selected + " — " + getTranslation("elternsprechtag.footer.blocker.email");
+    }
     if (klasse.getValue() == null) {
       return selected + " — " + getTranslation("elternsprechtag.footer.blocker.klasse");
     }
@@ -649,11 +664,16 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private boolean bookingValid() {
-    return session.hatAuswahl() && namesFilled() && klasse.getValue() != null;
+    return session.hatAuswahl() && namesFilled() && emailValid() && klasse.getValue() != null;
   }
 
   private boolean namesFilled() {
     return !elternName.getValue().isBlank() && !schuelerName.getValue().isBlank();
+  }
+
+  /** E-Mail ist Pflicht und muss dem Format genügen; {@link EmailField} prüft das Muster selbst. */
+  private boolean emailValid() {
+    return !elternEmail.getValue().isBlank() && !elternEmail.isInvalid();
   }
 
   private Component metaItem(VaadinIcon icon, String text) {

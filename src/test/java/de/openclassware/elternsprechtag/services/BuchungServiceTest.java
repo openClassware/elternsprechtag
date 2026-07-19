@@ -65,7 +65,8 @@ class BuchungServiceTest extends AbstractServiceTest {
         java.util.Arrays.stream(termine)
             .map(t -> new BuchungsWunsch(lehrauftrag.getId(), t.getId()))
             .toList();
-    return new BuchungsAnfrage("Eltern Müller", "Kind Müller", "Bitte pünktlich", wuensche);
+    return new BuchungsAnfrage(
+        "Eltern Müller", "Kind Müller", "eltern.mueller@example.com", "Bitte pünktlich", wuensche);
   }
 
   @Test
@@ -94,9 +95,22 @@ class BuchungServiceTest extends AbstractServiceTest {
     Buchung persisted = buchungRepository.findAll().get(0);
     assertThat(persisted.getStatus()).isEqualTo(BuchungStatusEnum.ZUGESAGT);
     assertThat(persisted.getElternName()).isEqualTo("Eltern Müller");
+    assertThat(persisted.getElternEmail()).isEqualTo("eltern.mueller@example.com");
     assertThat(terminRepository.findById(termin.getId()).orElseThrow().getStatus())
         .isEqualTo(TerminStatusEnum.BELEGT);
     assertThat(buchungRepository.count()).isEqualTo(1);
+  }
+
+  @Test
+  void buchen_persistsElternEmail_onEveryBuchung() {
+    Fixture f = publishedSprechtag();
+    List<Termin> frei = termineSorted();
+
+    buchungService.buchen(anfrage(f.lehrauftrag(), frei.get(0), frei.get(1)));
+
+    assertThat(buchungRepository.findAll())
+        .hasSize(2)
+        .allSatisfy(b -> assertThat(b.getElternEmail()).isEqualTo("eltern.mueller@example.com"));
   }
 
   @Test
@@ -182,7 +196,11 @@ class BuchungServiceTest extends AbstractServiceTest {
       Lehrauftrag auftrag, Termin termin, String eltern, String schueler, String notiz) {
     buchungService.buchen(
         new BuchungsAnfrage(
-            eltern, schueler, notiz, List.of(new BuchungsWunsch(auftrag.getId(), termin.getId()))));
+            eltern,
+            schueler,
+            "eltern@example.com",
+            notiz,
+            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId()))));
   }
 
   private LehrkraftPlan planOf(SprechtagAuswertung auswertung, Lehrer lehrer) {

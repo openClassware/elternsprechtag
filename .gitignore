@@ -44,3 +44,6 @@ node_modules/
 /types.d.ts
 /vite.config.ts
 /vite.generated.ts
+
+# Skills
+.scratch

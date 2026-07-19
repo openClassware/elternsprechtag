@@ -60,7 +60,11 @@ public class BuchungService {
 
   /** Ein kompletter Eltern-Submit: Angaben plus alle gewählten Fach-Slots. */
   public record BuchungsAnfrage(
-      String elternName, String schuelerName, String notiz, List<BuchungsWunsch> wuensche) {}
+      String elternName,
+      String schuelerName,
+      String elternEmail,
+      String notiz,
+      List<BuchungsWunsch> wuensche) {}
 
   /**
    * Read-Model der Sprechtag-Auswertung: Kopfdaten plus je beteiligter Lehrkraft ein Terminplan.
@@ -266,6 +270,7 @@ public class BuchungService {
         buchung.setStatus(BuchungStatusEnum.ZUGESAGT);
         buchung.setElternName(anfrage.elternName());
         buchung.setSchuelerName(anfrage.schuelerName());
+        buchung.setElternEmail(anfrage.elternEmail());
         buchung.setNotiz(anfrage.notiz());
         buchung.setLehrauftrag(lehrauftrag);
         buchung.setTermin(termin);

@@ -35,6 +35,11 @@ public class Buchung {
     @Column(name = "eltern_name", nullable = false)
     private String elternName;
 
+    // Kontakt-E-Mail der Eltern, denormalisiert an der Buchung (es gibt bewusst keine Eltern-Entity).
+    // Pflicht — dient ausschließlich der Benachrichtigung bei Absage des Sprechtags (siehe ADR 0001).
+    @Column(name = "eltern_email", nullable = false)
+    private String elternEmail;
+
     @Column(name = "notiz")
     private String notiz;
 
