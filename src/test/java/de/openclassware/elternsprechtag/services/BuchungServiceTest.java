@@ -15,12 +15,16 @@ import de.openclassware.elternsprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.domain.TerminStatusEnum;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
+import de.openclassware.elternsprechtag.services.BuchungService.BuchungsZeile;
 import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
+import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftPlan;
+import de.openclassware.elternsprechtag.services.BuchungService.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.services.BuchungService.TerminBelegtException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
@@ -140,6 +144,167 @@ class BuchungServiceTest extends AbstractServiceTest {
         .as("erster Slot muss nach Rollback wieder FREI sein")
         .isEqualTo(TerminStatusEnum.FREI);
     assertThat(buchungRepository.count()).isZero();
+  }
+
+  // --- Auswertung (Terminplan je Lehrkraft) ---
+
+  /** Veröffentlichter Sprechtag, Klasse 5a mit zwei Lehrkräften (Adler < Berg alphabetisch). */
+  private record AuswertungFixture(
+      Sprechtag sprechtag,
+      Klasse klasse,
+      Lehrer berg,
+      Lehrauftrag bergAuftrag,
+      Lehrer adler,
+      Lehrauftrag adlerAuftrag) {}
+
+  private AuswertungFixture publishedSprechtagWithTwoTeachers() {
+    Klasse klasse = persistKlasse("5a");
+    Lehrer berg = persistLehrer("Anna", "Berg", "BER");
+    Lehrer adler = persistLehrer("Carl", "Adler", "ADL");
+    Lehrauftrag bergAuftrag = persistLehrauftrag(berg, klasse, persistFach("Deutsch", "D"));
+    Lehrauftrag adlerAuftrag = persistLehrauftrag(adler, klasse, persistFach("Mathe", "M"));
+    Sprechtag sprechtag =
+        persistSprechtag(
+            "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatusEnum.ENTWURF, klasse);
+    sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
+    return new AuswertungFixture(sprechtag, klasse, berg, bergAuftrag, adler, adlerAuftrag);
+  }
+
+  private List<Termin> termineOf(Lehrer lehrer) {
+    return terminRepository.findAll().stream()
+        .filter(termin -> termin.getLehrer().getId().equals(lehrer.getId()))
+        .sorted(Comparator.comparing(Termin::getStartzeit))
+        .toList();
+  }
+
+  private void book(
+      Lehrauftrag auftrag, Termin termin, String eltern, String schueler, String notiz) {
+    buchungService.buchen(
+        new BuchungsAnfrage(
+            eltern, schueler, notiz, List.of(new BuchungsWunsch(auftrag.getId(), termin.getId()))));
+  }
+
+  private LehrkraftPlan planOf(SprechtagAuswertung auswertung, Lehrer lehrer) {
+    return auswertung.plaene().stream()
+        .filter(plan -> plan.lehrerId().equals(lehrer.getId()))
+        .findFirst()
+        .orElseThrow();
+  }
+
+  @Test
+  void werteAus_returnsAllParticipatingTeachers_sortedByNachname() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+
+    SprechtagAuswertung auswertung = buchungService.werteAus(f.sprechtag().getId()).orElseThrow();
+
+    assertThat(auswertung.titel()).isEqualTo("Frühling");
+    assertThat(auswertung.datum()).isEqualTo(DATE);
+    assertThat(auswertung.plaene())
+        .extracting(LehrkraftPlan::anzeigeName)
+        .containsExactly("Carl Adler", "Anna Berg");
+  }
+
+  @Test
+  void werteAus_teacherWithoutBooking_hasZeroCountAndEmptyZeilen() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    book(f.bergAuftrag(), termineOf(f.berg()).get(0), "Eltern A", "Kind A", "n");
+
+    SprechtagAuswertung auswertung = buchungService.werteAus(f.sprechtag().getId()).orElseThrow();
+
+    LehrkraftPlan adler = planOf(auswertung, f.adler());
+    assertThat(adler.anzahl()).isZero();
+    assertThat(adler.zeilen()).isEmpty();
+  }
+
+  @Test
+  void werteAus_cancelledBookingsExcluded_activeIncluded() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    List<Termin> bergSlots = termineOf(f.berg());
+    book(f.bergAuftrag(), bergSlots.get(0), "Eltern A", "Kind A", "n1");
+    book(f.bergAuftrag(), bergSlots.get(1), "Eltern B", "Kind B", "n2");
+    Buchung storniert =
+        buchungRepository.findAll().stream()
+            .filter(b -> b.getSchuelerName().equals("Kind A"))
+            .findFirst()
+            .orElseThrow();
+    storniert.setStatus(BuchungStatusEnum.ABGESAGT);
+    buchungRepository.save(storniert);
+
+    SprechtagAuswertung auswertung = buchungService.werteAus(f.sprechtag().getId()).orElseThrow();
+
+    LehrkraftPlan berg = planOf(auswertung, f.berg());
+    assertThat(berg.anzahl()).isEqualTo(1);
+    assertThat(berg.zeilen())
+        .extracting(BuchungsZeile::schuelerName)
+        .containsExactly("Kind B");
+  }
+
+  @Test
+  void werteAus_zeileFields_areMappedCorrectly() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    Termin slot = termineOf(f.berg()).get(0); // 14:00
+    book(f.bergAuftrag(), slot, "Eltern Müller", "Lukas Müller", "Leistung besprechen");
+
+    SprechtagAuswertung auswertung = buchungService.werteAus(f.sprechtag().getId()).orElseThrow();
+
+    BuchungsZeile zeile = planOf(auswertung, f.berg()).zeilen().get(0);
+    assertThat(zeile.startzeit()).isEqualTo(LocalTime.of(14, 0));
+    assertThat(zeile.schuelerName()).isEqualTo("Lukas Müller");
+    assertThat(zeile.klasse()).isEqualTo("5a");
+    assertThat(zeile.fach()).isEqualTo("Deutsch");
+    assertThat(zeile.elternName()).isEqualTo("Eltern Müller");
+    assertThat(zeile.notiz()).isEqualTo("Leistung besprechen");
+  }
+
+  @Test
+  void werteAus_bookingsPerTeacher_sortedByStartzeit() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    List<Termin> slots = termineOf(f.berg());
+    // Bewusst in verdrehter Reihenfolge buchen — die Auswertung muss chronologisch sortieren.
+    book(f.bergAuftrag(), slots.get(2), "E3", "K3", "n"); // 14:30
+    book(f.bergAuftrag(), slots.get(0), "E1", "K1", "n"); // 14:00
+    book(f.bergAuftrag(), slots.get(1), "E2", "K2", "n"); // 14:15
+
+    SprechtagAuswertung auswertung = buchungService.werteAus(f.sprechtag().getId()).orElseThrow();
+
+    assertThat(planOf(auswertung, f.berg()).zeilen())
+        .extracting(BuchungsZeile::startzeit)
+        .containsExactly(LocalTime.of(14, 0), LocalTime.of(14, 15), LocalTime.of(14, 30));
+  }
+
+  @Test
+  void werteAus_countPerTeacher_matchesActiveBookings() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    List<Termin> bergSlots = termineOf(f.berg());
+    book(f.bergAuftrag(), bergSlots.get(0), "E1", "K1", "n");
+    book(f.bergAuftrag(), bergSlots.get(1), "E2", "K2", "n");
+    book(f.adlerAuftrag(), termineOf(f.adler()).get(0), "E3", "K3", "n");
+
+    SprechtagAuswertung auswertung = buchungService.werteAus(f.sprechtag().getId()).orElseThrow();
+
+    assertThat(planOf(auswertung, f.berg()).anzahl()).isEqualTo(2);
+    assertThat(planOf(auswertung, f.adler()).anzahl()).isEqualTo(1);
+  }
+
+  @Test
+  void werteAus_sprechtagWithoutAnyBooking_returnsAllTeachersWithZero() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+
+    SprechtagAuswertung auswertung = buchungService.werteAus(f.sprechtag().getId()).orElseThrow();
+
+    assertThat(auswertung.plaene()).hasSize(2);
+    assertThat(auswertung.plaene())
+        .allSatisfy(
+            plan -> {
+              assertThat(plan.anzahl()).isZero();
+              assertThat(plan.zeilen()).isEmpty();
+            });
+  }
+
+  @Test
+  void werteAus_unknownSprechtag_returnsEmpty() {
+    assertThat(buchungService.werteAus(UUID.randomUUID())).isEmpty();
   }
 
   @Test

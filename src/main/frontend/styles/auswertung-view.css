@@ -1,0 +1,182 @@
+.auswertung {
+    --auswertung-columns: 76px 1.4fr 72px 1fr 1.4fr 2fr;
+}
+
+.auswertung__breadcrumb {
+    padding: 1.5rem 1.5rem 0;
+}
+
+.auswertung__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem 1.5rem 0;
+}
+
+.auswertung__eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8a909a;
+}
+
+.auswertung__title {
+    margin: 0;
+}
+
+.auswertung__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #5a6069;
+    font-size: 14px;
+}
+
+.auswertung__filter {
+    padding: 1rem 1.5rem;
+}
+
+.auswertung__filter-select {
+    width: 320px;
+    max-width: 100%;
+}
+
+.auswertung__sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1.5rem 2rem;
+}
+
+.auswertung__section {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.auswertung__section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 14px 20px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.auswertung__section-name {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.auswertung__section-kuerzel {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #8a909a;
+}
+
+.auswertung__section-count {
+    margin-left: auto;
+    font-size: 13px;
+    color: #5a6069;
+}
+
+.auswertung__section-empty {
+    padding: 16px 20px;
+    font-size: 14px;
+    font-style: italic;
+    color: #8a909a;
+}
+
+.auswertung__row {
+    display: grid;
+    grid-template-columns: var(--auswertung-columns);
+    align-items: baseline;
+    gap: 16px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f1f3;
+}
+
+.auswertung__row:last-child {
+    border-bottom: none;
+}
+
+.auswertung__row--head {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.auswertung__head-cell {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8a909a;
+}
+
+.auswertung__cell {
+    font-size: 14px;
+    color: #5a6069;
+    min-width: 0;
+    word-wrap: break-word;
+}
+
+.auswertung__cell--zeit {
+    font-weight: 600;
+    color: #1f2933;
+}
+
+.auswertung__cell--schueler {
+    font-weight: 500;
+    color: #1f2933;
+}
+
+.auswertung__cell--notiz {
+    color: #8a909a;
+}
+
+/* Tablet: schmalere Spalten, Notiz umbricht früher. */
+@media (max-width: 900px) {
+    .auswertung {
+        --auswertung-columns: 68px 1.2fr 64px 0.9fr 1.2fr 1.6fr;
+    }
+}
+
+/* Mobil: Tabellenzeile wird zur gestapelten Karte. */
+@media (max-width: 640px) {
+    .auswertung__breadcrumb,
+    .auswertung__header,
+    .auswertung__filter,
+    .auswertung__sections {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .auswertung__row--head {
+        display: none;
+    }
+
+    .auswertung__row {
+        grid-template-columns: 64px 1fr;
+        row-gap: 4px;
+        column-gap: 12px;
+    }
+
+    .auswertung__cell--zeit {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+    }
+
+    .auswertung__cell--schueler {
+        grid-column: 2;
+    }
+
+    .auswertung__cell--klasse,
+    .auswertung__cell--fach,
+    .auswertung__cell--eltern,
+    .auswertung__cell--notiz {
+        grid-column: 2;
+        font-size: 13px;
+    }
+}

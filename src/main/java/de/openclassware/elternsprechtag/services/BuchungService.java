@@ -13,6 +13,7 @@ import de.openclassware.elternsprechtag.repositories.KlassenRepository;
 import de.openclassware.elternsprechtag.repositories.LehrauftragRepository;
 import de.openclassware.elternsprechtag.repositories.SprechtagRepository;
 import de.openclassware.elternsprechtag.repositories.TerminRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeSet;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +61,92 @@ public class BuchungService {
   /** Ein kompletter Eltern-Submit: Angaben plus alle gewählten Fach-Slots. */
   public record BuchungsAnfrage(
       String elternName, String schuelerName, String notiz, List<BuchungsWunsch> wuensche) {}
+
+  /**
+   * Read-Model der Sprechtag-Auswertung: Kopfdaten plus je beteiligter Lehrkraft ein Terminplan.
+   * Die Pläne sind alphabetisch nach Lehrkraft-Nachname sortiert.
+   */
+  public record SprechtagAuswertung(String titel, LocalDate datum, List<LehrkraftPlan> plaene) {}
+
+  /**
+   * Terminplan einer Lehrkraft: Anzeigename/Kürzel, Anzahl aktiver Buchungen und die Zeilen in
+   * chronologischer Reihenfolge. Eine Lehrkraft ohne Buchung hat {@code anzahl == 0} und eine leere
+   * Zeilenliste.
+   */
+  public record LehrkraftPlan(
+      UUID lehrerId, String kuerzel, String anzeigeName, int anzahl, List<BuchungsZeile> zeilen) {}
+
+  /** Eine Buchungszeile im Terminplan einer Lehrkraft. */
+  public record BuchungsZeile(
+      LocalTime startzeit,
+      String schuelerName,
+      String klasse,
+      String fach,
+      String elternName,
+      String notiz) {}
+
+  /**
+   * Aggregiert für einen Sprechtag den Terminplan je beteiligter Lehrkraft. Beteiligte Lehrkräfte
+   * werden — wie in {@link #ladeLehrkraftOptionen} — aus den Lehraufträgen der teilnehmenden Klassen
+   * abgeleitet, sodass auch Lehrkräfte ohne Buchung erscheinen. Es fließen nur aktive Buchungen
+   * ({@link BuchungStatusEnum#ZUGESAGT}) ein; stornierte werden ausgefiltert. Mappt vollständig auf
+   * Records — Entities verlassen die Service-Schicht nicht. Leeres Optional, wenn der Sprechtag
+   * nicht existiert.
+   */
+  @Transactional(readOnly = true)
+  public Optional<SprechtagAuswertung> werteAus(UUID sprechtagId) {
+    Optional<Sprechtag> gefunden = sprechtagRepository.findById(sprechtagId);
+    if (gefunden.isEmpty()) {
+      return Optional.empty();
+    }
+    Sprechtag sprechtag = gefunden.get();
+
+    // Beteiligte Lehrkräfte über die Lehraufträge der teilnehmenden Klassen (dedupliziert).
+    Map<UUID, Lehrer> lehrerById = new LinkedHashMap<>();
+    for (Klasse klasse : sprechtag.getKlassen()) {
+      for (Lehrauftrag lehrauftrag : lehrauftragRepository.findByKlasseOrderByFach_NameAsc(klasse)) {
+        Lehrer lehrer = lehrauftrag.getLehrer();
+        if (lehrer != null) {
+          lehrerById.putIfAbsent(lehrer.getId(), lehrer);
+        }
+      }
+    }
+
+    // Aktive Buchungen je Lehrkraft; die Query liefert bereits nach Startzeit sortiert, die
+    // Gruppierung erhält diese Reihenfolge, sodass jede Zeilenliste chronologisch bleibt.
+    Map<UUID, List<BuchungsZeile>> zeilenByLehrer = new LinkedHashMap<>();
+    for (Buchung buchung :
+        buchungRepository.findByTermin_SprechtagAndStatusOrderByTermin_StartzeitAsc(
+            sprechtag, BuchungStatusEnum.ZUGESAGT)) {
+      Lehrauftrag lehrauftrag = buchung.getLehrauftrag();
+      zeilenByLehrer
+          .computeIfAbsent(lehrauftrag.getLehrer().getId(), k -> new ArrayList<>())
+          .add(
+              new BuchungsZeile(
+                  buchung.getTermin().getStartzeit().toLocalTime(),
+                  buchung.getSchuelerName(),
+                  lehrauftrag.getKlasse().getName(),
+                  lehrauftrag.getFach().getName(),
+                  buchung.getElternName(),
+                  buchung.getNotiz()));
+    }
+
+    List<Lehrer> lehrkraefte = new ArrayList<>(lehrerById.values());
+    lehrkraefte.sort(Comparator.comparing(Lehrer::getNachname, String.CASE_INSENSITIVE_ORDER));
+
+    List<LehrkraftPlan> plaene = new ArrayList<>();
+    for (Lehrer lehrer : lehrkraefte) {
+      List<BuchungsZeile> zeilen = zeilenByLehrer.getOrDefault(lehrer.getId(), List.of());
+      plaene.add(
+          new LehrkraftPlan(
+              lehrer.getId(),
+              lehrer.getKuerzel(),
+              lehrer.getVorname() + " " + lehrer.getNachname(),
+              zeilen.size(),
+              zeilen));
+    }
+    return Optional.of(new SprechtagAuswertung(sprechtag.getTitel(), sprechtag.getStartDate(), plaene));
+  }
 
   /** Signalisiert, dass ein gewünschter Slot zwischenzeitlich vergeben wurde. */
   public static class TerminBelegtException extends RuntimeException {

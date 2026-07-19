@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
+import de.openclassware.elternsprechtag.ui.AuswertungView;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import de.openclassware.elternsprechtag.ui.Formats;
 import java.util.List;
@@ -148,6 +149,12 @@ public class SprechtagTable extends Div {
     contextMenu.addItem(
         createMenuItemContent(VaadinIcon.COPY, "manage-sprechtag.menu.duplicate"),
         event -> onDuplicate.accept(sprechtag));
+    if (sprechtag.status() == SprechtagStatusEnum.VEROEFFENTLICHT
+        || sprechtag.status() == SprechtagStatusEnum.ABGESCHLOSSEN) {
+      contextMenu.addItem(
+          createMenuItemContent(VaadinIcon.CLIPBOARD_TEXT, "manage-sprechtag.menu.evaluate"),
+          event -> navigateToAuswertung(sprechtag));
+    }
     if (sprechtag.status() == SprechtagStatusEnum.VEROEFFENTLICHT) {
       contextMenu.addItem(
           createMenuItemContent(VaadinIcon.LINK, "manage-sprechtag.menu.share"),
@@ -192,5 +199,9 @@ public class SprechtagTable extends Div {
 
   private void navigateToEdit(SprechtagRow sprechtag) {
     getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + sprechtag.id()));
+  }
+
+  private void navigateToAuswertung(SprechtagRow sprechtag) {
+    getUI().ifPresent(ui -> ui.navigate(AuswertungView.ROUTE + "/" + sprechtag.id()));
   }
 }
