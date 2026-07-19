@@ -1,0 +1,9 @@
+.cancel-sprechtag-dialog__message {
+  margin-bottom: var(--lumo-space-m);
+  max-width: 28rem;
+}
+
+.cancel-sprechtag-dialog__affected {
+  font-weight: 600;
+  color: var(--lumo-error-text-color);
+}

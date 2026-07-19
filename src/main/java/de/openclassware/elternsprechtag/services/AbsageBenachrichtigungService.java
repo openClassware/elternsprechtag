@@ -36,6 +36,17 @@ public class AbsageBenachrichtigungService {
   public record AbsageEmpfaenger(String email, String titel, LocalDate datum, String ort) {}
 
   /**
+   * Anzahl der Eltern mit aktiver ({@link BuchungStatusEnum#ZUGESAGT}) Buchung an diesem Sprechtag —
+   * je E-Mail-Adresse genau einmal gezählt. Genau die Menge, die {@link #benachrichtige(UUID)}
+   * benachrichtigen würde; dient dem Bestätigungsdialog vor der Absage.
+   */
+  @Transactional(readOnly = true)
+  public long zaehleAktiveEmpfaenger(UUID sprechtagId) {
+    return buchungRepository.countDistinctElternEmailByTermin_SprechtagIdAndStatus(
+        sprechtagId, BuchungStatusEnum.ZUGESAGT);
+  }
+
+  /**
    * Benachrichtigt alle Eltern mit aktiver ({@link BuchungStatusEnum#ZUGESAGT}) Buchung an diesem
    * Sprechtag über die Absage — je E-Mail-Adresse genau einmal. Existiert der Sprechtag nicht oder
    * gibt es keine aktive Buchung, passiert nichts (kein Sende-Aufruf, kein Fehler). Der Versand ist

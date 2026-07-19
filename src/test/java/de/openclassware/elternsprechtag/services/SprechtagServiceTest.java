@@ -17,15 +17,21 @@ import java.time.LocalTime;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @DataJpaTest
 @Import({SprechtagService.class, BuchungService.class, KlassenService.class})
+@RecordApplicationEvents
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class SprechtagServiceTest extends AbstractServiceTest {
+
+  @Autowired private ApplicationEvents events;
 
   private static final LocalDate DATE = LocalDate.of(2026, 7, 20);
 
@@ -134,6 +140,32 @@ class SprechtagServiceTest extends AbstractServiceTest {
         SprechtagStatusEnum.VEROEFFENTLICHT);
 
     assertThat(terminRepository.count()).isEqualTo(4);
+  }
+
+  @Test
+  void changeStatus_cancelPublished_publishesAbsageEvent() {
+    Sprechtag sprechtag =
+        persistSprechtag(
+            "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatusEnum.VEROEFFENTLICHT, persistKlasse("5a"));
+
+    sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.ABGESAGT);
+
+    assertThat(events.stream(SprechtagAbgesagtEvent.class))
+        .extracting(SprechtagAbgesagtEvent::sprechtagId)
+        .containsExactly(sprechtag.getId());
+  }
+
+  @Test
+  void changeStatus_complete_doesNotPublishAbsageEvent() {
+    Sprechtag sprechtag =
+        persistSprechtag(
+            "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatusEnum.VEROEFFENTLICHT, persistKlasse("5a"));
+
+    sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.ABGESCHLOSSEN);
+
+    assertThat(events.stream(SprechtagAbgesagtEvent.class)).isEmpty();
   }
 
   @Test

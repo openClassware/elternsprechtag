@@ -174,6 +174,34 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   }
 
   @Test
+  void zaehleAktiveEmpfaenger_dedupedByEmail_excludesCancelled() {
+    Fixture f = publishedSprechtag();
+    List<Termin> slots = termineSorted();
+    book(f.lehrauftrag(), slots.get(0), "a@example.com");
+    book(f.lehrauftrag(), slots.get(1), "a@example.com"); // dieselbe Adresse -> zählt einmal
+    book(f.lehrauftrag(), slots.get(2), "b@example.com");
+    Buchung storniert =
+        buchungRepository.findAll().stream()
+            .filter(b -> b.getElternEmail().equals("b@example.com"))
+            .findFirst()
+            .orElseThrow();
+    storniert.setStatus(BuchungStatusEnum.ABGESAGT);
+    buchungRepository.save(storniert);
+
+    // a@ (aktiv, dedupliziert) zählt; b@ (storniert) nicht.
+    assertThat(absageBenachrichtigungService.zaehleAktiveEmpfaenger(f.sprechtag().getId()))
+        .isEqualTo(1);
+  }
+
+  @Test
+  void zaehleAktiveEmpfaenger_withoutActiveBooking_isZero() {
+    Fixture f = publishedSprechtag();
+
+    assertThat(absageBenachrichtigungService.zaehleAktiveEmpfaenger(f.sprechtag().getId()))
+        .isZero();
+  }
+
+  @Test
   void benachrichtige_senderFailsForOneAddress_othersStillDelivered() {
     Fixture f = publishedSprechtag();
     List<Termin> slots = termineSorted();

@@ -13,6 +13,7 @@ import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
+import de.openclassware.elternsprechtag.ui.components.CancelSprechtagDialog;
 import de.openclassware.elternsprechtag.ui.components.ShareLinkDialog;
 import de.openclassware.elternsprechtag.ui.components.SprechtagFilterBar;
 import de.openclassware.elternsprechtag.ui.components.SprechtagTable;
@@ -97,6 +98,17 @@ public class ManageSprechtagView extends Div {
   }
 
   private void onStatusChange(SprechtagRow sprechtag, SprechtagStatusEnum newStatus) {
+    if (newStatus == SprechtagStatusEnum.ABGESAGT) {
+      long betroffene = presenter.zaehleBetroffeneEltern(sprechtag.id());
+      new CancelSprechtagDialog(
+              sprechtag.titel(), betroffene, () -> applyStatusChange(sprechtag, newStatus))
+          .open();
+      return;
+    }
+    applyStatusChange(sprechtag, newStatus);
+  }
+
+  private void applyStatusChange(SprechtagRow sprechtag, SprechtagStatusEnum newStatus) {
     presenter.changeStatus(sprechtag.id(), newStatus);
     reload();
   }

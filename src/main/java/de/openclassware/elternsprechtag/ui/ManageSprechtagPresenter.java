@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.ui;
 
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.services.AbsageBenachrichtigungService;
 import de.openclassware.elternsprechtag.services.SprechtagService;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 class ManageSprechtagPresenter {
 
   private final SprechtagService sprechtagService;
+  private final AbsageBenachrichtigungService absageBenachrichtigungService;
 
   List<SprechtagRow> findAllSprechtage() {
     return sprechtagService.findAllRows();
@@ -33,6 +35,14 @@ class ManageSprechtagPresenter {
 
   void changeStatus(UUID id, SprechtagStatusEnum newStatus) {
     sprechtagService.changeStatus(id, newStatus);
+  }
+
+  /**
+   * Anzahl der von einer Absage betroffenen Eltern (aktive Buchungen, je E-Mail-Adresse einmal) —
+   * für den Bestätigungsdialog vor dem Absagen.
+   */
+  long zaehleBetroffeneEltern(UUID id) {
+    return absageBenachrichtigungService.zaehleAktiveEmpfaenger(id);
   }
 
   UUID duplicate(UUID id) {

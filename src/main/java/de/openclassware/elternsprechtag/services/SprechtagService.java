@@ -29,6 +29,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,7 @@ public class SprechtagService {
   private final LehrauftragRepository lehrauftragRepository;
   private final TerminRepository terminRepository;
   private final KlassenRepository klassenRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /** Read-Model einer Sprechtag-Zeile für Übersicht/Verwaltung — enthält nur, was Views rendern. */
   public record SprechtagRow(
@@ -198,6 +200,12 @@ public class SprechtagService {
     sprechtag.setStatus(newStatus);
     Sprechtag saved = sprechtagRepository.save(sprechtag);
     materialisiereWennNoetig(saved);
+    if (current == SprechtagStatusEnum.VEROEFFENTLICHT
+        && newStatus == SprechtagStatusEnum.ABGESAGT) {
+      // Nach Commit (AFTER_COMMIT, @Async) werden die betroffenen Eltern benachrichtigt; der
+      // Statuswechsel selbst bleibt eine reguläre, für sich abgeschlossene Transaktion.
+      eventPublisher.publishEvent(new SprechtagAbgesagtEvent(saved.getId()));
+    }
   }
 
   /**

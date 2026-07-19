@@ -24,6 +24,17 @@ public interface BuchungRepository extends ListCrudRepository<Buchung, UUID> {
       @Param("sprechtag") Sprechtag sprechtag, @Param("status") BuchungStatusEnum status);
 
   /**
+   * Anzahl der (per E-Mail-Adresse deduplizierten) betroffenen Eltern-Kontakte mit einer Buchung im
+   * gegebenen Status an diesem Sprechtag — für die Betroffenen-Anzeige im Absage-Bestätigungsdialog.
+   * Nimmt die Sprechtag-Id direkt, damit der Presenter-Pfad die Entity nicht laden muss.
+   */
+  @Query(
+      "select count(distinct b.elternEmail) from Buchung b "
+          + "where b.termin.sprechtag.id = :sprechtagId and b.status = :status")
+  long countDistinctElternEmailByTermin_SprechtagIdAndStatus(
+      @Param("sprechtagId") UUID sprechtagId, @Param("status") BuchungStatusEnum status);
+
+  /**
    * Buchungen eines Sprechtags im gegebenen Status, chronologisch nach Startzeit. Lädt Termin und
    * Lehrauftrag (samt Lehrer/Klasse/Fach) per {@link EntityGraph} mit, damit das Record-Mapping im
    * Service unter {@code open-in-view=false} ohne Lazy-Zugriff auskommt.
