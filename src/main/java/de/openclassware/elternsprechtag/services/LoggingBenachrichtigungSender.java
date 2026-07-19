@@ -3,9 +3,9 @@ package de.openclassware.elternsprechtag.services;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Default-{@link BenachrichtigungSender}: protokolliert die Benachrichtigung nur, ohne echtes SMTP.
- * Greift, solange keine versendende Implementierung (z. B. {@code JavaMailSender}-basiert, späteres
- * Ticket) registriert ist — siehe {@link BenachrichtigungConfig}.
+ * Fallback-{@link BenachrichtigungSender}: protokolliert die Benachrichtigung nur, ohne echtes SMTP.
+ * Greift, solange kein SMTP konfiguriert ist (kein {@code spring.mail.host}); mit Konfiguration
+ * übernimmt der {@link JavaMailBenachrichtigungSender} — siehe {@link BenachrichtigungConfig}.
  */
 @Slf4j
 class LoggingBenachrichtigungSender implements BenachrichtigungSender {

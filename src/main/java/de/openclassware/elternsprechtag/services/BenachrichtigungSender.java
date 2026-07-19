@@ -7,8 +7,8 @@ import de.openclassware.elternsprechtag.services.AbsageBenachrichtigungService.A
  * {@link AbsageEmpfaenger}-Record ist der vollständige Vertrag zwischen Kernlogik und Sender —
  * eine Implementierung braucht keinerlei Entities oder Repository-Zugriff.
  *
- * <p>Die Default-Implementierung protokolliert nur (kein echtes SMTP); eine
- * {@code JavaMailSender}-basierte Umsetzung kommt in einem späteren Ticket.
+ * <p>In Produktion versendet der {@link JavaMailBenachrichtigungSender} echte Mails, sobald SMTP
+ * konfiguriert ist; ohne Konfiguration protokolliert die Log-Attrappe nur (kein echtes SMTP).
  */
 public interface BenachrichtigungSender {
 
