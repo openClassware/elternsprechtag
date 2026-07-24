@@ -1,0 +1,28 @@
+# Build-Output & Abhängigkeiten (werden im Image-Build frisch erzeugt)
+target/
+node_modules/
+
+# Vaadin-generierte Frontend-Dateien: prepare-frontend/build-frontend erzeugen
+# sie im Image-Build neu — kopierte Host-Stände wären veraltet.
+package.json
+package-lock.json
+tsconfig.json
+types.d.ts
+vite.config.ts
+vite.generated.ts
+src/main/frontend/generated/
+
+# VCS, IDE & lokale Artefakte
+.git/
+.gitignore
+.idea/
+.vscode/
+.scratch/
+*.iml
+
+# Lokale Konfiguration darf nie ins Image
+src/main/resources/application-local.properties
+
+# Docker-Artefakte selbst
+Dockerfile
+.dockerignore
