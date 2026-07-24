@@ -177,20 +177,42 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>com.vaadin</groupId>
-                <artifactId>vaadin-maven-plugin</artifactId>
-                <version>${vaadin.version}</version>
-                <executions>
-                    <execution>
-                        <id>build-frontend</id>
-                        <goals>
-                            <goal>build-frontend</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            Production-Build: erzeugt das optimierte Vaadin-Frontend-Bundle (Production Mode).
+            Der Default-Build enthält bewusst KEINEN build-frontend-Hook — im Dev-Modus baut
+            Vaadin das Frontend on-the-fly. Der speicher- und zeitintensive Production-Build
+            läuft nur mit `-Pproduction` (im Docker-Image-Build, nicht zur Laufzeit).
+        -->
+        <profile>
+            <id>production</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.vaadin</groupId>
+                        <artifactId>vaadin-maven-plugin</artifactId>
+                        <version>${vaadin.version}</version>
+                        <executions>
+                            <!--
+                                Ohne explizite <phase>: prepare-frontend und build-frontend
+                                binden an ihre Vaadin-Standardphasen (process-resources bzw.
+                                compile) — konventionskonform statt beide in eine Phase zu zwingen.
+                            -->
+                            <execution>
+                                <id>frontend</id>
+                                <goals>
+                                    <goal>prepare-frontend</goal>
+                                    <goal>build-frontend</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
