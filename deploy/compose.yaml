@@ -7,11 +7,17 @@
 # Start auf dem Server:
 #   cd /opt/elternsprechtag && docker compose pull && docker compose up -d
 #
-# Erwartete Datei `.env` im selben Verzeichnis (Vorlage: `.env.example`).
+# Lokal zum Verifizieren: in der `.env` DEMO_DOMAIN=localhost und ein lokal gebautes
+# APP_IMAGE setzen. Caddy stellt für `localhost` ein internes Zertifikat aus statt ACME
+# zu fahren; ACME_EMAIL bleibt Pflicht, wird dann aber nicht benutzt.
+#
+# Erwartete Datei `.env` im selben Verzeichnis (Vorlage: `.env.example`). Alle Werte
+# kommen von dort und tragen hier bewusst KEINE Zweit-Defaults: ein fehlender Eintrag
+# soll den Stack-Start abbrechen, statt still auf einen anderen Wert auszuweichen.
 
 services:
   app:
-    image: ${APP_IMAGE:-ghcr.io/openclassware/elternsprechtag:latest}
+    image: ${APP_IMAGE:?APP_IMAGE fehlt in .env}
     restart: always
     depends_on:
       database:
@@ -23,10 +29,10 @@ services:
       # TLS endet bei Caddy; ohne Auswertung der X-Forwarded-*-Header baut die App
       # ihre Redirects auf http:// und den internen Port statt auf die öffentliche URL.
       SERVER_FORWARD_HEADERS_STRATEGY: framework
-      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-elternsprechtag}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-elternsprechtag}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:?POSTGRES_DB fehlt in .env}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER fehlt in .env}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}
-      ELTERNSPRECHTAG_SECURITY_ORGANIZER_USERNAME: ${ORGANIZER_USERNAME:-user}
+      ELTERNSPRECHTAG_SECURITY_ORGANIZER_USERNAME: ${ORGANIZER_USERNAME:?ORGANIZER_USERNAME fehlt in .env}
       # Nackter bcrypt-Hash ohne {bcrypt}-Präfix — den setzt application.properties.
       ELTERNSPRECHTAG_SECURITY_ORGANIZER_PASSWORD: ${ORGANIZER_PASSWORD:?ORGANIZER_PASSWORD fehlt in .env}
     # Kein Port-Mapping: die App ist ausschließlich über Caddy erreichbar.
@@ -36,15 +42,17 @@ services:
       - internal
 
   database:
+    # Feste Major-Version statt `latest` (wie lokal): auf dem Server soll ein Redeploy
+    # die Datenbank nicht unbemerkt über eine Major-Grenze heben.
     image: 'postgres:17'
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-elternsprechtag}
-      POSTGRES_USER: ${POSTGRES_USER:-elternsprechtag}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB fehlt in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER fehlt in .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}
     # Bewusst KEIN `ports:` — die DB ist nur im internen Docker-Netz erreichbar.
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-elternsprechtag} -d ${POSTGRES_DB:-elternsprechtag}']
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -60,7 +68,7 @@ services:
       - app
     environment:
       # Domain und ACME-Kontaktadresse steuern das Caddyfile von außen.
-      DEMO_DOMAIN: ${DEMO_DOMAIN:-demo.openclassware.de}
+      DEMO_DOMAIN: ${DEMO_DOMAIN:?DEMO_DOMAIN fehlt in .env}
       ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL fehlt in .env}
     ports:
       - '80:80'

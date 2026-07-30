@@ -8,6 +8,8 @@
 }
 
 {$DEMO_DOMAIN} {
+	# Das Vaadin-Production-Bundle ist gut komprimierbar; ohne encode geht es
+	# unkomprimiert über die Leitung.
 	encode zstd gzip
 
 	# Vaadin Push läuft über WebSockets auf demselben Pfad wie die übrige App.
@@ -16,8 +18,4 @@
 	# automatisch auf sofortiges Flushen um und läuft ohne Read-/Write-Timeout —
 	# langlebige Push-Verbindungen brauchen daher keine Sonderkonfiguration.
 	reverse_proxy app:8080
-
-	log {
-		output stdout
-	}
 }
