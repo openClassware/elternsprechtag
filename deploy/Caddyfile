@@ -1,0 +1,21 @@
+# Reverse-Proxy für die Demo-Umgebung.
+#
+# Caddy holt und erneuert das TLS-Zertifikat für {$DEMO_DOMAIN} vollautomatisch
+# via Let's Encrypt (ACME HTTP-01 auf Port 80) und leitet HTTP dauerhaft auf
+# HTTPS um — beides ist Caddy-Standardverhalten und braucht keine Direktive.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DEMO_DOMAIN} {
+	# Das Vaadin-Production-Bundle ist gut komprimierbar; ohne encode geht es
+	# unkomprimiert über die Leitung.
+	encode zstd gzip
+
+	# Vaadin Push läuft über WebSockets auf demselben Pfad wie die übrige App.
+	# reverse_proxy reicht `Connection: Upgrade` transparent durch, setzt
+	# X-Forwarded-{For,Proto,Host} selbst, schaltet für Upgrade-Verbindungen
+	# automatisch auf sofortiges Flushen um und läuft ohne Read-/Write-Timeout —
+	# langlebige Push-Verbindungen brauchen daher keine Sonderkonfiguration.
+	reverse_proxy app:8080
+}

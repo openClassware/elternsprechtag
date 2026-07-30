@@ -1,0 +1,93 @@
+# Server-Compose-Stack für die Demo-Umgebung (https://demo.openclassware.de).
+#
+# Bewusst SEPARAT von der lokalen `compose.yaml` im Repo-Root: dort liegt eine
+# Entwickler-Datenbank mit Port-Mapping und Klartext-Passwort. Hier gilt das
+# Gegenteil — kein DB-Port nach außen, alle Geheimnisse aus der `.env` daneben.
+#
+# Start auf dem Server:
+#   cd /opt/elternsprechtag && docker compose pull && docker compose up -d
+#
+# Lokal zum Verifizieren: in der `.env` DEMO_DOMAIN=localhost und ein lokal gebautes
+# APP_IMAGE setzen. Caddy stellt für `localhost` ein internes Zertifikat aus statt ACME
+# zu fahren; ACME_EMAIL bleibt Pflicht, wird dann aber nicht benutzt.
+#
+# Erwartete Datei `.env` im selben Verzeichnis (Vorlage: `.env.example`). Alle Werte
+# kommen von dort und tragen hier bewusst KEINE Zweit-Defaults: ein fehlender Eintrag
+# soll den Stack-Start abbrechen, statt still auf einen anderen Wert auszuweichen.
+
+services:
+  app:
+    image: ${APP_IMAGE:?APP_IMAGE fehlt in .env}
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      # Demo-Profil: frisches Schema je Start, Seed aus data-demo.sql, kein
+      # echter Mailversand (spring.mail.host bleibt ungesetzt => Log-Attrappe).
+      SPRING_PROFILES_ACTIVE: demo
+      # TLS endet bei Caddy; ohne Auswertung der X-Forwarded-*-Header baut die App
+      # ihre Redirects auf http:// und den internen Port statt auf die öffentliche URL.
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:?POSTGRES_DB fehlt in .env}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER fehlt in .env}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}
+      ELTERNSPRECHTAG_SECURITY_ORGANIZER_USERNAME: ${ORGANIZER_USERNAME:?ORGANIZER_USERNAME fehlt in .env}
+      # Nackter bcrypt-Hash ohne {bcrypt}-Präfix — den setzt application.properties.
+      ELTERNSPRECHTAG_SECURITY_ORGANIZER_PASSWORD: ${ORGANIZER_PASSWORD:?ORGANIZER_PASSWORD fehlt in .env}
+    # Kein Port-Mapping: die App ist ausschließlich über Caddy erreichbar.
+    expose:
+      - '8080'
+    networks:
+      - internal
+
+  database:
+    # Feste Major-Version statt `latest` (wie lokal): auf dem Server soll ein Redeploy
+    # die Datenbank nicht unbemerkt über eine Major-Grenze heben.
+    image: 'postgres:17'
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB fehlt in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER fehlt in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}
+    # Bewusst KEIN `ports:` — die DB ist nur im internen Docker-Netz erreichbar.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+    networks:
+      - internal
+
+  caddy:
+    image: 'caddy:2-alpine'
+    restart: always
+    depends_on:
+      - app
+    environment:
+      # Domain und ACME-Kontaktadresse steuern das Caddyfile von außen.
+      DEMO_DOMAIN: ${DEMO_DOMAIN:?DEMO_DOMAIN fehlt in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL fehlt in .env}
+    ports:
+      - '80:80'
+      - '443:443'
+      # HTTP/3 (QUIC) — Caddy lauscht darauf standardmäßig auf 443/udp.
+      - '443:443/udp'
+    volumes:
+      - './Caddyfile:/etc/caddy/Caddyfile:ro'
+      # Zertifikate und ACME-Kontostand überleben Neustarts (sonst drohen
+      # Let's-Encrypt-Rate-Limits bei jedem Deploy).
+      - 'caddy_data:/data'
+      - 'caddy_config:/config'
+    networks:
+      - internal
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:

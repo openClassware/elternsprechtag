@@ -35,6 +35,9 @@ build/
 ### Local Configuration ###
 application-local.properties
 
+### Deploy Secrets ###
+deploy/.env
+
 ### Vaadin ###
 src/main/frontend/generated
 node_modules/
