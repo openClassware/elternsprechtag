@@ -1,0 +1,155 @@
+# Deploy-Kette für die Demo-Umgebung (https://demo.openclassware.de).
+#
+#   Test-Gate (mvn verify) -> Image bauen & nach GHCR pushen -> per SSH auf dem VPS ausrollen
+#
+# Der VPS baut nichts selbst: der teure Vaadin-Production-Build läuft hier auf dem
+# Runner, der Server zieht nur das fertige Image. Ein rotes Test-Gate bricht die
+# Kette ab, bevor irgendetwas gepusht oder ausgerollt wird.
+name: Deploy Demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Zwei Deploys gleichzeitig würden sich auf dem Server ins Gehege kommen. Laufende
+# Deploys werden bewusst NICHT abgebrochen — ein halb ausgerollter Stack ist schlimmer
+# als ein überholter.
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/openclassware/elternsprechtag
+  # Zielverzeichnis des Compose-Stacks auf dem VPS.
+  REMOTE_DIR: /opt/elternsprechtag
+  # Nicht geheime Stack-Werte. Die Geheimnisse daneben kommen aus GitHub Secrets.
+  DEMO_DOMAIN: demo.openclassware.de
+  POSTGRES_DB: elternsprechtag
+  POSTGRES_USER: elternsprechtag
+
+jobs:
+  test:
+    name: Test-Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: mvn verify
+        run: ./mvnw -B verify
+
+  image:
+    name: Image bauen & pushen
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Für den Push nach GHCR mit dem automatischen GITHUB_TOKEN.
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Bei GHCR anmelden
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bauen und pushen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # `latest` als sprechender Zeiger, der Commit-SHA als unveränderlicher Tag —
+          # der Deploy rollt gegen den SHA aus, damit `compose up` den Wechsel sicher
+          # bemerkt (bei `latest` bliebe der alte Container ggf. unangetastet).
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Auf VPS ausrollen
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Der Server zieht das Image mit einem kurzlebigen Token dieses Laufs,
+      # damit das GHCR-Paket privat bleiben kann.
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SSH-Zugang einrichten
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: .env erzeugen
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          ORGANIZER_USERNAME: ${{ secrets.ORGANIZER_USERNAME }}
+          ORGANIZER_PASSWORD: ${{ secrets.ORGANIZER_PASSWORD }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
+        run: |
+          # Compose interpoliert `$` in .env-Werten. Die Secrets liegen im Klartext
+          # vor (bcrypt-Hashes strotzen vor `$`), also hier verdoppeln.
+          escape() { printf '%s' "$1" | sed 's/\$/$$/g'; }
+          umask 077
+          cat > deploy/.env <<EOF
+          APP_IMAGE=${IMAGE}:${GITHUB_SHA}
+          DEMO_DOMAIN=${DEMO_DOMAIN}
+          ACME_EMAIL=$(escape "$ACME_EMAIL")
+          POSTGRES_DB=${POSTGRES_DB}
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=$(escape "$POSTGRES_PASSWORD")
+          ORGANIZER_USERNAME=$(escape "$ORGANIZER_USERNAME")
+          ORGANIZER_PASSWORD=$(escape "$ORGANIZER_PASSWORD")
+          EOF
+
+      - name: Stack-Dateien übertragen
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "mkdir -p '$REMOTE_DIR'"
+          scp -i ~/.ssh/id_deploy \
+            deploy/compose.yaml deploy/Caddyfile deploy/.env \
+            "$SSH_USER@$SSH_HOST:$REMOTE_DIR/"
+          # scp überträgt keine Rechte: die .env mit DB- und Organizer-Geheimnis
+          # landet sonst mit der Standard-umask des Servers (meist weltlesbar).
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "chmod 600 '$REMOTE_DIR/.env'"
+
+      - name: Image ziehen und Stack neu starten
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Das Token kommt über stdin statt als Argument — Kommandozeilen sind auf
+          # dem Zielsystem für jeden Prozess sichtbar.
+          printf '%s' "$REGISTRY_TOKEN" | ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" \
+            "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "set -e
+            cd '$REMOTE_DIR'
+            docker compose pull
+            docker compose up -d
+            docker logout ghcr.io
+            # Der SHA-Tag je Deploy summiert sich sonst auf der kleinen Platte.
+            docker image prune -af --filter 'until=168h'"
