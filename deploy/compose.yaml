@@ -1,0 +1,85 @@
+# Server-Compose-Stack für die Demo-Umgebung (https://demo.openclassware.de).
+#
+# Bewusst SEPARAT von der lokalen `compose.yaml` im Repo-Root: dort liegt eine
+# Entwickler-Datenbank mit Port-Mapping und Klartext-Passwort. Hier gilt das
+# Gegenteil — kein DB-Port nach außen, alle Geheimnisse aus der `.env` daneben.
+#
+# Start auf dem Server:
+#   cd /opt/elternsprechtag && docker compose pull && docker compose up -d
+#
+# Erwartete Datei `.env` im selben Verzeichnis (Vorlage: `.env.example`).
+
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/openclassware/elternsprechtag:latest}
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      # Demo-Profil: frisches Schema je Start, Seed aus data-demo.sql, kein
+      # echter Mailversand (spring.mail.host bleibt ungesetzt => Log-Attrappe).
+      SPRING_PROFILES_ACTIVE: demo
+      # TLS endet bei Caddy; ohne Auswertung der X-Forwarded-*-Header baut die App
+      # ihre Redirects auf http:// und den internen Port statt auf die öffentliche URL.
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-elternsprechtag}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-elternsprechtag}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}
+      ELTERNSPRECHTAG_SECURITY_ORGANIZER_USERNAME: ${ORGANIZER_USERNAME:-user}
+      # Nackter bcrypt-Hash ohne {bcrypt}-Präfix — den setzt application.properties.
+      ELTERNSPRECHTAG_SECURITY_ORGANIZER_PASSWORD: ${ORGANIZER_PASSWORD:?ORGANIZER_PASSWORD fehlt in .env}
+    # Kein Port-Mapping: die App ist ausschließlich über Caddy erreichbar.
+    expose:
+      - '8080'
+    networks:
+      - internal
+
+  database:
+    image: 'postgres:17'
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-elternsprechtag}
+      POSTGRES_USER: ${POSTGRES_USER:-elternsprechtag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}
+    # Bewusst KEIN `ports:` — die DB ist nur im internen Docker-Netz erreichbar.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-elternsprechtag} -d ${POSTGRES_DB:-elternsprechtag}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+    networks:
+      - internal
+
+  caddy:
+    image: 'caddy:2-alpine'
+    restart: always
+    depends_on:
+      - app
+    environment:
+      # Domain und ACME-Kontaktadresse steuern das Caddyfile von außen.
+      DEMO_DOMAIN: ${DEMO_DOMAIN:-demo.openclassware.de}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL fehlt in .env}
+    ports:
+      - '80:80'
+      - '443:443'
+      # HTTP/3 (QUIC) — Caddy lauscht darauf standardmäßig auf 443/udp.
+      - '443:443/udp'
+    volumes:
+      - './Caddyfile:/etc/caddy/Caddyfile:ro'
+      # Zertifikate und ACME-Kontostand überleben Neustarts (sonst drohen
+      # Let's-Encrypt-Rate-Limits bei jedem Deploy).
+      - 'caddy_data:/data'
+      - 'caddy_config:/config'
+    networks:
+      - internal
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:
