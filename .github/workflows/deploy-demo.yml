@@ -32,6 +32,25 @@ jobs:
   test:
     name: Test-Gate
     runs-on: ubuntu-latest
+    # `ElternsprechtagApplicationTests` startet den echten Context und damit die
+    # Default-Datasource aus application.properties — lokal bedient die Entwickler-
+    # Postgres aus `compose.yaml` sie, hier dieser Service-Container. Werte, Port und
+    # Datenbankname stimmen deshalb absichtlich mit `compose.yaml` überein.
+    services:
+      database:
+        image: postgres:17
+        env:
+          POSTGRES_DB: elternsprechtag
+          POSTGRES_USER: myuser
+          POSTGRES_PASSWORD: mysecret
+        ports:
+          - 5432:5432
+        # Ohne Healthcheck startet Maven, bevor Postgres Verbindungen annimmt.
+        options: >-
+          --health-cmd "pg_isready -U myuser -d elternsprechtag"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
 
