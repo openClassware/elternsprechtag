@@ -139,7 +139,7 @@ jobs:
           POSTGRES_USER=${POSTGRES_USER}
           POSTGRES_PASSWORD=$(escape "$POSTGRES_PASSWORD")
           ORGANIZER_USERNAME=$(escape "$ORGANIZER_USERNAME")
-          ORGANIZER_PASSWORD=$(escape "$ORGANIZER_PASSWORD")
+          ORGANIZER_PASSWORD_HASH=$(escape "$ORGANIZER_PASSWORD")
           EOF
 
       - name: Stack-Dateien übertragen
