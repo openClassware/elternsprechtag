@@ -112,3 +112,72 @@
     font-size: 14px;
     color: #8a909a;
 }
+
+/* Mobil: Tabellenzeile wird zur gestapelten Karte. Der Datums-Badge belegt links
+   eine durchgehende Spalte und bleibt über alle Karten der gleiche Scan-Anker.
+
+   DateBadge und StatusBadge werden hier über ihre eigene Block-Wurzelklasse
+   positioniert (`.sprechtag-table__row > .date-badge`). BEM-konformer wären eigene
+   `__date-cell`/`__status-cell`-Wrapper, die aber das DOM und damit SprechtagTable.java
+   ändern würden — die Umformung bleibt bewusst rein in CSS auf unverändertem DOM.
+   Der Kindselektor hält den Zugriff auf die Zeile beschränkt. */
+@media (max-width: 640px) {
+    .sprechtag-table__head {
+        display: none;
+    }
+
+    .sprechtag-table__row {
+        grid-template-columns: 52px minmax(0, 1fr) 44px;
+        /* Der Status bekommt eine eigene Zeile über beide rechten Spalten: als eigene
+           44px-Zelle wäre der Badge breiter als seine Spalte und liefe in die
+           Klassenliste hinein. */
+        grid-template-areas:
+            "date title   menu"
+            "date time    ."
+            "date klassen ."
+            "date status  status";
+        align-items: start;
+        row-gap: 6px;
+        column-gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .sprechtag-table__row > .date-badge {
+        grid-area: date;
+    }
+
+    .sprechtag-table__title-cell {
+        grid-area: title;
+    }
+
+    .sprechtag-table__title {
+        overflow-wrap: anywhere;
+    }
+
+    .sprechtag-table__time {
+        grid-area: time;
+        font-size: 13px;
+    }
+
+    .sprechtag-table__klassen {
+        grid-area: klassen;
+        min-width: 0;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+    }
+
+    .sprechtag-table__row > .status-badge {
+        grid-area: status;
+        justify-self: end;
+    }
+
+    .sprechtag-table__menu {
+        grid-area: menu;
+        align-items: center;
+        min-height: 44px;
+    }
+
+    .sprechtag-table__empty {
+        padding: 32px 16px;
+    }
+}
