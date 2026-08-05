@@ -137,7 +137,7 @@
 }
 
 /* Tablet: schmalere Spalten, Notiz umbricht früher. */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
     .auswertung {
         --auswertung-columns: 68px 1.2fr 64px 0.9fr 1.2fr 1.6fr;
     }
