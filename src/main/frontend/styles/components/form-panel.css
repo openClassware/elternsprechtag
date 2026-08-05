@@ -2,16 +2,21 @@
     padding: 1.5rem 1.5rem;
     display: flex;
     gap: 1rem;
-    flex-direction: column;
+    flex-direction: row;
 }
 
-@media (min-width: 768px) {
+.form-panel > :first-child {
+    flex: 0 0 240px;
+}
+
+/* Mobil: Beschriftung und Formular stapeln untereinander. */
+@media (max-width: 640px) {
     .form-panel {
-        flex-direction: row;
+        flex-direction: column;
     }
 
     .form-panel > :first-child {
-        flex: 0 0 240px;
+        flex: initial;
     }
 }
 
