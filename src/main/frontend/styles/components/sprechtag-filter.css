@@ -33,3 +33,31 @@
 .sprechtag-filter__tab--active .sprechtag-filter__count {
     color: var(--aura-accent-color);
 }
+
+/* Mobil: Die fünf Tabs passen nicht mehr nebeneinander, also scrollt die Leiste
+   horizontal statt aus dem Bildschirm zu laufen. Der angeschnittene nächste Tab am
+   rechten Rand signalisiert, dass weitere Filter folgen; Zähler, Aktiv-Zustand und
+   `white-space: nowrap` bleiben unverändert.
+
+   Die Scrollbar wird nur optisch unterdrückt — es bleibt ein echter Scroll-Container und
+   damit per Wisch wie per Pfeiltasten bedienbar: Chrome nimmt überlaufende Scroll-Container
+   von sich aus in die Tab-Reihenfolge auf. Ein JS-Karussell verlöre genau das. */
+@media (max-width: 640px) {
+    .sprechtag-filter {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+    }
+
+    .sprechtag-filter::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sprechtag-filter__tab {
+        /* Nicht schrumpfen: sonst quetscht der Flex-Container die Tabs auf die
+           Containerbreite statt sie überlaufen zu lassen. */
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+    }
+}
