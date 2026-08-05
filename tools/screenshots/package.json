@@ -1,0 +1,12 @@
+{
+  "name": "elternsprechtag-screenshots",
+  "private": true,
+  "type": "module",
+  "description": "Screenshot-Werkzeug für Responsive-Arbeit. Bewusst eigenes package.json: das Root-package.json wird von Vaadin generiert und ist gitignored.",
+  "scripts": {
+    "shot": "node screenshot.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}
