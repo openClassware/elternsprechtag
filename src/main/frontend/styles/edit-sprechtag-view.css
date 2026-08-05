@@ -25,3 +25,29 @@
 .edit-sprechtag-view__draft-button {
     margin-left: auto;
 }
+
+/* Mobil: Die Leiste stapelt zur Spalte. Die Primäraktion steht oben, damit der Daumen
+   zuerst auf sie trifft, "Abbrechen" ganz unten. Die DOM-Reihenfolge (Abbrechen,
+   Entwurf, Primäraktion) bleibt für die Tab-Reihenfolge unverändert; gedreht wird
+   allein über `order`. */
+@media (max-width: 640px) {
+    .edit-sprechtag-view__bottom-button-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Primäraktion ("Sprechtag anlegen" bzw. "Speichern") */
+    .edit-sprechtag-view__bottom-button-bar > :last-child {
+        order: 1;
+    }
+
+    .edit-sprechtag-view__draft-button {
+        order: 2;
+        margin-left: 0;
+    }
+
+    /* "Abbrechen" */
+    .edit-sprechtag-view__bottom-button-bar > :first-child {
+        order: 3;
+    }
+}
