@@ -20,11 +20,12 @@
 
 /* Header of the main application layout (BEM: block "main-header"). */
 
+/* Stays a single line at every width; wrapping would only eat vertical space. */
 .main-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.75rem;
   box-sizing: border-box;
   width: 100%;
@@ -32,17 +33,19 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* Left side: logo + product title. */
+/* Left side: logo + product title. Yields to the right side when space runs short. */
 .main-header__brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .main-header__logo {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 2rem;
   height: 2rem;
   background-color: var(--aura-accent-color);
@@ -59,11 +62,12 @@
   color: #111827;
 }
 
-/* Right side: school, current user, logout. */
+/* Right side: school, current user, logout. Never shrinks: avatar and logout stay tappable. */
 .main-header__user {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex: 0 0 auto;
 }
 
 .main-header__school {
@@ -81,6 +85,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 2rem;
   height: 2rem;
   background-color: #e5e7eb;
@@ -101,10 +106,19 @@
     margin-top: 1rem;
   }
 
-  /* Secondary header info is redundant on small screens; logout collapses to its icon. */
+  /*
+   * Secondary header info is redundant on small screens; logout collapses to its icon.
+   * The account stays recognizable by the avatar initials; logout carries its aria-label.
+   */
   .main-header__school,
   .main-header__divider,
-  .main-header__logout-label {
+  .main-header__logout-label,
+  .main-header__username {
     display: none;
+  }
+
+  /* The product title shrinks instead of disappearing: the app keeps its name in the header. */
+  .main-header__title {
+    font-size: 1rem;
   }
 }
