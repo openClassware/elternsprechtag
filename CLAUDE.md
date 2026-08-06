@@ -53,7 +53,7 @@ das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTUR
 
 ### Issue tracker
 
-Issues und Specs leben als Markdown-Dateien unter `.scratch/<feature>/` (kein Git-Remote). See `docs/agents/issue-tracker.md`.
+Issues und Specs leben als GitHub Issues (`gh` CLI, Repo `openClassware/elternsprechtag`). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
