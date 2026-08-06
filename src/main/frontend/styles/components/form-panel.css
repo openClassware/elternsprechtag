@@ -34,3 +34,20 @@
     flex: 1;
     min-width: 0;
 }
+
+/* Mobil: Mehrzeilige Auswahlgruppen (die Klassen) stehen am Telefon zu eng. Eine Checkbox
+   ist nur 20 px hoch und der Zeilenabstand 4 px — ihre unsichtbare Trefferfläche ist aber
+   26 px hoch und reicht damit bis in die nächste Zeile. Ein leicht danebengesetzter Daumen
+   wählt so die falsche Klasse. Zeilenabstand und Mindest-Trefferhöhe geben jeder Checkbox
+   die von WCAG 2.5.8 verlangten 24 px plus Luft dazwischen; Kästchen und Beschriftung
+   stehen unverändert nebeneinander. */
+@media (max-width: 640px) {
+    .form-panel__form vaadin-checkbox-group::part(group-field) {
+        row-gap: 0.75rem;
+    }
+
+    .form-panel__form vaadin-checkbox {
+        min-height: 1.5rem;
+        align-items: center;
+    }
+}
