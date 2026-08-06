@@ -1,0 +1,37 @@
+/* Der Zugangs-Link stand in einem schreibgeschützten `vaadin-text-field`. Ein `input`
+   bricht nicht um: gemessen bei 375 px war das Feld 190 px breit, der Link brauchte
+   526 px. Sichtbar war "http://localhost:8080/elternsp…" — nicht einmal der Anfang des
+   Tokens. Bei 1024 px stand exakt dasselbe 190-px-Feld im Dialog; der Defekt hing nie an
+   der Bildschirmbreite, deshalb wird er hier für alle Breiten behoben und nicht nur
+   mobil. Der Link ist jetzt Text in einem Div und bricht um.
+
+   `overflow-wrap: anywhere` statt `break-word`, weil der Link eine einzige Zeichenkette
+   ohne Umbruchpunkte ist: nur `anywhere` senkt auch die Mindestbreite (min-content) des
+   Elements, und nur darüber hört der Dialog auf, sich auf die vollen 526 px aufzuziehen.
+
+   Die Breite ist absolut angegeben, nicht in Prozent: der Vaadin-Dialog richtet seine
+   Breite nach dem Inhalt, ein `max-width: 100%` wäre also zirkulär und bliebe wirkungslos.
+   `100vw` ist der Bezug, den es hier wirklich gibt. Die 3 rem sind der gemessene Rahmen
+   des Overlays bei 375 px (2 × 8 px Abstand zum Bildschirmrand, 2 × 16 px Innenabstand);
+   der Dialog füllt damit den Bildschirm ohne ihn zu sprengen. Ab rund 464 px greift
+   stattdessen die Obergrenze von 26 rem, damit der Dialog auf dem Desktop nicht ausufert.
+   `box-sizing` steht ausdrücklich dabei, weil die Rechnung sonst am Innenabstand des
+   Kastens vorbeigeht und der Dialog doch wieder über 375 px hinausliefe.
+
+   Rahmen, Füllung und Polster bilden das frühere schreibgeschützte Textfeld nach, damit
+   der Link weiterhin als abgesetzter, markierbarer Wert erkennbar ist und nicht als
+   Fließtext. Die Werte stehen wörtlich da statt als `var(--lumo-…)`: dieses Projekt bindet
+   Lumo nicht ein, die Lumo-Variablen sind nirgends definiert und fallen ersatzlos aus
+   (nachgemessen: `getComputedStyle(document.documentElement)` liefert für alle
+   `--lumo-*` den leeren String). Die Farben sind die des restlichen Themes. */
+.share-link-dialog__link {
+    box-sizing: border-box;
+    width: min(26rem, calc(100vw - 3rem));
+    overflow-wrap: anywhere;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f1f2f5;
+    font-size: 14px;
+    line-height: 20px;
+}
