@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.services;
 
 import com.vaadin.flow.i18n.I18NProvider;
+import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
 import de.openclassware.elternsprechtag.domain.BuchungStatusEnum;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.repositories.BuchungRepository;
@@ -12,7 +13,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,12 +41,12 @@ public class AbsageBenachrichtigungService {
       BuchungRepository buchungRepository,
       BenachrichtigungSender sender,
       I18NProvider i18n,
-      @Value("${elternsprechtag.schoolname}") String schulname) {
+      ElternsprechtagProperties properties) {
     this.sprechtagRepository = sprechtagRepository;
     this.buchungRepository = buchungRepository;
     this.sender = sender;
     this.i18n = i18n;
-    this.schulname = schulname;
+    this.schulname = properties.getSchoolname();
   }
 
   /**

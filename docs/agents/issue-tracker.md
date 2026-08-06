@@ -12,7 +12,9 @@ Issues and specs (you may know a spec as a PRD) for this repo live as **GitHub I
   labels exist in the repo.
 - Blocking edges are a `## Blocked by` section in the issue body listing the blocking issue numbers
   (`- #36`), or "None — can start immediately". GitHub renders these as backlinks, so a blocker
-  shows every ticket waiting on it.
+  shows every ticket waiting on it. Solange dort ein offenes Issue steht, trägt das Ticket das
+  Label `blocked` statt einer Umsetzungs-Rolle (siehe `triage-labels.md`) — Blockaden sollen in
+  der Issue-Liste sichtbar sein, nicht nur im Body.
 - Comments and conversation history are issue comments.
 
 ## When a skill says "publish to the issue tracker"

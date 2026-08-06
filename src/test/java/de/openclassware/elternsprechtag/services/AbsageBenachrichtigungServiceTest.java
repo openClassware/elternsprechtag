@@ -3,6 +3,7 @@ package de.openclassware.elternsprechtag.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
 import de.openclassware.elternsprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.domain.BuchungStatusEnum;
 import de.openclassware.elternsprechtag.domain.Fach;
@@ -23,7 +24,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
@@ -46,8 +46,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   @Autowired private AbsageBenachrichtigungService absageBenachrichtigungService;
   @Autowired private FakeBenachrichtigungSender sender;
 
-  @Value("${elternsprechtag.schoolname}")
-  private String schulname;
+  @Autowired private ElternsprechtagProperties properties;
 
   @BeforeEach
   void resetSender() {
@@ -158,7 +157,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     assertThat(nachricht.betreff()).isEqualTo("Sprechtag „Frühling“ am 20. Juli 2026 abgesagt");
     assertThat(nachricht.text())
         .contains("Frühling", "20. Juli 2026", "abgesagt")
-        .endsWith(schulname);
+        .endsWith(properties.getSchoolname());
   }
 
   @Test

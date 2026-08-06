@@ -8,8 +8,9 @@ import java.time.format.TextStyle;
 import java.util.Locale;
 
 /**
- * Zentrale, Deutsch-lokalisierte Datums-/Zeit-Formatierung für die UI. Einzige Stelle für
- * Anzeige-Formatter — nicht inline duplizieren (siehe ARCHITECTURE.md, Abschnitt i18n).
+ * Zentrale, Deutsch-lokalisierte Datums-/Zeit-Formatierung. Einzige Stelle für Anzeige-Formatter —
+ * nicht inline duplizieren (siehe ARCHITECTURE.md, Abschnitt i18n). Gilt für alles, was Nutzer zu
+ * sehen bekommen: die UI ebenso wie ausgehende Mailtexte.
  */
 public final class Formats {
 

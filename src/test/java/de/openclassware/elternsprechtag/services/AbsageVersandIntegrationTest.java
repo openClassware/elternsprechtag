@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
 import de.openclassware.elternsprechtag.domain.Fach;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Lehrauftrag;
@@ -62,6 +63,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
   }
 
   @Autowired private FakeBenachrichtigungSender sender;
+  @Autowired private ElternsprechtagProperties properties;
 
   @BeforeEach
   void resetSender() {
@@ -111,13 +113,16 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
         .containsExactlyInAnyOrder("a@example.com", "b@example.com");
-    // Über die ganze Naht hinweg kommt die fertige Absage-Mail an, nicht nur die Adresse.
+    // Über die ganze Naht hinweg kommt die fertige Absage-Mail an, nicht nur die Adresse. Den
+    // genauen Wortlaut nagelt AbsageBenachrichtigungServiceTest fest — hier zählt, dass Betreff
+    // und Text überhaupt gefüllt bei der Attrappe ankommen.
     assertThat(sender.empfangen)
         .allSatisfy(
             nachricht -> {
-              assertThat(nachricht.betreff())
-                  .isEqualTo("Sprechtag „Frühling“ am 20. Juli 2026 abgesagt");
-              assertThat(nachricht.text()).contains("Frühling", "20. Juli 2026", "abgesagt");
+              assertThat(nachricht.betreff()).contains("Frühling", "abgesagt");
+              assertThat(nachricht.text())
+                  .contains("Frühling", "20. Juli 2026", "abgesagt")
+                  .endsWith(properties.getSchoolname());
             });
   }
 
