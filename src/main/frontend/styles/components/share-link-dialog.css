@@ -23,8 +23,14 @@
    Fließtext. Die Werte stehen wörtlich da statt als `var(--lumo-…)`: dieses Projekt bindet
    Lumo nicht ein, die Lumo-Variablen sind nirgends definiert und fallen ersatzlos aus
    (nachgemessen: `getComputedStyle(document.documentElement)` liefert für alle
-   `--lumo-*` den leeren String). Die Farben sind die des restlichen Themes. */
+   `--lumo-*` den leeren String). Die Farben sind die des restlichen Themes.
+
+   `user-select: all` ersetzt eine Fähigkeit des früheren Textfelds: dort ließ sich der
+   Link antippen und mit "Alles auswählen" von Hand kopieren. Ein Div kennt das nicht, ein
+   Zug über 74 Zeichen auf einem Telefon ist mühsam — mit `all` markiert ein einziger Tipp
+   den ganzen Link. Der Kopieren-Button bleibt der Hauptweg. */
 .share-link-dialog__link {
+    user-select: all;
     box-sizing: border-box;
     width: min(26rem, calc(100vw - 3rem));
     overflow-wrap: anywhere;

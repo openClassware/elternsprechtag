@@ -1,9 +1,16 @@
+/* Abstand und Warnfarbe standen als `var(--lumo-space-m)` und `var(--lumo-error-text-color)`
+   hier — beide wirkungslos: das Projekt bindet Lumo nicht ein, `--lumo-*` ist nirgends
+   definiert (nachgemessen: `getComputedStyle(document.documentElement)` liefert für jede
+   dieser Variablen den leeren String). Eine Deklaration mit unbekannter Variable fällt
+   ersatzlos aus, der Hinweis auf die betroffenen Eltern stand deshalb schwarz und ohne
+   Abstand statt in Warnrot. Die Werte stehen jetzt wörtlich da; das Rot ist dasselbe wie
+   im Status-Badge "Abgesagt" (`status-badge.css`). */
 .cancel-sprechtag-dialog__message {
-  margin-bottom: var(--lumo-space-m);
+  margin-bottom: 1rem;
   max-width: 28rem;
 }
 
 .cancel-sprechtag-dialog__affected {
   font-weight: 600;
-  color: var(--lumo-error-text-color);
+  color: #b91c1c;
 }

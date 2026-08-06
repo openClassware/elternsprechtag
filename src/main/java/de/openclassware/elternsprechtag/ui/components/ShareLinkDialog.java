@@ -19,7 +19,6 @@ public class ShareLinkDialog extends Dialog {
 
   public ShareLinkDialog(String link) {
     setHeaderTitle(getTranslation("manage-sprechtag.share.title"));
-    addClassName("share-link-dialog");
 
     Div linkText = new Div();
     linkText.addClassName("share-link-dialog__link");
