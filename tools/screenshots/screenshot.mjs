@@ -37,8 +37,15 @@ if (routes.length === 0) {
   fail('Keine Route angegeben. Beispiel: node screenshot.mjs /sprechtage 375 1024');
 }
 
-/** Login-geschützte Routen brauchen das Passwort; die öffentliche Elternseite nicht. */
-const needsLogin = routes.some((route) => !route.startsWith("/elternsprechtag"));
+/**
+ * Login-geschützte Routen brauchen das Passwort; die öffentliche Elternseite nicht — und die
+ * Anmeldeseite selbst erst recht nicht: wer angemeldet ist, wird von /login weggeleitet und
+ * bekäme sie nie zu sehen.
+ */
+const PUBLIC_PREFIXES = ["/elternsprechtag", "/login"];
+const needsLogin = routes.some(
+  (route) => !PUBLIC_PREFIXES.some((prefix) => route.startsWith(prefix)),
+);
 if (needsLogin && !password) {
   fail(
     "ORGANIZER_PASSWORD ist nicht gesetzt — die Organizer-Routen sind ohne Anmeldung nicht erreichbar.\n" +
