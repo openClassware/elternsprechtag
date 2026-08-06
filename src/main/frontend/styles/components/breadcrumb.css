@@ -1,11 +1,19 @@
+/*
+ * Umbruch auf Zeilenebene, nicht innerhalb eines Glieds: ohne flex-wrap staucht die Zeile
+ * bei 375 px das längste Glied unter seine Eigenbreite, sodass "Elternsprechtage verwalten"
+ * mitten im Begriff bricht und der Pfad nicht mehr als eine Folge lesbar ist.
+ */
 .breadcrumb {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     font-size: 14px;
 }
 
+/* Die Glieder sind Routennamen und bleiben ganz; sie rutschen lieber in die nächste Zeile. */
 .breadcrumb__link {
+    white-space: nowrap;
     color: #8a909a;
     text-decoration: none;
 }
@@ -18,7 +26,12 @@
     color: #c4c8ce;
 }
 
+/*
+ * Das letzte Glied darf als einziges umbrechen: es trägt den Namen der aktuellen Ansicht und
+ * kann länger sein als der Bildschirm. Da nichts mehr folgt, kostet der Umbruch hier nichts.
+ */
 .breadcrumb__current {
     color: #374151;
     font-weight: 500;
+    overflow-wrap: anywhere;
 }
