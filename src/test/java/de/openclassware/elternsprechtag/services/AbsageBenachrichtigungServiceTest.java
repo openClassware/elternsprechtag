@@ -12,7 +12,7 @@ import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.domain.Termin;
-import de.openclassware.elternsprechtag.services.AbsageBenachrichtigungService.AbsageEmpfaenger;
+import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
 import java.time.LocalDate;
@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
@@ -34,7 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
   BuchungService.class,
   KlassenService.class,
   AbsageBenachrichtigungService.class,
-  FakeBenachrichtigungSender.class
+  FakeBenachrichtigungSender.class,
+  BenachrichtigungTextTestConfig.class
 })
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
@@ -43,6 +45,9 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
 
   @Autowired private AbsageBenachrichtigungService absageBenachrichtigungService;
   @Autowired private FakeBenachrichtigungSender sender;
+
+  @Value("${elternsprechtag.schoolname}")
+  private String schulname;
 
   @BeforeEach
   void resetSender() {
@@ -92,7 +97,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
 
     assertThat(sender.empfangen)
-        .extracting(AbsageEmpfaenger::email)
+        .extracting(Nachricht::empfaenger)
         .containsExactlyInAnyOrder("a@example.com", "b@example.com");
   }
 
@@ -114,7 +119,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
 
     assertThat(sender.empfangen)
-        .extracting(AbsageEmpfaenger::email)
+        .extracting(Nachricht::empfaenger)
         .containsExactly("mueller@example.com");
   }
 
@@ -135,26 +140,25 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
 
     assertThat(sender.empfangen)
-        .extracting(AbsageEmpfaenger::email)
+        .extracting(Nachricht::empfaenger)
         .containsExactly("aktiv@example.com");
   }
 
   @Test
-  void benachrichtige_recipientRecord_carriesSprechtagKopfdaten() {
+  void benachrichtige_message_carriesSubjectAndBodyFromTranslations() {
     Fixture f = publishedSprechtag();
-    Sprechtag sprechtag = sprechtagRepository.findById(f.sprechtag().getId()).orElseThrow();
-    sprechtag.setLocation("Aula");
-    sprechtagRepository.save(sprechtag);
     book(f.lehrauftrag(), termineSorted().get(0), "eltern@example.com");
 
     absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
 
     assertThat(sender.empfangen).hasSize(1);
-    AbsageEmpfaenger empfaenger = sender.empfangen.get(0);
-    assertThat(empfaenger.email()).isEqualTo("eltern@example.com");
-    assertThat(empfaenger.titel()).isEqualTo("Frühling");
-    assertThat(empfaenger.datum()).isEqualTo(DATE);
-    assertThat(empfaenger.ort()).isEqualTo("Aula");
+    Nachricht nachricht = sender.empfangen.get(0);
+    assertThat(nachricht.empfaenger()).isEqualTo("eltern@example.com");
+    // Titel und Datum (zentral formatiert) im Betreff, Schulname als Absender-Grußformel im Text.
+    assertThat(nachricht.betreff()).isEqualTo("Sprechtag „Frühling“ am 20. Juli 2026 abgesagt");
+    assertThat(nachricht.text())
+        .contains("Frühling", "20. Juli 2026", "abgesagt")
+        .endsWith(schulname);
   }
 
   @Test
@@ -213,7 +217,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
 
     // Der Fehler bei der ersten Adresse stoppt den Versand an die übrigen nicht.
     assertThat(sender.empfangen)
-        .extracting(AbsageEmpfaenger::email)
+        .extracting(Nachricht::empfaenger)
         .containsExactly("ok@example.com");
   }
 }

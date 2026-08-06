@@ -1,7 +1,14 @@
 # ADR 0001: Pflicht-E-Mail an der Buchung für Absage-Benachrichtigungen
 
-Status: akzeptiert
+Status: akzeptiert — Zweckbindung erweitert durch
+[ADR 0002](0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md)
 Datum: 2026-07-19
+
+> **Hinweis:** Die unten festgeschriebene Zweckbindung („ausschließlich der Benachrichtigung über
+> Änderungen an genau dem gebuchten Sprechtag") gilt in dieser Form nicht mehr. Die Adresse dient
+> zusätzlich der Bestätigung der eigenen Buchung — siehe
+> [ADR 0002](0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md). Die Entscheidung selbst
+> (Pflicht-E-Mail, denormalisiert an der `Buchung`) bleibt unverändert gültig.
 
 ## Kontext
 

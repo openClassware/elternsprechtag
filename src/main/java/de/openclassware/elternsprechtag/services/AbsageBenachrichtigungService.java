@@ -1,39 +1,53 @@
 package de.openclassware.elternsprechtag.services;
 
+import com.vaadin.flow.i18n.I18NProvider;
 import de.openclassware.elternsprechtag.domain.BuchungStatusEnum;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.repositories.BuchungRepository;
 import de.openclassware.elternsprechtag.repositories.SprechtagRepository;
-import java.time.LocalDate;
+import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
+import de.openclassware.elternsprechtag.ui.Formats;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Ermittelt bei Absage eines Sprechtags die zu benachrichtigenden Eltern und übergibt jede Adresse
- * genau einmal an den {@link BenachrichtigungSender}-Port. Die Kernmethode ist synchron und ohne
- * echtes SMTP verifizierbar; der eigentliche Auslöser (Domänen-Event, {@code @Async}) kommt in
- * einem späteren Ticket und ruft {@link #benachrichtige(UUID)} lediglich auf.
+ * Ermittelt bei Absage eines Sprechtags die zu benachrichtigenden Eltern, formuliert die Absage-Mail
+ * und übergibt jede Adresse genau einmal an den anlassneutralen {@link BenachrichtigungSender}-Port.
+ * Alle Texte kommen aus {@code vaadin-i18n/translations.properties} über den {@link I18NProvider},
+ * das Datum über {@link Formats}. Die Kernmethode ist synchron und ohne echtes SMTP verifizierbar;
+ * der Auslöser ({@link AbsageBenachrichtigungListener}) ruft {@link #benachrichtige(UUID)} lediglich
+ * auf.
  */
-@RequiredArgsConstructor
 @Service
 @Slf4j
 public class AbsageBenachrichtigungService {
 
+  private static final Locale LOCALE = Locale.GERMANY;
+
   private final SprechtagRepository sprechtagRepository;
   private final BuchungRepository buchungRepository;
   private final BenachrichtigungSender sender;
+  private final I18NProvider i18n;
+  private final String schulname;
 
-  /**
-   * Vertrag zwischen Kernlogik und {@link BenachrichtigungSender}: die Empfänger-Adresse plus die
-   * für den Mailtext nötigen Sprechtag-Kopfdaten. {@code ort} ist optional ({@code null}, wenn der
-   * Sprechtag keinen Ort trägt).
-   */
-  public record AbsageEmpfaenger(String email, String titel, LocalDate datum, String ort) {}
+  AbsageBenachrichtigungService(
+      SprechtagRepository sprechtagRepository,
+      BuchungRepository buchungRepository,
+      BenachrichtigungSender sender,
+      I18NProvider i18n,
+      @Value("${elternsprechtag.schoolname}") String schulname) {
+    this.sprechtagRepository = sprechtagRepository;
+    this.buchungRepository = buchungRepository;
+    this.sender = sender;
+    this.i18n = i18n;
+    this.schulname = schulname;
+  }
 
   /**
    * Anzahl der Eltern mit aktiver ({@link BuchungStatusEnum#ZUGESAGT}) Buchung an diesem Sprechtag —
@@ -51,8 +65,8 @@ public class AbsageBenachrichtigungService {
    * Sprechtag über die Absage — je E-Mail-Adresse genau einmal. Existiert der Sprechtag nicht oder
    * gibt es keine aktive Buchung, passiert nichts (kein Sende-Aufruf, kein Fehler). Der Versand ist
    * best-effort: schlägt der Sender für eine Adresse fehl, wird der Fehler per {@code log.warn}
-   * protokolliert und mit den übrigen Empfängern fortgefahren. Mappt vollständig auf Records —
-   * Entities verlassen die Service-Schicht nicht.
+   * protokolliert und mit den übrigen Empfängern fortgefahren. Über die Port-Grenze geht nur die
+   * fertige {@link Nachricht} — Entities verlassen die Service-Schicht nicht.
    */
   @Transactional(readOnly = true)
   public void benachrichtige(UUID sprechtagId) {
@@ -67,12 +81,14 @@ public class AbsageBenachrichtigungService {
         buchungRepository.findDistinctElternEmailByTermin_SprechtagAndStatus(
             sprechtag, BuchungStatusEnum.ZUGESAGT);
 
+    String datum = Formats.dateLong(sprechtag.getStartDate());
+    String betreff = i18n.getTranslation("absage.mail.subject", LOCALE, sprechtag.getTitel(), datum);
+    String text =
+        i18n.getTranslation("absage.mail.body", LOCALE, sprechtag.getTitel(), datum, schulname);
+
     for (String adresse : adressen) {
-      AbsageEmpfaenger empfaenger =
-          new AbsageEmpfaenger(
-              adresse, sprechtag.getTitel(), sprechtag.getStartDate(), sprechtag.getLocation());
       try {
-        sender.sende(empfaenger);
+        sender.sende(new Nachricht(adresse, betreff, text));
       } catch (RuntimeException e) {
         // Best-effort: Einzelfehler (Bounce, voller Posteingang) stoppen den Versand nicht.
         log.warn("Absage-Benachrichtigung an {} fehlgeschlagen: {}", adresse, e.getMessage());
