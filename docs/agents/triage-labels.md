@@ -12,6 +12,8 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
-Since this repo uses a local-markdown issue tracker, a label is recorded as a `Status:` line near the top of the issue file (see `issue-tracker.md`).
+This repo uses GitHub Issues (see `issue-tracker.md`), so a role is a real GitHub label of the same
+name — all five exist in `openClassware/elternsprechtag`. Apply one with
+`gh issue create --label <name>` or `gh issue edit <n> --add-label <name>`.
 
 Edit the right-hand column to match whatever vocabulary you actually use.
