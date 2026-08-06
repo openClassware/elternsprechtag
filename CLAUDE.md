@@ -41,6 +41,12 @@ das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTUR
 ## Views
 
 - Alle Views sollen responsive sein (Mobile, Tablet, Desktop).
+- **Untergrenze ist 375 × 667 px** (iPhone SE 2./3. Generation). 320 px ist ausdrücklich
+  **kein** Ziel.
+- Genau **zwei Schwellen**, desktop-first und `max-width`-basiert: **1024 px** (Tablet) und
+  **640 px** (Telefon). Keine weiteren Breakpoints erfinden.
+- **Mobile-Layouts entstehen in CSS, nicht in Java**: keine Viewport-Abfrage in einem View,
+  kein `BrowserWindowResizeListener`, keine bildschirmabhängige Komponentenauswahl.
 
 ## CSS
 
@@ -48,6 +54,9 @@ das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTUR
   - Block: `card`
   - Element: `card__title`
   - Modifier: `card--highlighted`
+- **Tabellen-Karten-Muster**: Unterhalb von 640 px wird die Kopfzeile ausgeblendet und die
+  Zeile zur gestapelten Karte — die erste Spalte bleibt fest als Scan-Anker, der Rest stapelt
+  daneben. Vorlage ist die Auswertungsansicht (`styles/auswertung-view.css`).
 
 ## Agent skills
 
