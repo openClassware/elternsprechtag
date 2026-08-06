@@ -9,7 +9,21 @@
     flex: 0 0 240px;
 }
 
-/* Mobil: Beschriftung und Formular stapeln untereinander. */
+/* Mobil: Beschriftung und Formular stapeln untereinander.
+
+   Dazu bekommen mehrzeilige Auswahlgruppen (die Klassen) Luft: dort stand am Telefon
+   Zeile an Zeile. Eine `vaadin-checkbox` ist 20 px hoch, der Zeilenabstand betrug 4 px —
+   die unsichtbare Trefferfläche (das native `input`) ist aber 26 px hoch und ragte damit
+   2 px in die nächste Zeile. Gemessen bei 375 px wählte ein Tipp 2 px unter "5a"
+   verlässlich "8a" aus. Der Zeilenabstand trennt die Trefferflächen (jetzt 10 px
+   auseinander), die Mindesthöhe hebt die Checkbox selbst auf die von WCAG 2.5.8
+   verlangten 24 px. Waagerecht war nichts zu tun: dort liegen 33 px zwischen den
+   Trefferflächen.
+
+   Beide Regeln sprechen Vaadins Elemente direkt an statt über BEM-Klassen — eigene
+   `__klasse`-Wrapper würden das DOM und damit EditSprechtagView.java ändern, und die
+   Korrektur bleibt bewusst rein in CSS. Der Nachfahren-Selektor hält den Zugriff auf das
+   Formular des Panels beschränkt. */
 @media (max-width: 640px) {
     .form-panel {
         flex-direction: column;
@@ -17,6 +31,14 @@
 
     .form-panel > :first-child {
         flex: initial;
+    }
+
+    .form-panel__form vaadin-checkbox-group::part(group-field) {
+        row-gap: 0.75rem;
+    }
+
+    .form-panel__form vaadin-checkbox {
+        min-height: 1.5rem;
     }
 }
 
