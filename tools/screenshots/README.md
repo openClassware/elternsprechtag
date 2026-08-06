@@ -35,6 +35,22 @@ node tools/screenshots/screenshot.mjs /sprechtage /auswertung 375
 Die Bilder landen als `<route>-<breite>px.png` in `target/screenshots/` (gitignored) und
 sind fullPage mit `deviceScaleFactor: 2`.
 
+## Buchung bei 375 px durchspielen
+
+`buchung-375.mjs` klickt die Eltern-Buchungsansicht bei 375 × 667 px komplett durch —
+Angaben, Klasse, Lehrkraft, Termin, Notiz, Absenden — und prüft nach jedem Schritt, dass
+`scrollWidth` nicht größer ist als `clientWidth`, dass die Seite also nicht seitlich
+überläuft. Screenshots landen als `buchung-375-*.png` im selben Ordner wie oben.
+
+```
+node tools/screenshots/buchung-375.mjs <access-token>
+```
+
+Der Access-Token gehört zu einem **veröffentlichten** Sprechtag; die Route ist öffentlich,
+ein Passwort braucht das Skript nicht. Es schreibt eine echte Buchung in die Datenbank —
+also nur gegen eine lokale Umgebung laufen lassen. Bei Überlauf oder ausbleibender
+Bestätigung endet es mit Exit-Code 1.
+
 ## Umgebungsvariablen
 
 | Variable              | Default                 | Zweck                                        |
