@@ -1,6 +1,7 @@
 # ADR 0001: Pflicht-E-Mail an der Buchung für Absage-Benachrichtigungen
 
-Status: akzeptiert
+Status: akzeptiert — Zweckbindung erweitert durch
+[ADR 0002](0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md)
 Datum: 2026-07-19
 
 ## Kontext
@@ -23,6 +24,11 @@ Der Eltern-Buchungsflow erhält ein **Pflichtfeld E-Mail**. Die Adresse wird den
 jeder `Buchung` gespeichert (keine neue `Eltern`-Entity). Sie ist **zweckgebunden**: Sie dient
 ausschließlich der Benachrichtigung über Änderungen an genau dem gebuchten Sprechtag — in dieser
 Iteration konkret der Absage des gesamten Sprechtags.
+
+> **Nachtrag:** Diese Zweckbindung gilt seit
+> [ADR 0002](0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md) nicht mehr in dieser
+> Enge — die Adresse dient zusätzlich der Bestätigung der eigenen Buchung. Der Rest dieser
+> Entscheidung bleibt unverändert gültig.
 
 Damit wird das Anonymitätsprinzip **bewusst und begrenzt aufgeweicht**: Eine Buchung ist künftig
 einer erreichbaren E-Mail-Adresse zuordenbar. Es bleibt beim Rest des minimalen Auth-Modells
