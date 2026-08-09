@@ -9,7 +9,7 @@ import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.domain.Termin;
-import de.openclassware.elternsprechtag.services.AbsageBenachrichtigungService.AbsageEmpfaenger;
+import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
 import java.time.LocalDate;
@@ -44,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
   AbsageBenachrichtigungService.class,
   AbsageBenachrichtigungListener.class,
   FakeBenachrichtigungSender.class,
+  BenachrichtigungTextConfig.class,
   AbsageVersandIntegrationTest.SyncAsyncConfig.class
 })
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -108,8 +109,17 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     sprechtagService.changeStatus(f.sprechtag().getId(), SprechtagStatusEnum.ABGESAGT);
 
     assertThat(sender.empfangen)
-        .extracting(AbsageEmpfaenger::email)
+        .extracting(Nachricht::empfaenger)
         .containsExactlyInAnyOrder("a@example.com", "b@example.com");
+    // Über die ganze Naht hinweg trägt jede Nachricht die fertige Absage-Mail.
+    assertThat(sender.empfangen)
+        .allSatisfy(
+            nachricht -> {
+              assertThat(nachricht.betreff())
+                  .isEqualTo("Sprechtag „Frühling“ am 20. Juli 2026 abgesagt");
+              assertThat(nachricht.text())
+                  .contains("Frühling", "20. Juli 2026", "Gesamtschule Lindenhof");
+            });
   }
 
   @Test
@@ -137,7 +147,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     assertThat(sprechtagRepository.findById(f.sprechtag().getId()).orElseThrow().getStatus())
         .isEqualTo(SprechtagStatusEnum.ABGESAGT);
     assertThat(sender.empfangen)
-        .extracting(AbsageEmpfaenger::email)
+        .extracting(Nachricht::empfaenger)
         .containsExactly("ok@example.com");
   }
 
