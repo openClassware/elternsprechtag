@@ -2,7 +2,6 @@ package de.openclassware.elternsprechtag.services;
 
 import com.vaadin.flow.i18n.DefaultI18NProvider;
 import com.vaadin.flow.i18n.I18NProvider;
-import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,11 +22,8 @@ class BenachrichtigungConfig {
   @Bean
   @ConditionalOnProperty(prefix = "spring.mail", name = "host")
   BenachrichtigungSender javaMailBenachrichtigungSender(
-      JavaMailSender mailSender,
-      I18NProvider i18n,
-      @Value("${elternsprechtag.mail.absender}") String absender,
-      ElternsprechtagProperties properties) {
-    return new JavaMailBenachrichtigungSender(mailSender, i18n, absender, properties.getSchoolname());
+      JavaMailSender mailSender, @Value("${elternsprechtag.mail.absender}") String absender) {
+    return new JavaMailBenachrichtigungSender(mailSender, absender);
   }
 
   @Bean
@@ -39,8 +35,9 @@ class BenachrichtigungConfig {
   /**
    * Stellt einen injizierbaren {@link I18NProvider} für den Mailtext bereit. Der Versand läuft in
    * einem {@code @Async}-Hintergrund-Thread ohne Vaadin-{@code UI}-Kontext, sodass das übliche
-   * {@code Component#getTranslation(...)} dort nicht greift — der Sender nutzt deshalb direkt den
-   * Provider, der aus {@code vaadin-i18n/translations.properties} liest. {@link ConditionalOnMissingBean}
+   * {@code Component#getTranslation(...)} dort nicht greift — der formulierende Fachservice nutzt
+   * deshalb direkt den Provider, der aus {@code vaadin-i18n/translations.properties} liest.
+   * {@link ConditionalOnMissingBean}
    * lässt einen bereits vorhandenen (z. B. von Vaadin registrierten) Provider unangetastet.
    */
   @Bean

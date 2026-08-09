@@ -1,26 +1,26 @@
 package de.openclassware.elternsprechtag.services;
 
-import de.openclassware.elternsprechtag.services.AbsageBenachrichtigungService.AbsageEmpfaenger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Test-Attrappe des {@link BenachrichtigungSender}-Ports: sammelt die übergebenen Empfänger und kann
- * für einzelne Adressen einen Zustellfehler simulieren, um das Best-effort-Verhalten zu prüfen.
+ * Test-Attrappe des {@link BenachrichtigungSender}-Ports: sammelt die übergebenen Nachrichten
+ * (Empfänger, Betreff, Text) und kann für einzelne Adressen einen Zustellfehler simulieren, um das
+ * Best-effort-Verhalten zu prüfen.
  */
 class FakeBenachrichtigungSender implements BenachrichtigungSender {
 
-  final List<AbsageEmpfaenger> empfangen = new ArrayList<>();
+  final List<Nachricht> empfangen = new ArrayList<>();
   final Set<String> scheitertFuer = new HashSet<>();
 
   @Override
-  public void sende(AbsageEmpfaenger empfaenger) {
-    if (scheitertFuer.contains(empfaenger.email())) {
-      throw new RuntimeException("Zustellung fehlgeschlagen: " + empfaenger.email());
+  public void sende(Nachricht nachricht) {
+    if (scheitertFuer.contains(nachricht.empfaenger())) {
+      throw new RuntimeException("Zustellung fehlgeschlagen: " + nachricht.empfaenger());
     }
-    empfangen.add(empfaenger);
+    empfangen.add(nachricht);
   }
 
   void reset() {
