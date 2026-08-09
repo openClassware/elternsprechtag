@@ -485,23 +485,26 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (!bookingValid()) {
       return;
     }
-    String notizText =
-        notiz.getValue() == null || notiz.getValue().isBlank() ? null : notiz.getValue().trim();
+    // Snapshot vor removeAll(): Die Bestätigungskarte rendert aus diesen Werten, nicht aus dem
+    // dann bereits geleerten Formular.
+    Angaben angaben =
+        new Angaben(
+            schuelerName.getValue().trim(),
+            klasse.getValue().name(),
+            elternName.getValue().trim(),
+            elternEmail.getValue().trim(),
+            notiz.getValue() == null || notiz.getValue().isBlank() ? null : notiz.getValue().trim());
     BuchungsAnfrage anfrage =
         new BuchungsAnfrage(
-            elternName.getValue().trim(),
-            schuelerName.getValue().trim(),
-            elternEmail.getValue().trim(),
-            notizText,
+            angaben.eltern(),
+            angaben.kind(),
+            angaben.email(),
+            angaben.notizText(),
             session.toWuensche());
 
     try {
-      // Snapshot vor removeAll(): Formularwerte werden für die Bestätigung festgehalten.
-      String kind = schuelerName.getValue().trim();
-      String klasseName = klasse.getValue().name();
-      String eltern = elternName.getValue().trim();
       int gebucht = presenter.buchen(anfrage);
-      showConfirmation(gebucht, kind, klasseName, eltern, notizText);
+      showConfirmation(gebucht, angaben);
     } catch (BuchungService.TerminBelegtException conflict) {
       Notification notification =
           Notification.show(getTranslation("elternsprechtag.footer.conflict"));
@@ -519,16 +522,17 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     refreshFooter();
   }
 
+  /** Die abgeschickten Formularwerte; überdauert das Leeren des Formulars. */
+  private record Angaben(
+      String kind, String klasseName, String eltern, String email, String notizText) {}
+
   /** Bestätigungskarte im Stil der Buchungsseite: Erfolgs-Banner, Sprechtag-Kopf, Empfänger, Termine. */
-  private void showConfirmation(
-      int count, String kind, String klasseName, String eltern, String notizText) {
+  private void showConfirmation(int count, Angaben angaben) {
     removeAll();
     Div card = new Div();
     card.addClassName("elternsprechtag-view__card");
     card.add(
-        createSuccessBanner(count),
-        createKopf(sprechtag, false),
-        createConfirmBody(kind, klasseName, eltern, notizText, count));
+        createSuccessBanner(count), createKopf(sprechtag, false), createConfirmBody(angaben, count));
     add(createHeader(), card);
   }
 
@@ -552,28 +556,34 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return banner;
   }
 
-  private Component createConfirmBody(
-      String kind, String klasseName, String eltern, String notizText, int count) {
+  private Component createConfirmBody(Angaben angaben, int count) {
     Div body = new Div();
     body.addClassName("elternsprechtag-view__body");
-    body.add(createRecipient(kind, klasseName, eltern, notizText), createBookedTermine(count));
+    body.add(createRecipient(angaben), createBookedTermine(count));
     return body;
   }
 
-  private Component createRecipient(String kind, String klasseName, String eltern, String notizText) {
+  private Component createRecipient(Angaben angaben) {
     Div recipient = new Div();
     recipient.addClassName("elternsprechtag-view__confirm-recipient");
 
     Div fuer = new Div();
     fuer.addClassName("elternsprechtag-view__confirm-for");
-    fuer.setText(getTranslation("elternsprechtag.confirm.fuer", kind, klasseName));
+    fuer.setText(
+        getTranslation("elternsprechtag.confirm.fuer", angaben.kind(), angaben.klasseName()));
 
     Div elternLine = new Div();
     elternLine.addClassName("elternsprechtag-view__confirm-eltern");
-    elternLine.setText(getTranslation("elternsprechtag.confirm.eltern", eltern));
+    elternLine.setText(getTranslation("elternsprechtag.confirm.eltern", angaben.eltern()));
 
-    recipient.add(fuer, elternLine);
+    // Zukunftsform: Die Mail geht asynchron nach Commit raus, ist beim Rendern also unterwegs.
+    Div mailLine = new Div();
+    mailLine.addClassName("elternsprechtag-view__confirm-mail");
+    mailLine.setText(getTranslation("elternsprechtag.confirm.mail", angaben.email()));
 
+    recipient.add(fuer, elternLine, mailLine);
+
+    String notizText = angaben.notizText();
     if (notizText != null) {
       Div notizBlock = new Div();
       notizBlock.addClassName("elternsprechtag-view__confirm-notiz");
