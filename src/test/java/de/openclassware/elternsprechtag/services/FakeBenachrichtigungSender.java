@@ -13,10 +13,14 @@ import java.util.Set;
 class FakeBenachrichtigungSender implements BenachrichtigungSender {
 
   final List<Nachricht> empfangen = new ArrayList<>();
+  /** Auch die gescheiterten Zustellungen — damit ein Test „versucht, aber fehlgeschlagen" von
+   * „gar nicht erst versucht" unterscheiden kann. */
+  final List<Nachricht> versucht = new ArrayList<>();
   final Set<String> scheitertFuer = new HashSet<>();
 
   @Override
   public void sende(Nachricht nachricht) {
+    versucht.add(nachricht);
     if (scheitertFuer.contains(nachricht.empfaenger())) {
       throw new RuntimeException("Zustellung fehlgeschlagen: " + nachricht.empfaenger());
     }
@@ -25,6 +29,7 @@ class FakeBenachrichtigungSender implements BenachrichtigungSender {
 
   void reset() {
     empfangen.clear();
+    versucht.clear();
     scheitertFuer.clear();
   }
 }

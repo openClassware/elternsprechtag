@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class BuchungService {
   private final BuchungRepository buchungRepository;
   private final SprechtagRepository sprechtagRepository;
   private final KlassenRepository klassenRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /** Ein wählbarer Slot in der Eltern-View (aus einem materialisierten {@link Termin}). */
   public record SlotOption(UUID terminId, LocalTime zeit, boolean belegt) {}
@@ -275,6 +277,13 @@ public class BuchungService {
         buchung.setLehrauftrag(lehrauftrag);
         buchung.setTermin(termin);
         buchungen.add(buchungRepository.save(buchung));
+      }
+      if (!buchungen.isEmpty()) {
+        // Nach Commit (AFTER_COMMIT, @Async) geht die Bestätigung an die angegebene Adresse; der
+        // Submit selbst bleibt eine für sich abgeschlossene Transaktion. Rollt sie zurück (etwa
+        // wegen eines vergebenen Slots), wird das Event nie zugestellt.
+        eventPublisher.publishEvent(
+            new BuchungenErstelltEvent(buchungen.stream().map(Buchung::getId).toList()));
       }
       return buchungen.size();
     } catch (OptimisticLockingFailureException e) {
