@@ -452,10 +452,16 @@
     color: #111827;
 }
 
-.elternsprechtag-view__confirm-eltern {
+.elternsprechtag-view__confirm-eltern,
+.elternsprechtag-view__confirm-mail {
     margin-top: 2px;
     font-size: 14px;
     color: #6b7280;
+}
+
+/* Zieladresse der Bestätigungsmail: lange Adressen brechen um, statt die Karte zu sprengen. */
+.elternsprechtag-view__confirm-mail {
+    overflow-wrap: anywhere;
 }
 
 .elternsprechtag-view__confirm-notiz {
