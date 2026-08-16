@@ -135,6 +135,21 @@ als eigene, saubere Entscheidung.
   View-**Klassen** bleiben `public` (Vaadin-Route + paketübergreifende `X.ROUTE`/`X.class`-Referenzen),
   ihre **Konstruktoren** sind package-private (nur das Framework konstruiert sie).
 
+## Lizenz
+
+- Das Projekt steht unter **Apache-2.0** — bewusst permissiv, damit ein Schulträger die
+  Prüfung ohne Rückfrage abschließen kann.
+- Verbindlich sind genau zwei Stellen: die Datei **`/LICENSE`** (vollständiger Lizenztext,
+  Grundlage der GitHub-Erkennung) und der **`<licenses>`-Block in `pom.xml`** (Name + URL,
+  das, was ein Lizenz-Scanner am Maven-Artefakt sieht). Beide müssen übereinstimmen.
+- **`/package.json` ist bewusst ausgenommen.** Die Datei ist ein Generat des
+  `vaadin-maven-plugin` (`"name": "no-name"`, `"license": "UNLICENSED"`, `vaadin.hash`), steht
+  in `.gitignore` und wird bei jedem Frontend-Build neu geschrieben. Sie gehört damit weder zum
+  versionierten noch zum ausgelieferten Stand — ausgeliefert wird das gebündelte Frontend im
+  Spring-Boot-Jar, nicht das Paketmanifest. Eine Korrektur dort wäre nicht dauerhaft und für
+  keinen Scanner sichtbar; die `UNLICENSED`-Kennung in einer lokalen Arbeitskopie ist deshalb
+  kein Widerspruch zur Lizenzaussage des Repositories.
+
 ## Findings-Backlog
 
 Bekannte Abweichungen vom Soll und ihr Stand. Erledigte Findings bleiben als Changelog stehen.
