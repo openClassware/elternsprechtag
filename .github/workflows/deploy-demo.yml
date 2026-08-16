@@ -5,16 +5,27 @@
 # Der VPS baut nichts selbst: der teure Vaadin-Production-Build läuft hier auf dem
 # Runner, der Server zieht nur das fertige Image. Ein rotes Test-Gate bricht die
 # Kette ab, bevor irgendetwas gepusht oder ausgerollt wird.
+#
+# Dieselbe Kette setzt täglich die Demo zurück (siehe `schedule` unten) — ein zweiter
+# Reset-Weg neben dem Deploy würde nur auseinanderlaufen.
 name: Deploy Demo
 
 on:
   push:
     branches: [main]
+  # Täglicher Demo-Reset um 02:00 UTC: das Demo-Profil baut das Schema bei jedem
+  # App-Start neu auf, also genügt derselbe Deploy-Lauf. Ohne ihn sammelt die Demo
+  # zwischen zwei Pushes Fremdeingaben an — inklusive echter Namen und Adressen.
+  # GitHub schaltet zeitgesteuerte Workflows nach 60 Tagen ohne Repo-Aktivität ab;
+  # bleibt die Demo stehen, ist das die erste Stelle zum Nachsehen.
+  schedule:
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 # Zwei Deploys gleichzeitig würden sich auf dem Server ins Gehege kommen. Laufende
 # Deploys werden bewusst NICHT abgebrochen — ein halb ausgerollter Stack ist schlimmer
-# als ein überholter.
+# als ein überholter. Die Gruppe hängt an keinem Trigger, deshalb reiht sich auch der
+# nächtliche Reset hinter einem laufenden Deploy aus `main` ein, statt ihn zu kreuzen.
 concurrency:
   group: deploy-demo
   cancel-in-progress: false
@@ -172,3 +183,19 @@ jobs:
             docker logout ghcr.io
             # Der SHA-Tag je Deploy summiert sich sonst auf der kleinen Platte.
             docker image prune -af --filter 'until=168h'"
+
+      - name: Demo zurücksetzen
+        # Nur für Läufe ohne neuen Commit (Zeitplan und manueller Start): APP_IMAGE zeigt
+        # dann auf denselben SHA wie beim letzten Deploy, `up -d` lässt den App-Container
+        # also unangetastet und das Schema stünde weiter mit allen Fremdeingaben da. Der
+        # Neustart genügt — `ddl-auto=create-drop` des Demo-Profils baut es beim Hochfahren
+        # neu auf und `data-demo.sql` seedet es. Nach einem Push wurde der Container ohnehin
+        # gerade frisch erzeugt; ein zweiter Start wäre nur zusätzliche Ausfallzeit.
+        if: github.event_name != 'push'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "set -e
+            cd '$REMOTE_DIR'
+            docker compose restart app"

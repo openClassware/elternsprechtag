@@ -2,7 +2,9 @@
 
 Die Demo läuft unter <https://demo.openclassware.de> als Docker-Compose-Stack auf einem
 kleinen VPS. Jeder Push auf `main` (und jeder manuelle `workflow_dispatch`) baut ein Image,
-schiebt es in die GitHub Container Registry und rollt es per SSH aus.
+schiebt es in die GitHub Container Registry und rollt es per SSH aus. Derselbe Workflow läuft
+zusätzlich nach Zeitplan und setzt die Demo täglich zurück (siehe
+[Täglicher Reset](#täglicher-reset)).
 
 Dieses Dokument beschreibt, was **außerhalb** der Automatisierung von Hand eingerichtet
 werden muss: Secrets, DNS und die einmalige Server-Vorbereitung. Die Automatisierung selbst
@@ -110,9 +112,12 @@ Repository.
 ## Zugang zur Demo
 
 - **Organizer**: eigenes, wegwerfbares Demo-Passwort aus `ORGANIZER_PASSWORD` — bewusst
-  **nicht** der im Repo liegende Default-Hash aus `application.properties`. Zugangsdaten und
-  Demo-Link werden privat verteilt; in der Oberfläche erscheint **kein** Credentials-Hinweis.
-  Wird der Zugang bekannt, genügt ein neuer Hash im Secret plus ein Redeploy.
+  **nicht** der im Repo liegende Default-Hash aus `application.properties`. Die Zugangsdaten
+  sind **öffentlich** und werden zusammen mit dem Demo-Link im Repository dokumentiert, damit
+  eine interessierte Schule die Demo ohne Kontaktaufnahme ausprobieren kann. Das ist
+  vertretbar, weil das Demo-Profil das Schema bei jedem Start neu aufbaut, der Mailversand
+  dort die Log-Attrappe ist (kein Spam-Vektor) und alle Daten erfunden sind. Soll der Zugang
+  trotzdem wechseln, genügt ein neuer Hash im Secret plus ein Redeploy.
 - **Eltern**: unverändert anonym über den Access-Token-Link des Sprechtags — kein Login,
   keine Accounts.
 
@@ -121,12 +126,49 @@ Repository.
 Der App-Container läuft mit `SPRING_PROFILES_ACTIVE=demo`
 ([`application-demo.properties`](../src/main/resources/application-demo.properties)):
 
-- `ddl-auto=create-drop` — bei jedem Deploy entsteht ein frisches Schema, `data-demo.sql`
-  seedet neu. Änderungen fremder Besucher verschwinden mit dem nächsten Deploy.
+- `ddl-auto=create-drop` — bei jedem **Start des App-Containers** entsteht ein frisches
+  Schema, `data-demo.sql` seedet neu. Änderungen fremder Besucher verschwinden also mit dem
+  nächsten Deploy, spätestens aber mit dem nächtlichen Reset.
 - **Kein echter Mailversand**: `spring.mail.host` bleibt ungesetzt, deshalb wählt
   `BenachrichtigungConfig` die Log-Attrappe. Beliebige Eltern-Adressen sind in der Demo
   gefahrlos eintragbar.
 - H2-Console deaktiviert, kein Browser-Autostart.
+
+## Täglicher Reset
+
+Der Deploy-Workflow hat neben `push: main` und `workflow_dispatch` einen dritten Trigger:
+
+```yaml
+schedule:
+  - cron: '0 2 * * *'
+```
+
+Um 02:00 UTC läuft dieselbe Kette wie bei einem Deploy — Test-Gate, Image, Ausrollen. Damit
+findet ein Besucher die Demo auch nach Wochen ohne Push im Ausgangszustand vor, und dort
+eingegebene Namen und Adressen sind spätestens am nächsten Tag verschwunden.
+
+Ein Punkt, der beim Lesen des Workflows leicht überrascht: `docker compose up -d` allein
+setzt **nichts** zurück. Bei einem Lauf ohne neuen Commit zeigt `APP_IMAGE` auf denselben
+Commit-SHA wie beim letzten Deploy, Compose sieht keine Änderung und lässt den App-Container
+in Ruhe. Deshalb gibt es den Schritt **Demo zurücksetzen**, der bei allen Läufen außer `push`
+zusätzlich `docker compose restart app` ausführt; erst der Neustart baut das Schema über
+`ddl-auto=create-drop` neu auf. Nach einem Push entfällt er, weil der Container dort ohnehin
+gerade neu erzeugt wurde.
+
+Weil der Reset am gewöhnlichen Deploy hängt, gilt die `concurrency`-Gruppe `deploy-demo` für
+beide: ein nächtlicher Reset und ein Deploy aus `main` können sich nicht überholen, der
+spätere Lauf wartet.
+
+Manuell auslösen — und damit exakt den Reset-Pfad testen — geht über *Actions → Deploy Demo →
+Run workflow*; auch dieser Lauf nimmt den `restart`-Schritt mit.
+
+Zwei Betriebshinweise:
+
+- GitHub **deaktiviert zeitgesteuerte Workflows nach 60 Tagen ohne Repository-Aktivität**.
+  Steht die Demo trotz Zeitplan still, ist das die erste Stelle zum Nachsehen; ein Klick auf
+  *Enable workflow* schaltet ihn wieder scharf.
+- `cron` in GitHub Actions ist **UTC** und nicht minutengenau — bei Last verschiebt sich der
+  Start um mehrere Minuten. Für einen Demo-Reset ist das ohne Belang.
 
 ## Wiederherstellung & Betrieb
 
