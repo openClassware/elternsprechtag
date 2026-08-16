@@ -113,11 +113,12 @@ Repository.
 
 - **Organizer**: eigenes, wegwerfbares Demo-Passwort aus `ORGANIZER_PASSWORD` — bewusst
   **nicht** der im Repo liegende Default-Hash aus `application.properties`. Die Zugangsdaten
-  sind **öffentlich** und werden zusammen mit dem Demo-Link im Repository dokumentiert, damit
-  eine interessierte Schule die Demo ohne Kontaktaufnahme ausprobieren kann. Das ist
-  vertretbar, weil das Demo-Profil das Schema bei jedem Start neu aufbaut, der Mailversand
-  dort die Log-Attrappe ist (kein Spam-Vektor) und alle Daten erfunden sind. Soll der Zugang
-  trotzdem wechseln, genügt ein neuer Hash im Secret plus ein Redeploy.
+  gelten als **öffentlich**: sie dürfen zusammen mit dem Demo-Link frei weitergegeben und im
+  Repository dokumentiert werden, damit eine interessierte Schule die Demo ohne
+  Kontaktaufnahme ausprobieren kann. Vertretbar ist das, weil das Demo-Profil das Schema bei
+  jedem Start neu aufbaut, der Mailversand dort die Log-Attrappe ist (kein Spam-Vektor) und
+  alle Daten erfunden sind. Soll der Zugang trotzdem wechseln, genügt ein neuer Hash im Secret
+  plus ein Redeploy. (Die frühere Festlegung, sie privat zu verteilen, gilt nicht mehr.)
 - **Eltern**: unverändert anonym über den Access-Token-Link des Sprechtags — kein Login,
   keine Accounts.
 
