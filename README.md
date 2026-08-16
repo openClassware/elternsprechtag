@@ -37,9 +37,9 @@ Die Auswertung: der Terminplan je Lehrkraft — die Liste, die am Sprechtag tats
 
 Eine laufende Instanz mit erfundenen Stammdaten steht unter **<https://demo.openclassware.de>**.
 
-| Zugang    | Benutzername | Passwort            |
-|-----------|--------------|---------------------|
-| Organizer | `user`       | `BITTE-EINTRAGEN`   |
+| Zugang    | Benutzername | Passwort     |
+|-----------|--------------|--------------|
+| Organizer | `demo`       | `password`   |
 
 Diese Zugangsdaten sind **absichtlich öffentlich**. Die Demo baut ihr Datenbankschema bei jedem
 Start neu auf und wird zusätzlich täglich zurückgesetzt, sie verschickt keine echten E-Mails (der
