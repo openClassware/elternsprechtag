@@ -11,20 +11,20 @@ hide circle
 skinparam classAttributeIconSize 0
 
 enum SprechtagStatusEnum {
-  Entwurf
-  Veröffentlicht
-  Geschlossen
+  ENTWURF
+  VEROEFFENTLICHT
+  ABGESCHLOSSEN
+  ABGESAGT
 }
 
 enum TerminStatusEnum {
-  Frei
-  Gebucht
-  Gesperrt
+  FREI
+  BELEGT
 }
 
 enum BuchungStatusEnum {
-  Aktiv
-  Storniert
+  ZUGESAGT
+  ABGESAGT
 }
 
 ' Auth ist bewusst in-memory (ein Organizer, ohne DB-Account) — daher keine Account-Entity.
@@ -78,6 +78,7 @@ class Buchung {
   + status! : BuchungStatusEnum
   + schuelerName! : String
   + elternName! : String
+  + elternEmail! : String
   + notiz? : String
 }
 
