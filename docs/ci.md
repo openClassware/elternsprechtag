@@ -36,6 +36,11 @@ ist das bewusst andersherum.
 
 ## Branch Protection auf `main`
 
+**Voraussetzung**: Branch Protection und Rulesets gibt es auf dem Free-Plan nur für
+**öffentliche** Repositories — bei einem privaten antwortet die API mit *"Upgrade to GitHub
+Pro or make this repository public"*. Das Repo ist öffentlich, damit ist die Bedingung
+erfüllt; würde es je wieder privat gestellt, fiele die Regel ersatzlos weg.
+
 *Settings → Branches → Branch protection rules*, Regel für den Branch-Namen `main`:
 
 | Einstellung                                                    | Wert                       |
