@@ -1,0 +1,64 @@
+# Prüf-Lauf für jeden Pull Request gegen `main` — auch aus einem Fork.
+#
+# Bewusst getrennt vom Deploy-Workflow: der hängt an `push: main` und darf hier nicht
+# mitlaufen. Das Test-Gate ist trotzdem eine Spiegelung des Gates aus
+# `deploy-demo.yml` — gleicher Service-Container, gleiche Verbindungswerte —, damit ein
+# Fork-Lauf dieselbe Umgebung sieht wie der Lauf vor einem Deploy und rote wie grüne
+# Ergebnisse vergleichbar bleiben.
+#
+# Dieser Job ist die Pflichtprüfung der Branch Protection auf `main` (siehe
+# `docs/ci.md`). Wird er umbenannt, muss die
+# Repository-Einstellung mit umbenannt werden, sonst blockiert eine nie startende
+# Prüfung jeden Merge.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+# Ein überholter PR-Lauf hat keinen Wert: neuer Push, alter Lauf raus. (Im Deploy ist das
+# absichtlich andersherum — dort würde ein Abbruch einen halb ausgerollten Stack hinterlassen.)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Fork-Pull-Requests bekommen ohnehin nur ein Lese-Token; hier explizit, damit der Lauf
+# keine Schreibrechte anfasst, die er nicht braucht.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test-Gate
+    runs-on: ubuntu-latest
+    # `ElternsprechtagApplicationTests` startet den echten Context und damit die
+    # Default-Datasource aus application.properties — lokal bedient die Entwickler-
+    # Postgres aus `compose.yaml` sie, hier dieser Service-Container. Werte, Port und
+    # Datenbankname stimmen deshalb absichtlich mit `compose.yaml` und mit dem
+    # Test-Gate in `deploy-demo.yml` überein.
+    services:
+      database:
+        image: postgres:17
+        env:
+          POSTGRES_DB: elternsprechtag
+          POSTGRES_USER: myuser
+          POSTGRES_PASSWORD: mysecret
+        ports:
+          - 5432:5432
+        # Ohne Healthcheck startet Maven, bevor Postgres Verbindungen annimmt.
+        options: >-
+          --health-cmd "pg_isready -U myuser -d elternsprechtag"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: mvn verify
+        run: ./mvnw -B verify
