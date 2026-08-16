@@ -23,9 +23,9 @@ auf 5432), gleicher Healthcheck. Das ist Absicht — `ElternsprechtagApplication
 den echten Spring-Context und damit die Default-Datasource aus `application.properties`, und
 ein PR-Lauf soll dieselbe Umgebung sehen wie der Lauf unmittelbar vor einem Deploy.
 
-Getrennte Workflows statt eines gemeinsamen: der Deploy hängt unverändert an `push: main` und
-`workflow_dispatch` und darf auf einem Pull Request nicht mitlaufen — schon gar nicht auf
-einem aus einem Fork.
+Getrennte Workflows statt eines gemeinsamen: der Deploy hängt an `push: main`,
+`workflow_dispatch` und dem [nächtlichen Zeitplan](deploy.md#täglicher-reset) und darf auf
+einem Pull Request nicht mitlaufen — schon gar nicht auf einem aus einem Fork.
 
 **Fork-Pull-Requests** laufen ohne Zutun mit. Der Trigger ist `pull_request`, der Job braucht
 keine Secrets, und das Token ist auf `contents: read` beschränkt; die Deploy-Secrets sind für
