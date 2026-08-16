@@ -11,6 +11,10 @@
  *
  * Argumente in beliebiger Reihenfolge: alles mit "/" am Anfang ist eine Route, alles
  * Numerische eine Breite. Ohne Breitenangabe greifen die Projekt-Breakpoints 375/1024/1440.
+ *
+ * Für Bilder, die veröffentlicht werden (README), die App mit
+ * VAADIN_DEVMODE_DEVTOOLS_ENABLED=false starten — sonst sitzt das Bedien-Element der
+ * Vaadin-Dev-Tools unten rechts mit auf dem Bild. Ausblenden per CSS greift dort nicht.
  */
 
 import { chromium } from "playwright-core";
