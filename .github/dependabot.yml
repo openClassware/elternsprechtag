@@ -1,0 +1,36 @@
+# Monatliche Abhängigkeits-Aktualisierungen als Pull Request, damit Sicherheits-
+# aktualisierungen nicht liegen bleiben.
+#
+# Der Weg über einen Pull Request ist der Punkt: jede Aktualisierung läuft durch das
+# Test-Gate aus `.github/workflows/ci.yml` (Trigger `pull_request` gegen `main`), und der
+# Maintainer entscheidet am Prüfergebnis, ob sie gefahrlos gemerged werden kann. Der Lauf
+# braucht keine Secrets und nur `contents: read` — das reicht auch für das eingeschränkte
+# Token eines Dependabot-Pull-Requests.
+#
+# Zwei Ökosysteme, weil beide veralten können: die Maven-Abhängigkeiten der Anwendung und
+# die im Repository verwendeten GitHub-Actions. Bliebe das zweite außen vor, würde
+# ausgerechnet die Pipeline, die alles andere prüft, selbst nicht aktuell gehalten.
+version: 2
+updates:
+  # Anwendung: `pom.xml` im Repo-Root (Spring Boot, Vaadin, …).
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: monthly
+    # Ein gebündelter Pull Request statt eines pro Abhängigkeit: ein Maven-Build dauert
+    # hier Minuten, und Spring-Boot- wie Vaadin-Artefakte wandern ohnehin im Verbund.
+    groups:
+      maven:
+        patterns:
+          - "*"
+
+  # Pipeline: alle Workflows unter `.github/workflows/`. Der Pfad ist bei diesem
+  # Ökosystem immer `/`, nicht das Workflow-Verzeichnis.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
