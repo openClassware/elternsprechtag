@@ -9,6 +9,9 @@ Zwei Teile: der Workflow im Repository und die Branch Protection als Repository-
 Der Workflow ist versioniert, die Einstellung nicht — deshalb steht sie unten so genau, dass
 sie nach einem Verlust rekonstruierbar ist.
 
+Was diese Prüfung monatlich von allein zu tun bekommt, steht unter
+[Abhängigkeits-Aktualisierungen](#abhängigkeits-aktualisierungen).
+
 ## Der Workflow
 
 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), ein Job namens **`Test-Gate`**:
@@ -97,3 +100,26 @@ Prüfen lässt sich der Ist-Zustand mit:
 ```bash
 gh api repos/openClassware/elternsprechtag/branches/main/protection
 ```
+
+## Abhängigkeits-Aktualisierungen
+
+[`.github/dependabot.yml`](../.github/dependabot.yml) lässt Dependabot **monatlich** nach
+Aktualisierungen suchen — für die Maven-Abhängigkeiten der Anwendung und für die im
+Repository verwendeten GitHub-Actions. Beide Ökosysteme bekommen je einen gebündelten Pull
+Request (`groups`) statt eines pro Abhängigkeit: ein Maven-Build dauert hier Minuten, und
+Spring-Boot- wie Vaadin-Artefakte wandern ohnehin im Verbund.
+
+Der Weg über einen Pull Request ist der Punkt. Jede Aktualisierung läuft durch das
+**`Test-Gate`** oben, und der Maintainer entscheidet am Prüfergebnis, ob sie gefahrlos
+gemerged werden kann — Sicherheitsaktualisierungen bleiben so nicht liegen, ohne dass etwas
+Ungetestetes nach `main` kommt. Ein Dependabot-Pull-Request bekommt ein eingeschränktes
+Token; das genügt, weil der Job keine Secrets braucht und auf `contents: read` steht.
+
+Warum auch GitHub-Actions: sonst würde ausgerechnet die Pipeline, die alles andere prüft,
+selbst nicht aktuell gehalten. `directory: /` ist bei diesem Ökosystem richtig — Dependabot
+sucht die Workflows selbst unter `.github/workflows/`, das Verzeichnis wird nicht angegeben.
+
+**Gültigkeit prüfen**: GitHub liest die Datei nur vom Default-Branch. Nach dem Merge zeigt
+*Insights → Dependency graph → Dependabot* beide Ökosysteme mit ihrem letzten Prüfzeitpunkt;
+ein Parse-Fehler stünde dort statt der Einträge. Einen Lauf sofort auslösen (statt bis zum
+Monatstermin zu warten) geht dort über *Check for updates*.
