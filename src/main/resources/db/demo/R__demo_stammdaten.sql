@@ -1,6 +1,18 @@
--- Testdaten für das 'demo'-Profil.
--- Nur Stammdaten (Fächer, Klassen, Lehrer, Lehraufträge) – KEIN Sprechtag/Termin/Buchung.
--- Feste UUIDs + ON CONFLICT DO NOTHING => idempotent bei jedem App-Start.
+-- Demo-Stammdaten (Fächer, Klassen, Lehrer, Lehraufträge) – KEIN Sprechtag/Termin/Buchung.
+--
+-- Diese Migration liegt bewusst NICHT unter `db/migration`, sondern in einem eigenen Verzeichnis,
+-- das nur das 'demo'-Profil in `spring.flyway.locations` aufnimmt (application-demo.properties).
+-- Eine Schulinstanz sieht dieses Skript damit gar nicht erst und bekommt keine Demo-Daten.
+--
+-- Sie ist eine WIEDERHOLBARE Migration (`R__`) und keine versionierte: Wiederholbare laufen immer
+-- nach allen versionierten Skripten, also nach der jeweils neuesten Schemaversion. Eine feste
+-- Versionsnummer müsste dagegen entweder in die Hauptkette eingereiht werden (wo sie mit dem
+-- nächsten V-Skript kollidiert) oder hinter ihr liegen (dann liefen spätere Hauptmigrationen
+-- "out of order" und Flyway bräche ab).
+--
+-- Feste UUIDs + ON CONFLICT DO NOTHING => idempotent. Wiederholbare Migrationen laufen erneut,
+-- sobald sich ihre Prüfsumme ändert, und der Demo-Deploy setzt die Datenbank ohnehin vor jedem
+-- Start zurück — beides darf hier nichts kaputtmachen.
 --
 -- Das Konfliktziel ist bewusst `(id)` und nicht das weitere `ON CONFLICT DO NOTHING`. Neben der id
 -- sind auch `faecher.name`, `faecher.short_name` und `klassen.name` eindeutig; eine fremde Zeile,
