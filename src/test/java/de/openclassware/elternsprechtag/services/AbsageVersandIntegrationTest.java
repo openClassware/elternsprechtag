@@ -21,14 +21,11 @@ import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * End-to-End der Absage-Naht: Die Absage ({@code VEROEFFENTLICHT -> ABGESAGT}) löst über das
@@ -36,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
  * damit die {@code AFTER_COMMIT}-Verarbeitung deterministisch (im selben Thread, ohne Timing) läuft
  * — geprüft wird das beobachtbare Ergebnis am Fake-Sender, nicht die Event-Mechanik.
  */
-@DataJpaTest
+@ServiceTest
 @Import({
   SprechtagService.class,
   BuchungService.class,
@@ -47,7 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
   BenachrichtigungTextConfig.class,
   AbsageVersandIntegrationTest.SyncAsyncConfig.class
 })
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
 class AbsageVersandIntegrationTest extends AbstractServiceTest {
 
   private static final LocalDate DATE = LocalDate.of(2026, 7, 20);

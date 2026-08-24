@@ -23,14 +23,11 @@ import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * End-to-End der Bestätigungs-Naht: Ein Eltern-Submit über {@link BuchungService#buchen} löst nach
@@ -39,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Aufteilung der Services bleiben dem Test bewusst unbekannt. Der {@code @Async}-Executor ist ein
  * {@link SyncTaskExecutor}, damit die {@code AFTER_COMMIT}-Verarbeitung ohne Timing beobachtbar ist.
  */
-@DataJpaTest
+@ServiceTest
 @Import({
   SprechtagService.class,
   BuchungService.class,
@@ -50,7 +47,6 @@ import org.springframework.transaction.annotation.Transactional;
   BenachrichtigungTextConfig.class,
   BuchungBestaetigungVersandIntegrationTest.SyncAsyncConfig.class
 })
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
 class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
 
   private static final LocalDate DATE = LocalDate.of(2026, 7, 20);

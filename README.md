@@ -95,8 +95,19 @@ Achtung: Das `demo`-Profil verwirft bei jedem Start das gesamte Schema (`ddl-aut
 Tests laufen mit:
 
 ```bash
+docker compose up -d   # falls die Datenbank nicht ohnehin läuft
 ./mvnw verify
 ```
+
+**Die Testsuite braucht eine laufende Datenbank.** Die Service-Tests laufen bewusst gegen dieselbe
+PostgreSQL wie die Produktion und nicht gegen eine untergeschobene In-Memory-Datenbank — nur so
+wird datenbankspezifisches Verhalten in Tests überhaupt sichtbar.
+
+Anders als beim Anwendungsstart fährt der Testlauf die Datenbank **nicht** selbst hoch: Spring
+Boots Docker-Compose-Unterstützung hängt am Start der Anwendung, nicht am Start der Tests. In der
+Praxis fällt das selten auf, weil der Container aus [`compose.yaml`](compose.yaml) mit
+`restart: always` läuft, sobald er einmal gestartet wurde. Wer ihn gestoppt hat, bekommt rote
+Tests mit Verbindungsfehler — dann hilft die Zeile oben.
 
 ## Dokumentation
 

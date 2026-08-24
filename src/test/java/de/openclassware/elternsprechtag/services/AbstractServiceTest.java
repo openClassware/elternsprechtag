@@ -23,9 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Gemeinsame Fixtures und DB-Reinigung für die Service-Tests. Trägt bewusst keine Spring-Test-
- * Annotationen — die konkreten Testklassen bringen {@code @DataJpaTest} etc. mit. Ohne umschließende
- * Test-Transaktion (siehe konkrete Klassen) committen die Fixture-Saves sofort, sodass die eigenen
+ * Annotationen — die konkreten Testklassen bringen {@link ServiceTest} mit. Ohne umschließende
+ * Test-Transaktion (dort konfiguriert) committen die Fixture-Saves sofort, sodass die eigenen
  * Transaktionsgrenzen der Services real beobachtbar sind.
+ *
+ * <p>Die Reinigung in {@link #cleanDb()} ist deshalb nicht optional: Die Tests laufen gegen die
+ * konfigurierte Postgres, die zwischen zwei Läufen bestehen bleibt — anders als bei einer
+ * untergeschobenen In-Memory-Datenbank räumt kein Kontextabbau hinter ihnen auf.
  */
 abstract class AbstractServiceTest {
 

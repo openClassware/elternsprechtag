@@ -43,10 +43,13 @@ jobs:
   test:
     name: Test-Gate
     runs-on: ubuntu-latest
-    # `ElternsprechtagApplicationTests` startet den echten Context und damit die
-    # Default-Datasource aus application.properties — lokal bedient die Entwickler-
-    # Postgres aus `compose.yaml` sie, hier dieser Service-Container. Werte, Port und
-    # Datenbankname stimmen deshalb absichtlich mit `compose.yaml` überein.
+    # Die Suite braucht eine erreichbare Postgres: `ElternsprechtagApplicationTests` startet
+    # den echten Context und damit die Default-Datasource aus application.properties, und die
+    # Service-Tests laufen über `@ServiceTest` (Replace.NONE) gegen dieselbe Datenbank statt
+    # gegen eine untergeschobene In-Memory-Instanz. Fehlt dieser Container, ist die Suite rot
+    # — sie weicht nicht auf einen Ersatz aus. Lokal bedient die Entwickler-Postgres aus
+    # `compose.yaml` denselben Zweck. Werte, Port und Datenbankname stimmen deshalb
+    # absichtlich mit `compose.yaml` überein.
     services:
       database:
         image: postgres:17
