@@ -1,6 +1,16 @@
 -- Testdaten für das 'demo'-Profil.
 -- Nur Stammdaten (Fächer, Klassen, Lehrer, Lehraufträge) – KEIN Sprechtag/Termin/Buchung.
 -- Feste UUIDs + ON CONFLICT DO NOTHING => idempotent bei jedem App-Start.
+--
+-- Das Konfliktziel ist bewusst `(id)` und nicht das weitere `ON CONFLICT DO NOTHING`. Neben der id
+-- sind auch `faecher.name`, `faecher.short_name` und `klassen.name` eindeutig; eine fremde Zeile,
+-- die nur auf so einem Namen kollidiert, lässt den Seed hier laut scheitern. Das ist gewollt:
+-- Ohne Ziel würde die Zeile still übersprungen, die Lehraufträge zeigten dann auf eine nie
+-- eingefügte Klasse und der Start bräche stattdessen an einer Fremdschlüsselverletzung ab — bei
+-- gleicher Wirkung, aber mit einer Meldung, die von der Ursache wegführt.
+--
+-- Der Seed setzt also eine Datenbank voraus, die diese Stammdaten entweder gar nicht oder exakt
+-- so enthält. Genau das stellt der Demo-Deploy her: Er leert die Datenbank vor jedem Start.
 
 -- ---------------------------------------------------------------------------
 -- Fächer

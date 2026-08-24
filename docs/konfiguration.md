@@ -34,8 +34,14 @@ Datenbankverbindung und Organizer-Zugang gesetzt werden.
 
 ## Datenbank
 
-Die Anwendung erwartet eine **PostgreSQL**-Datenbank. Das Schema legt Hibernate selbst an
-(`spring.jpa.hibernate.ddl-auto=update`); ein Migrationswerkzeug gibt es nicht.
+Die Anwendung erwartet eine **PostgreSQL**-Datenbank. Das Schema legt **Flyway** an: Die Skripte
+liegen im Repository unter [`src/main/resources/db/migration`](../src/main/resources/db/migration)
+und laufen beim Start der Anwendung automatisch — beim ersten Start auf einer leeren Datenbank
+ebenso wie bei jedem Update. Sie sind vor dem Update lesbar; Flyway führt jedes Skript genau einmal
+aus und schreibt das in die Tabelle `flyway_schema_history` derselben Datenbank.
+
+Der Datenbank-Benutzer braucht daher Rechte zum Anlegen und Ändern von Tabellen, nicht nur zum
+Lesen und Schreiben von Daten.
 
 | Umgebungsvariable            | Default                                              | Bedeutung                                                     |
 |------------------------------|------------------------------------------------------|---------------------------------------------------------------|
@@ -43,10 +49,11 @@ Die Anwendung erwartet eine **PostgreSQL**-Datenbank. Das Schema legt Hibernate 
 | `SPRING_DATASOURCE_USERNAME` | `myuser`                                             | Datenbank-Benutzer.                                           |
 | `SPRING_DATASOURCE_PASSWORD` | `mysecret`                                           | Passwort des Datenbank-Benutzers.                             |
 
-Die JPA-Einstellungen selbst (`spring.jpa.hibernate.ddl-auto=update`, `show-sql=false`,
+Die JPA-Einstellungen selbst (`spring.jpa.hibernate.ddl-auto=validate`, `show-sql=false`,
 `open-in-view=false`) sind bewusst fest verdrahtet und keine Konfigurationspunkte für Betreiber.
-Über Relaxed Binding ließen sie sich überschreiben — davon ist abzuraten, insbesondere von
-`ddl-auto`-Werten wie `create-drop`, die Daten verwerfen.
+Über Relaxed Binding ließen sie sich überschreiben — davon ist abzuraten: `validate` heißt, dass
+Hibernate das migrierte Schema nur noch prüft und nichts daran ändert. Jeder andere `ddl-auto`-Wert
+lässt Hibernate am Schema arbeiten, das Flyway besitzt; `create-drop` verwirft dabei alle Daten.
 
 ## Organizer-Zugang
 
@@ -160,10 +167,12 @@ Profile werden über `SPRING_PROFILES_ACTIVE` aktiviert, mehrere kommasepariert
 |------------|------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | *(keins)*  | [`application.properties`](../src/main/resources/application.properties)           | Standard. Gilt immer und ist die Basis für alle Profile. Für eine eigene Instanz ist **kein** Profil nötig — die Werte kommen aus der Umgebung.                |
 | `local`    | `application-local.properties` (nicht im Repository)                               | Persönliche Entwicklereinstellungen, u. a. echter SMTP-Zugang zum Testen. Die Datei ist per `.gitignore` ausgeschlossen und muss lokal selbst angelegt werden. |
-| `demo`     | [`application-demo.properties`](../src/main/resources/application-demo.properties) | Öffentliche Vorführinstanz: `ddl-auto=create-drop` (frisches Schema bei jedem Start), Seed aus `data-demo.sql`, kein Browser-Autostart, H2-Console aus.        |
+| `demo`     | [`application-demo.properties`](../src/main/resources/application-demo.properties) | Öffentliche Vorführinstanz: Seed aus `data-demo.sql`, kein Browser-Autostart, H2-Console aus.                                                                  |
 
-Das `demo`-Profil ist **nicht** für den Echtbetrieb geeignet: Es verwirft bei jedem Start das
-Schema samt aller Daten.
+Das `demo`-Profil ist **nicht** für den Echtbetrieb geeignet: Es befüllt die Datenbank bei jedem
+Start mit erfundenen Stammdaten. Das Schema baut es nicht mehr selbst neu auf — es läuft durch
+dieselbe Migrationskette wie eine Schulinstanz. Zurückgesetzt wird die Demo stattdessen beim
+Deploy (siehe [Deployment](deploy.md)).
 
 ## Welche Daten die Anwendung speichert
 
