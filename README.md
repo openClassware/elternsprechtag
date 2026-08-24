@@ -12,8 +12,6 @@ Zeiten.
 > Einsatz braucht:
 > - **Stammdaten sind nur per SQL pflegbar.** Lehrkräfte, Klassen, Fächer und Lehraufträge werden
 >   direkt in der Datenbank angelegt — es gibt weder Import noch Pflegemasken.
-> - **Keine Schema-Migrationen.** Das Datenbankschema erzeugt Hibernate selbst
->   (`ddl-auto=update`); ein Upgrade auf eine neue Version ist nicht abgesichert.
 >
 > Zum Ausprobieren, Bewerten und Mitentwickeln ist das Projekt gedacht — für den Sprechtag im
 > nächsten Monat noch nicht.
@@ -90,7 +88,24 @@ Klassen, Fächer, Lehraufträge) dazu:
 SPRING_PROFILES_ACTIVE=demo ./mvnw spring-boot:run
 ```
 
-Achtung: Das `demo`-Profil verwirft bei jedem Start das gesamte Schema (`ddl-auto=create-drop`).
+### Datenbankschema
+
+Das Schema gehört [Flyway](https://flywaydb.org/): Die Skripte liegen unter
+[`src/main/resources/db/migration`](src/main/resources/db/migration) und laufen beim Start in
+jedem Profil, auch in Tests. Hibernate prüft das Ergebnis nur noch
+(`spring.jpa.hibernate.ddl-auto=validate`) und ändert nichts mehr selbst — passen Entitäten und
+Migrationen nicht zusammen, startet die Anwendung gar nicht erst.
+
+Jede Schemaänderung ist damit ein neues, versioniertes Skript (`V2__…sql`, `V3__…sql`); bereits
+ausgelieferte Skripte werden nicht mehr geändert, Flyway prüft ihre Prüfsummen.
+
+Wer die Entwicklungsdatenbank noch aus der Zeit vor Flyway hat, muss sie einmalig leeren — Flyway
+verweigert die Arbeit an einem gefüllten Schema ohne Historientabelle:
+
+```bash
+docker exec elternsprechtag-database-1 psql -U myuser -d elternsprechtag \
+  -c 'DROP SCHEMA public CASCADE' -c 'CREATE SCHEMA public'
+```
 
 Tests laufen mit:
 
@@ -121,10 +136,9 @@ Praxis fällt das selten auf, weil der Container aus [`compose.yaml`](compose.ya
 `restart: always` läuft, sobald er einmal gestartet wurde. Wer ihn gestoppt hat, bekommt rote
 Tests mit Verbindungsfehler — dann hilft die Zeile oben.
 
-Solange das Schema aus den Entities entsteht (`ddl-auto=update`), gilt lokal eine Einschränkung:
-Hibernate fügt nur hinzu und räumt nie auf. Nach einer Umbenennung oder einem neu gesetzten
-`nullable = false` kann die lange bestehende Test-Datenbank Reste behalten und Tests scheitern
-lassen, die im CI grün sind — dort ist die Datenbank bei jedem Lauf frisch. Dann hilft ein
+Auch die Test-Datenbank füllt Flyway. Sie bleibt zwischen zwei Läufen bestehen, im CI ist sie bei
+jedem Lauf frisch — wer sie noch aus der Zeit vor Flyway hat oder eine Migration lokal ändert,
+während sie schon eingespielt war, bekommt hier rote Tests, die im CI grün sind. Dann hilft ein
 Neuanlegen:
 
 ```bash

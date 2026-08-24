@@ -13,8 +13,8 @@ name: Deploy Demo
 on:
   push:
     branches: [main]
-  # Täglicher Demo-Reset um 02:00 UTC: das Demo-Profil baut das Schema bei jedem
-  # App-Start neu auf, also genügt derselbe Deploy-Lauf. Ohne ihn sammelt die Demo
+  # Täglicher Demo-Reset um 02:00 UTC: der Deploy-Lauf setzt die Datenbank ohnehin vor
+  # jedem Start zurück, also genügt es, ihn zu wiederholen. Ohne ihn sammelt die Demo
   # zwischen zwei Pushes Fremdeingaben an — inklusive echter Namen und Adressen.
   # GitHub schaltet zeitgesteuerte Workflows nach 60 Tagen ohne Repo-Aktivität ab;
   # bleibt die Demo stehen, ist das die erste Stelle zum Nachsehen.
@@ -176,7 +176,7 @@ jobs:
           # landet sonst mit der Standard-umask des Servers (meist weltlesbar).
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "chmod 600 '$REMOTE_DIR/.env'"
 
-      - name: Image ziehen und Stack neu starten
+      - name: Image ziehen, Datenbank zurücksetzen, Stack neu starten
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -186,26 +186,31 @@ jobs:
           # dem Zielsystem für jeden Prozess sichtbar.
           printf '%s' "$REGISTRY_TOKEN" | ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" \
             "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+          # Der Reset des Schemas ersetzt das frühere `ddl-auto=create-drop` der Demo: Seit
+          # Flyway das Schema besitzt, baut die App es beim Start nicht mehr neu auf, sondern
+          # migriert eine vorhandene Datenbank weiter. Ohne den Reset überlebten Fremdeingaben
+          # jeden Deploy und der nächtliche Lauf verlöre seinen Zweck.
+          #
+          # `DROP SCHEMA public` statt Volume verwerfen: es trifft genau die Daten dieser
+          # Datenbank und lässt Postgres selbst stehen. Danach läuft dieselbe Migrationskette
+          # auf eine leere Datenbank, die auch eine Schulinstanz bei der Erstinstallation fährt
+          # — der tägliche Beweis, dass die Kette durchläuft.
+          #
+          # Reihenfolge: App anhalten (sonst schreibt sie während des Drops weiter), Datenbank
+          # leeren, dann `up -d`. Der Start ist auch für Läufe ohne neuen Commit nötig — bei
+          # unverändertem APP_IMAGE ließe `up -d` den laufenden Container sonst unangetastet.
+          # `--wait` wartet den Healthcheck der Datenbank ab; frisch erzeugt nimmt sie sonst
+          # noch keine Verbindungen an und der Reset scheiterte am ersten Deploy nach einem
+          # Server-Neustart.
           ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "set -e
             cd '$REMOTE_DIR'
             docker compose pull
+            docker compose up -d --wait database
+            docker compose stop app
+            docker compose exec -T database sh -c \
+              'PGPASSWORD=\"\$POSTGRES_PASSWORD\" psql -v ON_ERROR_STOP=1 -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" \
+                 -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"'
             docker compose up -d
             docker logout ghcr.io
             # Der SHA-Tag je Deploy summiert sich sonst auf der kleinen Platte.
             docker image prune -af --filter 'until=168h'"
-
-      - name: Demo zurücksetzen
-        # Nur für Läufe ohne neuen Commit (Zeitplan und manueller Start): APP_IMAGE zeigt
-        # dann auf denselben SHA wie beim letzten Deploy, `up -d` lässt den App-Container
-        # also unangetastet und das Schema stünde weiter mit allen Fremdeingaben da. Der
-        # Neustart genügt — `ddl-auto=create-drop` des Demo-Profils baut es beim Hochfahren
-        # neu auf und `data-demo.sql` seedet es. Nach einem Push wurde der Container ohnehin
-        # gerade frisch erzeugt; ein zweiter Start wäre nur zusätzliche Ausfallzeit.
-        if: github.event_name != 'push'
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-        run: |
-          ssh -i ~/.ssh/id_deploy "$SSH_USER@$SSH_HOST" "set -e
-            cd '$REMOTE_DIR'
-            docker compose restart app"

@@ -6,7 +6,9 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Propagation;
@@ -34,6 +36,12 @@ import org.springframework.transaction.annotation.Transactional;
 // Produktion. Nur so läuft ab dem Flyway-Ticket dieselbe Migrationskette auch in Tests.
 // Preis: die Service-Tests brauchen eine laufende Datenbank (siehe docs/ci.md).
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+// Flyway gehört nicht zum Umfang des @DataJpaTest-Schnitts (dessen Auto-Konfigurationsliste kennt
+// nur JPA). Ohne diese Zeile stünde die Test-Datenbank ohne Schema da und Hibernates `validate`
+// ließe den Kontext gar nicht erst hochkommen. Mit ihr läuft in Tests dieselbe Migrationskette
+// wie im Betrieb — und der Kontextstart prüft nebenbei, dass Migrationen und Entitäten
+// zusammenpassen.
+@ImportAutoConfiguration(FlywayAutoConfiguration.class)
 // Eigene Test-Datenbank statt der Entwicklungsdatenbank. Zwingend, nicht kosmetisch: Die
 // Fixture-Reinigung in AbstractServiceTest räumt vor jedem Test alle Tabellen ab — gegen
 // `elternsprechtag` würde ein Testlauf die Daten leeren, mit denen gerade entwickelt wird.

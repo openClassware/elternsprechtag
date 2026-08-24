@@ -38,6 +38,11 @@ treffen. Ein Service-Container kann kein Init-Skript aus dem Repository mounten,
 Checkout startet; deshalb legt ein eigener Workflow-Schritt die Datenbank an, bevor `mvn verify`
 läuft. Lokal erledigt das `docker/init-test-db.sql` beim ersten Containerstart.
 
+Das Schema dieser Datenbank baut **Flyway** auf, dieselbe Migrationskette wie im Betrieb.
+Hibernate steht auf `validate`: Laufen Migrationen und Entitäten auseinander, kommt der
+Spring-Kontext nicht hoch und die Suite ist rot. `ElternsprechtagApplicationTests` ist damit ohne
+Zutun auch der Migrationstest — es gibt keine eigene Testart dafür.
+
 Das ist eine bewusste Entscheidung: Es soll genau eine Schema-Wahrheit geben, und
 datenbankspezifisches Verhalten soll in Tests sichtbar werden statt erst in der Produktion. Der
 Preis ist eine längere Testlaufzeit. Testcontainers wäre die Alternative gewesen und wurde

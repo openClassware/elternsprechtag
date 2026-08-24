@@ -23,8 +23,10 @@ services:
       database:
         condition: service_healthy
     environment:
-      # Demo-Profil: frisches Schema je Start, Seed aus data-demo.sql, kein
-      # echter Mailversand (spring.mail.host bleibt ungesetzt => Log-Attrappe).
+      # Demo-Profil: Seed aus data-demo.sql, kein echter Mailversand
+      # (spring.mail.host bleibt ungesetzt => Log-Attrappe). Das Schema baut die App
+      # nicht mehr selbst auf — Flyway migriert die Datenbank, die der Deploy zuvor
+      # geleert hat (siehe .github/workflows/deploy-demo.yml).
       SPRING_PROFILES_ACTIVE: demo
       # TLS endet bei Caddy; ohne Auswertung der X-Forwarded-*-Header baut die App
       # ihre Redirects auf http:// und den internen Port statt auf die öffentliche URL.

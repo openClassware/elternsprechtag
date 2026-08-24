@@ -115,8 +115,8 @@ Repository.
   **nicht** der im Repo liegende Default-Hash aus `application.properties`. Die Zugangsdaten
   gelten als **öffentlich**: sie dürfen zusammen mit dem Demo-Link frei weitergegeben und im
   Repository dokumentiert werden, damit eine interessierte Schule die Demo ohne
-  Kontaktaufnahme ausprobieren kann. Vertretbar ist das, weil das Demo-Profil das Schema bei
-  jedem Start neu aufbaut, der Mailversand dort die Log-Attrappe ist (kein Spam-Vektor) und
+  Kontaktaufnahme ausprobieren kann. Vertretbar ist das, weil der Deploy die Datenbank vor
+  jedem Start zurücksetzt, der Mailversand dort die Log-Attrappe ist (kein Spam-Vektor) und
   alle Daten erfunden sind. Soll der Zugang trotzdem wechseln, genügt ein neuer Hash im Secret
   plus ein Redeploy. (Die frühere Festlegung, sie privat zu verteilen, gilt nicht mehr.)
 - **Eltern**: unverändert anonym über den Access-Token-Link des Sprechtags — kein Login,
@@ -127,9 +127,14 @@ Repository.
 Der App-Container läuft mit `SPRING_PROFILES_ACTIVE=demo`
 ([`application-demo.properties`](../src/main/resources/application-demo.properties)):
 
-- `ddl-auto=create-drop` — bei jedem **Start des App-Containers** entsteht ein frisches
-  Schema, `data-demo.sql` seedet neu. Änderungen fremder Besucher verschwinden also mit dem
-  nächsten Deploy, spätestens aber mit dem nächtlichen Reset.
+- **Dieselbe Flyway-Migrationskette wie eine Schulinstanz.** Die Demo baut ihr Schema nicht
+  mehr selbst auf (früher: `ddl-auto=create-drop`). Das ist Absicht: Weil der Deploy die
+  Datenbank vorher leert, läuft die Kette hier täglich auf eine leere Datenbank — genau der
+  Weg, den eine Schule bei der Erstinstallation nimmt. Bliebe die Demo bei `create-drop`,
+  würde die Kette nirgends automatisch ausgeführt, bevor eine Schule sie ausführt.
+- **Wegwerfbar bleibt sie trotzdem**: Der Deploy setzt die Datenbank vor jedem Start zurück
+  (siehe unten), anschließend seedet `data-demo.sql` neu. Änderungen fremder Besucher
+  verschwinden also mit dem nächsten Deploy, spätestens aber mit dem nächtlichen Reset.
 - **Kein echter Mailversand**: `spring.mail.host` bleibt ungesetzt, deshalb wählt
   `BenachrichtigungConfig` die Log-Attrappe. Beliebige Eltern-Adressen sind in der Demo
   gefahrlos eintragbar.
@@ -148,20 +153,34 @@ Um 02:00 UTC läuft dieselbe Kette wie bei einem Deploy — Test-Gate, Image, Au
 findet ein Besucher die Demo auch nach Wochen ohne Push im Ausgangszustand vor, und dort
 eingegebene Namen und Adressen sind spätestens am nächsten Tag verschwunden.
 
-Ein Punkt, der beim Lesen des Workflows leicht überrascht: `docker compose up -d` allein
-setzt **nichts** zurück. Bei einem Lauf ohne neuen Commit zeigt `APP_IMAGE` auf denselben
-Commit-SHA wie beim letzten Deploy, Compose sieht keine Änderung und lässt den App-Container
-in Ruhe. Deshalb gibt es den Schritt **Demo zurücksetzen**, der bei allen Läufen außer `push`
-zusätzlich `docker compose restart app` ausführt; erst der Neustart baut das Schema über
-`ddl-auto=create-drop` neu auf. Nach einem Push entfällt er, weil der Container dort ohnehin
-gerade neu erzeugt wurde.
+Zurückgesetzt wird im Ausrollschritt selbst, und zwar bei **jedem** Lauf: Die App wird
+angehalten, das Schema der Demo-Datenbank verworfen und neu angelegt, danach fährt der Stack
+wieder hoch. Beim Hochfahren spielt Flyway die Migrationskette auf die leere Datenbank ein und
+`data-demo.sql` seedet sie.
+
+```
+docker compose up -d --wait database   # Datenbank muss laufen und Verbindungen annehmen
+docker compose stop app         # sonst schreibt die App während des Drops weiter
+psql ... -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+docker compose up -d            # startet die App wieder
+```
+
+Der Reset gehört in den Ausrollschritt und nicht in einen eigenen: `docker compose up -d`
+allein setzt **nichts** zurück. Bei einem Lauf ohne neuen Commit zeigt `APP_IMAGE` auf denselben
+Commit-SHA wie beim letzten Deploy, Compose sieht keine Änderung und ließe den App-Container in
+Ruhe — der Container liefe weiter, und die Datenbank behielte alles, was Besucher eingegeben
+haben. Das `docker compose stop app` davor erzwingt den Neustart auch in diesem Fall.
+
+`DROP SCHEMA public` statt „Volume verwerfen“: Es trifft genau die Daten dieser Datenbank und
+lässt den Postgres-Container samt Benutzer stehen. Das Passwort kommt dabei aus der Umgebung
+des Datenbank-Containers und steht nie auf einer Kommandozeile.
 
 Weil der Reset am gewöhnlichen Deploy hängt, gilt die `concurrency`-Gruppe `deploy-demo` für
 beide: ein nächtlicher Reset und ein Deploy aus `main` können sich nicht überholen, der
 spätere Lauf wartet.
 
 Manuell auslösen — und damit exakt den Reset-Pfad testen — geht über *Actions → Deploy Demo →
-Run workflow*; auch dieser Lauf nimmt den `restart`-Schritt mit.
+Run workflow*.
 
 Zwei Betriebshinweise:
 
