@@ -1,0 +1,15 @@
+-- Legt die Datenbank an, gegen die die Testsuite läuft.
+--
+-- Warum getrennt von der Entwicklungsdatenbank: Die Service-Tests räumen vor jedem Test alle
+-- Tabellen ab (siehe AbstractServiceTest#cleanDb). Liefen sie gegen `elternsprechtag`, würde
+-- ein `./mvnw verify` die Daten leeren, mit denen gerade entwickelt wird — und zwar lautlos,
+-- auch während die Anwendung läuft.
+--
+-- Dieses Skript führt das Postgres-Image nur beim ERSTEN Start aus, also bei leerem
+-- Datenverzeichnis. Existiert der Container bereits, legt man die Datenbank einmalig von Hand an:
+--
+--   docker exec elternsprechtag-database-1 \
+--     psql -U myuser -d elternsprechtag -c 'CREATE DATABASE elternsprechtag_test'
+--
+-- oder man verwirft das Volume mit `docker compose down -v` und startet neu.
+CREATE DATABASE elternsprechtag_test;

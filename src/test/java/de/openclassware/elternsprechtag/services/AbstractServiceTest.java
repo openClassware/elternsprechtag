@@ -27,9 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
  * Test-Transaktion (dort konfiguriert) committen die Fixture-Saves sofort, sodass die eigenen
  * Transaktionsgrenzen der Services real beobachtbar sind.
  *
- * <p>Die Reinigung in {@link #cleanDb()} ist deshalb nicht optional: Die Tests laufen gegen die
- * konfigurierte Postgres, die zwischen zwei Läufen bestehen bleibt — anders als bei einer
- * untergeschobenen In-Memory-Datenbank räumt kein Kontextabbau hinter ihnen auf.
+ * <p>Die Reinigung in {@link #cleanDb()} ist deshalb nicht optional: Die Tests laufen gegen eine
+ * echte Postgres, die zwischen zwei Läufen bestehen bleibt — anders als bei einer untergeschobenen
+ * In-Memory-Datenbank räumt kein Kontextabbau hinter ihnen auf.
+ *
+ * <p>Weil hier tatsächlich Tabellen geleert werden, zeigt {@link ServiceTest} auf eine eigene
+ * Test-Datenbank und nicht auf die der Anwendung. Wer das ändert, leert damit die
+ * Entwicklungsdatenbank bei jedem Testlauf.
  */
 abstract class AbstractServiceTest {
 

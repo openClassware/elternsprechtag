@@ -74,6 +74,13 @@ jobs:
           java-version: '25'
           cache: maven
 
+      # Die Testsuite läuft gegen eine eigene Datenbank, nicht gegen die der Anwendung (siehe
+      # src/test/resources/application-test.properties). Lokal legt docker/init-test-db.sql sie
+      # beim ersten Containerstart an; ein Service-Container kann kein Init-Skript aus dem
+      # Repository mounten, weil er vor dem Checkout startet — deshalb hier als eigener Schritt.
+      - name: Test-Datenbank anlegen
+        run: PGPASSWORD=mysecret psql -h localhost -U myuser -d elternsprechtag -c 'CREATE DATABASE elternsprechtag_test'
+
       - name: mvn verify
         run: ./mvnw -B verify
 

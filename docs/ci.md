@@ -26,11 +26,17 @@ auf 5432), gleicher Healthcheck. Das ist Absicht — ein PR-Lauf soll dieselbe U
 der Lauf unmittelbar vor einem Deploy.
 
 **Der Service-Container ist keine Bequemlichkeit, sondern Voraussetzung.** Nicht nur
-`ElternsprechtagApplicationTests` startet den echten Spring-Context und damit die
-Default-Datasource aus `application.properties` — auch die Service-Tests laufen gegen genau diese
-Datenbank. Sie sind über die Annotation `@ServiceTest` auf `Replace.NONE` gestellt, bekommen also
-keine eingebettete Datenbank untergeschoben. Ohne erreichbare Postgres ist die Suite rot, nicht
-etwa grün gegen einen Ersatz.
+`ElternsprechtagApplicationTests` startet den echten Spring-Context — auch die Service-Tests laufen
+gegen eine echte Postgres. Sie sind über die Annotation `@ServiceTest` auf `Replace.NONE` gestellt,
+bekommen also keine eingebettete Datenbank untergeschoben. Ohne erreichbare Postgres ist die Suite
+rot, nicht etwa grün gegen einen Ersatz.
+
+Getestet wird gegen eine **eigene Datenbank** `elternsprechtag_test` (Profil `test`, siehe
+`src/test/resources/application-test.properties`), nicht gegen die der Anwendung — die
+Service-Tests räumen vor jedem Test alle Tabellen ab, und das darf die Entwicklungsdatenbank nicht
+treffen. Ein Service-Container kann kein Init-Skript aus dem Repository mounten, weil er vor dem
+Checkout startet; deshalb legt ein eigener Workflow-Schritt die Datenbank an, bevor `mvn verify`
+läuft. Lokal erledigt das `docker/init-test-db.sql` beim ersten Containerstart.
 
 Das ist eine bewusste Entscheidung: Es soll genau eine Schema-Wahrheit geben, und
 datenbankspezifisches Verhalten soll in Tests sichtbar werden statt erst in der Produktion. Der

@@ -10,6 +10,12 @@ services:
     restart: always
     volumes:
       - 'postgres_data:/var/lib/postgresql/data'
+      # Legt beim ersten Start zusätzlich `elternsprechtag_test` an — die Datenbank, gegen die
+      # die Testsuite läuft. Getrennt von der Entwicklungsdatenbank, weil die Service-Tests vor
+      # jedem Test alle Tabellen abräumen und sonst die Daten leeren würden, mit denen gerade
+      # entwickelt wird. Bei bereits bestehendem Volume greift das Skript nicht mehr; siehe den
+      # Hinweis in der Datei selbst.
+      - './docker/init-test-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro'
 
 volumes:
   postgres_data:

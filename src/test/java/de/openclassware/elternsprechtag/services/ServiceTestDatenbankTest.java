@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 /**
  * Hält fest, gegen welche Datenbank die Service-Naht läuft.
@@ -19,8 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * <p>Schlägt dieser Test fehl, läuft die Service-Naht wieder gegen eine untergeschobene Datenbank
  * — dann fehlt {@code Replace.NONE} an {@link ServiceTest}.
+ *
+ * <p>Die {@code @Import}-Liste ist für die Aussage des Tests ohne Bedeutung und nur deshalb da,
+ * damit der Spring-Kontext derselbe ist wie in den anderen Service-Tests. Ohne sie ergäbe sich ein
+ * eigener Cache-Schlüssel und die Suite würde einen zweiten Kontext bloß für diese eine Zusicherung
+ * hochfahren.
  */
 @ServiceTest
+@Import({SprechtagService.class, BuchungService.class, KlassenService.class})
 class ServiceTestDatenbankTest {
 
   @Autowired private DataSource dataSource;
