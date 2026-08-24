@@ -18,17 +18,13 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
-@DataJpaTest
+@ServiceTest
 @Import({SprechtagService.class, BuchungService.class, KlassenService.class})
 @RecordApplicationEvents
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
 class SprechtagServiceTest extends AbstractServiceTest {
 
   @Autowired private ApplicationEvents events;

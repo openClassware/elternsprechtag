@@ -26,14 +26,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
-@DataJpaTest
+@ServiceTest
 @Import({SprechtagService.class, BuchungService.class, KlassenService.class})
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
 class BuchungServiceTest extends AbstractServiceTest {
 
   private static final LocalDate DATE = LocalDate.of(2026, 7, 20);

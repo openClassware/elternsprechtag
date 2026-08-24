@@ -95,7 +95,41 @@ Achtung: Das `demo`-Profil verwirft bei jedem Start das gesamte Schema (`ddl-aut
 Tests laufen mit:
 
 ```bash
+docker compose up -d   # falls die Datenbank nicht ohnehin läuft
 ./mvnw verify
+```
+
+**Die Testsuite braucht eine laufende Datenbank.** Die Tests laufen bewusst gegen PostgreSQL und
+nicht gegen eine untergeschobene In-Memory-Datenbank — nur so wird datenbankspezifisches Verhalten
+in Tests überhaupt sichtbar.
+
+Sie benutzen dabei eine **eigene Datenbank** (`elternsprechtag_test`), nicht die der Anwendung.
+Das ist kein Detail: Die Service-Tests räumen vor jedem Test alle Tabellen ab. Liefen sie gegen
+`elternsprechtag`, würde jedes `./mvnw verify` die Daten leeren, mit denen gerade entwickelt wird —
+lautlos und auch bei laufender Anwendung. Angelegt wird sie von
+[`docker/init-test-db.sql`](docker/init-test-db.sql) beim **ersten** Start des Containers. Wer den
+Container schon länger laufen hat, legt sie einmalig von Hand an:
+
+```bash
+docker exec elternsprechtag-database-1 \
+  psql -U myuser -d elternsprechtag -c 'CREATE DATABASE elternsprechtag_test'
+```
+
+Anders als beim Anwendungsstart fährt der Testlauf die Datenbank **nicht** selbst hoch: Spring
+Boots Docker-Compose-Unterstützung hängt am Start der Anwendung, nicht am Start der Tests. In der
+Praxis fällt das selten auf, weil der Container aus [`compose.yaml`](compose.yaml) mit
+`restart: always` läuft, sobald er einmal gestartet wurde. Wer ihn gestoppt hat, bekommt rote
+Tests mit Verbindungsfehler — dann hilft die Zeile oben.
+
+Solange das Schema aus den Entities entsteht (`ddl-auto=update`), gilt lokal eine Einschränkung:
+Hibernate fügt nur hinzu und räumt nie auf. Nach einer Umbenennung oder einem neu gesetzten
+`nullable = false` kann die lange bestehende Test-Datenbank Reste behalten und Tests scheitern
+lassen, die im CI grün sind — dort ist die Datenbank bei jedem Lauf frisch. Dann hilft ein
+Neuanlegen:
+
+```bash
+docker exec elternsprechtag-database-1 psql -U myuser -d elternsprechtag \
+  -c 'DROP DATABASE elternsprechtag_test' -c 'CREATE DATABASE elternsprechtag_test'
 ```
 
 ## Dokumentation

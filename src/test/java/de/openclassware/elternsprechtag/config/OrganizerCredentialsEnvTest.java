@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
@@ -26,6 +27,7 @@ import org.springframework.test.context.ContextConfiguration;
  * application.properties — der Login scheitert dann an "no default password encoder configured".
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @ContextConfiguration(initializers = OrganizerCredentialsEnvTest.SimulierteUmgebung.class)
 class OrganizerCredentialsEnvTest {
 

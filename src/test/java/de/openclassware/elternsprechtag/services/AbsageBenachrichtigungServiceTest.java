@@ -23,12 +23,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
-@DataJpaTest
+@ServiceTest
 @Import({
   SprechtagService.class,
   BuchungService.class,
@@ -37,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
   FakeBenachrichtigungSender.class,
   BenachrichtigungTextConfig.class
 })
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
 class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
 
   private static final LocalDate DATE = LocalDate.of(2026, 7, 20);
