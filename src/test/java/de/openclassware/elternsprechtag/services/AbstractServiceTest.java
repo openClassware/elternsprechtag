@@ -18,6 +18,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -48,7 +49,13 @@ abstract class AbstractServiceTest {
   @Autowired protected SprechtagService sprechtagService;
   @Autowired protected BuchungService buchungService;
 
+  // Auch NACH jedem Test, nicht nur davor: Die Datenbank überlebt den Testlauf. Räumten die
+  // Service-Tests nur vor sich selbst auf, bliebe die Fixture des jeweils letzten Tests einer
+  // Klasse liegen — für jede andere Testklasse der Suite und für jeden weiteren `mvn verify`.
+  // DemoSeedSmokeTest ist daran schon einmal gescheitert (eine liegengebliebene Klasse "5a"
+  // kollidierte mit dem Seed).
   @BeforeEach
+  @AfterEach
   void cleanDb() {
     // FK-sichere Reihenfolge.
     buchungRepository.deleteAll();

@@ -207,10 +207,15 @@ jobs:
             docker compose pull
             docker compose up -d --wait database
             docker compose stop app
+            reset_rc=0
             docker compose exec -T database sh -c \
               'PGPASSWORD=\"\$POSTGRES_PASSWORD\" psql -v ON_ERROR_STOP=1 -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" \
-                 -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"'
+                 -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\"' || reset_rc=\$?
             docker compose up -d
             docker logout ghcr.io
             # Der SHA-Tag je Deploy summiert sich sonst auf der kleinen Platte.
-            docker image prune -af --filter 'until=168h'"
+            docker image prune -af --filter 'until=168h'
+            # Ein gescheiterter Reset lässt den Lauf rot werden — aber erst hier, nachdem der
+            # Stack wieder oben ist. Bräche `set -e` direkt nach dem Fehler ab, bliebe die Demo
+            # offline: `restart: always` holt einen ausdrücklich gestoppten Container nicht zurück.
+            exit \$reset_rc"
