@@ -23,7 +23,7 @@ services:
       database:
         condition: service_healthy
     environment:
-      # Demo-Profil: Seed aus data-demo.sql, kein echter Mailversand
+      # Demo-Profil: Demo-Stammdaten aus db/demo/R__demo_stammdaten.sql, kein echter Mailversand
       # (spring.mail.host bleibt ungesetzt => Log-Attrappe). Das Schema baut die App
       # nicht mehr selbst auf — Flyway migriert die Datenbank, die der Deploy zuvor
       # geleert hat (siehe .github/workflows/deploy-demo.yml).

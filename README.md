@@ -96,6 +96,10 @@ jedem Profil, auch in Tests. Hibernate prüft das Ergebnis nur noch
 (`spring.jpa.hibernate.ddl-auto=validate`) und ändert nichts mehr selbst — passen Entitäten und
 Migrationen nicht zusammen, startet die Anwendung gar nicht erst.
 
+Das `demo`-Profil nimmt zusätzlich [`db/demo`](src/main/resources/db/demo) in die Suchpfade auf;
+dort liegen die Demo-Stammdaten als wiederholbare Migration. Eine Schulinstanz aktiviert dieses
+Profil nicht und bekommt sie deshalb nie.
+
 Jede Schemaänderung ist damit ein neues, versioniertes Skript (`V2__…sql`, `V3__…sql`); bereits
 ausgelieferte Skripte werden nicht mehr geändert, Flyway prüft ihre Prüfsummen.
 

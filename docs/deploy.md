@@ -133,8 +133,10 @@ Der App-Container läuft mit `SPRING_PROFILES_ACTIVE=demo`
   Weg, den eine Schule bei der Erstinstallation nimmt. Bliebe die Demo bei `create-drop`,
   würde die Kette nirgends automatisch ausgeführt, bevor eine Schule sie ausführt.
 - **Wegwerfbar bleibt sie trotzdem**: Der Deploy setzt die Datenbank vor jedem Start zurück
-  (siehe unten), anschließend seedet `data-demo.sql` neu. Änderungen fremder Besucher
-  verschwinden also mit dem nächsten Deploy, spätestens aber mit dem nächtlichen Reset.
+  (siehe unten); die Demo-Stammdaten kommen anschließend aus der wiederholbaren Migration
+  `db/demo/R__demo_stammdaten.sql`, die nur dieses Profil in seinen Flyway-Suchpfaden hat.
+  Änderungen fremder Besucher verschwinden also mit dem nächsten Deploy, spätestens aber
+  mit dem nächtlichen Reset.
 - **Kein echter Mailversand**: `spring.mail.host` bleibt ungesetzt, deshalb wählt
   `BenachrichtigungConfig` die Log-Attrappe. Beliebige Eltern-Adressen sind in der Demo
   gefahrlos eintragbar.
@@ -155,8 +157,8 @@ eingegebene Namen und Adressen sind spätestens am nächsten Tag verschwunden.
 
 Zurückgesetzt wird im Ausrollschritt selbst, und zwar bei **jedem** Lauf: Die App wird
 angehalten, das Schema der Demo-Datenbank verworfen und neu angelegt, danach fährt der Stack
-wieder hoch. Beim Hochfahren spielt Flyway die Migrationskette auf die leere Datenbank ein und
-`data-demo.sql` seedet sie.
+wieder hoch. Beim Hochfahren spielt Flyway die Migrationskette auf die leere Datenbank ein
+und seedet dabei über `db/demo/R__demo_stammdaten.sql` die Demo-Stammdaten.
 
 ```
 docker compose up -d --wait database   # Datenbank muss laufen und Verbindungen annehmen
