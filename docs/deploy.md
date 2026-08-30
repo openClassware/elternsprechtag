@@ -140,7 +140,7 @@ Der App-Container läuft mit `SPRING_PROFILES_ACTIVE=demo`
 - **Kein echter Mailversand**: `spring.mail.host` bleibt ungesetzt, deshalb wählt
   `BenachrichtigungConfig` die Log-Attrappe. Beliebige Eltern-Adressen sind in der Demo
   gefahrlos eintragbar.
-- H2-Console deaktiviert, kein Browser-Autostart.
+- Kein Browser-Autostart.
 
 ## Täglicher Reset
 
