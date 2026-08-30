@@ -167,7 +167,7 @@ Profile werden über `SPRING_PROFILES_ACTIVE` aktiviert, mehrere kommasepariert
 |------------|------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | *(keins)*  | [`application.properties`](../src/main/resources/application.properties)           | Standard. Gilt immer und ist die Basis für alle Profile. Für eine eigene Instanz ist **kein** Profil nötig — die Werte kommen aus der Umgebung.                |
 | `local`    | `application-local.properties` (nicht im Repository)                               | Persönliche Entwicklereinstellungen, u. a. echter SMTP-Zugang zum Testen. Die Datei ist per `.gitignore` ausgeschlossen und muss lokal selbst angelegt werden. |
-| `demo`     | [`application-demo.properties`](../src/main/resources/application-demo.properties) | Öffentliche Vorführinstanz: Demo-Stammdaten aus `db/demo/R__demo_stammdaten.sql`, kein Browser-Autostart, H2-Console aus.                                                                  |
+| `demo`     | [`application-demo.properties`](../src/main/resources/application-demo.properties) | Öffentliche Vorführinstanz: Demo-Stammdaten aus `db/demo/R__demo_stammdaten.sql`, kein Browser-Autostart.                                                                  |
 
 Das `demo`-Profil ist **nicht** für den Echtbetrieb geeignet: Es nimmt ein zusätzliches
 Migrationsverzeichnis in die Flyway-Suchpfade auf und füllt die Datenbank damit mit erfundenen
