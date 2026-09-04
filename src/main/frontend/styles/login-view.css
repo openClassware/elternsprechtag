@@ -1,0 +1,128 @@
+/*
+ * Login-Seite: Bild links (60 %), Formular rechts (40 %).
+ * Unter 1024 px wird das Bild vollflächig und das Formular sitzt als Karte darüber —
+ * bei 640 px wäre die Formularspalte nur noch 256 px breit, der Split muss also schon
+ * an der Tablet-Schwelle kippen.
+ *
+ * Das CSS setzt ein hochformatiges Motiv mit dunklem, ruhigem unterem Bildbereich
+ * voraus. Siehe META-INF/resources/images/README.md.
+ */
+.login-view {
+    position: relative;
+    display: flex;
+    min-height: 100dvh;
+}
+
+/* Fallback für Browser ohne dvh: bewusst nach der dvh-Regel, damit sie nicht gewinnt. */
+@supports not (height: 100dvh) {
+    .login-view {
+        min-height: 100%;
+    }
+}
+
+.login-view__media {
+    position: relative;
+    flex: 1 1 60%;
+    background-image: url("/images/login-bg.webp");
+    background-size: cover;
+    background-position: center;
+}
+
+/* Schwacher Verlauf nur im unteren Bilddrittel — trägt den Markentext,
+   ohne das helle Gegenlicht des Motivs zu ersticken. */
+.login-view__media::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 45%;
+    background: linear-gradient(to top, rgba(28, 20, 12, 0.55), rgba(28, 20, 12, 0));
+    pointer-events: none;
+}
+
+/* Geschwister des Bildes, deshalb hier absolut auf die linke 60-%-Spalte begrenzt. */
+.login-view__brand {
+    position: absolute;
+    left: clamp(1.5rem, 4vw, 3rem);
+    bottom: clamp(1.5rem, 4vw, 3rem);
+    max-width: calc(60% - 2 * clamp(1.5rem, 4vw, 3rem));
+    z-index: 1;
+    color: #ffffff;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+.login-view__brand-name {
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.login-view__brand-claim {
+    margin-top: 6px;
+    font-size: clamp(15px, 1.2vw, 18px);
+    opacity: 0.92;
+}
+
+.login-view__panel {
+    flex: 1 1 40%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: #ffffff;
+}
+
+/* Auf dem Desktop trägt die weiße Spalte das Formular — keine Karte nötig. */
+.login-view__card {
+    width: 100%;
+    max-width: 320px;
+}
+
+@media (max-width: 1024px) {
+    /* Formular und Markentext stehen untereinander im Fluss, das Bild liegt dahinter. */
+    .login-view {
+        flex-direction: column;
+        background-image: url("/images/login-bg.webp");
+        background-size: cover;
+        background-position: center;
+    }
+
+    /* Das Medium trägt hier nur noch den Verlauf; das Bild liegt am Block. */
+    .login-view__media {
+        position: absolute;
+        inset: 0;
+        flex: none;
+        background-image: none;
+    }
+
+    .login-view__panel {
+        position: relative;
+        z-index: 1;
+        flex: 1 1 auto;
+        padding: 1.5rem;
+        background-color: transparent;
+    }
+
+    /* Im Fluss unter der Karte — eine wachsende Karte (Fehlermeldung) schiebt ihn
+       nach unten, statt ihn zu überdecken. */
+    .login-view__brand {
+        position: relative;
+        z-index: 1;
+        left: auto;
+        bottom: auto;
+        max-width: none;
+        padding: 0 1.5rem 2rem;
+    }
+
+    /* Über dem Foto braucht das Formular einen eigenen Grund. */
+    .login-view__card {
+        max-width: 22rem;
+        /* Ohne border-box addiert sich der Innenabstand auf die Breite und die Karte
+           läuft bei 375 px über den Viewport hinaus. */
+        box-sizing: border-box;
+        padding: 1.75rem;
+        border-radius: 12px;
+        background-color: #ffffff;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+    }
+}

@@ -20,6 +20,11 @@ public class SecurityConfiguration {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+    // Statische Bilder sind anonym erreichbar — das Hintergrundbild der Login-Seite wird
+    // gebraucht, bevor überhaupt jemand angemeldet ist. Muss vor der Vaadin-Konfiguration
+    // stehen, die mit `anyRequest().authenticated()` abschließt.
+    http.authorizeHttpRequests(auth -> auth.requestMatchers("/images/**").permitAll());
+
     http.with(
         VaadinSecurityConfigurer.vaadin(),
         configurer -> {
