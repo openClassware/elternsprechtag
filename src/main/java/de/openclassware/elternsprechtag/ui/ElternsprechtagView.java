@@ -379,7 +379,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     TextArea notiz = new TextArea(getTranslation("elternsprechtag.notiz.label"));
     notiz.addClassName("elternsprechtag-view__notiz-field");
     notiz.setPlaceholder(getTranslation("elternsprechtag.notiz.placeholder"));
-    notiz.setHelperText(getTranslation("elternsprechtag.notiz.helper"));
     notiz.setWidthFull();
     notiz.setMaxLength(NOTIZ_MAX_LENGTH);
     notiz.setValue(session.notiz(lehrkraft.lehrauftragId()));
