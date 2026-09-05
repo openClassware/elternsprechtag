@@ -122,10 +122,12 @@ class BookingSessionTest {
     session.waehle(bSlot);
 
     assertThat(session.auswahlAnzahl()).isEqualTo(2);
-    assertThat(session.toWuensche())
+    // Die Notiz gehört zum Wunsch; solange die Oberfläche nur ein globales Feld hat, trägt sie
+    // jeder Wunsch.
+    assertThat(session.toWuensche("Anliegen"))
         .containsExactly(
-            new BuchungsWunsch(a.lehrauftragId(), aSlot.terminId()),
-            new BuchungsWunsch(b.lehrauftragId(), bSlot.terminId()));
+            new BuchungsWunsch(a.lehrauftragId(), aSlot.terminId(), "Anliegen"),
+            new BuchungsWunsch(b.lehrauftragId(), bSlot.terminId(), "Anliegen"));
   }
 
   @Test

@@ -534,8 +534,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
             angaben.eltern(),
             angaben.kind(),
             angaben.email(),
-            angaben.notizText(),
-            session.toWuensche());
+            session.toWuensche(angaben.notizText()));
 
     try {
       int gebucht = presenter.buchen(anfrage);

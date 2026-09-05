@@ -125,10 +125,14 @@ class BookingSession {
     return SlotState.FREI;
   }
 
-  /** Gewählte Slots als Buchungswünsche (Lehrauftrag → Termin). */
-  List<BuchungsWunsch> toWuensche() {
+  /**
+   * Gewählte Slots als Buchungswünsche (Lehrauftrag → Termin → Notiz). Die Notiz gehört bereits
+   * zum einzelnen Wunsch; bis die Oberfläche sie je Lehrkraft erhebt, bekommt jeder Wunsch den
+   * übergebenen — noch globalen — Text.
+   */
+  List<BuchungsWunsch> toWuensche(String notiz) {
     return selection.entrySet().stream()
-        .map(entry -> new BuchungsWunsch(entry.getKey(), entry.getValue().terminId()))
+        .map(entry -> new BuchungsWunsch(entry.getKey(), entry.getValue().terminId(), notiz))
         .toList();
   }
 
