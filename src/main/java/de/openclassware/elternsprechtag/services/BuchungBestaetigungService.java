@@ -38,13 +38,16 @@ public class BuchungBestaetigungService {
   private final I18NProvider i18n;
   private final ElternsprechtagProperties properties;
 
-  /** Ein bestätigter Termin des Vorgangs: wann, bei wem, in welchem Fach. */
-  record TerminZeile(LocalTime zeit, String lehrkraft, String fach) {}
+  /**
+   * Ein bestätigter Termin des Vorgangs: wann, bei wem, in welchem Fach — und die Notiz, die genau
+   * dieser Lehrkraft gilt. {@code notiz} darf {@code null} sein, dann entfällt die Notiz-Zeile.
+   */
+  record TerminZeile(LocalTime zeit, String lehrkraft, String fach, String notiz) {}
 
   /**
    * Der komplette Beleg eines Absendevorgangs. Empfänger und Kopfdaten sind aus den geladenen
-   * Buchungen abgeleitet, nicht aus der Anfrage übernommen. {@code ort} und {@code notiz} dürfen
-   * {@code null} sein — dann entfällt der jeweilige Abschnitt.
+   * Buchungen abgeleitet, nicht aus der Anfrage übernommen. {@code ort} darf {@code null} sein —
+   * dann entfällt der Ort-Abschnitt.
    */
   record Bestaetigung(
       String empfaenger,
@@ -53,7 +56,6 @@ public class BuchungBestaetigungService {
       String ort,
       String schuelerName,
       String klasse,
-      String notiz,
       List<TerminZeile> termine) {}
 
   /**
@@ -118,7 +120,8 @@ public class BuchungBestaetigungService {
           new TerminZeile(
               buchung.getTermin().getStartzeit().toLocalTime(),
               lehrer.getVorname() + " " + lehrer.getNachname(),
-              lehrauftrag.getFach().getName()));
+              lehrauftrag.getFach().getName(),
+              buchung.getNotiz()));
     }
 
     return new Bestaetigung(
@@ -128,14 +131,14 @@ public class BuchungBestaetigungService {
         sprechtag.getLocation(),
         erste.getSchuelerName(),
         erste.getLehrauftrag().getKlasse().getName(),
-        erste.getNotiz(),
         termine);
   }
 
   /**
    * Setzt den Fließtext aus den i18n-Bausteinen zusammen. Die Terminliste ist beliebig lang, daher
-   * ist der Text nicht ein einzelner Format-String wie bei der Absage. Ort- und Notiz-Abschnitt
-   * entfallen vollständig, wenn nichts hinterlegt ist — keine leere Zeile, keine leere Überschrift.
+   * ist der Text nicht ein einzelner Format-String wie bei der Absage. Der Ort-Abschnitt entfällt
+   * vollständig, wenn nichts hinterlegt ist — keine leere Zeile, keine leere Überschrift. Die Notiz
+   * steht eingerückt unter ihrer Terminzeile; ein Termin ohne Notiz bleibt einzeilig.
    */
   private String baueText(Bestaetigung b) {
     List<String> absaetze = new ArrayList<>();
@@ -162,12 +165,11 @@ public class BuchungBestaetigungService {
               Formats.time(termin.zeit()),
               termin.lehrkraft(),
               termin.fach()));
+      if (hatInhalt(termin.notiz())) {
+        liste.add(i18n.getTranslation("buchung.mail.notiz", LOCALE, termin.notiz().trim()));
+      }
     }
     absaetze.add(String.join("\n", liste));
-
-    if (hatInhalt(b.notiz())) {
-      absaetze.add(i18n.getTranslation("buchung.mail.notiz", LOCALE) + "\n" + b.notiz().trim());
-    }
 
     absaetze.add(i18n.getTranslation("buchung.mail.hinweis", LOCALE));
     absaetze.add(i18n.getTranslation("buchung.mail.closing", LOCALE, properties.getSchoolname()));

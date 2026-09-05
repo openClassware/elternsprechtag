@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import de.openclassware.elternsprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.domain.BuchungStatusEnum;
@@ -59,10 +60,10 @@ class BuchungServiceTest extends AbstractServiceTest {
   private BuchungsAnfrage anfrage(Lehrauftrag lehrauftrag, Termin... termine) {
     List<BuchungsWunsch> wuensche =
         java.util.Arrays.stream(termine)
-            .map(t -> new BuchungsWunsch(lehrauftrag.getId(), t.getId()))
+            .map(t -> new BuchungsWunsch(lehrauftrag.getId(), t.getId(), "Bitte pünktlich"))
             .toList();
     return new BuchungsAnfrage(
-        "Eltern Müller", "Kind Müller", "eltern.mueller@example.com", "Bitte pünktlich", wuensche);
+        "Eltern Müller", "Kind Müller", "eltern.mueller@example.com", wuensche);
   }
 
   @Test
@@ -107,6 +108,43 @@ class BuchungServiceTest extends AbstractServiceTest {
     assertThat(buchungRepository.findAll())
         .hasSize(2)
         .allSatisfy(b -> assertThat(b.getElternEmail()).isEqualTo("eltern.mueller@example.com"));
+  }
+
+  @Test
+  void buchen_notizJeWunsch_persistedOnItsOwnBuchung() {
+    Fixture f = publishedSprechtag();
+    List<Termin> frei = termineSorted();
+
+    buchungService.buchen(
+        new BuchungsAnfrage(
+            "Eltern Müller",
+            "Kind Müller",
+            "eltern.mueller@example.com",
+            List.of(
+                new BuchungsWunsch(f.lehrauftrag().getId(), frei.get(0).getId(), "Erstes Anliegen"),
+                new BuchungsWunsch(
+                    f.lehrauftrag().getId(), frei.get(1).getId(), "Zweites Anliegen"))));
+
+    assertThat(buchungRepository.findAll())
+        .extracting(b -> b.getTermin().getId(), Buchung::getNotiz)
+        .containsExactlyInAnyOrder(
+            tuple(frei.get(0).getId(), "Erstes Anliegen"),
+            tuple(frei.get(1).getId(), "Zweites Anliegen"));
+  }
+
+  @Test
+  void buchen_wunschOhneNotiz_persistsBuchungOhneNotiz() {
+    Fixture f = publishedSprechtag();
+    Termin termin = termineSorted().get(0);
+
+    buchungService.buchen(
+        new BuchungsAnfrage(
+            "Eltern Müller",
+            "Kind Müller",
+            "eltern.mueller@example.com",
+            List.of(new BuchungsWunsch(f.lehrauftrag().getId(), termin.getId(), null))));
+
+    assertThat(buchungRepository.findAll().get(0).getNotiz()).isNull();
   }
 
   @Test
@@ -195,8 +233,7 @@ class BuchungServiceTest extends AbstractServiceTest {
             eltern,
             schueler,
             "eltern@example.com",
-            notiz,
-            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId()))));
+            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId(), notiz))));
   }
 
   private LehrkraftPlan planOf(SprechtagAuswertung auswertung, Lehrer lehrer) {
@@ -269,6 +306,34 @@ class BuchungServiceTest extends AbstractServiceTest {
     assertThat(zeile.fach()).isEqualTo("Deutsch");
     assertThat(zeile.elternName()).isEqualTo("Eltern Müller");
     assertThat(zeile.notiz()).isEqualTo("Leistung besprechen");
+  }
+
+  @Test
+  void werteAus_notizErscheintNurBeiIhrerLehrkraft() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+
+    // Ein Submit an beide Lehrkräfte — jeder Wunsch trägt seine eigene Notiz.
+    buchungService.buchen(
+        new BuchungsAnfrage(
+            "Eltern Müller",
+            "Lukas Müller",
+            "eltern@example.com",
+            List.of(
+                new BuchungsWunsch(
+                    f.bergAuftrag().getId(), termineOf(f.berg()).get(0).getId(), "Nur für Berg"),
+                new BuchungsWunsch(
+                    f.adlerAuftrag().getId(),
+                    termineOf(f.adler()).get(1).getId(),
+                    "Nur für Adler"))));
+
+    SprechtagAuswertung auswertung = buchungService.werteAus(f.sprechtag().getId()).orElseThrow();
+
+    assertThat(planOf(auswertung, f.berg()).zeilen())
+        .extracting(BuchungsZeile::notiz)
+        .containsExactly("Nur für Berg");
+    assertThat(planOf(auswertung, f.adler()).zeilen())
+        .extracting(BuchungsZeile::notiz)
+        .containsExactly("Nur für Adler");
   }
 
   @Test
