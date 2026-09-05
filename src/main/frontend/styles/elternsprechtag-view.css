@@ -139,7 +139,10 @@
     transition: border-color 0.15s, background-color 0.15s;
 }
 
-.elternsprechtag-view__lehrkraft:hover {
+/* Hover hebt nur die Ruhelage an. Ohne das :not() gewänne er über die Spezifität gegen
+   --selected, und die aufgeklappte Karte stünde grau über ihrem blau gerahmten Terminraster —
+   der Zeiger liegt nach dem Klick ja genau auf ihr. */
+.elternsprechtag-view__lehrkraft:not(.elternsprechtag-view__lehrkraft--selected):hover {
     border-color: #cbd5e1;
 }
 
