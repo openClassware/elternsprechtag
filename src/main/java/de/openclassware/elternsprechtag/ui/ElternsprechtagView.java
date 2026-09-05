@@ -361,19 +361,18 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     Div grid = new Div();
     grid.addClassName("elternsprechtag-view__slot-grid");
     lehrkraft.slots().forEach(slot -> grid.add(createSlot(slot)));
-    panel.add(grid);
-
-    // Ohne Termin gibt es keine Buchung, an der die Notiz hängen könnte.
-    if (session.istGewaehlt(lehrkraft.lehrauftragId())) {
-      panel.add(createNotizField(lehrkraft));
-    }
+    panel.add(grid, createNotizField(lehrkraft));
     return panel;
   }
 
   /**
-   * Notizfeld der aufgeklappten Lehrkraft. Es schreibt bei jedem Tastendruck ins Modell, damit beim
-   * Panel-Wechsel nichts verloren geht, und frischt nur die Zusammenfassung auf — ein Neuaufbau des
-   * Panels würde dem Feld den Fokus nehmen.
+   * Notizfeld der aufgeklappten Lehrkraft. Es steht von Anfang an da, bleibt aber ausgegraut, bis
+   * ein Termin gewählt ist — ohne Termin gibt es keine Buchung, an der die Notiz hängen könnte, und
+   * ausgegraut zeigt das an, statt das Feld erst später aus dem Nichts auftauchen zu lassen.
+   *
+   * <p>Es schreibt bei jedem Tastendruck ins Modell, damit beim Panel-Wechsel nichts verloren geht,
+   * und frischt nur die Zusammenfassung auf — ein Neuaufbau des Panels würde dem Feld den Fokus
+   * nehmen.
    */
   private Component createNotizField(LehrkraftOption lehrkraft) {
     TextArea notiz = new TextArea(getTranslation("elternsprechtag.notiz.label"));
@@ -382,6 +381,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     notiz.setWidthFull();
     notiz.setMaxLength(NOTIZ_MAX_LENGTH);
     notiz.setValue(session.notiz(lehrkraft.lehrauftragId()));
+    notiz.setEnabled(session.istGewaehlt(lehrkraft.lehrauftragId()));
     notiz.setValueChangeMode(ValueChangeMode.EAGER);
     notiz.addValueChangeListener(
         event -> {
