@@ -55,9 +55,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   /** Buchungs-„Warenkorb" + Entscheidungslogik; Vaadin-frei und unit-getestet. */
   private final BookingSession session = new BookingSession();
 
-  private Div lehrkraftGrid;
-  private Div slotArea;
+  private Div lehrkraftListe;
   private Div summaryContainer;
+
+  /** Karte der aktuell aufgeklappten Lehrkraft; Ziel des Sprungs aus der Auswahl. */
+  private Component activeItem;
 
   ElternsprechtagView(ElternsprechtagPresenter presenter) {
     this.presenter = presenter;
@@ -102,12 +104,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
     Div body = new Div();
     body.addClassName("elternsprechtag-view__body");
-    body.add(createAngaben(sprechtag), createBuchung(sprechtag), createNotiz());
+    body.add(createAngaben(sprechtag), createBuchung(sprechtag), createAuswahl(), createNotiz());
 
     card.add(createInfo(sprechtag), body, createFooter());
 
-    refreshLehrkraftGrid();
-    refreshSlotArea();
+    refreshLehrkraefte();
     refreshSummary();
     refreshFooter();
     return card;
@@ -200,31 +201,41 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return section;
   }
 
+  /**
+   * Schritt 2: die Lehrkräfte der Klasse als einspaltige Liste. Das Terminraster der aufgeklappten
+   * Lehrkraft wird beim Rendern direkt hinter ihre Karte gesetzt, sodass Auswahl und Termine als ein
+   * Block gelesen werden.
+   */
   private Component createBuchung(SprechtagPublic sprechtag) {
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
 
-    section.add(new StepHeader(2, getTranslation("elternsprechtag.lehrkraft.step-title")));
-    lehrkraftGrid = new Div();
-    lehrkraftGrid.addClassName("elternsprechtag-view__lehrkraft-grid");
-    section.add(lehrkraftGrid);
+    Div stepHead = new Div();
+    stepHead.addClassName("elternsprechtag-view__step-head");
+    stepHead.add(
+        new StepHeader(2, getTranslation("elternsprechtag.lehrkraft.step-title")), createLegend());
+    section.add(stepHead);
 
-    Div step3Head = new Div();
-    step3Head.addClassName("elternsprechtag-view__step3-head");
-    step3Head.add(
-        new StepHeader(3, getTranslation("elternsprechtag.termin.step-title")), createLegend());
-    section.add(step3Head);
-
-    slotArea = new Div();
-    slotArea.addClassName("elternsprechtag-view__slot-area");
-    section.add(slotArea);
+    lehrkraftListe = new Div();
+    lehrkraftListe.addClassName("elternsprechtag-view__lehrkraft-liste");
+    section.add(lehrkraftListe);
 
     Paragraph hint =
         new Paragraph(getTranslation("elternsprechtag.termin.hint", sprechtag.slotInMinutes()));
     hint.addClassName("elternsprechtag-view__slot-hint");
     section.add(hint);
 
+    return section;
+  }
+
+  /** Schritt 3: die gewählten Termine als Kontrolle vor dem Absenden. */
+  private Component createAuswahl() {
+    Div section = new Div();
+    section.addClassName("elternsprechtag-view__section");
+    section.add(new StepHeader(3, getTranslation("elternsprechtag.summary.step-title")));
+
     summaryContainer = new Div();
+    summaryContainer.addClassName("elternsprechtag-view__summary-container");
     section.add(summaryContainer);
 
     return section;
@@ -233,8 +244,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   /** Reagiert auf die Klassenwahl: lädt die echten Lehrkräfte/Termine und verwirft die Auswahl. */
   private void onKlasseChanged() {
     session.reset(loadOptionen());
-    refreshLehrkraftGrid();
-    refreshSlotArea();
+    refreshLehrkraefte();
     refreshSummary();
     refreshFooter();
   }
@@ -265,16 +275,28 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return item;
   }
 
-  private void refreshLehrkraftGrid() {
-    lehrkraftGrid.removeAll();
+  /** Rendert die Lehrkraft-Liste samt dem Terminraster der aufgeklappten Lehrkraft. */
+  private void refreshLehrkraefte() {
+    lehrkraftListe.removeAll();
+    activeItem = null;
     if (!session.hatOptionen()) {
       Div placeholder = new Div();
       placeholder.addClassName("elternsprechtag-view__placeholder");
       placeholder.setText(getTranslation("elternsprechtag.lehrkraft.placeholder"));
-      lehrkraftGrid.add(placeholder);
+      lehrkraftListe.add(placeholder);
       return;
     }
-    session.optionen().forEach(lehrkraft -> lehrkraftGrid.add(createLehrkraftCard(lehrkraft)));
+    for (LehrkraftOption lehrkraft : session.optionen()) {
+      Div item = new Div();
+      item.addClassName("elternsprechtag-view__lehrkraft-item");
+      item.add(createLehrkraftCard(lehrkraft));
+      if (session.isActive(lehrkraft)) {
+        item.addClassName("elternsprechtag-view__lehrkraft-item--offen");
+        item.add(createSlotPanel(lehrkraft));
+        activeItem = item;
+      }
+      lehrkraftListe.add(item);
+    }
   }
 
   private Component createLehrkraftCard(LehrkraftOption lehrkraft) {
@@ -310,33 +332,29 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     card.addClickListener(
         event -> {
           session.setActive(lehrkraft);
-          refreshLehrkraftGrid();
-          refreshSlotArea();
+          refreshLehrkraefte();
         });
     return card;
   }
 
-  private void refreshSlotArea() {
-    slotArea.removeAll();
-    LehrkraftOption active = session.active();
-    if (active == null) {
-      Div placeholder = new Div();
-      placeholder.addClassName("elternsprechtag-view__placeholder");
-      placeholder.setText(getTranslation("elternsprechtag.termin.placeholder"));
-      slotArea.add(placeholder);
-      return;
-    }
-    if (active.slots().isEmpty()) {
+  /** Terminraster der aufgeklappten Lehrkraft; sitzt in der Liste direkt hinter ihrer Karte. */
+  private Component createSlotPanel(LehrkraftOption lehrkraft) {
+    Div panel = new Div();
+    panel.addClassName("elternsprechtag-view__slot-panel");
+
+    if (lehrkraft.slots().isEmpty()) {
       Div placeholder = new Div();
       placeholder.addClassName("elternsprechtag-view__placeholder");
       placeholder.setText(getTranslation("elternsprechtag.termin.empty"));
-      slotArea.add(placeholder);
-      return;
+      panel.add(placeholder);
+      return panel;
     }
+
     Div grid = new Div();
     grid.addClassName("elternsprechtag-view__slot-grid");
-    active.slots().forEach(slot -> grid.add(createSlot(slot)));
-    slotArea.add(grid);
+    lehrkraft.slots().forEach(slot -> grid.add(createSlot(slot)));
+    panel.add(grid);
+    return panel;
   }
 
   private Component createSlot(SlotOption slot) {
@@ -371,29 +389,33 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private void refreshAfterSelectionChange() {
-    refreshLehrkraftGrid();
-    refreshSlotArea();
+    refreshLehrkraefte();
     refreshSummary();
     refreshFooter();
+  }
+
+  /** Springt zur Lehrkraft einer Auswahl-Zeile: klappt sie auf und scrollt ihre Karte ins Bild. */
+  private void springeZu(LehrkraftOption lehrkraft) {
+    session.setActive(lehrkraft);
+    refreshLehrkraefte();
+    if (activeItem != null) {
+      activeItem.getElement().scrollIntoView();
+    }
   }
 
   private void refreshSummary() {
     summaryContainer.removeAll();
     if (!session.hatAuswahl()) {
+      Div placeholder = new Div();
+      placeholder.addClassName("elternsprechtag-view__placeholder");
+      placeholder.setText(getTranslation("elternsprechtag.summary.placeholder"));
+      summaryContainer.add(placeholder);
       return;
     }
 
+    // Ohne eigenen Kopf: Der Schritt trägt bereits den Titel, die Anzahl steht im Footer.
     Div panel = new Div();
     panel.addClassName("elternsprechtag-view__summary");
-
-    Div head = new Div();
-    head.addClassName("elternsprechtag-view__summary-head");
-    Span title = new Span(getTranslation("elternsprechtag.summary.title"));
-    title.addClassName("elternsprechtag-view__summary-title");
-    Span count = new Span(countLabel(session.auswahlAnzahl()));
-    count.addClassName("elternsprechtag-view__summary-count");
-    head.add(title, count);
-    panel.add(head);
 
     // In Lehrkraft-Reihenfolge rendern, nicht in Auswahl-Reihenfolge.
     for (LehrkraftOption lehrkraft : session.optionen()) {
@@ -432,6 +454,13 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     sub.setText(String.join(", ", lehrkraft.faecher()));
     info.add(main, sub);
 
+    // Klickfläche für den Sprung zur Lehrkraft; der Entfernen-Button liegt bewusst außerhalb,
+    // damit sein Klick nicht zugleich das Panel aufklappt.
+    Div ziel = new Div();
+    ziel.addClassName("elternsprechtag-view__summary-ziel");
+    ziel.add(badge, info);
+    ziel.addClickListener(event -> springeZu(lehrkraft));
+
     Button remove = new Button(VaadinIcon.CLOSE_SMALL.create());
     remove.addClassName("elternsprechtag-view__summary-remove");
     remove.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
@@ -441,7 +470,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
           refreshAfterSelectionChange();
         });
 
-    row.add(badge, info, remove);
+    row.add(ziel, remove);
     return row;
   }
 
@@ -516,8 +545,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   /** Nach einem Konflikt: Optionen neu laden und ungültig gewordene Slots aus der Auswahl werfen. */
   private void handleConflict() {
     session.reload(loadOptionen());
-    refreshLehrkraftGrid();
-    refreshSlotArea();
+    refreshLehrkraefte();
     refreshSummary();
     refreshFooter();
   }
