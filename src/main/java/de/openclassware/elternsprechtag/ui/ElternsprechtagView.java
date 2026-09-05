@@ -376,8 +376,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
    * Panels würde dem Feld den Fokus nehmen.
    */
   private Component createNotizField(LehrkraftOption lehrkraft) {
-    TextArea notiz =
-        new TextArea(getTranslation("elternsprechtag.notiz.label", lehrkraft.lehrerName()));
+    TextArea notiz = new TextArea(getTranslation("elternsprechtag.notiz.label"));
     notiz.addClassName("elternsprechtag-view__notiz-field");
     notiz.setPlaceholder(getTranslation("elternsprechtag.notiz.placeholder"));
     notiz.setHelperText(getTranslation("elternsprechtag.notiz.helper"));
