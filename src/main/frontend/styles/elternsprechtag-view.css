@@ -343,7 +343,7 @@
 
 .elternsprechtag-view__summary-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 12px 14px;
     border-bottom: 1px solid #f0f1f3;
@@ -385,10 +385,22 @@
     color: #6b7280;
 }
 
+/* Notiz der Zeile: ungekürzt, umbrechend, mit erhaltenen Zeilenumbrüchen. */
+.elternsprechtag-view__summary-notiz {
+    margin: 6px 0 0;
+    padding-left: 10px;
+    border-left: 2px solid #e5e7eb;
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.5;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
 /* Klickfläche der Auswahl-Zeile: springt zur Lehrkraft, ohne den Entfernen-Button einzuschließen. */
 .elternsprechtag-view__summary-link {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     flex: 1;
     min-width: 0;
@@ -399,9 +411,9 @@
     flex-shrink: 0;
 }
 
-/* Step 4: note field. */
+/* Notizfeld im aufgeklappten Panel: sitzt unter dem Terminraster der gewählten Lehrkraft. */
 .elternsprechtag-view__notiz-field {
-    margin-top: 1.25rem;
+    margin-top: 14px;
 }
 
 /* Submit footer bar: full-width bottom bar of the booking card. */
@@ -477,27 +489,6 @@
 /* Zieladresse der Bestätigungsmail: lange Adressen brechen um, statt die Karte zu sprengen. */
 .elternsprechtag-view__confirm-mail {
     overflow-wrap: anywhere;
-}
-
-.elternsprechtag-view__confirm-notiz {
-    margin-top: 1rem;
-    padding: 12px 14px;
-    background-color: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-}
-
-.elternsprechtag-view__confirm-notiz-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #6b7280;
-}
-
-.elternsprechtag-view__confirm-notiz-text {
-    margin: 4px 0 0;
-    color: #374151;
-    line-height: 1.5;
-    white-space: pre-line;
 }
 
 /* Cancelled / unavailable states: no header, centered message. */
