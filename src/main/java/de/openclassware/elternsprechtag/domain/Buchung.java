@@ -41,7 +41,8 @@ public class Buchung {
     @Column(name = "eltern_email", nullable = false)
     private String elternEmail;
 
-    @Column(name = "notiz")
+    // 500 Zeichen: so viel lässt die Buchungsoberfläche je Termin zu (V2-Migration).
+    @Column(name = "notiz", length = 500)
     private String notiz;
 
     @ManyToOne(fetch = FetchType.LAZY)

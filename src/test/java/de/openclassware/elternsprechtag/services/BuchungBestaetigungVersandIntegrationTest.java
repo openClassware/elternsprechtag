@@ -96,9 +96,8 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
             "Elke Elternteil",
             "Karl Kind",
             email,
-            notiz,
             Arrays.stream(termine)
-                .map(t -> new BuchungsWunsch(auftrag.getId(), t.getId()))
+                .map(t -> new BuchungsWunsch(auftrag.getId(), t.getId(), notiz))
                 .toList()));
   }
 
@@ -152,12 +151,37 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   }
 
   @Test
-  void withoutNote_noEmptyNoteSection() {
+  void withoutNote_noNoteLineAtAll() {
     Fixture f = publishedSprechtag("Aula");
     book(f.lehrauftrag(), "eltern@example.com", "   ", termineSorted().get(0));
 
     assertThat(sender.empfangen).hasSize(1);
-    assertThat(sender.empfangen.get(0).text()).doesNotContain("Ihre Notiz");
+    assertThat(sender.empfangen.get(0).text()).doesNotContain("Notiz");
+  }
+
+  @Test
+  void noteBelongsToItsAppointment_indentedUnderIt() {
+    Fixture f = publishedSprechtag("Aula");
+    List<Termin> slots = termineSorted();
+    // Zwei Termine, nur der zweite trägt eine Notiz.
+    buchungService.buchen(
+        new BuchungsAnfrage(
+            "Elke Elternteil",
+            "Karl Kind",
+            "eltern@example.com",
+            List.of(
+                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).getId(), null),
+                new BuchungsWunsch(
+                    f.lehrauftrag().getId(), slots.get(1).getId(), "Bitte über Mathe sprechen"))));
+
+    assertThat(sender.empfangen).hasSize(1);
+    String text = sender.empfangen.get(0).text();
+    // Der Termin ohne Notiz bleibt einzeilig, die Notiz steht eingerückt unter ihrem Termin.
+    assertThat(text)
+        .contains(
+            "- 14:00 Uhr, Anna Berg (Deutsch)\n"
+                + "- 14:15 Uhr, Anna Berg (Deutsch)\n"
+                + "  Notiz: Bitte über Mathe sprechen\n");
   }
 
   @Test
@@ -191,7 +215,7 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     publishedSprechtag("Aula");
 
     buchungService.buchen(
-        new BuchungsAnfrage("Elke", "Karl", "eltern@example.com", null, List.of()));
+        new BuchungsAnfrage("Elke", "Karl", "eltern@example.com", List.of()));
 
     assertThat(sender.versucht).isEmpty();
   }

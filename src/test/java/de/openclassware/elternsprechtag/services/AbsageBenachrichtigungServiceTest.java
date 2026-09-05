@@ -75,8 +75,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
             "Eltern " + email,
             "Kind " + email,
             email,
-            "n",
-            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId()))));
+            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId(), "n"))));
   }
 
   @Test
@@ -103,10 +102,9 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
             "Eltern Müller",
             "Kind Müller",
             "mueller@example.com",
-            "n",
             List.of(
-                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).getId()),
-                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(1).getId()))));
+                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).getId(), "n"),
+                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(1).getId(), "n"))));
 
     absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
 

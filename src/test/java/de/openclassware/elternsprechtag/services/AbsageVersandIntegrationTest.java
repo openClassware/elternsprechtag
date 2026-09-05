@@ -91,8 +91,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
             "Eltern " + email,
             "Kind " + email,
             email,
-            "n",
-            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId()))));
+            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId(), "n"))));
   }
 
   @Test
