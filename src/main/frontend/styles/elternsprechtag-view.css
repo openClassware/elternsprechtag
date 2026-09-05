@@ -386,7 +386,7 @@
 }
 
 /* Klickfläche der Auswahl-Zeile: springt zur Lehrkraft, ohne den Entfernen-Button einzuschließen. */
-.elternsprechtag-view__summary-ziel {
+.elternsprechtag-view__summary-link {
     display: flex;
     align-items: center;
     gap: 12px;
