@@ -151,6 +151,16 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   }
 
   @Test
+  void withSchulkontakt_appearsAsOwnParagraph() {
+    Fixture f = publishedSprechtag("Aula");
+    book(f.lehrauftrag(), "eltern@example.com", null, termineSorted().get(0));
+
+    String text = sender.empfangen.get(0).text();
+    // Eigener, beschrifteter Absatz zwischen Hinweis und Grußformel.
+    assertThat(text).contains("\n\nSo erreichen Sie die Schule:\n" + SCHULKONTAKT + "\n\n");
+  }
+
+  @Test
   void withoutNote_noNoteLineAtAll() {
     Fixture f = publishedSprechtag("Aula");
     book(f.lehrauftrag(), "eltern@example.com", "   ", termineSorted().get(0));

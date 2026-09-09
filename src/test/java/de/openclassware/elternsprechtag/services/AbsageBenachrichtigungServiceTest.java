@@ -156,9 +156,13 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
             Ihr bereits gebuchter Termin entfällt damit. Bei Fragen wenden Sie sich bitte an die \
             Schule.
 
+            So erreichen Sie die Schule:
+            Sekretariat, Tel. 0123 456789
+
             Mit freundlichen Grüßen
             Gesamtschule Lindenhof""");
   }
+
 
   @Test
   void benachrichtige_sprechtagWithoutActiveBooking_sendsNothing() {

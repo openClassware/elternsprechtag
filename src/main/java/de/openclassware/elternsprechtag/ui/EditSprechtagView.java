@@ -53,6 +53,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private TextField titel;
   private TextField location;
   private TextArea description;
+  private TextArea schulkontakt;
   private DatePicker datePicker;
   private ComboBox<Integer> slotInMinutes;
   private TimePicker startTime;
@@ -82,6 +83,10 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         .bind(SprechtagForm::getTitel, SprechtagForm::setTitel);
     binder.forField(location).bind(SprechtagForm::getLocation, SprechtagForm::setLocation);
     binder.forField(description).bind(SprechtagForm::getDescription, SprechtagForm::setDescription);
+    binder
+        .forField(schulkontakt)
+        .asRequired(getTranslation("edit-sprechtag.validation.schulkontakt-required"))
+        .bind(SprechtagForm::getSchulkontakt, SprechtagForm::setSchulkontakt);
     binder
         .forField(datePicker)
         .asRequired(getTranslation("edit-sprechtag.validation.datum-required"))
@@ -266,8 +271,18 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     description.setMinRows(3);
     thirdRow.add(description, 2);
 
+    FormRow fourthRow = new FormRow();
+    schulkontakt = new TextArea();
+    schulkontakt.setLabel(getTranslation("edit-sprechtag.field.schulkontakt.label"));
+    schulkontakt.setPlaceholder(getTranslation("edit-sprechtag.field.schulkontakt.placeholder"));
+    schulkontakt.setHelperText(getTranslation("edit-sprechtag.field.schulkontakt.helper"));
+    schulkontakt.setRequiredIndicatorVisible(true);
+    schulkontakt.setMinRows(3);
+    schulkontakt.setMaxLength(1000);
+    fourthRow.add(schulkontakt, 2);
+
     FormLayout formLayout = panel.getFormLayout();
-    formLayout.add(firstRow, secondRow, thirdRow);
+    formLayout.add(firstRow, secondRow, thirdRow, fourthRow);
 
     return panel;
   }

@@ -47,13 +47,14 @@ public class BuchungBestaetigungService {
   /**
    * Der komplette Beleg eines Absendevorgangs. Empfänger und Kopfdaten sind aus den geladenen
    * Buchungen abgeleitet, nicht aus der Anfrage übernommen. {@code ort} darf {@code null} sein —
-   * dann entfällt der Ort-Abschnitt.
+   * dann entfällt der Ort-Abschnitt; {@code schulkontakt} ist am Sprechtag Pflicht.
    */
   record Bestaetigung(
       String empfaenger,
       String sprechtagTitel,
       LocalDate datum,
       String ort,
+      String schulkontakt,
       String schuelerName,
       String klasse,
       List<TerminZeile> termine) {}
@@ -129,6 +130,7 @@ public class BuchungBestaetigungService {
         sprechtag.getTitel(),
         sprechtag.getStartDate(),
         sprechtag.getLocation(),
+        sprechtag.getSchulkontakt(),
         erste.getSchuelerName(),
         erste.getLehrauftrag().getKlasse().getName(),
         termine);
@@ -137,7 +139,8 @@ public class BuchungBestaetigungService {
   /**
    * Setzt den Fließtext aus den i18n-Bausteinen zusammen. Die Terminliste ist beliebig lang, daher
    * ist der Text nicht ein einzelner Format-String wie bei der Absage. Der Ort-Abschnitt entfällt
-   * vollständig, wenn nichts hinterlegt ist — keine leere Zeile, keine leere Überschrift. Die Notiz
+   * vollständig, wenn nichts hinterlegt ist — keine leere Zeile, keine leere Überschrift; der
+   * Schulkontakt ist Pflicht und daher immer dabei. Die Notiz
    * steht eingerückt unter ihrer Terminzeile; ein Termin ohne Notiz bleibt einzeilig.
    */
   private String baueText(Bestaetigung b) {
@@ -172,6 +175,9 @@ public class BuchungBestaetigungService {
     absaetze.add(String.join("\n", liste));
 
     absaetze.add(i18n.getTranslation("buchung.mail.hinweis", LOCALE));
+    // Eigener Absatz mit eigener Beschriftung — der Schulkontakt ist mehrzeiliger Freitext und
+    // passt in keinen laufenden Satz. Er ist ab dem Entwurf Pflicht, kann hier also nicht fehlen.
+    absaetze.add(i18n.getTranslation("buchung.mail.schulkontakt", LOCALE, b.schulkontakt().trim()));
     absaetze.add(i18n.getTranslation("buchung.mail.closing", LOCALE, properties.getSchoolname()));
     return String.join("\n\n", absaetze);
   }

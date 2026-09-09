@@ -38,6 +38,12 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 abstract class AbstractServiceTest {
 
+  /**
+   * Schulkontakt der Fixtures. Nicht kosmetisch: Ohne ihn lässt sich kein Sprechtag veröffentlichen
+   * — weder über den Service noch am Check-Constraint der Datenbank vorbei.
+   */
+  protected static final String SCHULKONTAKT = "Sekretariat, Tel. 0123 456789";
+
   @Autowired protected SprechtagRepository sprechtagRepository;
   @Autowired protected TerminRepository terminRepository;
   @Autowired protected BuchungRepository buchungRepository;
@@ -113,6 +119,7 @@ abstract class AbstractServiceTest {
     sprechtag.setEndTime(end);
     sprechtag.setSlotInMinutes(slotMinutes);
     sprechtag.setAccessToken(UUID.randomUUID().toString());
+    sprechtag.setSchulkontakt(SCHULKONTAKT);
     sprechtag.setStatus(status);
     sprechtag.setKlassen(new ArrayList<>(List.of(klassen)));
     return sprechtagRepository.save(sprechtag);

@@ -8,6 +8,7 @@ import de.openclassware.elternsprechtag.repositories.BuchungRepository;
 import de.openclassware.elternsprechtag.repositories.SprechtagRepository;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.ui.Formats;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -76,9 +77,7 @@ public class AbsageBenachrichtigungService {
 
     String datum = Formats.dateLong(sprechtag.getStartDate());
     String betreff = i18n.getTranslation("absage.mail.subject", LOCALE, sprechtag.getTitel(), datum);
-    String text =
-        i18n.getTranslation(
-            "absage.mail.body", LOCALE, sprechtag.getTitel(), datum, properties.getSchoolname());
+    String text = baueText(sprechtag, datum);
 
     for (String adresse : adressen) {
       try {
@@ -88,5 +87,20 @@ public class AbsageBenachrichtigungService {
         log.warn("Absage-Benachrichtigung an {} fehlgeschlagen: {}", adresse, e.getMessage());
       }
     }
+  }
+
+  /**
+   * Setzt den Fließtext aus den i18n-Bausteinen zusammen. Der Schulkontakt steht als eigener,
+   * beschrifteter Absatz zwischen Hinweis und Grußformel, nicht in einem bestehenden Satz — er ist
+   * mehrzeiliger Freitext. Er ist am Sprechtag ab dem Entwurf Pflicht und daher immer vorhanden.
+   */
+  private String baueText(Sprechtag sprechtag, String datum) {
+    List<String> absaetze = new ArrayList<>();
+    absaetze.add(i18n.getTranslation("absage.mail.body", LOCALE, sprechtag.getTitel(), datum));
+    absaetze.add(
+        i18n.getTranslation(
+            "absage.mail.schulkontakt", LOCALE, sprechtag.getSchulkontakt().trim()));
+    absaetze.add(i18n.getTranslation("absage.mail.closing", LOCALE, properties.getSchoolname()));
+    return String.join("\n\n", absaetze);
   }
 }

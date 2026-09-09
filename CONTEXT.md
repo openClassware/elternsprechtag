@@ -31,8 +31,9 @@ die gesprochen werden soll.
 ### Sprechtag
 
 Das Ereignis selbst: ein Datum mit Zeitfenster (Start-/Endzeit), einer **Slot-Dauer** in Minuten,
-optional Ort und Hinweistext, den teilnehmenden Klassen und einem **Access-Token** für den
-Eltern-Link. Der Sprechtag ist der Aggregatseinstieg — alles Weitere hängt an ihm.
+optional Ort und Hinweistext, dem verpflichtenden **Schulkontakt**, den teilnehmenden Klassen und einem
+**Access-Token** für den Eltern-Link. Der Sprechtag ist der Aggregatseinstieg — alles Weitere
+hängt an ihm.
 
 Statuswerte (`SprechtagStatusEnum`) und die erlaubten Übergänge:
 
@@ -45,6 +46,23 @@ Statuswerte (`SprechtagStatusEnum`) und die erlaubten Übergänge:
 
 Sprachgebrauch: **Sprechtag** ist der Fachbegriff im Modell, **Elternsprechtag** der Produktname
 (und der Name der Eltern-Ansicht). Im Code und in Issues bitte **Sprechtag**.
+
+### Schulkontakt
+
+Wie die Eltern die Schule erreichen: ein einzelnes, mehrzeiliges **Freitextfeld** am Sprechtag —
+bewusst nicht in Ansprechpartner, Telefon und E-Mail zerlegt, denn Kontakt aufnehmen ist mehr als
+anrufen (Sekretariatszeiten, eine Durchwahl mit Bedingung, „kommen Sie vorbei"). Er ist die
+Voraussetzung dafür, dass alles, was die App **nicht** kann, an der Schule landet: Umbuchen,
+Stornieren, Rückfragen zu einer Absage.
+
+Deshalb ist er **Pflicht ab dem Entwurf**: Ein Sprechtag ohne Schulkontakt ist unvollständig, egal
+in welchem Status. Die Regel steht im `SprechtagService` und zusätzlich als `not null` plus
+Check-Constraint gegen den leeren String in der Datenbank. Gezeigt wird er in der Bestätigungs- und
+in der Absagemail — bewusst **nicht** auf der Buchungsseite: Dort soll nichts von der Terminwahl
+ablenken. Die Eltern haben ihn schwarz auf weiß, sobald sie ihn brauchen.
+
+Nicht zu verwechseln mit der **E-Mail der Eltern** an der Buchung: Das ist die Adresse, an die
+*wir* schreiben. Der Schulkontakt ist die Richtung zurück.
 
 ### Klasse
 

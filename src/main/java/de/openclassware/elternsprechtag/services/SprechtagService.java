@@ -66,6 +66,7 @@ public class SprechtagService {
     private String titel;
     private String location;
     private String description;
+    private String schulkontakt;
     private LocalDate startDate;
     private LocalTime startTime;
     private LocalTime endTime;
@@ -121,6 +122,7 @@ public class SprechtagService {
     form.setTitel(sprechtag.getTitel());
     form.setLocation(sprechtag.getLocation());
     form.setDescription(sprechtag.getDescription());
+    form.setSchulkontakt(sprechtag.getSchulkontakt());
     form.setStartDate(sprechtag.getStartDate());
     form.setStartTime(sprechtag.getStartTime());
     form.setEndTime(sprechtag.getEndTime());
@@ -134,11 +136,28 @@ public class SprechtagService {
   }
 
   /**
+   * Signalisiert, dass ein Sprechtag ohne Schulkontakt gespeichert werden sollte. Ohne ihn wissen
+   * die Eltern nicht, wen sie erreichen — und jedes „die Eltern wenden sich an die Schule" der
+   * übrigen Abläufe (Absage, Änderungswunsch) liefe ins Leere. Das gilt schon am Entwurf: Ein
+   * Sprechtag ohne Schulkontakt ist unvollständig, egal in welchem Status.
+   */
+  public static class SchulkontaktFehltException extends RuntimeException {
+    public SchulkontaktFehltException(String message) {
+      super(message);
+    }
+  }
+
+  /**
    * Legt einen Sprechtag an ({@code id == null}) oder aktualisiert einen bestehenden aus dem
    * Formularmodell und setzt den Zielstatus. Materialisiert Termine, falls veröffentlicht wird.
+   * Ohne Schulkontakt wird nicht gespeichert — Prüfinhalt ist bei Freitext zwangsläufig nur „nicht
+   * leer" (nach {@code trim}).
    */
   @Transactional
   public UUID createOrUpdate(UUID id, SprechtagForm form, SprechtagStatusEnum status) {
+    if (form.getSchulkontakt() == null || form.getSchulkontakt().isBlank()) {
+      throw new SchulkontaktFehltException("Ein Sprechtag ohne Schulkontakt wird nicht gespeichert");
+    }
     Sprechtag sprechtag =
         id == null
             ? new Sprechtag()
@@ -148,6 +167,7 @@ public class SprechtagService {
     sprechtag.setTitel(form.getTitel());
     sprechtag.setLocation(form.getLocation());
     sprechtag.setDescription(form.getDescription());
+    sprechtag.setSchulkontakt(form.getSchulkontakt());
     sprechtag.setStartDate(form.getStartDate());
     sprechtag.setStartTime(form.getStartTime());
     sprechtag.setEndTime(form.getEndTime());
@@ -286,6 +306,9 @@ public class SprechtagService {
     copy.setSlotInMinutes(original.getSlotInMinutes());
     copy.setLocation(original.getLocation());
     copy.setDescription(original.getDescription());
+    // Muss mitkopiert werden: Der Schulkontakt ist ab dem Entwurf Pflicht, eine Kopie ohne ihn
+    // ließe sich gar nicht speichern.
+    copy.setSchulkontakt(original.getSchulkontakt());
     copy.setAccessToken(UUID.randomUUID().toString());
     copy.setStatus(SprechtagStatusEnum.ENTWURF);
     copy.setKlassen(new ArrayList<>(original.getKlassen()));

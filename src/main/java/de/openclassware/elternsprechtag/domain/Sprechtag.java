@@ -49,6 +49,14 @@ public class Sprechtag {
     @Column(name = "description")
     private String description;
 
+    /**
+     * Wie die Eltern die Schule erreichen — mehrzeiliger Freitext (Ansprechpartner, Telefon,
+     * Sprechzeiten). Pflicht ab dem Entwurf. Dass der Wert auch nicht leer ist, hält der
+     * Check-Constraint der Migration V3 fest, den Hibernate nicht prüft.
+     */
+    @Column(name = "schulkontakt", nullable = false, length = 1000)
+    private String schulkontakt;
+
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private SprechtagStatusEnum status;
