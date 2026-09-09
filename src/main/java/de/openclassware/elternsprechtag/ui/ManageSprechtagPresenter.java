@@ -3,9 +3,11 @@ package de.openclassware.elternsprechtag.ui;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.services.AbsageBenachrichtigungService;
 import de.openclassware.elternsprechtag.services.SprechtagService;
+import de.openclassware.elternsprechtag.services.SprechtagService.SchulkontaktFehltException;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -33,8 +35,18 @@ class ManageSprechtagPresenter {
         .toList();
   }
 
-  void changeStatus(UUID id, SprechtagStatusEnum newStatus) {
-    sprechtagService.changeStatus(id, newStatus);
+  /**
+   * Wechselt den Status und liefert im Fehlerfall den i18n-Schlüssel der Meldung, sonst
+   * {@link Optional#empty()}. Die Ausnahme der Service-Schicht endet hier: Der View bekommt keine
+   * Exception zu sehen, sondern nur noch einen Text-Schlüssel, den er anzeigt.
+   */
+  Optional<String> changeStatus(UUID id, SprechtagStatusEnum newStatus) {
+    try {
+      sprechtagService.changeStatus(id, newStatus);
+      return Optional.empty();
+    } catch (SchulkontaktFehltException fehlt) {
+      return Optional.of("manage-sprechtag.publish.schulkontakt-required");
+    }
   }
 
   /**

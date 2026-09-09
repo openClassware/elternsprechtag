@@ -13,7 +13,6 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
-import de.openclassware.elternsprechtag.services.SprechtagService.SchulkontaktFehltException;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
 import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
 import de.openclassware.elternsprechtag.ui.components.CancelSprechtagDialog;
@@ -112,16 +111,16 @@ public class ManageSprechtagView extends Div {
   }
 
   private void applyStatusChange(SprechtagRow sprechtag, SprechtagStatusEnum newStatus) {
-    try {
-      presenter.changeStatus(sprechtag.id(), newStatus);
-    } catch (SchulkontaktFehltException fehlt) {
-      // Aus der Liste heraus gibt es kein Feld, an das die Meldung sich hängen könnte — hier
-      // verweist sie auf das Formular, in dem der Schulkontakt nachzutragen ist.
-      Notification notification =
-          Notification.show(getTranslation("manage-sprechtag.publish.schulkontakt-required"));
-      notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-    }
-    // Auch nach der Abweisung neu laden: Die Statusauswahl der Zeile steht sonst auf einem Wert,
+    // Aus der Liste heraus gibt es kein Feld, an das eine Meldung sich hängen könnte; der Presenter
+    // entscheidet, ob und welche es gibt, der View zeigt sie nur an.
+    presenter
+        .changeStatus(sprechtag.id(), newStatus)
+        .ifPresent(
+            meldung -> {
+              Notification notification = Notification.show(getTranslation(meldung));
+              notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            });
+    // Auch nach einer Abweisung neu laden: Die Statusauswahl der Zeile steht sonst auf einem Wert,
     // den der Sprechtag gar nicht angenommen hat.
     reload();
   }
