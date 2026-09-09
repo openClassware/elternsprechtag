@@ -51,7 +51,7 @@ Jedes `bewusst nein` trägt unten eine Anmerkung; ohne Begründung wäre die Ein
 
 **Zum Weg drumherum.** Die Rolle Organizer schließt das Sekretariat mit ein — ein Anruf in der
 Schule zählt als gültiger Weg drumherum. Er setzt voraus, dass die Eltern wissen, wen sie anrufen:
-Deshalb werden die **Kontaktdaten der Schule** ein Pflichtfeld am Sprechtag (Phase 2). Solange das
+Deshalb wird der **Schulkontakt** ein Pflichtfeld am Sprechtag (Phase 2). Solange das
 fehlt, ruht jede Stufe `darf fehlen` mit Akteur *Eltern* auf einer Annahme, die die App selbst
 nicht einlöst.
 
@@ -93,7 +93,7 @@ Organizer einen Sprechtag anlegt.
 | Abgesagten oder abgeschlossenen Sprechtag über „Speichern" wiederbeleben | Organizer | verhindert | muss | möglich: `createOrUpdate` setzt den Status ungeprüft (`SprechtagService:157`) und umgeht `allowedTransitions` |
 | Keine der gewählten Klassen hat einen Lehrauftrag | Organizer | Meldung beim Veröffentlichen: keine Termine erzeugt | muss | steigt stumm aus (`SprechtagService:238`), Sprechtag gilt als veröffentlicht |
 | Slot-Dauer geleert (`null`) | Organizer | Pflichtfeld, Speichern nicht möglich | muss | kein `asRequired`; Veröffentlichen läuft in eine `NullPointerException` |
-| Kontaktdaten der Schule im Sprechtag | Eltern | eigenes Feld, Pflicht beim Veröffentlichen | muss | nur der freie Hinweistext |
+| Schulkontakt im Sprechtag | Eltern | eigenes Freitextfeld, Pflicht beim Veröffentlichen | muss | nur der freie Hinweistext |
 | Zeitfenster geht nicht glatt auf, Rest-Slot entfällt | Organizer | — | darf fehlen | `slotStartTimes` verwirft ihn kommentarlos |
 | Datum liegt in der Vergangenheit | Organizer | — | darf fehlen | keine Prüfung, `DatePicker` ohne Minimum |
 | Eltern haben den Zugangs-Link verloren | Eltern | — | darf fehlen | Weg drumherum: Anruf in der Schule |
@@ -115,12 +115,16 @@ was kaputtgehen kann; danach ist jeder Rückweg ein stiller Verlust einer Zusage
 Entwurf ist deshalb genau bis zur ersten Buchung erlaubt und danach gesperrt, mit dem Verweis auf
 die Absage als dem einzigen verbleibenden Weg. Dieselbe Grenze gilt in Phase 6 für das Löschen.
 
-**Kontaktdaten sind die Voraussetzung der Stufe `darf fehlen`.** Drei Einstufungen dieser Phase
+**Der Schulkontakt ist die Voraussetzung der Stufe `darf fehlen`.** Drei Einstufungen dieser Phase
 lauten „darf fehlen, die Eltern rufen an". Diese Annahme trägt nur, wenn die Eltern wissen, wen sie
 anrufen. Ein freier Hinweistext, in den der Organizer eine Nummer schreiben *kann*, reicht dafür
-nicht. Deshalb ein **eigenes Feld** (Ansprechpartner, Telefon, E-Mail der Schule), das beim
-Veröffentlichen Pflicht ist. Fiele dieser Fall weg, fielen alle `darf fehlen` für Eltern auf `muss`
-zurück.
+nicht. Deshalb ein **eigenes Feld** am Sprechtag — der **Schulkontakt** —, das beim
+Veröffentlichen Pflicht ist. Es bleibt bewusst **Freitext** und wird nicht in Ansprechpartner,
+Telefon und E-Mail zerlegt: Kontakt aufnehmen ist mehr als anrufen oder schreiben, und
+Sekretariatszeiten, eine Durchwahl mit Bedingung oder „kommen Sie vorbei" müssen hineinpassen. Die
+Pflichtprüfung heißt damit zwangsläufig nur „nicht leer" — den Unterschied zum Hinweistext macht
+nicht die Prüfung, sondern die Führung eines eigenen, benannten, beim Veröffentlichen erzwungenen
+Feldes. Fiele dieser Fall weg, fielen alle `darf fehlen` für Eltern auf `muss` zurück.
 
 **Zugangs-Link neu ausstellen — bewusst nein, und zwar rückwärts.** Die Funktion sollte bei
 bemerktem Missbrauch billig einen neuen Link liefern, ohne den Sprechtag abzusagen und Buchungen zu
@@ -340,7 +344,7 @@ Lehrkraft bekommt ihren Plan als Datei, nicht als Login.
 | Lehrkraft braucht ihren Tagesplan | Lehrkraft | PDF-Export aus der Auswertung: ohne Filter ein ZIP mit einem PDF je Lehrkraft, mit gesetztem Lehrkraft-Filter genau dieses eine PDF | muss | `AuswertungView` hat den Filter je Lehrkraft, aber **keinen** Export |
 | Inhalt des Blatts | Lehrkraft | Kopf mit Lehrkraft, Sprechtag, Datum, Ort und „Stand: \<Zeitstempel\>"; alle Slots chronologisch — **auch die freien** — mit Zeit, Schüler, Klasse, Fach, Elternname, Notiz; rechts eine leere Spalte für Handschrift | muss | `BuchungService.BuchungsZeile` liefert nur aktive Buchungen, freie Slots erscheinen nicht |
 | Anmeldeschluss | Organizer | Pflichtfeld am `Sprechtag`, beim Anlegen mit dem Vortag vorbelegt, änderbar | muss | kein Feld; `ElternsprechtagPresenter` gibt bei `VEROEFFENTLICHT` unbegrenzt `BUCHBAR` zurück |
-| Elternlink nach Fristablauf | Eltern | nicht mehr buchbar; Hinweis „Anmeldung beendet" plus Datum, Ort und Kontaktdaten der Schule | muss | unbegrenzt buchbar, auch am Tag selbst und danach |
+| Elternlink nach Fristablauf | Eltern | nicht mehr buchbar; Hinweis „Anmeldung beendet" plus Datum, Ort und Schulkontakt | muss | unbegrenzt buchbar, auch am Tag selbst und danach |
 | Familie ruft am Tag selbst an, jemand steht spontan vor der Tür | Organizer | die Frist schließt nur den Elternlink; die Organizer-Buchungsstrecke bleibt bis zum Abschluss offen | muss | fehlt mit der Strecke aus Phase 3 |
 | Telefonauskunft „wann habe ich meinen Termin?" | Organizer | Suche nach Schüler- oder Elternname in der Auswertung | muss | nur Lehrkraft-Filter, **keine** Namenssuche |
 | Eltern sehen ihre eigene Buchung wieder | Eltern | — | darf fehlen | Token hängt am Sprechtag, nicht an der Familie; Beleg bleibt die Bestätigungsmail, Weg drumherum der Anruf |
@@ -395,7 +399,7 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
 | Sprechtag schließt sich nach Ablauf der Endzeit selbst ab | Organizer | Statuswechsel durch den Tagesjob; der Menüpunkt bleibt zum Vorziehen | muss | nur von Hand (`SprechtagTable` → `SprechtagService.changeStatus`) |
-| Elternlink nach dem Sprechtag | Eltern | Ansicht „Der Sprechtag ist vorbei" plus Kontaktdaten der Schule, keine Buchungsauskunft | muss | `NICHT_VERFUEGBAR` — dieselbe Seite wie bei unbekanntem Token oder Entwurf |
+| Elternlink nach dem Sprechtag | Eltern | Ansicht „Der Sprechtag ist vorbei" plus Schulkontakt, keine Buchungsauskunft | muss | `NICHT_VERFUEGBAR` — dieselbe Seite wie bei unbekanntem Token oder Entwurf |
 | Verfrüht von Hand abgeschlossen | Organizer | Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT`, solange die Endzeit nicht verstrichen ist | muss | kein Rückweg (`allowedTransitions()` ist für `ABGESCHLOSSEN` leer) |
 | Aufbewahrungsfrist | — | ab Ende des Sprechtags, Default 30 Tage, als Property verstellbar | muss | fehlt |
 | Ablauf der Frist | — | Elternname, Schülername, E-Mail und Notiz werden geleert, die Buchung bleibt; gilt auch für `ABGESAGT` | muss | fehlt — kein Löschen im ganzen Projekt |
@@ -434,8 +438,8 @@ ist unabhängig davon, ob jemand rechtzeitig geklickt hat, und ist auch für ein
 definiert — dessen Buchungen sind genauso personenbezogen und liegen heute genauso ewig.
 
 **Hausregel zum Duplizieren.** `duplicate` kopiert, was Vorlage ist, und leitet neu ab, was am Datum
-hängt. Konkret fehlen ihm die drei Felder, die dieser Maßstab beschlossen hat: Kontaktdaten der
-Schule (Phase 2) und Erinnerungszeitpunkt (Phase 4) werden **mitkopiert**, der **Anmeldeschluss**
+hängt. Konkret fehlen ihm die drei Felder, die dieser Maßstab beschlossen hat: Schulkontakt
+(Phase 2) und Erinnerungszeitpunkt (Phase 4) werden **mitkopiert**, der **Anmeldeschluss**
 (Phase 5) dagegen aus dem kopierten Datum **neu vorbelegt** — 1:1 übernommen läge er ein Jahr vor dem
 neuen Sprechtag und machte ihn tot geboren. Wer künftig ein Feld an den `Sprechtag` hängt, muss sich
 in diese eine Frage einsortieren.
@@ -503,7 +507,7 @@ doppelt geführt.
 
 | Issue | Fall |
 |---|---|
-| [#102](https://github.com/openClassware/elternsprechtag/issues/102) | Kontaktdaten der Schule als Pflichtfeld am Sprechtag |
+| [#102](https://github.com/openClassware/elternsprechtag/issues/102) | Schulkontakt als Pflichtfeld am Sprechtag |
 | [#112](https://github.com/openClassware/elternsprechtag/issues/112) | Terminrelevante Felder nach dem Veröffentlichen sperren |
 | [#113](https://github.com/openClassware/elternsprechtag/issues/113) | Rückweg auf Entwurf regeln: erlaubt ohne Buchung, sonst gesperrt |
 | [#114](https://github.com/openClassware/elternsprechtag/issues/114) | Statusübergänge auch in `createOrUpdate` erzwingen |
