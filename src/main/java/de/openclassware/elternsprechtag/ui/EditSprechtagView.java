@@ -93,8 +93,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     binder
         .forField(schulkontakt)
         .withValidator(
-            wert ->
-                !presenter.schulkontaktErforderlich(zielStatus) || (wert != null && !wert.isBlank()),
+            wert -> presenter.schulkontaktGueltig(zielStatus, wert),
             getTranslation("edit-sprechtag.validation.schulkontakt-required"))
         .bind(SprechtagForm::getSchulkontakt, SprechtagForm::setSchulkontakt);
     binder

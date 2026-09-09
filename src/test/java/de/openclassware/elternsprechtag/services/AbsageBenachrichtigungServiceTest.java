@@ -154,8 +154,9 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
             der Sprechtag „Frühling“ am 20. Juli 2026 muss leider abgesagt werden.
 
             Ihr bereits gebuchter Termin entfällt damit. Bei Fragen wenden Sie sich bitte an die \
-            Schule:
+            Schule.
 
+            So erreichen Sie die Schule:
             Sekretariat, Tel. 0123 456789
 
             Mit freundlichen Grüßen

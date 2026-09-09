@@ -90,22 +90,16 @@ public class AbsageBenachrichtigungService {
   }
 
   /**
-   * Setzt den Fließtext aus den i18n-Bausteinen zusammen. Der Schulkontakt steht als eigener
-   * Absatz zwischen Hinweis und Grußformel, nicht in einem bestehenden Satz — er ist mehrzeiliger
-   * Freitext. Fehlt er (etwa bei einem vor Einführung des Feldes veröffentlichten Sprechtag),
-   * entfällt der Absatz vollständig und der Hinweis bleibt ein abgeschlossener Satz.
+   * Setzt den Fließtext aus den i18n-Bausteinen zusammen. Der Schulkontakt steht als eigener,
+   * beschrifteter Absatz zwischen Hinweis und Grußformel, nicht in einem bestehenden Satz — er ist
+   * mehrzeiliger Freitext. Fehlt er (etwa bei einem vor Einführung des Feldes veröffentlichten
+   * Sprechtag), entfällt der Absatz samt Beschriftung vollständig.
    */
   private String baueText(Sprechtag sprechtag, String datum) {
     List<String> absaetze = new ArrayList<>();
     String schulkontakt = sprechtag.getSchulkontakt();
-    boolean mitKontakt = schulkontakt != null && !schulkontakt.isBlank();
-    absaetze.add(
-        i18n.getTranslation(
-            mitKontakt ? "absage.mail.body.mit-kontakt" : "absage.mail.body",
-            LOCALE,
-            sprechtag.getTitel(),
-            datum));
-    if (mitKontakt) {
+    absaetze.add(i18n.getTranslation("absage.mail.body", LOCALE, sprechtag.getTitel(), datum));
+    if (schulkontakt != null && !schulkontakt.isBlank()) {
       absaetze.add(i18n.getTranslation("absage.mail.schulkontakt", LOCALE, schulkontakt.trim()));
     }
     absaetze.add(i18n.getTranslation("absage.mail.closing", LOCALE, properties.getSchoolname()));

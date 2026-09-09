@@ -156,9 +156,8 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     book(f.lehrauftrag(), "eltern@example.com", null, termineSorted().get(0));
 
     String text = sender.empfangen.get(0).text();
-    assertThat(text).contains(SCHULKONTAKT);
-    // Eigener Absatz zwischen Hinweis und Grußformel, und der Hinweis zeigt darauf.
-    assertThat(text).contains("an die Schule:\n\n" + SCHULKONTAKT);
+    // Eigener, beschrifteter Absatz zwischen Hinweis und Grußformel.
+    assertThat(text).contains("\n\nSo erreichen Sie die Schule:\n" + SCHULKONTAKT + "\n\n");
   }
 
   @Test
@@ -175,7 +174,7 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     book(f.lehrauftrag(), "eltern@example.com", null, termineSorted().get(0));
 
     String text = sender.empfangen.get(0).text();
-    assertThat(text).contains("an die Schule.").doesNotContain("an die Schule:");
+    assertThat(text).doesNotContain("So erreichen Sie die Schule");
     assertThat(text).doesNotContain("\n\n\n");
   }
 

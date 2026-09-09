@@ -5,9 +5,12 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.Time;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
@@ -54,7 +57,7 @@ class SchulkontaktConstraintTest extends AbstractServiceTest {
     UUID id = insertSprechtag("ENTWURF", null);
 
     assertThatThrownBy(
-            () -> execute("update sprechtage set status = 'VEROEFFENTLICHT' where id = '" + id + "'"))
+            () -> execute("update sprechtage set status = 'VEROEFFENTLICHT' where id = ?", id))
         .isInstanceOf(SQLException.class);
   }
 
@@ -64,24 +67,26 @@ class SchulkontaktConstraintTest extends AbstractServiceTest {
     execute(
         "insert into sprechtage"
             + " (id, titel, start_date, start_time, end_time, slot_in_minutes, access_token,"
-            + " status, schulkontakt) values ('"
-            + id
-            + "', 'Frühling', '"
-            + DATE
-            + "', '14:00', '15:00', 15, '"
-            + UUID.randomUUID()
-            + "', '"
-            + status
-            + "', "
-            + (schulkontakt == null ? "null" : "'" + schulkontakt + "'")
-            + ")");
+            + " status, schulkontakt) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        id,
+        "Frühling",
+        Date.valueOf(DATE),
+        Time.valueOf(LocalTime.of(14, 0)),
+        Time.valueOf(LocalTime.of(15, 0)),
+        15,
+        UUID.randomUUID().toString(),
+        status,
+        schulkontakt);
     return id;
   }
 
-  private void execute(String sql) throws SQLException {
+  private void execute(String sql, Object... parameter) throws SQLException {
     try (Connection connection = dataSource.getConnection();
-        Statement statement = connection.createStatement()) {
-      statement.execute(sql);
+        PreparedStatement statement = connection.prepareStatement(sql)) {
+      for (int i = 0; i < parameter.length; i++) {
+        statement.setObject(i + 1, parameter[i]);
+      }
+      statement.execute();
     }
   }
 }

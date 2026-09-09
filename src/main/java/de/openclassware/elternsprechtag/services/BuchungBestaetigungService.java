@@ -174,15 +174,12 @@ public class BuchungBestaetigungService {
     }
     absaetze.add(String.join("\n", liste));
 
-    // Der Hinweis verweist die Eltern an die Schule. Steht der Schulkontakt darunter, endet er mit
-    // Doppelpunkt und zeigt darauf; fehlt er, bleibt der abgeschlossene Satz stehen — so entsteht
-    // weder eine leere Zeile noch ein ins Leere zeigender Verweis.
+    absaetze.add(i18n.getTranslation("buchung.mail.hinweis", LOCALE));
+    // Eigener Absatz mit eigener Beschriftung — der Schulkontakt ist mehrzeiliger Freitext und
+    // passt in keinen laufenden Satz. Fehlt er, entfällt der Absatz samt Beschriftung.
     if (hatInhalt(b.schulkontakt())) {
-      absaetze.add(i18n.getTranslation("buchung.mail.hinweis.mit-kontakt", LOCALE));
       absaetze.add(
           i18n.getTranslation("buchung.mail.schulkontakt", LOCALE, b.schulkontakt().trim()));
-    } else {
-      absaetze.add(i18n.getTranslation("buchung.mail.hinweis", LOCALE));
     }
     absaetze.add(i18n.getTranslation("buchung.mail.closing", LOCALE, properties.getSchoolname()));
     return String.join("\n\n", absaetze);
