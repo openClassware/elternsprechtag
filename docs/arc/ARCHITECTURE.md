@@ -4,6 +4,11 @@ Lebende Architektur-Doku. Beschreibt den **beabsichtigten** Zustand und die gelt
 Regeln. Kurzfassung der harten Regeln: [`/CLAUDE.md`](../../CLAUDE.md). Bekannte Abweichungen
 vom Soll stehen im [Findings-Backlog](#findings-backlog) am Ende.
 
+Was das Produkt an Fällen **jenseits des Happy Path** abdecken muss, steht nicht hier, sondern in
+[`ABDECKUNG.md`](ABDECKUNG.md) — dem Maßstab entlang des realen Schulablaufs (`muss` /
+`darf fehlen` / `bewusst nein`). Diese Datei sagt, *wie* gebaut wird; jene, *was* abgedeckt sein
+muss.
+
 Ergänzend: [`domain.puml`](domain.puml) (Domänen-Klassendiagramm),
 [`docs/deploy.md`](../deploy.md) (Demo-Umgebung: Secrets, DNS, Server-Vorbereitung) und
 [`docs/ci.md`](../ci.md) (PR-Workflow und Branch Protection auf `main`).

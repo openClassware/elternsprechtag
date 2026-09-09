@@ -3,6 +3,11 @@
 Kurzregeln für die Arbeit an diesem Projekt. Architektur-Details, Begründungen und
 das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTURE.md).
 
+**Bevor ein Feature als fertig gilt:** [`docs/arc/ABDECKUNG.md`](docs/arc/ABDECKUNG.md) ist der
+Maßstab für die Fälle jenseits des Happy Path. Es stuft je Phase des Schulablaufs ein, was das
+Produkt abdecken **muss**, was **fehlen darf** und was **bewusst nein** ist — Letzteres nicht ohne
+ADR ändern.
+
 ## Architektur & Schichten
 
 - Strikte Schichtung: **Domain (JPA) → Repository → Service → Presenter → View**.
