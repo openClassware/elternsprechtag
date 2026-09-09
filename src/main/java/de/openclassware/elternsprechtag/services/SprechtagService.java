@@ -84,7 +84,6 @@ public class SprechtagService {
       LocalTime endTime,
       String location,
       String description,
-      String schulkontakt,
       Integer slotInMinutes,
       SprechtagStatusEnum status,
       List<KlasseOption> klassen) {}
@@ -200,7 +199,6 @@ public class SprechtagService {
         sprechtag.getEndTime(),
         sprechtag.getLocation(),
         sprechtag.getDescription(),
-        sprechtag.getSchulkontakt(),
         sprechtag.getSlotInMinutes(),
         sprechtag.getStatus(),
         sprechtag.getKlassen().stream()

@@ -151,16 +151,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         description.addClassName("elternsprechtag-view__description");
         kopf.add(description);
       }
-
-      // Der Schulkontakt ist ein Rückfallweg, kein Aufruf zum Anrufen: Er steht klein und
-      // zurückgenommen unter dem Kopf, damit die Terminwahl die Seite bestimmt.
-      Paragraph schulkontakt =
-          new Paragraph(
-              getTranslation("elternsprechtag.schulkontakt.label")
-                  + " "
-                  + sprechtag.schulkontakt());
-      schulkontakt.addClassName("elternsprechtag-view__schulkontakt");
-      kopf.add(schulkontakt);
     }
 
     return kopf;

@@ -281,7 +281,7 @@ class SprechtagServiceTest extends AbstractServiceTest {
   }
 
   @Test
-  void loadFormAndPublic_carrySchulkontakt() {
+  void loadForm_carriesSchulkontakt() {
     Klasse klasse = persistKlasse("5a");
     Sprechtag sprechtag =
         persistSprechtag(
@@ -289,12 +289,6 @@ class SprechtagServiceTest extends AbstractServiceTest {
             SprechtagStatusEnum.VEROEFFENTLICHT, klasse);
 
     assertThat(sprechtagService.loadForm(sprechtag.getId()).orElseThrow().getSchulkontakt())
-        .isEqualTo(SCHULKONTAKT);
-    assertThat(
-            sprechtagService
-                .findPublicByAccessToken(sprechtag.getAccessToken())
-                .orElseThrow()
-                .schulkontakt())
         .isEqualTo(SCHULKONTAKT);
   }
 
