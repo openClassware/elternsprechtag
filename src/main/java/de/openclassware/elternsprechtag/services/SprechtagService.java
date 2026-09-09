@@ -66,6 +66,7 @@ public class SprechtagService {
     private String titel;
     private String location;
     private String description;
+    private String schulkontakt;
     private LocalDate startDate;
     private LocalTime startTime;
     private LocalTime endTime;
@@ -83,6 +84,7 @@ public class SprechtagService {
       LocalTime endTime,
       String location,
       String description,
+      String schulkontakt,
       Integer slotInMinutes,
       SprechtagStatusEnum status,
       List<KlasseOption> klassen) {}
@@ -121,6 +123,7 @@ public class SprechtagService {
     form.setTitel(sprechtag.getTitel());
     form.setLocation(sprechtag.getLocation());
     form.setDescription(sprechtag.getDescription());
+    form.setSchulkontakt(sprechtag.getSchulkontakt());
     form.setStartDate(sprechtag.getStartDate());
     form.setStartTime(sprechtag.getStartTime());
     form.setEndTime(sprechtag.getEndTime());
@@ -134,11 +137,36 @@ public class SprechtagService {
   }
 
   /**
+   * Signalisiert, dass ein Sprechtag ohne Schulkontakt veröffentlicht werden sollte. Ohne ihn
+   * wissen die Eltern nicht, wen sie anrufen — und jedes „die Eltern melden sich bei der Schule"
+   * der übrigen Abläufe (Absage, Änderungswunsch) liefe ins Leere.
+   */
+  public static class SchulkontaktFehltException extends RuntimeException {
+    public SchulkontaktFehltException(String message) {
+      super(message);
+    }
+  }
+
+  /**
+   * Weist den Weg nach {@link SprechtagStatusEnum#VEROEFFENTLICHT} ab, solange kein Schulkontakt
+   * hinterlegt ist. Prüfinhalt ist bei Freitext zwangsläufig nur „nicht leer" (nach {@code trim}).
+   * Jeder andere Zielstatus — insbesondere der Entwurf — bleibt unberührt.
+   */
+  private void pruefeSchulkontaktFuer(SprechtagStatusEnum status, String schulkontakt) {
+    if (status == SprechtagStatusEnum.VEROEFFENTLICHT
+        && (schulkontakt == null || schulkontakt.isBlank())) {
+      throw new SchulkontaktFehltException("Veröffentlichen ohne Schulkontakt ist nicht möglich");
+    }
+  }
+
+  /**
    * Legt einen Sprechtag an ({@code id == null}) oder aktualisiert einen bestehenden aus dem
    * Formularmodell und setzt den Zielstatus. Materialisiert Termine, falls veröffentlicht wird.
+   * Wird veröffentlicht, ist der Schulkontakt Pflicht.
    */
   @Transactional
   public UUID createOrUpdate(UUID id, SprechtagForm form, SprechtagStatusEnum status) {
+    pruefeSchulkontaktFuer(status, form.getSchulkontakt());
     Sprechtag sprechtag =
         id == null
             ? new Sprechtag()
@@ -148,6 +176,7 @@ public class SprechtagService {
     sprechtag.setTitel(form.getTitel());
     sprechtag.setLocation(form.getLocation());
     sprechtag.setDescription(form.getDescription());
+    sprechtag.setSchulkontakt(form.getSchulkontakt());
     sprechtag.setStartDate(form.getStartDate());
     sprechtag.setStartTime(form.getStartTime());
     sprechtag.setEndTime(form.getEndTime());
@@ -179,6 +208,7 @@ public class SprechtagService {
         sprechtag.getEndTime(),
         sprechtag.getLocation(),
         sprechtag.getDescription(),
+        sprechtag.getSchulkontakt(),
         sprechtag.getSlotInMinutes(),
         sprechtag.getStatus(),
         sprechtag.getKlassen().stream()
@@ -197,6 +227,7 @@ public class SprechtagService {
     if (!current.allowedTransitions().contains(newStatus)) {
       throw new IllegalStateException("Ungültiger Statusübergang: " + current + " -> " + newStatus);
     }
+    pruefeSchulkontaktFuer(newStatus, sprechtag.getSchulkontakt());
     sprechtag.setStatus(newStatus);
     Sprechtag saved = sprechtagRepository.save(sprechtag);
     materialisiereWennNoetig(saved);

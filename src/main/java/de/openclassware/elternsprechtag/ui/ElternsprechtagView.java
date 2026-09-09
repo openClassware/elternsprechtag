@@ -151,6 +151,19 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         description.addClassName("elternsprechtag-view__description");
         kopf.add(description);
       }
+
+      // Ohne Schulkontakt entfällt der ganze Block — keine leere Überschrift, keine leere Zeile.
+      // Möglich ist das bei Sprechtagen, die vor Einführung des Feldes veröffentlicht wurden.
+      if (sprechtag.schulkontakt() != null && !sprechtag.schulkontakt().isBlank()) {
+        Div schulkontakt = new Div();
+        schulkontakt.addClassName("elternsprechtag-view__schulkontakt");
+        Span label = new Span(getTranslation("elternsprechtag.schulkontakt.label"));
+        label.addClassName("elternsprechtag-view__schulkontakt-label");
+        Paragraph text = new Paragraph(sprechtag.schulkontakt());
+        text.addClassName("elternsprechtag-view__schulkontakt-text");
+        schulkontakt.add(label, text);
+        kopf.add(schulkontakt);
+      }
     }
 
     return kopf;

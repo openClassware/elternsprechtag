@@ -536,3 +536,21 @@
         gap: 10px;
     }
 }
+
+/* School contact block in the header — free text, so line breaks are part of the content. */
+.elternsprechtag-view__schulkontakt {
+    margin: 1.25rem 0 0;
+}
+
+.elternsprechtag-view__schulkontakt-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+}
+
+.elternsprechtag-view__schulkontakt-text {
+    margin: 0.25rem 0 0;
+    color: #6b7280;
+    line-height: 1.6;
+    white-space: pre-line;
+}

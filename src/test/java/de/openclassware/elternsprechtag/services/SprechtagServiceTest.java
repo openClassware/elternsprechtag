@@ -38,6 +38,7 @@ class SprechtagServiceTest extends AbstractServiceTest {
     form.setStartTime(start);
     form.setEndTime(end);
     form.setSlotInMinutes(slot);
+    form.setSchulkontakt(SCHULKONTAKT);
     form.setKlassen(
         Set.copyOf(
             java.util.Arrays.stream(klassen)
@@ -226,5 +227,97 @@ class SprechtagServiceTest extends AbstractServiceTest {
     assertThat(copy.getStatus()).isEqualTo(SprechtagStatusEnum.ENTWURF);
     assertThat(copy.getAccessToken()).isNotEqualTo(original.getAccessToken());
     assertThat(copy.getKlassen()).extracting(Klasse::getName).containsExactly("5a");
+  }
+
+  // --- Schulkontakt: Pflicht beim Veröffentlichen, nicht am Entwurf (Issue #102) ---
+
+  @Test
+  void createOrUpdate_draftWithoutSchulkontakt_isSaved() {
+    Klasse klasse = persistKlasse("5a");
+    SprechtagForm form = form("Entwurf", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
+    form.setSchulkontakt(null);
+
+    UUID id = sprechtagService.createOrUpdate(null, form, SprechtagStatusEnum.ENTWURF);
+
+    assertThat(sprechtagRepository.findById(id).orElseThrow().getSchulkontakt()).isNull();
+  }
+
+  @Test
+  void createOrUpdate_publishWithoutSchulkontakt_isRejected() {
+    Klasse klasse = persistKlasse("5a");
+    SprechtagForm form = form("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
+    form.setSchulkontakt(null);
+
+    assertThatThrownBy(
+            () ->
+                sprechtagService.createOrUpdate(
+                    null, form, SprechtagStatusEnum.VEROEFFENTLICHT))
+        .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
+
+    assertThat(sprechtagRepository.count()).as("nichts angelegt").isZero();
+  }
+
+  @Test
+  void createOrUpdate_publishWithBlankSchulkontakt_isRejected() {
+    Klasse klasse = persistKlasse("5a");
+    SprechtagForm form = form("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
+    form.setSchulkontakt("   \n  ");
+
+    assertThatThrownBy(
+            () ->
+                sprechtagService.createOrUpdate(
+                    null, form, SprechtagStatusEnum.VEROEFFENTLICHT))
+        .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
+  }
+
+  @Test
+  void changeStatus_publishWithoutSchulkontakt_isRejected() {
+    Klasse klasse = persistKlasse("5a");
+    Sprechtag sprechtag =
+        persistSprechtag(
+            "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatusEnum.ENTWURF, klasse);
+    sprechtag.setSchulkontakt("   ");
+    sprechtagRepository.save(sprechtag);
+
+    assertThatThrownBy(
+            () ->
+                sprechtagService.changeStatus(
+                    sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT))
+        .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
+
+    assertThat(sprechtagRepository.findById(sprechtag.getId()).orElseThrow().getStatus())
+        .isEqualTo(SprechtagStatusEnum.ENTWURF);
+    assertThat(terminRepository.count()).as("keine Termine materialisiert").isZero();
+  }
+
+  @Test
+  void createOrUpdate_publishWithSchulkontakt_persistsIt() {
+    Klasse klasse = persistKlasse("5a");
+    SprechtagForm form = form("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
+    form.setSchulkontakt("Sekretariat\nTel. 0123 456789");
+
+    UUID id = sprechtagService.createOrUpdate(null, form, SprechtagStatusEnum.VEROEFFENTLICHT);
+
+    assertThat(sprechtagRepository.findById(id).orElseThrow().getSchulkontakt())
+        .isEqualTo("Sekretariat\nTel. 0123 456789");
+  }
+
+  @Test
+  void loadFormAndPublic_carrySchulkontakt() {
+    Klasse klasse = persistKlasse("5a");
+    Sprechtag sprechtag =
+        persistSprechtag(
+            "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatusEnum.VEROEFFENTLICHT, klasse);
+
+    assertThat(sprechtagService.loadForm(sprechtag.getId()).orElseThrow().getSchulkontakt())
+        .isEqualTo(SCHULKONTAKT);
+    assertThat(
+            sprechtagService
+                .findPublicByAccessToken(sprechtag.getAccessToken())
+                .orElseThrow()
+                .schulkontakt())
+        .isEqualTo(SCHULKONTAKT);
   }
 }

@@ -50,9 +50,17 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private H2 headerTitle;
   private Button createButton;
 
+  /**
+   * Zielstatus des laufenden Speichervorgangs. Der Binder wird einmal konfiguriert, der
+   * Schulkontakt ist aber nur beim Veröffentlichen Pflicht — der Validator muss also wissen,
+   * welcher Knopf gedrückt wurde.
+   */
+  private SprechtagStatusEnum zielStatus = SprechtagStatusEnum.ENTWURF;
+
   private TextField titel;
   private TextField location;
   private TextArea description;
+  private TextArea schulkontakt;
   private DatePicker datePicker;
   private ComboBox<Integer> slotInMinutes;
   private TimePicker startTime;
@@ -82,6 +90,13 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         .bind(SprechtagForm::getTitel, SprechtagForm::setTitel);
     binder.forField(location).bind(SprechtagForm::getLocation, SprechtagForm::setLocation);
     binder.forField(description).bind(SprechtagForm::getDescription, SprechtagForm::setDescription);
+    binder
+        .forField(schulkontakt)
+        .withValidator(
+            wert ->
+                !presenter.schulkontaktErforderlich(zielStatus) || (wert != null && !wert.isBlank()),
+            getTranslation("edit-sprechtag.validation.schulkontakt-required"))
+        .bind(SprechtagForm::getSchulkontakt, SprechtagForm::setSchulkontakt);
     binder
         .forField(datePicker)
         .asRequired(getTranslation("edit-sprechtag.validation.datum-required"))
@@ -143,6 +158,10 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   }
 
   private void save(SprechtagStatusEnum status) {
+    zielStatus = status;
+    // Erforderlich-Markierung am Feld statt Notification: Die Meldung soll dort hängen, wo sie
+    // behoben wird.
+    schulkontakt.setRequiredIndicatorVisible(presenter.schulkontaktErforderlich(status));
     SprechtagForm form = new SprechtagForm();
     if (binder.writeBeanIfValid(form)) {
       presenter.save(editingId, form, status);
@@ -266,8 +285,17 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     description.setMinRows(3);
     thirdRow.add(description, 2);
 
+    FormRow fourthRow = new FormRow();
+    schulkontakt = new TextArea();
+    schulkontakt.setLabel(getTranslation("edit-sprechtag.field.schulkontakt.label"));
+    schulkontakt.setPlaceholder(getTranslation("edit-sprechtag.field.schulkontakt.placeholder"));
+    schulkontakt.setHelperText(getTranslation("edit-sprechtag.field.schulkontakt.helper"));
+    schulkontakt.setMinRows(3);
+    schulkontakt.setMaxLength(1000);
+    fourthRow.add(schulkontakt, 2);
+
     FormLayout formLayout = panel.getFormLayout();
-    formLayout.add(firstRow, secondRow, thirdRow);
+    formLayout.add(firstRow, secondRow, thirdRow, fourthRow);
 
     return panel;
   }

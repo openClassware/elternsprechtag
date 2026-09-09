@@ -26,6 +26,15 @@ class EditSprechtagPresenter {
     return sprechtagService.loadForm(id);
   }
 
+  /**
+   * Ob der Schulkontakt für diesen Zielstatus ausgefüllt sein muss. Nur beim Veröffentlichen — ein
+   * Entwurf darf ohne ihn gespeichert werden. Die Entscheidung gehört hierher und nicht in den
+   * View; die Wahrheit steht im {@link SprechtagService}, hier hängt nur die Nutzerführung dran.
+   */
+  boolean schulkontaktErforderlich(SprechtagStatusEnum status) {
+    return status == SprechtagStatusEnum.VEROEFFENTLICHT;
+  }
+
   UUID save(UUID id, SprechtagForm form, SprechtagStatusEnum status) {
     return sprechtagService.createOrUpdate(id, form, status);
   }
