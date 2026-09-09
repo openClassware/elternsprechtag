@@ -93,7 +93,7 @@ Organizer einen Sprechtag anlegt.
 | Abgesagten oder abgeschlossenen Sprechtag über „Speichern" wiederbeleben | Organizer | verhindert | muss | möglich: `createOrUpdate` setzt den Status ungeprüft (`SprechtagService:157`) und umgeht `allowedTransitions` |
 | Keine der gewählten Klassen hat einen Lehrauftrag | Organizer | Meldung beim Veröffentlichen: keine Termine erzeugt | muss | steigt stumm aus (`SprechtagService:238`), Sprechtag gilt als veröffentlicht |
 | Slot-Dauer geleert (`null`) | Organizer | Pflichtfeld, Speichern nicht möglich | muss | kein `asRequired`; Veröffentlichen läuft in eine `NullPointerException` |
-| Schulkontakt im Sprechtag | Eltern | eigenes Freitextfeld, Pflicht beim Veröffentlichen | muss | nur der freie Hinweistext |
+| Schulkontakt im Sprechtag | Eltern | eigenes Freitextfeld, Pflicht ab dem Entwurf | muss | nur der freie Hinweistext |
 | Zeitfenster geht nicht glatt auf, Rest-Slot entfällt | Organizer | — | darf fehlen | `slotStartTimes` verwirft ihn kommentarlos |
 | Datum liegt in der Vergangenheit | Organizer | — | darf fehlen | keine Prüfung, `DatePicker` ohne Minimum |
 | Eltern haben den Zugangs-Link verloren | Eltern | — | darf fehlen | Weg drumherum: Anruf in der Schule |
@@ -118,13 +118,26 @@ die Absage als dem einzigen verbleibenden Weg. Dieselbe Grenze gilt in Phase 6 f
 **Der Schulkontakt ist die Voraussetzung der Stufe `darf fehlen`.** Drei Einstufungen dieser Phase
 lauten „darf fehlen, die Eltern rufen an". Diese Annahme trägt nur, wenn die Eltern wissen, wen sie
 anrufen. Ein freier Hinweistext, in den der Organizer eine Nummer schreiben *kann*, reicht dafür
-nicht. Deshalb ein **eigenes Feld** am Sprechtag — der **Schulkontakt** —, das beim
-Veröffentlichen Pflicht ist. Es bleibt bewusst **Freitext** und wird nicht in Ansprechpartner,
-Telefon und E-Mail zerlegt: Kontakt aufnehmen ist mehr als anrufen oder schreiben, und
-Sekretariatszeiten, eine Durchwahl mit Bedingung oder „kommen Sie vorbei" müssen hineinpassen. Die
-Pflichtprüfung heißt damit zwangsläufig nur „nicht leer" — den Unterschied zum Hinweistext macht
-nicht die Prüfung, sondern die Führung eines eigenen, benannten, beim Veröffentlichen erzwungenen
-Feldes. Fiele dieser Fall weg, fielen alle `darf fehlen` für Eltern auf `muss` zurück.
+nicht. Deshalb ein **eigenes Feld** am Sprechtag — der **Schulkontakt** —, das **ab dem Entwurf**
+Pflicht ist. Es bleibt bewusst **Freitext** und wird nicht in Ansprechpartner, Telefon und E-Mail
+zerlegt: Kontakt aufnehmen ist mehr als anrufen oder schreiben, und Sekretariatszeiten, eine
+Durchwahl mit Bedingung oder „kommen Sie vorbei" müssen hineinpassen. Die Pflichtprüfung heißt
+damit zwangsläufig nur „nicht leer" — den Unterschied zum Hinweistext macht nicht die Prüfung,
+sondern die Führung eines eigenen, benannten, erzwungenen Feldes. Fiele dieser Fall weg, fielen
+alle `darf fehlen` für Eltern auf `muss` zurück.
+
+Die Pflicht greift **ab dem Entwurf**, nicht erst beim Veröffentlichen: Ein Sprechtag ohne
+Schulkontakt ist unvollständig, egal in welchem Status. Die Unterscheidung kaufte nichts ein, hätte
+aber jede Stelle verteuert — einen bedingten Check-Constraint, eine Prüfung in beiden schreibenden
+Wegen, ein Formularfeld, das erst auf Knopfdruck erforderlich wird, und eine eigene Fehlermeldung
+in der Sprechtag-Liste.
+
+**Wo er erscheint, ist eine eigene Frage.** Der Schulkontakt steht in der **Bestätigungs-** und der
+**Absagemail** und in den Elternansichten nach Anmeldeschluss (Phase 5) und nach dem Sprechtag
+(Phase 6) — dort ist er die Hauptaussage der Seite. Auf der **Buchungsseite steht er bewusst
+nicht**: Dort soll nichts von der Terminwahl ablenken, und die Eltern haben ihn schwarz auf weiß in
+der Bestätigungsmail, sobald sie ihn brauchen. Der Kontakt ist ein Rückfallweg, kein Aufruf zum
+Anrufen.
 
 **Zugangs-Link neu ausstellen — bewusst nein, und zwar rückwärts.** Die Funktion sollte bei
 bemerktem Missbrauch billig einen neuen Link liefern, ohne den Sprechtag abzusagen und Buchungen zu
