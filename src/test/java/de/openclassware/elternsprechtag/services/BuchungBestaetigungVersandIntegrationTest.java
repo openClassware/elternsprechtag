@@ -161,24 +161,6 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   }
 
   @Test
-  void withoutSchulkontakt_noEmptyContactBlock() {
-    Fixture f = publishedSprechtag("Aula");
-    // Steht für einen Sprechtag, der vor Einführung des Feldes veröffentlicht wurde: veröffentlicht
-    // ohne Schulkontakt lässt der Check-Constraint sich nicht mehr herstellen, ein abgeschlossener
-    // Sprechtag ohne Schulkontakt sehr wohl.
-    Sprechtag ohneKontakt = sprechtagRepository.findById(f.sprechtag().getId()).orElseThrow();
-    ohneKontakt.setStatus(SprechtagStatusEnum.ABGESCHLOSSEN);
-    ohneKontakt.setSchulkontakt(null);
-    sprechtagRepository.save(ohneKontakt);
-
-    book(f.lehrauftrag(), "eltern@example.com", null, termineSorted().get(0));
-
-    String text = sender.empfangen.get(0).text();
-    assertThat(text).doesNotContain("So erreichen Sie die Schule");
-    assertThat(text).doesNotContain("\n\n\n");
-  }
-
-  @Test
   void withoutNote_noNoteLineAtAll() {
     Fixture f = publishedSprechtag("Aula");
     book(f.lehrauftrag(), "eltern@example.com", "   ", termineSorted().get(0));

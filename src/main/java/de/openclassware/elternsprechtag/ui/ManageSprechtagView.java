@@ -6,8 +6,6 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
@@ -111,17 +109,7 @@ public class ManageSprechtagView extends Div {
   }
 
   private void applyStatusChange(SprechtagRow sprechtag, SprechtagStatusEnum newStatus) {
-    // Aus der Liste heraus gibt es kein Feld, an das eine Meldung sich hängen könnte; der Presenter
-    // entscheidet, ob und welche es gibt, der View zeigt sie nur an.
-    presenter
-        .changeStatus(sprechtag.id(), newStatus)
-        .ifPresent(
-            meldung -> {
-              Notification notification = Notification.show(getTranslation(meldung));
-              notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            });
-    // Auch nach einer Abweisung neu laden: Die Statusauswahl der Zeile steht sonst auf einem Wert,
-    // den der Sprechtag gar nicht angenommen hat.
+    presenter.changeStatus(sprechtag.id(), newStatus);
     reload();
   }
 

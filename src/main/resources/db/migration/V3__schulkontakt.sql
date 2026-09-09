@@ -5,20 +5,20 @@
 -- Deshalb kein strukturiertes Trio aus Ansprechpartner, Telefon und E-Mail und deshalb mehr als
 -- die 255 Zeichen der übrigen Textspalten.
 --
--- Die Spalte ist NULL-fähig, denn Pflicht ist der Schulkontakt erst beim Veröffentlichen: Ein
--- Entwurf darf ohne ihn gespeichert werden. Ein glattes NOT NULL wäre daher falsch,
--- NOT NULL DEFAULT '' wirkungslos. Die Regel steht stattdessen als bedingter Check-Constraint
--- daneben — „Status ist nicht VEROEFFENTLICHT oder der getrimmte Schulkontakt ist nicht leer".
--- Hibernate prüft Check-Constraints nicht; die Entity trägt das Feld folgerichtig ohne
--- `nullable = false`, sonst scheiterte `ddl-auto=validate` beim Start.
+-- Pflicht ist der Schulkontakt ab dem Entwurf, nicht erst beim Veröffentlichen: Ein Sprechtag ohne
+-- ihn ist unvollständig, egal in welchem Status. `not null` allein genügt dafür nicht — es ließe
+-- den leeren String durch —, deshalb steht der Check-Constraint daneben. Hibernate prüft
+-- Check-Constraints nicht; die Nicht-Leerheit ist zusätzlich im SprechtagService abgesichert.
 --
--- Kein Platzhalter-Backfill: Bestehende veröffentlichte Sprechtage ohne Schulkontakt gibt es
--- produktiv nicht (keine produktive Instanz, der Demo-Seed enthält keine Sprechtage). Lokal ist
--- eine solche Zeile von Hand zu füllen — erfundene Kontaktdaten landen sonst in der Elternansicht,
--- und das ist schlimmer als gar keine.
+-- Kein Platzhalter-Backfill: erfundene Kontaktdaten landeten sonst in der Elternansicht, und das
+-- ist schlimmer als gar keine. Produktiv gibt es keinen Altbestand (es existiert keine produktive
+-- Version, und der Demo-Seed enthält keine Sprechtage). Enthält eine lokale Entwicklungsdatenbank
+-- bereits Sprechtage, scheitert diese Migration — die Zeilen sind vorher von Hand zu füllen
+-- (`update sprechtage set schulkontakt = '...' where schulkontakt is null;`) oder die Datenbank
+-- ist neu aufzusetzen.
 alter table sprechtage
-    add column schulkontakt varchar(1000);
+    add column schulkontakt varchar(1000) not null;
 
 alter table sprechtage
-    add constraint chk_sprechtage_schulkontakt_veroeffentlicht
-        check (status <> 'VEROEFFENTLICHT' or btrim(coalesce(schulkontakt, '')) <> '');
+    add constraint chk_sprechtage_schulkontakt_nicht_leer
+        check (btrim(schulkontakt) <> '');

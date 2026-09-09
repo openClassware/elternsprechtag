@@ -50,13 +50,6 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private H2 headerTitle;
   private Button createButton;
 
-  /**
-   * Zielstatus des laufenden Speichervorgangs. Der Binder wird einmal konfiguriert, der
-   * Schulkontakt ist aber nur beim Veröffentlichen Pflicht — der Validator muss also wissen,
-   * welcher Knopf gedrückt wurde.
-   */
-  private SprechtagStatusEnum zielStatus = SprechtagStatusEnum.ENTWURF;
-
   private TextField titel;
   private TextField location;
   private TextArea description;
@@ -92,9 +85,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     binder.forField(description).bind(SprechtagForm::getDescription, SprechtagForm::setDescription);
     binder
         .forField(schulkontakt)
-        .withValidator(
-            wert -> presenter.schulkontaktGueltig(zielStatus, wert),
-            getTranslation("edit-sprechtag.validation.schulkontakt-required"))
+        .asRequired(getTranslation("edit-sprechtag.validation.schulkontakt-required"))
         .bind(SprechtagForm::getSchulkontakt, SprechtagForm::setSchulkontakt);
     binder
         .forField(datePicker)
@@ -157,10 +148,6 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   }
 
   private void save(SprechtagStatusEnum status) {
-    zielStatus = status;
-    // Erforderlich-Markierung am Feld statt Notification: Die Meldung soll dort hängen, wo sie
-    // behoben wird.
-    schulkontakt.setRequiredIndicatorVisible(presenter.schulkontaktErforderlich(status));
     SprechtagForm form = new SprechtagForm();
     if (binder.writeBeanIfValid(form)) {
       presenter.save(editingId, form, status);
@@ -289,6 +276,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     schulkontakt.setLabel(getTranslation("edit-sprechtag.field.schulkontakt.label"));
     schulkontakt.setPlaceholder(getTranslation("edit-sprechtag.field.schulkontakt.placeholder"));
     schulkontakt.setHelperText(getTranslation("edit-sprechtag.field.schulkontakt.helper"));
+    schulkontakt.setRequiredIndicatorVisible(true);
     schulkontakt.setMinRows(3);
     schulkontakt.setMaxLength(1000);
     fourthRow.add(schulkontakt, 2);

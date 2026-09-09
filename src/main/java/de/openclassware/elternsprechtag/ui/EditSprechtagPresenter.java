@@ -26,24 +26,6 @@ class EditSprechtagPresenter {
     return sprechtagService.loadForm(id);
   }
 
-  /**
-   * Ob der Schulkontakt für diesen Zielstatus ausgefüllt sein muss. Nur beim Veröffentlichen — ein
-   * Entwurf darf ohne ihn gespeichert werden. Die Entscheidung gehört hierher und nicht in den
-   * View; die Wahrheit steht im {@link SprechtagService}, hier hängt nur die Nutzerführung dran.
-   */
-  boolean schulkontaktErforderlich(SprechtagStatusEnum status) {
-    return status == SprechtagStatusEnum.VEROEFFENTLICHT;
-  }
-
-  /**
-   * Ob der eingegebene Schulkontakt für diesen Zielstatus durchgeht. Die ganze Prüfformel liegt
-   * hier, damit der View keine halbe Regel mitträgt: Er fragt nur, ob der Wert gültig ist, und
-   * zeigt die Meldung an. Prüfinhalt ist bei Freitext zwangsläufig nur „nicht leer".
-   */
-  boolean schulkontaktGueltig(SprechtagStatusEnum status, String wert) {
-    return !schulkontaktErforderlich(status) || (wert != null && !wert.isBlank());
-  }
-
   UUID save(UUID id, SprechtagForm form, SprechtagStatusEnum status) {
     return sprechtagService.createOrUpdate(id, form, status);
   }

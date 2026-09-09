@@ -51,11 +51,10 @@ public class Sprechtag {
 
     /**
      * Wie die Eltern die Schule erreichen — mehrzeiliger Freitext (Ansprechpartner, Telefon,
-     * Sprechzeiten). Bewusst ohne {@code nullable = false}: Pflicht ist der Schulkontakt erst beim
-     * Veröffentlichen, ein Entwurf darf ohne ihn gespeichert werden. Die Garantie sitzt im
-     * bedingten Check-Constraint der Migration V3, den Hibernate nicht prüft.
+     * Sprechzeiten). Pflicht ab dem Entwurf. Dass der Wert auch nicht leer ist, hält der
+     * Check-Constraint der Migration V3 fest, den Hibernate nicht prüft.
      */
-    @Column(name = "schulkontakt", length = 1000)
+    @Column(name = "schulkontakt", nullable = false, length = 1000)
     private String schulkontakt;
 
     @Column(name = "status", nullable = false)

@@ -229,17 +229,30 @@ class SprechtagServiceTest extends AbstractServiceTest {
     assertThat(copy.getKlassen()).extracting(Klasse::getName).containsExactly("5a");
   }
 
-  // --- Schulkontakt: Pflicht beim Veröffentlichen, nicht am Entwurf (Issue #102) ---
+  // --- Schulkontakt: Pflicht ab dem Entwurf (Issue #102) ---
 
   @Test
-  void createOrUpdate_draftWithoutSchulkontakt_isSaved() {
+  void createOrUpdate_draftWithoutSchulkontakt_isRejected() {
     Klasse klasse = persistKlasse("5a");
     SprechtagForm form = form("Entwurf", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
     form.setSchulkontakt(null);
 
-    UUID id = sprechtagService.createOrUpdate(null, form, SprechtagStatusEnum.ENTWURF);
+    assertThatThrownBy(
+            () -> sprechtagService.createOrUpdate(null, form, SprechtagStatusEnum.ENTWURF))
+        .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
 
-    assertThat(sprechtagRepository.findById(id).orElseThrow().getSchulkontakt()).isNull();
+    assertThat(sprechtagRepository.count()).as("nichts angelegt").isZero();
+  }
+
+  @Test
+  void createOrUpdate_blankSchulkontakt_isRejected() {
+    Klasse klasse = persistKlasse("5a");
+    SprechtagForm form = form("Entwurf", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
+    form.setSchulkontakt("   \n  ");
+
+    assertThatThrownBy(
+            () -> sprechtagService.createOrUpdate(null, form, SprechtagStatusEnum.ENTWURF))
+        .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
   }
 
   @Test
@@ -249,50 +262,14 @@ class SprechtagServiceTest extends AbstractServiceTest {
     form.setSchulkontakt(null);
 
     assertThatThrownBy(
-            () ->
-                sprechtagService.createOrUpdate(
-                    null, form, SprechtagStatusEnum.VEROEFFENTLICHT))
+            () -> sprechtagService.createOrUpdate(null, form, SprechtagStatusEnum.VEROEFFENTLICHT))
         .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
 
-    assertThat(sprechtagRepository.count()).as("nichts angelegt").isZero();
-  }
-
-  @Test
-  void createOrUpdate_publishWithBlankSchulkontakt_isRejected() {
-    Klasse klasse = persistKlasse("5a");
-    SprechtagForm form = form("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
-    form.setSchulkontakt("   \n  ");
-
-    assertThatThrownBy(
-            () ->
-                sprechtagService.createOrUpdate(
-                    null, form, SprechtagStatusEnum.VEROEFFENTLICHT))
-        .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
-  }
-
-  @Test
-  void changeStatus_publishWithoutSchulkontakt_isRejected() {
-    Klasse klasse = persistKlasse("5a");
-    Sprechtag sprechtag =
-        persistSprechtag(
-            "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
-            SprechtagStatusEnum.ENTWURF, klasse);
-    sprechtag.setSchulkontakt("   ");
-    sprechtagRepository.save(sprechtag);
-
-    assertThatThrownBy(
-            () ->
-                sprechtagService.changeStatus(
-                    sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT))
-        .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
-
-    assertThat(sprechtagRepository.findById(sprechtag.getId()).orElseThrow().getStatus())
-        .isEqualTo(SprechtagStatusEnum.ENTWURF);
     assertThat(terminRepository.count()).as("keine Termine materialisiert").isZero();
   }
 
   @Test
-  void createOrUpdate_publishWithSchulkontakt_persistsIt() {
+  void createOrUpdate_withSchulkontakt_persistsItVerbatim() {
     Klasse klasse = persistKlasse("5a");
     SprechtagForm form = form("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
     form.setSchulkontakt("Sekretariat\nTel. 0123 456789");
@@ -318,6 +295,21 @@ class SprechtagServiceTest extends AbstractServiceTest {
                 .findPublicByAccessToken(sprechtag.getAccessToken())
                 .orElseThrow()
                 .schulkontakt())
+        .isEqualTo(SCHULKONTAKT);
+  }
+
+  @Test
+  void duplicate_carriesSchulkontakt() {
+    Klasse klasse = persistKlasse("5a");
+    Sprechtag original =
+        persistSprechtag(
+            "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatusEnum.VEROEFFENTLICHT, klasse);
+
+    UUID copyId = sprechtagService.duplicate(original.getId());
+
+    // Muss mitkopiert werden: Ohne Schulkontakt ließe sich die Kopie gar nicht speichern.
+    assertThat(sprechtagRepository.findById(copyId).orElseThrow().getSchulkontakt())
         .isEqualTo(SCHULKONTAKT);
   }
 }

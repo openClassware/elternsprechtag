@@ -31,7 +31,7 @@ die gesprochen werden soll.
 ### Sprechtag
 
 Das Ereignis selbst: ein Datum mit Zeitfenster (Start-/Endzeit), einer **Slot-Dauer** in Minuten,
-optional Ort und Hinweistext, dem **Schulkontakt**, den teilnehmenden Klassen und einem
+optional Ort und Hinweistext, dem verpflichtenden **Schulkontakt**, den teilnehmenden Klassen und einem
 **Access-Token** für den Eltern-Link. Der Sprechtag ist der Aggregatseinstieg — alles Weitere
 hängt an ihm.
 
@@ -55,9 +55,10 @@ anrufen (Sekretariatszeiten, eine Durchwahl mit Bedingung, „kommen Sie vorbei"
 Voraussetzung dafür, dass alles, was die App **nicht** kann, an der Schule landet: Umbuchen,
 Stornieren, Rückfragen zu einer Absage.
 
-Deshalb ist er **Pflicht beim Veröffentlichen** — am Entwurf nicht. Die Regel steht im
-`SprechtagService` und zusätzlich als bedingter Check-Constraint in der Datenbank. Gezeigt wird er
-in der Elternansicht sowie in Bestätigungs- und Absagemail.
+Deshalb ist er **Pflicht ab dem Entwurf**: Ein Sprechtag ohne Schulkontakt ist unvollständig, egal
+in welchem Status. Die Regel steht im `SprechtagService` und zusätzlich als `not null` plus
+Check-Constraint gegen den leeren String in der Datenbank. Gezeigt wird er — zurückgenommen, als
+Rückfallweg — in der Elternansicht sowie in Bestätigungs- und Absagemail.
 
 Nicht zu verwechseln mit der **E-Mail der Eltern** an der Buchung: Das ist die Adresse, an die
 *wir* schreiben. Der Schulkontakt ist die Richtung zurück.

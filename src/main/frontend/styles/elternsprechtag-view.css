@@ -89,6 +89,20 @@
     white-space: pre-line;
 }
 
+/*
+ * School contact: a fallback route, not a call to action - small, muted, and set apart by a hairline
+ * so it never competes with the booking steps. Free text, so line breaks are part of the content.
+ */
+.elternsprechtag-view__schulkontakt {
+    margin: 1.25rem 0 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #9ca3af;
+    white-space: pre-line;
+}
+
 /* "Ihre Angaben" form, spaced below its step header. */
 .elternsprechtag-view__form {
     margin-top: 1.5rem;
@@ -537,20 +551,3 @@
     }
 }
 
-/* School contact block in the header — free text, so line breaks are part of the content. */
-.elternsprechtag-view__schulkontakt {
-    margin: 1.25rem 0 0;
-}
-
-.elternsprechtag-view__schulkontakt-label {
-    display: block;
-    font-weight: 600;
-    color: #374151;
-}
-
-.elternsprechtag-view__schulkontakt-text {
-    margin: 0.25rem 0 0;
-    color: #6b7280;
-    line-height: 1.6;
-    white-space: pre-line;
-}

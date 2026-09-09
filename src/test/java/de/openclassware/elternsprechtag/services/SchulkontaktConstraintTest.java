@@ -22,8 +22,8 @@ import org.springframework.context.annotation.Import;
  * Hibernate vorbei.
  *
  * <p>Die Service-Prüfung in {@link SprechtagService} ist die getestete Wahrheit für die Anwendung;
- * dieser Test beantwortet die andere Frage: Kann ein veröffentlichter Sprechtag ohne Schulkontakt
- * überhaupt in der Datenbank stehen? Er darf es nicht — auch nicht durch ein Skript, einen
+ * dieser Test beantwortet die andere Frage: Kann ein Sprechtag ohne Schulkontakt überhaupt in der
+ * Datenbank stehen? Er darf es nicht — in keinem Status und auch nicht durch ein Skript, einen
  * Datenbank-Client oder einen künftigen Schreibweg, der die Service-Prüfung umgeht.
  */
 @ServiceTest
@@ -35,29 +35,32 @@ class SchulkontaktConstraintTest extends AbstractServiceTest {
   private static final LocalDate DATE = LocalDate.of(2026, 7, 20);
 
   @Test
+  void insert_draftWithoutSchulkontakt_isRejected() {
+    assertThatThrownBy(() -> insertSprechtag("ENTWURF", null)).isInstanceOf(SQLException.class);
+  }
+
+  @Test
+  void insert_draftWithBlankSchulkontakt_isRejected() {
+    assertThatThrownBy(() -> insertSprechtag("ENTWURF", "   ")).isInstanceOf(SQLException.class);
+  }
+
+  @Test
   void insert_publishedWithoutSchulkontakt_isRejected() {
     assertThatThrownBy(() -> insertSprechtag("VEROEFFENTLICHT", null))
         .isInstanceOf(SQLException.class);
   }
 
   @Test
-  void insert_publishedWithBlankSchulkontakt_isRejected() {
-    assertThatThrownBy(() -> insertSprechtag("VEROEFFENTLICHT", "   "))
-        .isInstanceOf(SQLException.class);
-  }
-
-  @Test
-  void insert_draftWithoutSchulkontakt_isAllowed() {
-    assertThatCode(() -> insertSprechtag("ENTWURF", null)).doesNotThrowAnyException();
+  void insert_withSchulkontakt_isAllowed() {
+    assertThatCode(() -> insertSprechtag("ENTWURF", SCHULKONTAKT)).doesNotThrowAnyException();
     assertThat(sprechtagRepository.count()).isEqualTo(1);
   }
 
   @Test
-  void update_draftToPublishedWithoutSchulkontakt_isRejected() throws SQLException {
-    UUID id = insertSprechtag("ENTWURF", null);
+  void update_toBlankSchulkontakt_isRejected() throws SQLException {
+    UUID id = insertSprechtag("ENTWURF", SCHULKONTAKT);
 
-    assertThatThrownBy(
-            () -> execute("update sprechtage set status = 'VEROEFFENTLICHT' where id = ?", id))
+    assertThatThrownBy(() -> execute("update sprechtage set schulkontakt = ' ' where id = ?", id))
         .isInstanceOf(SQLException.class);
   }
 

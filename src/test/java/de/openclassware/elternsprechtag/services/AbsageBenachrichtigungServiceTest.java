@@ -163,32 +163,6 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
             Gesamtschule Lindenhof""");
   }
 
-  @Test
-  void benachrichtige_withoutSchulkontakt_omitsContactParagraph() {
-    Fixture f = publishedSprechtag();
-    book(f.lehrauftrag(), termineSorted().get(0), "eltern@example.com");
-    // Steht für einen Sprechtag, der vor Einführung des Feldes veröffentlicht wurde: Der
-    // Check-Constraint greift nur für VEROEFFENTLICHT, abgesagt darf der Schulkontakt fehlen.
-    Sprechtag ohneKontakt = sprechtagRepository.findById(f.sprechtag().getId()).orElseThrow();
-    ohneKontakt.setStatus(SprechtagStatusEnum.ABGESAGT);
-    ohneKontakt.setSchulkontakt(null);
-    sprechtagRepository.save(ohneKontakt);
-
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
-
-    assertThat(sender.empfangen.get(0).text())
-        .isEqualTo(
-            """
-            Guten Tag,
-
-            der Sprechtag „Frühling“ am 20. Juli 2026 muss leider abgesagt werden.
-
-            Ihr bereits gebuchter Termin entfällt damit. Bei Fragen wenden Sie sich bitte an die \
-            Schule.
-
-            Mit freundlichen Grüßen
-            Gesamtschule Lindenhof""");
-  }
 
   @Test
   void benachrichtige_sprechtagWithoutActiveBooking_sendsNothing() {
