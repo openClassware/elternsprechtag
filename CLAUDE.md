@@ -1,58 +1,45 @@
 # CLAUDE.md
 
-Kurzregeln für die Arbeit an diesem Projekt. Architektur-Details, Begründungen und
-das Findings-Backlog stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTURE.md).
+Kurzregeln für die Arbeit an diesem Projekt. Architektur-Details und Begründungen stehen in
+[`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTURE.md).
 
 **Bevor ein Feature als fertig gilt:** [`docs/arc/ABDECKUNG.md`](docs/arc/ABDECKUNG.md) ist der
 Maßstab für die Fälle jenseits des Happy Path. Es stuft je Phase des Schulablaufs ein, was das
 Produkt abdecken **muss**, was **fehlen darf** und was **bewusst nein** ist — Letzteres nicht ohne
 ADR ändern.
 
-## Der Umbau läuft — zwei Welten gelten gleichzeitig
+## Zwei Kontexte, eine Struktur
 
-Die Codebasis stellt auf eine **hexagonale Architektur mit DDD-Aggregaten** um
+Die Codebasis ist **hexagonal geschnitten**, mit DDD-Aggregaten und zwei Bounded Contexts
 ([ADR 0003](docs/adr/0003-hexagonale-architektur-mit-zwei-kontexten.md),
 [0004](docs/adr/0004-spring-data-jdbc-statt-jpa.md),
-[0005](docs/adr/0005-eltern-submit-bricht-eine-transaktion-ein-aggregat.md)). Prüfe zuerst, in
-welcher Hälfte du arbeitest — die Regeln unterscheiden sich:
+[0005](docs/adr/0005-eltern-submit-bricht-eine-transaktion-ein-aggregat.md)). Der Umbau ist
+abgeschlossen — es gibt **keine zweite, alte Struktur** und **keine JPA**.
 
-- **`sprechtag.{domain,application,adapter}`** und **`schulorganisation.{domain,application,adapter}`**
-  — migriert (Scheiben 1–3: `Termin` mit `Buchung`, `Sprechtag`, und die Stammdaten als eigener
-  Kontext). Hier gelten die ADRs; Spring Data JDBC, Aggregate ohne Framework-Annotationen, Ports
-  statt Repositories.
-- **`services`, `ui`** — Bestand (Versand, gesamte Oberfläche). Hier gelten die Schichtenregeln
-  unten weiter.
+```
+sprechtag/          domain | application/{port/in,port/out,service} | adapter/{in/web,out/{persistence,mail,event,schulorganisation}}
+schulorganisation/  domain | application | adapter        (ohne in/web)
+config/, security/  Verdrahtung, sonst nichts
+```
 
-Neue fachliche Arbeit gehört in die migrierte Hälfte. **Neue JPA-Entities kommen nicht mehr dazu**
-— es gibt keine mehr.
+Alles Fachliche gehört in einen der beiden Kontexte. Die Grenze zwischen ihnen steht in
+[`CONTEXT-MAP.md`](CONTEXT-MAP.md).
 
-Die beiden Kontexte und ihre Grenze stehen in [`CONTEXT-MAP.md`](CONTEXT-MAP.md).
+## Architektur & Schichten
 
-## Architektur & Schichten (Bestand)
-
-- Strikte Schichtung: **Domain (JPA) → Repository → Service → Presenter → View**.
-- JPA-`@Entity` bleiben in Persistenz/Service. **Kein View und keine UI-Component hält
-  oder empfängt je eine Entity** — über die Presenter-Grenze gehen ausschließlich
-  Records/DTOs.
-- Entity→Record-Mapping passiert **ausschließlich im Service**; der Presenter reicht nur
-  durch. Records liegen verschachtelt im erzeugenden Service (`XxxService.YyyOption`).
-- Views sind **so dumm wie möglich**: Anzeige- und Entscheidungslogik liegt im Presenter,
-  nicht im View. Presenter sind **zustandslos** (Singletons) — Per-View-Zustand bleibt im View.
-- **Komplexe UI-Entscheidungslogik** (mit Zustand) gehört in ein **Vaadin-freies Modell**
-  (z. B. `BookingSession`), das der View hält — so bleibt sie per plain JUnit testbar.
-- Views/Components rufen **nie** ein Repository direkt.
-- **Sichtbarkeit**: Presenter sind package-private; View-Klassen `public` (Vaadin-Route), ihre
-  Konstruktoren aber package-private.
-
-## Architektur & Schichten (migrierte Kontexte)
-
-- Die **Domäne importiert nur JDK** — kein Spring, kein Lombok, kein JPA. Aggregate referenzieren
-  einander ausschließlich über **typisierte IDs**.
+- Die **Domäne importiert nur JDK** — kein Spring, kein Lombok, keine Persistenz, kein Vaadin.
+  Aggregate referenzieren einander ausschließlich über **typisierte IDs**.
 - **In einen fremden Kontext führt genau ein Weg: sein `port/in`.** Der Sprechtag liest die
   Schulorganisation, nie umgekehrt; geteilte Typen gibt es über die Grenze nicht — dort gehen
   `UUID`s und Text.
 - Presenter rufen **ausschließlich Use-Case-Ports** (`port/in`), auch für Abfragen. Die Records
   liegen dort, nicht im Service — `Buchen.BuchungsAnfrage`, `Auswerten.SprechtagAuswertung`.
+- **Kein View und keine UI-Komponente hält je ein Aggregat** — über die Presenter-Grenze gehen
+  ausschließlich Records.
+- Views sind **so dumm wie möglich**: Anzeige- und Entscheidungslogik liegt im Presenter,
+  nicht im View. Presenter sind **zustandslos** (Singletons) — Per-View-Zustand bleibt im View.
+- **Komplexe UI-Entscheidungslogik** (mit Zustand) gehört in ein **Vaadin-freies Modell**
+  (z. B. `BookingSession`), das der View hält — so bleibt sie per plain JUnit testbar.
 - **Zwei Wege in die Datenbank**: Aggregat-Repository zum Schreiben, Query-Port mit
   handgeschriebenem SQL zum Lesen. **Read-Modelle dürfen veraltet sein**; jede Entscheidung darauf
   wird beim Schreiben am Aggregat erneut geprüft.
@@ -61,6 +48,13 @@ Die beiden Kontexte und ihre Grenze stehen in [`CONTEXT-MAP.md`](CONTEXT-MAP.md)
 - Das **Aggregat meldet** Ereignisse, der **Use Case bündelt und veröffentlicht** sie über den
   Ereignis-Port.
 - Ein Aggregat ist nach `Termine.speichere` **verbraucht** — wer weiterarbeitet, lädt neu.
+- **Ein Adapter kennt keinen zweiten.** Was sich zwei teilen, liegt eine Ebene höher
+  (`sprechtag/adapter/Formats`).
+- **Sichtbarkeit**: Use-Case-Services, Outbound-Adapter, Mapper, Persistenzmodelle und Presenter
+  sind **package-private** — nach außen gilt der Port. Öffentlich sind Ports, Domäne und
+  View-Klassen (Vaadin-Route); deren Konstruktoren wieder package-private.
+- **Sprache**: Fachsprache deutsch (`Termin.buche(...)`, `Lehrauftrag`), Architekturvokabular
+  englisch (`port/in`, `adapter`, `domain`, `application`).
 - Diese Regeln stehen als **ArchUnit-Test** (`ArchitekturTest`) im Build. Wer sie ändert, ändert
   dort mit.
 
@@ -78,11 +72,10 @@ Die beiden Kontexte und ihre Grenze stehen in [`CONTEXT-MAP.md`](CONTEXT-MAP.md)
 
 ## Tests
 
-- Geschäftslogik lebt im Service und braucht Tests. Neue oder geänderte Service-Logik ⇒
-  Test (`@DataJpaTest` / `@SpringBootTest`). Views bleiben dumm und testfrei.
-- Im migrierten Kontext teilt sich das auf: **Aggregat-Logik ⇒ plain JUnit** (ohne Spring, ohne
-  Datenbank), **Persistenz-Adapter ⇒ `@DataJdbcTest`**, **Use Case ⇒ Service-Test**. Eine Regel,
-  die ins Aggregat gehört, wird nicht auf Service-Ebene getestet.
+- Drei Stellen, jede mit eigenem Zweck: **Aggregat-Logik ⇒ plain JUnit** (ohne Spring, ohne
+  Datenbank), **Persistenz-Adapter ⇒ `@DataJdbcTest`**, **Use Case ⇒ `@ServiceTest`** (gegen eine
+  echte Postgres). Eine Regel, die ins Aggregat gehört, wird nicht auf Service-Ebene getestet.
+- Views bleiben dumm und testfrei.
 - Ausnahme: Vaadin-freie UI-Modelle (z. B. `BookingSession`) tragen Entscheidungslogik und
   bekommen **plain-JUnit-Tests** ohne Spring-Kontext.
 

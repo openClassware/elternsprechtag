@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test;
  * der Beleg, und zwar bei deutlich einfacheren Regeln als diesen. Fragen wie „kennt dieser View ein
  * Aggregat?" sind im Review nicht zuverlässig zu beantworten, im Test schon.
  *
- * <p>Geprüft werden die beiden migrierten Kontexte. Das noch nicht migrierte Paket
- * ({@code services}, der Versand) steht bewusst außen vor — es ist der Bestand, den die letzte
- * Scheibe abräumt.
+ * <p>Geprüft wird das gesamte Projekt: Seit der letzten Scheibe des Umbaus liegt aller fachliche
+ * Code in einem der beiden Kontexte, Oberfläche und Versand eingeschlossen. Außerhalb stehen nur
+ * noch {@code config} (Spring- und Vaadin-Verdrahtung) und {@code security} (die eine Rolle).
  */
 class ArchitekturTest {
 
@@ -42,7 +42,7 @@ class ArchitekturTest {
           .should()
           .dependOnClassesThat()
           .resideOutsideOfPackages(kontext + ".domain..", "java..", "javax..")
-          .as("Die Domäne ist technologiefrei: kein Spring, kein Lombok, kein JPA, kein Vaadin")
+          .as("Die Domäne ist technologiefrei: kein Spring, kein Lombok, keine Persistenz, kein Vaadin")
           .check(klassen);
     }
   }
@@ -51,7 +51,7 @@ class ArchitekturTest {
   void keinViewKenntEinAggregat() {
     noClasses()
         .that()
-        .resideInAnyPackage(BASIS + ".ui..", SPRECHTAG + ".adapter.in..")
+        .resideInAPackage(SPRECHTAG + ".adapter.in..")
         .should()
         .dependOnClassesThat()
         .areAssignableTo(AggregateRoot.class)
@@ -79,11 +79,21 @@ class ArchitekturTest {
         .check(klassen);
   }
 
+  /**
+   * Ein Adapter ist ein Verzeichnis unterhalb von {@code in}/{@code out} samt allem darin — nicht
+   * jedes einzelne Unterpaket. Deshalb {@code (*).(*)..} und nicht {@code (**)}: Sonst wären
+   * {@code in.web} und {@code in.web.components} zwei Scheiben, und ein View, der eine seiner
+   * eigenen Komponenten benutzt, gälte als Verstoß.
+   *
+   * <p>Was direkt in {@code adapter} liegt, fällt bewusst aus dem Muster: Dort steht, was sich
+   * mehrere Adapter teilen dürfen (heute {@code Formats}, die eine Datums-Formatierung, die
+   * Oberfläche und Mailtext gemeinsam benutzen).
+   */
   @Test
   void adapterKennenEinanderNicht() {
     for (String kontext : new String[] {SPRECHTAG, SCHULORGANISATION}) {
       slices()
-          .matching(kontext + ".adapter.(**)")
+          .matching(kontext + ".adapter.(*).(*)..")
           .should()
           .notDependOnEachOther()
           .as("Ein Adapter erfüllt einen Port; ein zweiter Adapter ist ihm gleichgültig")
@@ -146,9 +156,9 @@ class ArchitekturTest {
    * Aggregaten, Ports out oder Persistenzmodellen des anderen Kontexts vorbei.
    *
    * <p>Die Regel gilt für <b>alles außerhalb</b> der Schulorganisation, nicht nur für den
-   * Sprechtag-Kontext. Sonst bliebe die Tür für die noch nicht migrierten Pakete offen, und
-   * ausgerechnet dort — im {@code ui} — wäre ein Presenter mit einem {@code Lehrkraft}-Aggregat in
-   * der Hand genau der Fehler, den diese Regel verhindern soll.
+   * Sprechtag-Kontext — auch für die Verdrahtung unter {@code config} und für alles, was später
+   * danebentritt. Ein Presenter mit einem {@code Lehrkraft}-Aggregat in der Hand ist genau der
+   * Fehler, den diese Regel verhindern soll, und dafür muss sie überall gelten.
    */
   @Test
   void vonAussenFuehrtInDieSchulorganisationNurIhrPortIn() {
@@ -177,6 +187,70 @@ class ArchitekturTest {
         .should()
         .resideInAPackage(SCHULORGANISATION + ".adapter.in..")
         .as("Die Schulorganisation hat keine Oberfläche — ihre Use Cases ruft der Sprechtag")
+        .check(klassen);
+  }
+
+  // --- Sichtbarkeit (Issue #141) ---------------------------------------------------------------
+
+  /**
+   * Die Ports sind die Außenfläche des Kontexts. Was sie erfüllt — Adapter, Mapper,
+   * Persistenzmodelle — ist Innenleben und gehört hinter den Paketdeckel: Ein
+   * {@code SprechtagZeile} oder ein Mail-Sender, den man von außen importieren kann, ist eine
+   * zweite Außenfläche, die niemand beschlossen hat.
+   *
+   * <p>Geprüft werden nur Top-Level-Klassen. Ein Record in einem Interface ist implizit
+   * {@code public} — das ist keine Entscheidung, sondern Java.
+   */
+  @Test
+  void kennenAdapterInnenleben_bleibtImPaket() {
+    for (String kontext : new String[] {SPRECHTAG, SCHULORGANISATION}) {
+      noClasses()
+          .that()
+          .resideInAPackage(kontext + ".adapter.out..")
+          .and()
+          .areTopLevelClasses()
+          .should()
+          .bePublic()
+          .as("Outbound-Adapter, Mapper und Persistenzmodelle sind package-private")
+          .check(klassen);
+    }
+  }
+
+  /**
+   * Dasselbe eine Schicht weiter innen: Nach außen gilt der Use-Case-Port, nicht die Klasse, die
+   * ihn erfüllt. Wäre der Service sichtbar, ließe sich der Port umgehen, ohne dass es auffällt.
+   */
+  @Test
+  void useCaseImplementierungenSindPackagePrivate() {
+    for (String kontext : new String[] {SPRECHTAG, SCHULORGANISATION}) {
+      noClasses()
+          .that()
+          .resideInAPackage(kontext + ".application.service..")
+          .and()
+          .areTopLevelClasses()
+          .should()
+          .bePublic()
+          .as("Nach außen gilt der Port, nicht seine Implementierung")
+          .check(klassen);
+    }
+  }
+
+  /**
+   * Im Web-Adapter gilt dieselbe Regel nur für die Presenter: Die View-Klassen müssen
+   * {@code public} bleiben (Vaadin konstruiert sie über die Route, und die Navigation verweist
+   * paketübergreifend auf {@code X.ROUTE}). Ihr Presenter dagegen geht niemanden außer sie selbst
+   * etwas an.
+   */
+  @Test
+  void presenterSindPackagePrivate() {
+    noClasses()
+        .that()
+        .resideInAPackage(SPRECHTAG + ".adapter.in.web..")
+        .and()
+        .haveSimpleNameEndingWith("Presenter")
+        .should()
+        .bePublic()
+        .as("Ein Presenter gehört seinem View — nicht dem Projekt")
         .check(klassen);
   }
 }

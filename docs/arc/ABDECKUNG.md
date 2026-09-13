@@ -1,6 +1,6 @@
 # Abdeckung der wesentlichen Anwendungsfälle
 
-**Stand: 2026-09-09.** Dieser Maßstab bezieht sich auf den *realen Ablauf eines Elternsprechtags
+**Stand: 2026-09-14.** Dieser Maßstab bezieht sich auf den *realen Ablauf eines Elternsprechtags
 an einer Schule* — nicht auf die dokumentierte Domäne und nicht auf den vorhandenen Code. Er
 listet für die Phasen 2–6 dieses Ablaufs die Fälle jenseits des Happy Path auf und stuft jeden
 ein.
@@ -105,7 +105,7 @@ Organizer einen Sprechtag anlegt.
 
 **Sperren statt Nachziehen.** Was nach dem Veröffentlichen die Terminstruktur berührt —
 Zeitfenster, Slot-Dauer, Klassen — ist unveränderlich. Wer sich vertan hat, sagt ab und legt neu
-an; das Duplizieren gibt es bereits (`SprechtagService.duplicate`). Nachmaterialisieren wäre die
+an; das Duplizieren gibt es bereits (`Duplizieren.dupliziere`). Nachmaterialisieren wäre die
 Alternative, wirft aber bei jeder Variante die Frage auf, was mit betroffenen Buchungen geschieht,
 und wiegt für dieses Produkt zu schwer. Was nur Text ist — Titel, Ort, Hinweistext — bleibt frei
 änderbar, weil es keine Termine anfasst.
@@ -150,8 +150,8 @@ Abbau statt Aufbau verlangt.
 
 **Missbrauch des Links — bewusst nein.** Wer den Link hat, darf buchen; das Token ist der gesamte
 Zugangsschutz und laut `docs/contexts/sprechtag/CONTEXT.md` eine bewusste Entscheidung. Personenbezogene Daten gibt die
-Elternsicht dabei nicht preis — `SlotOption` trägt nur Termin-Id, Uhrzeit und ein `belegt`-Flag
-(`BuchungService:45`). Festzuhalten bleibt: Gegen mutwilliges Blockieren hat der Organizer kein
+Elternsicht dabei nicht preis — `Buchungsoptionen.SlotOption` trägt nur Termin-Id, Uhrzeit und ein
+`belegt`-Flag. Festzuhalten bleibt: Gegen mutwilliges Blockieren hat der Organizer kein
 Mittel außer der Absage des ganzen Sprechtags.
 
 **Rest-Slot und Vergangenheitsdatum — weich eingestuft.** Beides ist im Entwurf sichtbar und vom
@@ -226,8 +226,8 @@ in Phase 3.
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Einzelne Lehrkraft fällt aus (ganz oder teilweise) | Eltern | Termine entfallen, betroffene Familien werden benachrichtigt | muss | fehlt — einziger Hebel ist die Absage des **ganzen** Sprechtags (`SprechtagStatusEnum.allowedTransitions`) |
-| Ein Termin ist nicht buchbar, weil er entfällt | Eltern | dritter Terminzustand neben `FREI`/`BELEGT` | muss | fehlt — `TerminStatusEnum` kennt nur `FREI, BELEGT` |
+| Einzelne Lehrkraft fällt aus (ganz oder teilweise) | Eltern | Termine entfallen, betroffene Familien werden benachrichtigt | muss | fehlt — einziger Hebel ist `Absagen.sageAb` auf dem **ganzen** Sprechtag; der Termin kennt den Zustand `ENTFAELLT` inzwischen, aber kein Use Case setzt ihn |
+| Ein Termin ist nicht buchbar, weil er entfällt | Eltern | dritter Terminzustand neben „frei" und „belegt" | muss | **im Modell erfüllt** — `Verfuegbarkeit.ENTFAELLT` ist gespeichert, „belegt" abgeleitet (`Termin.istBuchbar()`); es fehlt der Weg, ihn zu setzen (Zeile darüber) |
 | Absage-Nachricht führt zurück in die Buchung | Eltern | Zugangs-Link in der Mail, Familie bucht selbst neu | muss | fehlt; der Link existiert bereits in der Bestätigungsmail |
 | Erinnerung vor dem Sprechtag | Eltern | automatischer Versand zum gewählten Vorlauf | muss | fehlt vollständig — jeder Mailversand hängt heute an einer Organizer-Handlung |
 | Erinnerungszeitpunkt wählbar | Organizer | Auswahl fester Optionen am `Sprechtag`, auch nach dem Veröffentlichen änderbar | muss | kein Feld |
@@ -235,7 +235,7 @@ in Phase 3.
 | E-Mail-Versand schlägt fehl, niemand erfährt es | Organizer | Liste der nicht erreichten Familien in der Auswertung | muss | fehlt — best-effort mit `log.warn` je Adresse (`AbsageBenachrichtigungService`), `@Async` nach Commit, die UI erfährt nichts |
 | Tippfehler in der Adresse beim Erfassen | Eltern | zweite Eingabe „E-Mail wiederholen" | muss | fehlt; `EmailField` prüft nur das Format |
 | Einzelnen Termin verschieben, Buchung behalten | Organizer | Umbuchen in einem Zug, neue Bestätigungsmail | muss | fehlt — fällt mit der Organizer-Buchungsstrecke aus Phase 3 ab |
-| Absage-Dialog nennt die Zahl der Betroffenen | Organizer | Zahl vor dem Bestätigen | muss | **erfüllt** — `zaehleAktiveEmpfaenger`, je Adresse einmal gezählt |
+| Absage-Dialog nennt die Zahl der Betroffenen | Organizer | Zahl vor dem Bestätigen | muss | **erfüllt** — `Absagen.zaehleBetroffeneEltern`, je Adresse einmal gezählt |
 | Absage ohne jede Buchung | Organizer | kein Versand, kein Fehler | muss | **erfüllt** — `benachrichtige` steigt bei leerer Adressliste aus |
 | Versand rollt die Absage zurück | Organizer | kann nicht passieren | muss | **erfüllt** — `AFTER_COMMIT` im `AbsageBenachrichtigungListener` |
 | Sprechtag wird verschoben statt abgesagt | Organizer | — | darf fehlen | kein Weg; `startDate`/`startTime` nach Phase 2 gesperrt. Weg drumherum: absagen → `duplicate` → neu veröffentlichen |
@@ -244,7 +244,7 @@ in Phase 3.
 | Ersatztermin wird automatisch zugeteilt | Eltern | — | bewusst nein | fehlt |
 | Double-Opt-In der Eltern-Adresse | Eltern | — | bewusst nein | fehlt |
 | Lehrkraft meldet ihren Ausfall selbst | Lehrkraft | — | bewusst nein | fehlt; `Lehrer` ist reines Stammdatum, kein Login |
-| Absage rückgängig machen | Organizer | — | bewusst nein | `ABGESAGT` ist Endzustand (`allowedTransitions()` liefert leer) |
+| Absage rückgängig machen | Organizer | — | bewusst nein | `ABGESAGT` ist Endzustand — das Aggregat weist jeden weiteren Übergang ab |
 
 ### Anmerkungen
 
@@ -355,7 +355,7 @@ Lehrkraft bekommt ihren Plan als Datei, nicht als Login.
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
 | Lehrkraft braucht ihren Tagesplan | Lehrkraft | PDF-Export aus der Auswertung: ohne Filter ein ZIP mit einem PDF je Lehrkraft, mit gesetztem Lehrkraft-Filter genau dieses eine PDF | muss | `AuswertungView` hat den Filter je Lehrkraft, aber **keinen** Export |
-| Inhalt des Blatts | Lehrkraft | Kopf mit Lehrkraft, Sprechtag, Datum, Ort und „Stand: \<Zeitstempel\>"; alle Slots chronologisch — **auch die freien** — mit Zeit, Schüler, Klasse, Fach, Elternname, Notiz; rechts eine leere Spalte für Handschrift | muss | `BuchungService.BuchungsZeile` liefert nur aktive Buchungen, freie Slots erscheinen nicht |
+| Inhalt des Blatts | Lehrkraft | Kopf mit Lehrkraft, Sprechtag, Datum, Ort und „Stand: \<Zeitstempel\>"; alle Slots chronologisch — **auch die freien** — mit Zeit, Schüler, Klasse, Fach, Elternname, Notiz; rechts eine leere Spalte für Handschrift | muss | `Auswerten.BuchungsZeile` liefert nur aktive Buchungen, freie Slots erscheinen nicht |
 | Anmeldeschluss | Organizer | Pflichtfeld am `Sprechtag`, beim Anlegen mit dem Vortag vorbelegt, änderbar | muss | kein Feld; `ElternsprechtagPresenter` gibt bei `VEROEFFENTLICHT` unbegrenzt `BUCHBAR` zurück |
 | Elternlink nach Fristablauf | Eltern | nicht mehr buchbar; Hinweis „Anmeldung beendet" plus Datum, Ort und Schulkontakt | muss | unbegrenzt buchbar, auch am Tag selbst und danach |
 | Familie ruft am Tag selbst an, jemand steht spontan vor der Tür | Organizer | die Frist schließt nur den Elternlink; die Organizer-Buchungsstrecke bleibt bis zum Abschluss offen | muss | fehlt mit der Strecke aus Phase 3 |
@@ -411,9 +411,9 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Sprechtag schließt sich nach Ablauf der Endzeit selbst ab | Organizer | Statuswechsel durch den Tagesjob; der Menüpunkt bleibt zum Vorziehen | muss | nur von Hand (`SprechtagTable` → `SprechtagService.changeStatus`) |
+| Sprechtag schließt sich nach Ablauf der Endzeit selbst ab | Organizer | Statuswechsel durch den Tagesjob; der Menüpunkt bleibt zum Vorziehen | muss | nur von Hand (`SprechtagTable` → `Abschliessen.schliesseAb`) |
 | Elternlink nach dem Sprechtag | Eltern | Ansicht „Der Sprechtag ist vorbei" plus Schulkontakt, keine Buchungsauskunft | muss | `NICHT_VERFUEGBAR` — dieselbe Seite wie bei unbekanntem Token oder Entwurf |
-| Verfrüht von Hand abgeschlossen | Organizer | Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT`, solange die Endzeit nicht verstrichen ist | muss | kein Rückweg (`allowedTransitions()` ist für `ABGESCHLOSSEN` leer) |
+| Verfrüht von Hand abgeschlossen | Organizer | Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT`, solange die Endzeit nicht verstrichen ist | muss | kein Rückweg — aus `ABGESCHLOSSEN` kennt das Aggregat keinen Übergang mehr |
 | Aufbewahrungsfrist | — | ab Ende des Sprechtags, Default 30 Tage, als Property verstellbar | muss | fehlt |
 | Ablauf der Frist | — | Elternname, Schülername, E-Mail und Notiz werden geleert, die Buchung bleibt; gilt auch für `ABGESAGT` | muss | fehlt — kein Löschen im ganzen Projekt |
 | Auswertung nach Fristablauf | Organizer | `anonymisiertAm` am Sprechtag, Hinweis mit Datum statt scheinbarem Datenverlust | muss | fehlt |

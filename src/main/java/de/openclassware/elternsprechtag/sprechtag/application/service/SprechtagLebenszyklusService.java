@@ -5,6 +5,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Abschliess
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Materialisieren;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.ZurueckAufEntwurf;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Ereignisse;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
@@ -36,6 +37,7 @@ class SprechtagLebenszyklusService
   private final Termine termine;
   private final Materialisieren materialisieren;
   private final Ereignisse ereignisse;
+  private final BuchungsAnsichten buchungsAnsichten;
 
   @Override
   @Transactional
@@ -57,6 +59,12 @@ class SprechtagLebenszyklusService
     sprechtag.sageAb();
     sprechtage.speichere(sprechtag);
     veroeffentliche(sprechtag.ereignisseAbholen());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public long zaehleBetroffeneEltern(UUID id) {
+    return buchungsAnsichten.zaehleAktiveElternAdressen(SprechtagId.von(id));
   }
 
   @Override
