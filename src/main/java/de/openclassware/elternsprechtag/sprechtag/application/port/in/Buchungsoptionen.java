@@ -1,0 +1,37 @@
+package de.openclassware.elternsprechtag.sprechtag.application.port.in;
+
+import java.time.LocalTime;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Use Case: was die Eltern-Ansicht zur Auswahl stellt — je Lehrkraft der gewählten Klasse ihre
+ * Slots.
+ *
+ * <p>Das ist ein Read-Modell und darf veraltet sein: Ein hier als frei gezeigter Slot kann beim
+ * Submit vergeben sein. Die Entscheidung fällt erneut am Aggregat (ADR 0003).
+ */
+public interface Buchungsoptionen {
+
+  List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId);
+
+  /**
+   * Ein Slot in der Eltern-Ansicht. {@code belegt} heißt „nicht wählbar" und fasst beide Gründe
+   * zusammen, die für die Eltern gleich aussehen: Der Slot trägt eine aktive Buchung, oder der
+   * Organizer hat ihn entfallen lassen.
+   */
+  record SlotOption(UUID terminId, LocalTime zeit, boolean belegt) {}
+
+  /**
+   * Eine wählbare Lehrkraft der gewählten Klasse samt ihrer Slots. {@code lehrauftragId} ist der für
+   * (Klasse, Lehrkraft) aufgelöste Lehrauftrag (Buchungs-Ziel); {@code faecher} listet die Fächer
+   * der Lehrkraft an diesem Sprechtag (nur informativ).
+   */
+  record LehrkraftOption(
+      UUID lehrauftragId,
+      UUID lehrerId,
+      String kuerzel,
+      String lehrerName,
+      List<String> faecher,
+      List<SlotOption> slots) {}
+}

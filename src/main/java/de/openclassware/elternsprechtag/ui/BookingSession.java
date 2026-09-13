@@ -1,8 +1,8 @@
 package de.openclassware.elternsprechtag.ui;
 
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
-import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
-import de.openclassware.elternsprechtag.services.BuchungService.SlotOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

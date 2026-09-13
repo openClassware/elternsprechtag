@@ -2,25 +2,25 @@ package de.openclassware.elternsprechtag.services;
 
 import com.vaadin.flow.i18n.I18NProvider;
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
-import de.openclassware.elternsprechtag.domain.Buchung;
-import de.openclassware.elternsprechtag.domain.Lehrauftrag;
-import de.openclassware.elternsprechtag.domain.Lehrer;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
-import de.openclassware.elternsprechtag.repositories.BuchungRepository;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten.BelegZeile;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
+import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.ui.Formats;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * Formuliert nach einem Eltern-Submit die Bestätigungsmail und übergibt sie als fertige
+ * Formuliert nach einem Buchungsvorgang die Bestätigungsmail und übergibt sie als fertige
  * {@link Nachricht} an den {@link BenachrichtigungSender}-Port — Spiegelbild zu
  * {@link AbsageBenachrichtigungService}. Die Mail ist ein reiner Beleg: Sie enthält keinerlei
  * Aktion, insbesondere keinen Storno-Link. Die Kernmethode ist synchron und ohne echtes SMTP
@@ -33,7 +33,8 @@ public class BuchungBestaetigungService {
 
   private static final Locale LOCALE = Locale.GERMANY;
 
-  private final BuchungRepository buchungRepository;
+  private final BuchungsAnsichten buchungsAnsichten;
+  private final Sprechtage sprechtage;
   private final BenachrichtigungSender sender;
   private final I18NProvider i18n;
   private final ElternsprechtagProperties properties;
@@ -66,30 +67,31 @@ public class BuchungBestaetigungService {
    * Fehler per {@code log.warn} protokolliert — die Buchung bleibt gültig, es gibt kein Retry.
    * Betreff und Text stammen aus {@code vaadin-i18n/translations.properties} (direkt über den
    * {@link I18NProvider}, weil der Versand ohne Vaadin-{@code UI}-Kontext läuft), Datum und Uhrzeit
-   * aus {@link Formats}. Übergeben wird ausschließlich der {@link Nachricht}-Record — Entities
-   * verlassen die Service-Schicht nicht.
+   * aus {@link Formats}.
    *
-   * <p>Bewusst <b>ohne</b> eigenes {@code @Transactional}: Die eine Repository-Query bringt per
-   * {@code @EntityGraph} alles mit, was das Mapping braucht, und ist damit für sich abgeschlossen.
-   * So hält der Versand keine DB-Verbindung — ein hängender SMTP-Server (JavaMail wartet
-   * voreingestellt unbegrenzt) könnte sonst je Buchung eine Verbindung des Pools blockieren und den
-   * Pool erschöpfen, während der Versand hier bei <em>jeder</em> Buchung läuft.
+   * <p>Bewusst <b>ohne</b> eigenes {@code @Transactional}: Die beiden Abfragen sind je für sich
+   * abgeschlossen. So hält der Versand keine DB-Verbindung — ein hängender SMTP-Server (JavaMail
+   * wartet voreingestellt unbegrenzt) könnte sonst je Buchung eine Verbindung des Pools blockieren
+   * und den Pool erschöpfen, während der Versand hier bei <em>jeder</em> Buchung läuft.
+   *
+   * <p>Dass die Ids nach dem Commit überhaupt noch gelten, liegt daran, dass die Domäne sie selbst
+   * vergibt und ein erneutes Speichern des Termin-Aggregats sie nicht verändert (ADR 0004).
    */
-  public void bestaetige(List<UUID> buchungIds) {
+  public void bestaetige(List<BuchungId> buchungIds) {
     if (buchungIds == null || buchungIds.isEmpty()) {
       return;
     }
     // Die Query sortiert bereits nach Startzeit; die Mail listet damit chronologisch.
-    List<Buchung> buchungen = buchungRepository.findByIdInOrderByTermin_StartzeitAsc(buchungIds);
-    if (buchungen.isEmpty()) {
+    List<BelegZeile> zeilen = buchungsAnsichten.belege(buchungIds);
+    if (zeilen.isEmpty()) {
       // Unbekannte Ids (etwa nach zwischenzeitlicher Löschung): nichts zu bestätigen, kein Fehler.
       return;
     }
 
     // Empfänger vorab, damit ein Fehler beim Formulieren die Adresse trotzdem protokollieren kann.
-    String empfaenger = buchungen.get(0).getElternEmail();
+    String empfaenger = zeilen.get(0).elternEmail();
     try {
-      Bestaetigung bestaetigung = zuBestaetigung(buchungen);
+      Bestaetigung bestaetigung = zuBestaetigung(zeilen);
       String betreff =
           i18n.getTranslation(
               "buchung.mail.subject",
@@ -99,40 +101,39 @@ public class BuchungBestaetigungService {
       sender.sende(new Nachricht(bestaetigung.empfaenger(), betreff, baueText(bestaetigung)));
     } catch (RuntimeException e) {
       // Best-effort: Weder ein Zustellproblem noch ein Fehler beim Formulieren (fehlender
-      // Textbaustein, unvollständiger Lehrauftrag) darf die festgeschriebene Buchung entwerten oder
+      // Textbaustein, verschwundener Sprechtag) darf die festgeschriebene Buchung entwerten oder
       // als unbehandelte Ausnahme aus dem @Async-Thread entkommen.
       log.warn("Buchungsbestätigung an {} fehlgeschlagen: {}", empfaenger, e.getMessage());
     }
   }
 
   /**
-   * Mappt die Buchungen des Vorgangs vollständig auf den Record. Alle Buchungen eines Submits teilen
-   * Adresse, Kind und Sprechtag; abgeleitet werden sie aus der ersten geladenen Buchung.
+   * Fügt Beleg-Zeilen und Sprechtag-Kopf zum Record zusammen. Alle Buchungen eines Vorgangs teilen
+   * Adresse, Kind und Sprechtag; abgeleitet werden sie aus der ersten Zeile. Der Kopf kommt aus
+   * einem zweiten Port — kein Join über die Grenze der Aggregate.
    */
-  private Bestaetigung zuBestaetigung(List<Buchung> buchungen) {
-    Buchung erste = buchungen.get(0);
-    Sprechtag sprechtag = erste.getTermin().getSprechtag();
+  private Bestaetigung zuBestaetigung(List<BelegZeile> zeilen) {
+    BelegZeile erste = zeilen.get(0);
+    Optional<Sprechtage.Kopf> kopf =
+        sprechtage.ladeKopf(SprechtagId.von(erste.sprechtagId()));
+    if (kopf.isEmpty()) {
+      throw new IllegalStateException("Sprechtag zur Buchung nicht gefunden: " + erste.sprechtagId());
+    }
 
     List<TerminZeile> termine = new ArrayList<>();
-    for (Buchung buchung : buchungen) {
-      Lehrauftrag lehrauftrag = buchung.getLehrauftrag();
-      Lehrer lehrer = lehrauftrag.getLehrer();
+    for (BelegZeile zeile : zeilen) {
       termine.add(
-          new TerminZeile(
-              buchung.getTermin().getStartzeit().toLocalTime(),
-              lehrer.getVorname() + " " + lehrer.getNachname(),
-              lehrauftrag.getFach().getName(),
-              buchung.getNotiz()));
+          new TerminZeile(zeile.zeit(), zeile.lehrkraftName(), zeile.fach(), zeile.notiz()));
     }
 
     return new Bestaetigung(
-        erste.getElternEmail(),
-        sprechtag.getTitel(),
-        sprechtag.getStartDate(),
-        sprechtag.getLocation(),
-        sprechtag.getSchulkontakt(),
-        erste.getSchuelerName(),
-        erste.getLehrauftrag().getKlasse().getName(),
+        erste.elternEmail(),
+        kopf.get().titel(),
+        kopf.get().datum(),
+        kopf.get().ort(),
+        kopf.get().schulkontakt(),
+        erste.schuelerName(),
+        erste.klasse(),
         termine);
   }
 
@@ -140,8 +141,8 @@ public class BuchungBestaetigungService {
    * Setzt den Fließtext aus den i18n-Bausteinen zusammen. Die Terminliste ist beliebig lang, daher
    * ist der Text nicht ein einzelner Format-String wie bei der Absage. Der Ort-Abschnitt entfällt
    * vollständig, wenn nichts hinterlegt ist — keine leere Zeile, keine leere Überschrift; der
-   * Schulkontakt ist Pflicht und daher immer dabei. Die Notiz
-   * steht eingerückt unter ihrer Terminzeile; ein Termin ohne Notiz bleibt einzeilig.
+   * Schulkontakt ist Pflicht und daher immer dabei. Die Notiz steht eingerückt unter ihrer
+   * Terminzeile; ein Termin ohne Notiz bleibt einzeilig.
    */
   private String baueText(Bestaetigung b) {
     List<String> absaetze = new ArrayList<>();

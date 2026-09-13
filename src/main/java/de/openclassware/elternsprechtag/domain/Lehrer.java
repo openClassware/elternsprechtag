@@ -33,9 +33,6 @@ public class Lehrer {
     private String kuerzel;
 
     @OneToMany(mappedBy = "lehrer")
-    private List<Termin> termine  = new ArrayList<>();
-
-    @OneToMany(mappedBy = "lehrer")
     private List<Lehrauftrag> lehrauftraege = new ArrayList<>();
 
 }

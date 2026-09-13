@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.services;
 
+import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.Connection;
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.Import;
  * hochfahren.
  */
 @ServiceTest
-@Import({SprechtagService.class, BuchungService.class, KlassenService.class})
+@Import({SprechtagService.class, KlassenService.class, SprechtagKontextTestConfig.class})
 class ServiceTestDatenbankTest {
 
   @Autowired private DataSource dataSource;

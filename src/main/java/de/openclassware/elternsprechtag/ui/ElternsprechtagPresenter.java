@@ -1,11 +1,13 @@
 package de.openclassware.elternsprechtag.ui;
 
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
-import de.openclassware.elternsprechtag.services.BuchungService;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
 import de.openclassware.elternsprechtag.services.SprechtagService;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagPublic;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
+import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,7 +19,8 @@ import org.springframework.stereotype.Component;
 class ElternsprechtagPresenter {
 
   private final SprechtagService sprechtagService;
-  private final BuchungService buchungService;
+  private final Buchungsoptionen buchungsoptionen;
+  private final Buchen buchenUseCase;
   private final ElternsprechtagProperties properties;
 
   /** Welcher Screen der Eltern-View aus dem Zugriff folgt. */
@@ -48,15 +51,15 @@ class ElternsprechtagPresenter {
   }
 
   List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId) {
-    return buchungService.ladeLehrkraftOptionen(sprechtagId, klasseId);
+    return buchungsoptionen.ladeLehrkraftOptionen(sprechtagId, klasseId);
   }
 
   /**
-   * Persistiert den Eltern-Submit atomar und gibt die Anzahl gebuchter Termine zurück. Wirft
-   * {@link BuchungService.TerminBelegtException}.
+   * Schreibt den Eltern-Submit atomar fest und gibt die Anzahl gebuchter Termine zurück. Wirft
+   * {@link TerminBelegtException}.
    */
   int buchen(BuchungsAnfrage anfrage) {
-    return buchungService.buchen(anfrage);
+    return buchenUseCase.buchen(anfrage);
   }
 
   String getSchoolname() {

@@ -2,9 +2,9 @@ package de.openclassware.elternsprechtag.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
-import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
-import de.openclassware.elternsprechtag.services.BuchungService.SlotOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
 import de.openclassware.elternsprechtag.ui.BookingSession.SlotState;
 import java.time.LocalTime;
 import java.util.List;
