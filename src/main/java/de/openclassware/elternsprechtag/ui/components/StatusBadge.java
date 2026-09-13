@@ -2,12 +2,12 @@ package de.openclassware.elternsprechtag.ui.components;
 
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Span;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 
 @CssImport("./styles/components/status-badge.css")
 public class StatusBadge extends Span {
 
-  public StatusBadge(SprechtagStatusEnum status) {
+  public StatusBadge(SprechtagStatus status) {
     addClassName("status-badge");
     addClassName(modifier(status));
 
@@ -20,7 +20,7 @@ public class StatusBadge extends Span {
     add(dot, label);
   }
 
-  private String modifier(SprechtagStatusEnum status) {
+  private String modifier(SprechtagStatus status) {
     return switch (status) {
       case ENTWURF -> "status-badge--draft";
       case VEROEFFENTLICHT -> "status-badge--active";
@@ -29,7 +29,7 @@ public class StatusBadge extends Span {
     };
   }
 
-  private String labelKey(SprechtagStatusEnum status) {
+  private String labelKey(SprechtagStatus status) {
     return switch (status) {
       case ENTWURF -> "sprechtag.status.entwurf";
       case VEROEFFENTLICHT -> "sprechtag.status.aktiv";

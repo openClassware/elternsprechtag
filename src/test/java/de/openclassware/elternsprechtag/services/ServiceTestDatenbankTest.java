@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Import;
  * hochfahren.
  */
 @ServiceTest
-@Import({SprechtagService.class, KlassenService.class, SprechtagKontextTestConfig.class})
+@Import(SprechtagKontextTestConfig.class)
 class ServiceTestDatenbankTest {
 
   @Autowired private DataSource dataSource;

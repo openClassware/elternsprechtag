@@ -23,8 +23,8 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
-import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagPublic;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.OeffentlicherSprechtag;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
@@ -44,7 +44,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   private final ElternsprechtagPresenter presenter;
 
-  private SprechtagPublic sprechtag;
+  private OeffentlicherSprechtag sprechtag;
 
   private TextField elternName;
   private TextField schuelerName;
@@ -94,7 +94,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   /** Single card holding the Sprechtag head plus all booking steps and the footer. */
-  private Component createBookingCard(SprechtagPublic sprechtag) {
+  private Component createBookingCard(OeffentlicherSprechtag sprechtag) {
     this.sprechtag = sprechtag;
     session.reset(List.of());
 
@@ -113,7 +113,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return card;
   }
 
-  private Component createInfo(SprechtagPublic sprechtag) {
+  private Component createInfo(OeffentlicherSprechtag sprechtag) {
     return createKopf(sprechtag, true);
   }
 
@@ -121,7 +121,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
    * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs- und Bestätigungsseite. Nur beim Buchen kommen
    * die Intro-Zeile und die Beschreibung dazu.
    */
-  private Div createKopf(SprechtagPublic sprechtag, boolean withBookingText) {
+  private Div createKopf(OeffentlicherSprechtag sprechtag, boolean withBookingText) {
     Div kopf = new Div();
     kopf.addClassName("elternsprechtag-view__kopf");
 
@@ -132,12 +132,12 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     Div meta = new Div();
     meta.addClassName("elternsprechtag-view__meta");
     meta.add(
-        metaItem(VaadinIcon.CALENDAR, Formats.dateLong(sprechtag.startDate())),
+        metaItem(VaadinIcon.CALENDAR, Formats.dateLong(sprechtag.datum())),
         metaItem(
             VaadinIcon.CLOCK,
-            Formats.time(sprechtag.startTime()) + "–" + Formats.time(sprechtag.endTime())));
-    if (sprechtag.location() != null && !sprechtag.location().isBlank()) {
-      meta.add(metaItem(VaadinIcon.MAP_MARKER, sprechtag.location()));
+            Formats.time(sprechtag.beginn()) + "–" + Formats.time(sprechtag.ende())));
+    if (sprechtag.ort() != null && !sprechtag.ort().isBlank()) {
+      meta.add(metaItem(VaadinIcon.MAP_MARKER, sprechtag.ort()));
     }
     kopf.add(meta);
 
@@ -146,8 +146,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
       intro.addClassName("elternsprechtag-view__intro");
       kopf.add(intro);
 
-      if (sprechtag.description() != null && !sprechtag.description().isBlank()) {
-        Paragraph description = new Paragraph(sprechtag.description());
+      if (sprechtag.beschreibung() != null && !sprechtag.beschreibung().isBlank()) {
+        Paragraph description = new Paragraph(sprechtag.beschreibung());
         description.addClassName("elternsprechtag-view__description");
         kopf.add(description);
       }
@@ -156,7 +156,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return kopf;
   }
 
-  private Component createAngaben(SprechtagPublic sprechtag) {
+  private Component createAngaben(OeffentlicherSprechtag sprechtag) {
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
     section.add(new StepHeader(1, getTranslation("elternsprechtag.angaben.step-title")));
@@ -205,7 +205,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
    * Lehrkraft wird beim Rendern direkt hinter ihre Karte gesetzt, sodass Auswahl und Termine als ein
    * Block gelesen werden.
    */
-  private Component createBuchung(SprechtagPublic sprechtag) {
+  private Component createBuchung(OeffentlicherSprechtag sprechtag) {
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
 
@@ -218,7 +218,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     // Über der Liste, nicht darunter: Der Satz trägt die Mehrfachbuchungs-Botschaft und bliebe
     // unter einer langen Liste mit aufgeklapptem Raster ungelesen.
     Paragraph hint =
-        new Paragraph(getTranslation("elternsprechtag.termin.hint", sprechtag.slotInMinutes()));
+        new Paragraph(getTranslation("elternsprechtag.termin.hint", sprechtag.slotInMinuten()));
     hint.addClassName("elternsprechtag-view__slot-hint");
     section.add(hint);
 

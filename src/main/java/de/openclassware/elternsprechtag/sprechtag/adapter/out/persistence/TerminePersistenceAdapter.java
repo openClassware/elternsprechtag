@@ -42,4 +42,14 @@ class TerminePersistenceAdapter implements Termine {
   public boolean existierenFuer(SprechtagId sprechtag) {
     return zeilen.zaehleFuerSprechtag(sprechtag.wert()) > 0;
   }
+
+  @Override
+  public boolean wurdeGebucht(SprechtagId sprechtag) {
+    return zeilen.zaehleBuchungenFuerSprechtag(sprechtag.wert()) > 0;
+  }
+
+  @Override
+  public void entferneFuer(SprechtagId sprechtag) {
+    zeilen.loescheFuerSprechtag(sprechtag.wert());
+  }
 }

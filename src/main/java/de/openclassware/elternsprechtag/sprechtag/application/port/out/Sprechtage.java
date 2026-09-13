@@ -1,28 +1,34 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.out;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
+import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
- * Lesender Zugriff auf die Kopfdaten eines Sprechtags.
- *
- * <p>Übergangsweise: Solange {@code Sprechtag} noch eine JPA-Entity mit eigenem Service ist, holt
- * dieser Port nur, was Auswertung, Buchungsoptionen und die Bestätigungsmail von ihm brauchen. Mit
- * der Sprechtag-Scheibe wird er durch das Aggregat ersetzt.
+ * Aggregat-Repository des Sprechtags: lädt und speichert ganze Aggregate — der Schreibweg in die
+ * Datenbank. Read-Modelle gehen den anderen Weg, über {@link SprechtagAnsichten}.
  */
 public interface Sprechtage {
 
-  Optional<Kopf> ladeKopf(SprechtagId id);
+  Optional<Sprechtag> lade(SprechtagId id);
 
-  /** {@code ort} darf {@code null} sein; {@code schulkontakt} ist am Sprechtag Pflicht. */
-  record Kopf(
-      SprechtagId id,
-      String titel,
-      LocalDate datum,
-      String ort,
-      String schulkontakt,
-      List<UUID> klasseIds) {}
+  /**
+   * Der Sprechtag hinter einem Elternlink. Gehört hierher und nicht zu den Ansichten: Der Zugang
+   * entscheidet, ob überhaupt gebucht werden darf, und diese Frage wird am Aggregat beantwortet.
+   */
+  Optional<Sprechtag> ladeNachAccessToken(AccessToken token);
+
+  /**
+   * Schreibt das ganze Aggregat. Gibt nichts zurück: Der Aufrufer behält das Aggregat in der Hand,
+   * das er verändert hat — samt seiner noch nicht abgeholten Ereignisse.
+   *
+   * <p><b>Ein Aggregat ist nach dem Speichern verbraucht</b> (wie bei {@link Termine}): Der Adapter
+   * hebt die Version in der Datenbank, das Aggregat trägt sie unveränderlich. Wer weiterarbeiten
+   * will, lädt neu.
+   *
+   * @throws org.springframework.dao.OptimisticLockingFailureException wenn der Sprechtag seit dem
+   *     Laden verändert wurde
+   */
+  void speichere(Sprechtag sprechtag);
 }

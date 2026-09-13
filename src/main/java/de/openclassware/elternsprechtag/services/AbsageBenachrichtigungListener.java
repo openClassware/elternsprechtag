@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.services;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagAbgesagt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -7,7 +8,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * Verbindet die Absage-Naht mit dem Versand: reagiert auf {@link SprechtagAbgesagtEvent} erst
+ * Verbindet die Absage-Naht mit dem Versand: reagiert auf {@link SprechtagAbgesagt} erst
  * <em>nach Commit</em> ({@link TransactionPhase#AFTER_COMMIT}) und ruft — {@link Async} in einem
  * eigenen Thread — {@link AbsageBenachrichtigungService#benachrichtige(java.util.UUID)} auf. So ist
  * die Absage festgeschrieben, bevor der Versand beginnt (er kann sie nie zurückrollen), und die
@@ -24,7 +25,7 @@ class AbsageBenachrichtigungListener {
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  void onSprechtagAbgesagt(SprechtagAbgesagtEvent event) {
-    service.benachrichtige(event.sprechtagId());
+  void onSprechtagAbgesagt(SprechtagAbgesagt ereignis) {
+    service.benachrichtige(ereignis.sprechtag().wert());
   }
 }

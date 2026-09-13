@@ -5,7 +5,7 @@ import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten.BelegZeile;
-import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.ui.Formats;
@@ -34,7 +34,7 @@ public class BuchungBestaetigungService {
   private static final Locale LOCALE = Locale.GERMANY;
 
   private final BuchungsAnsichten buchungsAnsichten;
-  private final Sprechtage sprechtage;
+  private final SprechtagAnsichten sprechtagAnsichten;
   private final BenachrichtigungSender sender;
   private final I18NProvider i18n;
   private final ElternsprechtagProperties properties;
@@ -114,8 +114,8 @@ public class BuchungBestaetigungService {
    */
   private Bestaetigung zuBestaetigung(List<BelegZeile> zeilen) {
     BelegZeile erste = zeilen.get(0);
-    Optional<Sprechtage.Kopf> kopf =
-        sprechtage.ladeKopf(SprechtagId.von(erste.sprechtagId()));
+    Optional<SprechtagAnsichten.Kopf> kopf =
+        sprechtagAnsichten.kopf(SprechtagId.von(erste.sprechtagId()));
     if (kopf.isEmpty()) {
       throw new IllegalStateException("Sprechtag zur Buchung nicht gefunden: " + erste.sprechtagId());
     }

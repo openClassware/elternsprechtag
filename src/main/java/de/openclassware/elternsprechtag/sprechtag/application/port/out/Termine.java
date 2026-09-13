@@ -37,4 +37,19 @@ public interface Termine {
 
   /** Ob für diesen Sprechtag schon materialisiert wurde. Macht die Materialisierung idempotent. */
   boolean existierenFuer(SprechtagId sprechtag);
+
+  /**
+   * Ob an diesem Sprechtag jemals gebucht wurde — stornierte Buchungen zählen mit: Benachrichtigt
+   * wurde trotzdem. Die Antwort entscheidet, ob sich die Veröffentlichung noch zurücknehmen lässt.
+   */
+  boolean wurdeGebucht(SprechtagId sprechtag);
+
+  /**
+   * Verwirft die materialisierten Termine eines Sprechtags — der Gegenzug zur Materialisierung, wenn
+   * eine Veröffentlichung zurückgenommen wird.
+   *
+   * <p>Ausdrücklich nur für Termine ohne Buchung: Ob das zutrifft, entscheidet der Use Case über
+   * {@link #wurdeGebucht(SprechtagId)}, bevor er hierher kommt.
+   */
+  void entferneFuer(SprechtagId sprechtag);
 }

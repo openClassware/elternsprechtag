@@ -8,8 +8,8 @@ import de.openclassware.elternsprechtag.domain.Fach;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
@@ -38,9 +38,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @ServiceTest
 @Import({
-  SprechtagService.class,
+
   SprechtagKontextTestConfig.class,
-  KlassenService.class,
+
   BuchungBestaetigungService.class,
   BuchungBestaetigungListener.class,
   FakeBenachrichtigungSender.class,
@@ -76,11 +76,9 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     Lehrauftrag lehrauftrag = persistLehrauftrag(lehrer, klasse, fach);
     Sprechtag sprechtag =
         persistSprechtag(
-            "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
-            SprechtagStatusEnum.ENTWURF, klasse);
-    sprechtag.setLocation(ort);
-    sprechtagRepository.save(sprechtag);
-    sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
+            "Frühling", ort, DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatus.ENTWURF, klasse);
+    veroeffentlichen.veroeffentliche(sprechtag.id().wert());
     return new Fixture(sprechtag, lehrauftrag);
   }
 

@@ -24,16 +24,22 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.NotFoundException;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
-import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
-import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagForm;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
 import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
 import de.openclassware.elternsprechtag.ui.components.FormPanel;
 import de.openclassware.elternsprechtag.ui.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Route(value = EditSprechtagView.ROUTE, layout = MainLayout.class)
 @RolesAllowed(Roles.ORGANIZER)
@@ -43,12 +49,13 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   public static final String ROUTE = "sprechtag";
 
   private final EditSprechtagPresenter presenter;
-  private final Binder<SprechtagForm> binder = new Binder<>(SprechtagForm.class);
+  private final Binder<SprechtagFormular> binder = new Binder<>(SprechtagFormular.class);
 
   private UUID editingId;
   private Breadcrumb breadcrumb;
   private H2 headerTitle;
   private Button createButton;
+  private Button draftButton;
 
   private TextField titel;
   private TextField location;
@@ -62,6 +69,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private TextField accessToken;
   private TextField shareLink;
   private String origin;
+
+  /** Namen zu Ids — das, was der Konverter zwischen Auswahl und Formular braucht. */
+  private final Map<UUID, KlasseOption> klassenById = new LinkedHashMap<>();
 
   EditSprechtagView(EditSprechtagPresenter presenter) {
     this.presenter = presenter;
@@ -80,45 +90,68 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     binder
         .forField(titel)
         .asRequired(getTranslation("edit-sprechtag.validation.titel-required"))
-        .bind(SprechtagForm::getTitel, SprechtagForm::setTitel);
-    binder.forField(location).bind(SprechtagForm::getLocation, SprechtagForm::setLocation);
-    binder.forField(description).bind(SprechtagForm::getDescription, SprechtagForm::setDescription);
+        .bind(SprechtagFormular::getTitel, SprechtagFormular::setTitel);
+    binder.forField(location).bind(SprechtagFormular::getOrt, SprechtagFormular::setOrt);
+    binder
+        .forField(description)
+        .bind(SprechtagFormular::getBeschreibung, SprechtagFormular::setBeschreibung);
     binder
         .forField(schulkontakt)
         .asRequired(getTranslation("edit-sprechtag.validation.schulkontakt-required"))
-        .bind(SprechtagForm::getSchulkontakt, SprechtagForm::setSchulkontakt);
+        .bind(SprechtagFormular::getSchulkontakt, SprechtagFormular::setSchulkontakt);
     binder
         .forField(datePicker)
         .asRequired(getTranslation("edit-sprechtag.validation.datum-required"))
-        .bind(SprechtagForm::getStartDate, SprechtagForm::setStartDate);
+        .bind(SprechtagFormular::getDatum, SprechtagFormular::setDatum);
     binder
         .forField(startTime)
         .asRequired(getTranslation("edit-sprechtag.validation.startzeit-required"))
-        .bind(SprechtagForm::getStartTime, SprechtagForm::setStartTime);
+        .bind(SprechtagFormular::getBeginn, SprechtagFormular::setBeginn);
     binder
         .forField(endTime)
         .asRequired(getTranslation("edit-sprechtag.validation.endzeit-required"))
-        .bind(SprechtagForm::getEndTime, SprechtagForm::setEndTime);
+        .bind(SprechtagFormular::getEnde, SprechtagFormular::setEnde);
 
+    // Pflichtfeld: Ohne Slot-Dauer lassen sich keine Termine bilden (`ABDECKUNG.md` Z. 95). Die
+    // Auswahl lässt sich leeren, und ohne diese Zeile lief das Veröffentlichen in eine
+    // NullPointerException.
     binder
         .forField(slotInMinutes)
-        .bind(SprechtagForm::getSlotInMinutes, SprechtagForm::setSlotInMinutes);
+        .asRequired(getTranslation("edit-sprechtag.validation.slot-required"))
+        .bind(SprechtagFormular::getSlotInMinuten, SprechtagFormular::setSlotInMinuten);
 
-    binder.forField(accessToken).bind(SprechtagForm::getAccessToken, SprechtagForm::setAccessToken);
+    binder
+        .forField(accessToken)
+        .bind(SprechtagFormular::getAccessToken, SprechtagFormular::setAccessToken);
 
+    // Die Oberfläche wählt Klassen als Optionen, das Formular trägt ihre Ids: Die Namen gehören der
+    // Schulorganisation und haben im Sprechtag nichts zu suchen.
     binder
         .forField(klassen)
         .withValidator(
             selected -> selected != null && !selected.isEmpty(),
             getTranslation("edit-sprechtag.validation.klasse-required"))
-        .bind(SprechtagForm::getKlassen, SprechtagForm::setKlassen);
+        .withConverter(this::zuIds, this::zuOptionen)
+        .bind(SprechtagFormular::getKlasseIds, SprechtagFormular::setKlasseIds);
 
     binder.withValidator(
         form ->
-            form.getStartTime() == null
-                || form.getEndTime() == null
-                || form.getEndTime().isAfter(form.getStartTime()),
+            form.getBeginn() == null
+                || form.getEnde() == null
+                || form.getEnde().isAfter(form.getBeginn()),
         getTranslation("edit-sprechtag.validation.end-after-start"));
+  }
+
+  private Set<UUID> zuIds(Set<KlasseOption> auswahl) {
+    return auswahl.stream().map(KlasseOption::id).collect(Collectors.toCollection(LinkedHashSet::new));
+  }
+
+  /** Eine Klasse, die es nicht mehr gibt, fällt aus der Auswahl — angeboten wird nur Vorhandenes. */
+  private Set<KlasseOption> zuOptionen(Set<UUID> ids) {
+    return ids.stream()
+        .map(klassenById::get)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   @Override
@@ -127,16 +160,39 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
       return; // Anlege-Modus
     }
     Optional<UUID> id = parseId(sprechtagId);
-    Optional<SprechtagForm> form = id.flatMap(presenter::loadForm);
+    Optional<SprechtagFormular> form = id.flatMap(presenter::loadForm);
     if (form.isEmpty()) {
       event.rerouteToError(NotFoundException.class, "Sprechtag not found: " + sprechtagId);
       return;
     }
     editingId = id.get();
     binder.readBean(form.get());
+    if (form.get().isZeitstrukturEingefroren()) {
+      sperreZeitstruktur();
+    }
     breadcrumb.setCurrentText(getTranslation("edit-sprechtag.breadcrumb.title-edit"));
     headerTitle.setText(getTranslation("edit-sprechtag.header.title-edit"));
+    // Im Bearbeiten-Modus speichert der Hauptknopf nur — ein Statuswechsel läuft über die Verwaltung
+    // und ihre eigenen Wege. Dass „Speichern" früher zugleich veröffentlichte, war der Weg, auf dem
+    // sich ein abgesagter Sprechtag wiederbeleben ließ (`ABDECKUNG.md` Z. 93).
     createButton.setText(getTranslation("edit-sprechtag.button.save"));
+    draftButton.setVisible(false);
+  }
+
+  /**
+   * Nimmt Datum, Zeitfenster, Slot-Dauer und Klassen aus der Eingabe und schreibt den Grund daneben
+   * (`ABDECKUNG.md` Z. 87–89). Die Weigerung des Aggregats beim Speichern bleibt trotzdem bestehen —
+   * sie ist die Wahrheit, das hier ist die Höflichkeit: Der Organizer soll gar nicht erst tippen,
+   * was ohnehin abgewiesen würde.
+   */
+  private void sperreZeitstruktur() {
+    datePicker.setReadOnly(true);
+    startTime.setReadOnly(true);
+    endTime.setReadOnly(true);
+    slotInMinutes.setReadOnly(true);
+    klassen.setReadOnly(true);
+    datePicker.setHelperText(getTranslation("edit-sprechtag.timing.eingefroren"));
+    klassen.setHelperText(getTranslation("edit-sprechtag.timing.eingefroren"));
   }
 
   private Optional<UUID> parseId(String id) {
@@ -147,12 +203,30 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     }
   }
 
-  private void save(SprechtagStatusEnum status) {
-    SprechtagForm form = new SprechtagForm();
-    if (binder.writeBeanIfValid(form)) {
-      presenter.save(editingId, form, status);
-      navigateToOrganizerView();
+  /** Speichert, ohne den Status anzurühren: anlegen als Entwurf oder zurückschreiben. */
+  private void speichere() {
+    SprechtagFormular form = new SprechtagFormular();
+    if (!binder.writeBeanIfValid(form)) {
+      return;
     }
+    try {
+      presenter.speichere(editingId, form);
+      navigateToOrganizerView();
+    } catch (RuntimeException fehler) {
+      SprechtagMeldungen.zeige(this, SprechtagMeldungen.zu(fehler));
+    }
+  }
+
+  /** Legt an und veröffentlicht in einem Zug — nur im Anlege-Modus erreichbar. */
+  private void legeAnUndVeroeffentliche() {
+    SprechtagFormular form = new SprechtagFormular();
+    if (!binder.writeBeanIfValid(form)) {
+      return;
+    }
+    if (presenter.legeAnUndVeroeffentliche(form).ohneTermine()) {
+      SprechtagMeldungen.zeige(this, SprechtagMeldungen.ohneTermine());
+    }
+    navigateToOrganizerView();
   }
 
   private void navigateToOrganizerView() {
@@ -231,7 +305,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     panel.setDescription(getTranslation("edit-sprechtag.klassen.description"));
 
     klassen = new CheckboxGroup<>();
-    klassen.setItems(presenter.findAllKlassen());
+    List<KlasseOption> optionen = presenter.findAllKlassen();
+    optionen.forEach(option -> klassenById.put(option.id(), option));
+    klassen.setItems(optionen);
     klassen.setHelperText(getTranslation("edit-sprechtag.klassen.helper", 0));
     klassen.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
     klassen.setRenderer(new TextRenderer<>(KlasseOption::name));
@@ -345,16 +421,25 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     createButton.setText(getTranslation("edit-sprechtag.button.create"));
     createButton.setIcon(VaadinIcon.CHECK.create());
     createButton.setThemeVariants(ButtonVariant.PRIMARY);
-    createButton.addClickListener(_ -> save(SprechtagStatusEnum.VEROEFFENTLICHT));
+    // Im Anlege-Modus veröffentlicht dieser Knopf; im Bearbeiten-Modus speichert er nur (siehe
+    // setParameter). Beide Fälle stehen hier zusammen, weil es derselbe Knopf ist.
+    createButton.addClickListener(
+        _ -> {
+          if (editingId == null) {
+            legeAnUndVeroeffentliche();
+          } else {
+            speichere();
+          }
+        });
     return createButton;
   }
 
   private Button createSaveAsDraftButton() {
-    Button button = new Button();
-    button.setText(getTranslation("edit-sprechtag.button.draft"));
-    button.addClassName("edit-sprechtag-view__draft-button");
-    button.addClickListener(_ -> save(SprechtagStatusEnum.ENTWURF));
-    return button;
+    draftButton = new Button();
+    draftButton.setText(getTranslation("edit-sprechtag.button.draft"));
+    draftButton.addClassName("edit-sprechtag-view__draft-button");
+    draftButton.addClickListener(_ -> speichere());
+    return draftButton;
   }
 
   private Button createCancelButton() {

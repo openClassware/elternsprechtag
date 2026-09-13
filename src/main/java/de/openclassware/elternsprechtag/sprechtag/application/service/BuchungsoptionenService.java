@@ -3,7 +3,7 @@ package de.openclassware.elternsprechtag.sprechtag.application.service;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege.LehrauftragDaten;
-import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.SlotZeile;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 class BuchungsoptionenService implements Buchungsoptionen {
 
-  private final Sprechtage sprechtage;
+  private final SprechtagAnsichten sprechtagAnsichten;
   private final Lehrauftraege lehrauftraege;
   private final TerminAnsichten terminAnsichten;
 
@@ -37,9 +37,9 @@ class BuchungsoptionenService implements Buchungsoptionen {
   @Transactional(readOnly = true)
   public List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId) {
     SprechtagId id = SprechtagId.von(sprechtagId);
-    Sprechtage.Kopf kopf =
-        sprechtage
-            .ladeKopf(id)
+    SprechtagAnsichten.Kopf kopf =
+        sprechtagAnsichten
+            .kopf(id)
             .orElseThrow(
                 () -> new IllegalArgumentException("Sprechtag nicht gefunden: " + sprechtagId));
 
