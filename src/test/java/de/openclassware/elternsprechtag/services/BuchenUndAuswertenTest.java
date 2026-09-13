@@ -5,10 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
-import de.openclassware.elternsprechtag.domain.Fach;
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Lehrauftrag;
-import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
@@ -44,25 +40,25 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
   private static final LocalDate DATE = LocalDate.of(2026, 7, 20);
 
   /** Ein veröffentlichter Sprechtag mit einer Lehrkraft (4 materialisierte Slots). */
-  private record Fixture(Sprechtag sprechtag, Klasse klasse, Lehrauftrag lehrauftrag, Lehrer lehrer) {}
+  private record Fixture(Sprechtag sprechtag, UUID klasse, UUID lehrauftrag, UUID lehrkraft) {}
 
   private Fixture publishedSprechtag() {
-    Klasse klasse = persistKlasse("5a");
-    Lehrer lehrer = persistLehrer("Anna", "Berg", "BER");
-    Fach fach = persistFach("Deutsch", "D");
-    Lehrauftrag lehrauftrag = persistLehrauftrag(lehrer, klasse, fach);
+    UUID klasse = persistKlasse("5a");
+    UUID lehrkraft = persistLehrkraft("Anna", "Berg", "BER");
+    UUID fach = persistFach("Deutsch", "D");
+    UUID lehrauftrag = persistLehrauftrag(lehrkraft, klasse, fach);
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
             SprechtagStatus.ENTWURF, klasse);
     veroeffentlichen.veroeffentliche(sprechtag.id().wert());
-    return new Fixture(sprechtag, klasse, lehrauftrag, lehrer);
+    return new Fixture(sprechtag, klasse, lehrauftrag, lehrkraft);
   }
 
-  private BuchungsAnfrage anfrage(Lehrauftrag lehrauftrag, Termin... termine) {
+  private BuchungsAnfrage anfrage(UUID lehrauftrag, Termin... termine) {
     List<BuchungsWunsch> wuensche =
         Arrays.stream(termine)
-            .map(t -> new BuchungsWunsch(lehrauftrag.getId(), t.id().wert(), "Bitte pünktlich"))
+            .map(t -> new BuchungsWunsch(lehrauftrag, t.id().wert(), "Bitte pünktlich"))
             .toList();
     return new BuchungsAnfrage(
         "Eltern Müller", "Kind Müller", "eltern.mueller@example.com", wuensche);
@@ -73,11 +69,11 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag();
 
     List<LehrkraftOption> optionen =
-        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse().getId());
+        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse());
 
     assertThat(optionen).hasSize(1);
     LehrkraftOption option = optionen.get(0);
-    assertThat(option.lehrauftragId()).isEqualTo(f.lehrauftrag().getId());
+    assertThat(option.lehrauftragId()).isEqualTo(f.lehrauftrag());
     assertThat(option.faecher()).containsExactly("Deutsch");
     assertThat(option.slots()).hasSize(4);
     assertThat(option.slots()).allSatisfy(slot -> assertThat(slot.buchbar()).isTrue());
@@ -90,7 +86,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     buchen.buchen(anfrage(f.lehrauftrag(), termin));
 
     List<LehrkraftOption> optionen =
-        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse().getId());
+        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse());
 
     assertThat(optionen.get(0).slots())
         .filteredOn(slot -> slot.terminId().equals(termin.id().wert()))
@@ -106,7 +102,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     termine.speichere(termin);
 
     List<LehrkraftOption> optionen =
-        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse().getId());
+        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse());
 
     assertThat(optionen.get(0).slots())
         .filteredOn(slot -> slot.terminId().equals(termin.id().wert()))
@@ -139,7 +135,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     assertThat(alleBuchungen().get(0).ziel())
         .satisfies(
             ziel -> {
-              assertThat(ziel.herkunft().wert()).isEqualTo(f.lehrauftrag().getId());
+              assertThat(ziel.herkunft().wert()).isEqualTo(f.lehrauftrag());
               assertThat(ziel.lehrkraftName()).isEqualTo("Anna Berg");
               assertThat(ziel.lehrkraftKuerzel()).isEqualTo("BER");
               assertThat(ziel.klasse()).isEqualTo("5a");
@@ -172,9 +168,9 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
             "eltern.mueller@example.com",
             List.of(
                 new BuchungsWunsch(
-                    f.lehrauftrag().getId(), frei.get(0).id().wert(), "Erstes Anliegen"),
+                    f.lehrauftrag(), frei.get(0).id().wert(), "Erstes Anliegen"),
                 new BuchungsWunsch(
-                    f.lehrauftrag().getId(), frei.get(1).id().wert(), "Zweites Anliegen"))));
+                    f.lehrauftrag(), frei.get(1).id().wert(), "Zweites Anliegen"))));
 
     assertThat(alleTermine())
         .filteredOn(termin -> termin.aktiveBuchung().isPresent())
@@ -196,7 +192,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
             "Eltern Müller",
             "Kind Müller",
             "eltern.mueller@example.com",
-            List.of(new BuchungsWunsch(f.lehrauftrag().getId(), termin.id().wert(), null))));
+            List.of(new BuchungsWunsch(f.lehrauftrag(), termin.id().wert(), null))));
 
     assertThat(alleBuchungen().get(0).notiz()).isEmpty();
   }
@@ -238,7 +234,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
             "Eltern Schmidt",
             "Kind Schmidt",
             "schmidt@example.com",
-            List.of(new BuchungsWunsch(f.lehrauftrag().getId(), second.id().wert(), null))));
+            List.of(new BuchungsWunsch(f.lehrauftrag(), second.id().wert(), null))));
 
     assertThatThrownBy(() -> buchen.buchen(anfrage(f.lehrauftrag(), first, second)))
         .isInstanceOf(TerminBelegtException.class);
@@ -259,18 +255,18 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
   /** Veröffentlichter Sprechtag, Klasse 5a mit zwei Lehrkräften (Adler < Berg alphabetisch). */
   private record AuswertungFixture(
       Sprechtag sprechtag,
-      Klasse klasse,
-      Lehrer berg,
-      Lehrauftrag bergAuftrag,
-      Lehrer adler,
-      Lehrauftrag adlerAuftrag) {}
+      UUID klasse,
+      UUID berg,
+      UUID bergAuftrag,
+      UUID adler,
+      UUID adlerAuftrag) {}
 
   private AuswertungFixture publishedSprechtagWithTwoTeachers() {
-    Klasse klasse = persistKlasse("5a");
-    Lehrer berg = persistLehrer("Anna", "Berg", "BER");
-    Lehrer adler = persistLehrer("Carl", "Adler", "ADL");
-    Lehrauftrag bergAuftrag = persistLehrauftrag(berg, klasse, persistFach("Deutsch", "D"));
-    Lehrauftrag adlerAuftrag = persistLehrauftrag(adler, klasse, persistFach("Mathe", "M"));
+    UUID klasse = persistKlasse("5a");
+    UUID berg = persistLehrkraft("Anna", "Berg", "BER");
+    UUID adler = persistLehrkraft("Carl", "Adler", "ADL");
+    UUID bergAuftrag = persistLehrauftrag(berg, klasse, persistFach("Deutsch", "D"));
+    UUID adlerAuftrag = persistLehrauftrag(adler, klasse, persistFach("Mathe", "M"));
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -280,18 +276,18 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
   }
 
   private void book(
-      Lehrauftrag auftrag, Termin termin, String eltern, String schueler, String notiz) {
+      UUID auftrag, Termin termin, String eltern, String schueler, String notiz) {
     buchen.buchen(
         new BuchungsAnfrage(
             eltern,
             schueler,
             "eltern@example.com",
-            List.of(new BuchungsWunsch(auftrag.getId(), termin.id().wert(), notiz))));
+            List.of(new BuchungsWunsch(auftrag, termin.id().wert(), notiz))));
   }
 
-  private LehrkraftPlan planOf(SprechtagAuswertung auswertung, Lehrer lehrer) {
+  private LehrkraftPlan planOf(SprechtagAuswertung auswertung, UUID lehrkraft) {
     return auswertung.plaene().stream()
-        .filter(plan -> plan.lehrerId().equals(lehrer.getId()))
+        .filter(plan -> plan.lehrerId().equals(lehrkraft))
         .findFirst()
         .orElseThrow();
   }
@@ -358,7 +354,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     AuswertungFixture f = publishedSprechtagWithTwoTeachers();
     book(f.bergAuftrag(), termineVon(f.berg()).get(0), "Eltern Müller", "Lukas Müller", "n");
     // Der kommende Import lässt Lehraufträge verschwinden; die Buchung hält ihren Stand selbst.
-    jdbc.update("delete from lehrauftrag where id = ?", f.bergAuftrag().getId());
+    jdbc.update("delete from lehrauftrag where id = ?", f.bergAuftrag());
 
     SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
@@ -379,11 +375,11 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
             "eltern@example.com",
             List.of(
                 new BuchungsWunsch(
-                    f.bergAuftrag().getId(),
+                    f.bergAuftrag(),
                     termineVon(f.berg()).get(0).id().wert(),
                     "Nur für Berg"),
                 new BuchungsWunsch(
-                    f.adlerAuftrag().getId(),
+                    f.adlerAuftrag(),
                     termineVon(f.adler()).get(1).id().wert(),
                     "Nur für Adler"))));
 
@@ -451,8 +447,8 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
   void buchen_terminAndLehrauftragDifferentTeacher_throwsIllegalArgument() {
     Fixture f = publishedSprechtag();
     // Zweite Lehrkraft mit eigenem Lehrauftrag (aber ohne materialisierte Termine).
-    Lehrer anderer = persistLehrer("Bob", "Klein", "KLE");
-    Lehrauftrag fremderAuftrag = persistLehrauftrag(anderer, f.klasse(), persistFach("Mathe", "M"));
+    UUID anderer = persistLehrkraft("Bob", "Klein", "KLE");
+    UUID fremderAuftrag = persistLehrauftrag(anderer, f.klasse(), persistFach("Mathe", "M"));
     Termin terminVonLehrer1 = alleTermine().get(0);
 
     assertThatThrownBy(() -> buchen.buchen(anfrage(fremderAuftrag, terminVonLehrer1)))

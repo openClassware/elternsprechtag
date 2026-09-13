@@ -4,9 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
-import de.openclassware.elternsprechtag.domain.Fach;
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
@@ -51,7 +48,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   private static final LocalDate DATUM = LocalDate.of(2026, 7, 20);
 
   private SprechtagFormular formular(
-      String titel, LocalTime beginn, LocalTime ende, int slot, Klasse... klassen) {
+      String titel, LocalTime beginn, LocalTime ende, int slot, UUID... klassen) {
     SprechtagFormular formular = new SprechtagFormular();
     formular.setTitel(titel);
     formular.setDatum(DATUM);
@@ -60,18 +57,16 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
     formular.setSlotInMinuten(slot);
     formular.setSchulkontakt(SCHULKONTAKT);
     formular.setKlasseIds(
-        Arrays.stream(klassen)
-            .map(Klasse::getId)
-            .collect(Collectors.toCollection(LinkedHashSet::new)));
+        Arrays.stream(klassen).collect(Collectors.toCollection(LinkedHashSet::new)));
     return formular;
   }
 
   /** Eine Klasse mit einer Lehrkraft — so entstehen beim Veröffentlichen überhaupt Termine. */
-  private Klasse klasseMitLehrkraft(String name) {
-    Klasse klasse = persistKlasse(name);
-    Lehrer lehrer = persistLehrer("Anna", "Berg", "BER");
-    Fach fach = persistFach("Deutsch", "D");
-    persistLehrauftrag(lehrer, klasse, fach);
+  private UUID klasseMitLehrkraft(String name) {
+    UUID klasse = persistKlasse(name);
+    UUID lehrkraft = persistLehrkraft("Anna", "Berg", "BER");
+    UUID fach = persistFach("Deutsch", "D");
+    persistLehrauftrag(lehrkraft, klasse, fach);
     return klasse;
   }
 
@@ -79,7 +74,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void anlegen_erzeugtEinenEntwurfOhneTermine() {
-    Klasse klasse = persistKlasse("5a");
+    UUID klasse = persistKlasse("5a");
 
     UUID id = anlegen.lege(formular("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse));
 
@@ -92,7 +87,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void bearbeiten_behaeltIdUndStatus() {
-    Klasse klasse = persistKlasse("5a");
+    UUID klasse = persistKlasse("5a");
     UUID id = anlegen.lege(formular("Alt", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse));
 
     bearbeiten.bearbeite(id, formular("Neu", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse));
@@ -104,8 +99,8 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void formularTraegtDenSchulkontaktUndDieKlassen() {
-    Klasse a = persistKlasse("5a");
-    Klasse b = persistKlasse("7a");
+    UUID a = persistKlasse("5a");
+    UUID b = persistKlasse("7a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -115,7 +110,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
     assertThat(geladen.getTitel()).isEqualTo("Frühling");
     assertThat(geladen.getSchulkontakt()).isEqualTo(SCHULKONTAKT);
-    assertThat(geladen.getKlasseIds()).containsExactlyInAnyOrder(a.getId(), b.getId());
+    assertThat(geladen.getKlasseIds()).containsExactlyInAnyOrder(a, b);
     assertThat(geladen.isZeitstrukturEingefroren()).as("ein Entwurf ist noch offen").isFalse();
   }
 
@@ -136,7 +131,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void anlegen_ohneSchulkontakt_wirdNichtGespeichert() {
-    Klasse klasse = persistKlasse("5a");
+    UUID klasse = persistKlasse("5a");
     SprechtagFormular formular =
         formular("Entwurf", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
     formular.setSchulkontakt("   \n  ");
@@ -150,7 +145,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void anlegen_ohneSlotdauer_wirdNichtGespeichert() {
-    Klasse klasse = persistKlasse("5a");
+    UUID klasse = persistKlasse("5a");
     SprechtagFormular formular =
         formular("Entwurf", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
     formular.setSlotInMinuten(null);
@@ -161,7 +156,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   /** `ABDECKUNG.md` Z. 87 — die Sperre gilt auch über den Formularweg, nicht nur am Aggregat. */
   @Test
   void bearbeiten_zeitfensterEinesVeroeffentlichten_wirdAbgelehnt() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     UUID id = anlegen.lege(formular("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse));
     veroeffentlichen.veroeffentliche(id);
 
@@ -177,7 +172,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   /** `ABDECKUNG.md` Z. 90 — Titel und Ort bleiben auch danach änderbar. */
   @Test
   void bearbeiten_titelEinesVeroeffentlichten_bleibtErlaubt() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     UUID id = anlegen.lege(formular("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse));
     veroeffentlichen.veroeffentliche(id);
 
@@ -190,7 +185,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   /** `ABDECKUNG.md` Z. 93 — ein abgesagter Sprechtag lässt sich nicht über „Speichern" wiederbeleben. */
   @Test
   void bearbeiten_einesAbgesagten_wirdAbgelehnt() {
-    Klasse klasse = persistKlasse("5a");
+    UUID klasse = persistKlasse("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -210,7 +205,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void veroeffentlichen_erzeugtJeLehrkraftUndSlotEinenTermin() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -226,7 +221,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void veroeffentlichen_verwirftDenAngebrochenenRestSlot() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Kurz", DATUM, LocalTime.of(14, 0), LocalTime.of(14, 50), 20,
@@ -239,7 +234,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   /** `ABDECKUNG.md` Z. 94 — keine der gewählten Klassen hat einen Lehrauftrag. */
   @Test
   void veroeffentlichen_ohneLehrauftrag_meldetKeineTermine() {
-    Klasse klasse = persistKlasse("5a");
+    UUID klasse = persistKlasse("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -252,7 +247,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void materialisieren_istIdempotent() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -313,7 +308,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   /** `ABDECKUNG.md` Z. 91 — zu früh veröffentlicht, noch keine Buchung: erlaubt. */
   @Test
   void zurueckAufEntwurf_ohneBuchung_verwirftDieTermine() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -328,7 +323,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void zurueckAufEntwurf_machtDieZeitstrukturWiederAenderbar() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -347,7 +342,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   /** `ABDECKUNG.md` Z. 92 — zurück auf Entwurf, obwohl gebucht wurde: verhindert. */
   @Test
   void zurueckAufEntwurf_nachEinerBuchung_verweistAufDieAbsage() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -366,7 +361,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   /** Auch eine stornierte Buchung zählt: Benachrichtigt wurde trotzdem. */
   @Test
   void zurueckAufEntwurf_nachEinerStornierung_bleibtVerhindert() {
-    Klasse klasse = klasseMitLehrkraft("5a");
+    UUID klasse = klasseMitLehrkraft("5a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -384,7 +379,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void duplizieren_erzeugtEinenEntwurfMitEigenemToken() {
-    Klasse klasse = persistKlasse("5a");
+    UUID klasse = persistKlasse("5a");
     Sprechtag original =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -400,7 +395,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void uebersicht_istNachDatumSortiertUndTraegtDieKlassennamen() {
-    Klasse klasse = persistKlasse("5a");
+    UUID klasse = persistKlasse("5a");
     persistSprechtag(
         "Später", LocalDate.of(2026, 9, 1), LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
         SprechtagStatus.ENTWURF, klasse);
@@ -416,8 +411,8 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   @Test
   void zugang_ueberDasTokenLiefertDieWaehlbarenKlassen() {
-    Klasse a = persistKlasse("5a");
-    Klasse b = persistKlasse("7a");
+    UUID a = persistKlasse("5a");
+    UUID b = persistKlasse("7a");
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,

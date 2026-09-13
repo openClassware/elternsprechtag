@@ -305,7 +305,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     panel.setDescription(getTranslation("edit-sprechtag.klassen.description"));
 
     klassen = new CheckboxGroup<>();
-    List<KlasseOption> optionen = presenter.findAllKlassen();
+    List<KlasseOption> optionen = presenter.waehlbareKlassen();
     optionen.forEach(option -> klassenById.put(option.id(), option));
     klassen.setItems(optionen);
     klassen.setHelperText(getTranslation("edit-sprechtag.klassen.helper", 0));

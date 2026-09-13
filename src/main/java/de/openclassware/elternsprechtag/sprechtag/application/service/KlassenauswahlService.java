@@ -22,7 +22,7 @@ class KlassenauswahlService implements Klassenauswahl {
 
   @Override
   @Transactional(readOnly = true)
-  public List<KlasseOption> alleKlassen() {
-    return klassen.alle().stream().map(k -> new KlasseOption(k.id(), k.name())).toList();
+  public List<KlasseOption> waehlbareKlassen() {
+    return klassen.waehlbare().stream().map(k -> new KlasseOption(k.id(), k.name())).toList();
   }
 }

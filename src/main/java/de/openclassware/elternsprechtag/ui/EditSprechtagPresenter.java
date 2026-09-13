@@ -20,8 +20,8 @@ class EditSprechtagPresenter {
   private final Anlegen anlegen;
   private final Bearbeiten bearbeiten;
 
-  List<KlasseOption> findAllKlassen() {
-    return klassenauswahl.alleKlassen();
+  List<KlasseOption> waehlbareKlassen() {
+    return klassenauswahl.waehlbareKlassen();
   }
 
   Optional<SprechtagFormular> loadForm(UUID id) {

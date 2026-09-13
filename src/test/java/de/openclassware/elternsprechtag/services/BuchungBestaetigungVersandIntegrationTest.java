@@ -4,10 +4,6 @@ import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import de.openclassware.elternsprechtag.domain.Fach;
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Lehrauftrag;
-import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
@@ -19,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,13 +64,13 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     sender.reset();
   }
 
-  private record Fixture(Sprechtag sprechtag, Lehrauftrag lehrauftrag) {}
+  private record Fixture(Sprechtag sprechtag, UUID lehrauftrag) {}
 
   private Fixture publishedSprechtag(String ort) {
-    Klasse klasse = persistKlasse("5a");
-    Lehrer lehrer = persistLehrer("Anna", "Berg", "BER");
-    Fach fach = persistFach("Deutsch", "D");
-    Lehrauftrag lehrauftrag = persistLehrauftrag(lehrer, klasse, fach);
+    UUID klasse = persistKlasse("5a");
+    UUID lehrkraft = persistLehrkraft("Anna", "Berg", "BER");
+    UUID fach = persistFach("Deutsch", "D");
+    UUID lehrauftrag = persistLehrauftrag(lehrkraft, klasse, fach);
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", ort, DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
@@ -82,14 +79,14 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     return new Fixture(sprechtag, lehrauftrag);
   }
 
-  private void book(Lehrauftrag auftrag, String email, String notiz, Termin... termine) {
+  private void book(UUID auftrag, String email, String notiz, Termin... termine) {
     buchen.buchen(
         new BuchungsAnfrage(
             "Elke Elternteil",
             "Karl Kind",
             email,
             Arrays.stream(termine)
-                .map(t -> new BuchungsWunsch(auftrag.getId(), t.id().wert(), notiz))
+                .map(t -> new BuchungsWunsch(auftrag, t.id().wert(), notiz))
                 .toList()));
   }
 
@@ -192,9 +189,9 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
             "Karl Kind",
             "eltern@example.com",
             List.of(
-                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).id().wert(), null),
+                new BuchungsWunsch(f.lehrauftrag(), slots.get(0).id().wert(), null),
                 new BuchungsWunsch(
-                    f.lehrauftrag().getId(), slots.get(1).id().wert(), "Bitte über Mathe sprechen"))));
+                    f.lehrauftrag(), slots.get(1).id().wert(), "Bitte über Mathe sprechen"))));
 
     assertThat(sender.empfangen).hasSize(1);
     String text = sender.empfangen.get(0).text();
