@@ -32,8 +32,13 @@ die gesprochen werden soll.
 
 Das Ereignis selbst: ein Datum mit Zeitfenster (Start-/Endzeit), einer **Slot-Dauer** in Minuten,
 optional Ort und Hinweistext, dem verpflichtenden **Schulkontakt**, den teilnehmenden Klassen und einem
-**Access-Token** für den Eltern-Link. Der Sprechtag ist der Aggregatseinstieg — alles Weitere
-hängt an ihm.
+**Access-Token** für den Eltern-Link.
+
+Der Sprechtag setzt den **Rahmen**: Aus Zeitfenster, Slot-Dauer und teilnehmenden Klassen entstehen
+beim Veröffentlichen die Termine. Danach steht der Rahmen fest — Datum, Zeitfenster, Slot-Dauer und
+Klassenliste sind ab `VEROEFFENTLICHT` unveränderlich, weil die bereits erzeugten Termine sonst aus
+ihm herausfielen. Titel, Ort und Hinweistext bleiben änderbar. Ein Sprechtag, der so nicht mehr
+stattfinden kann, wird **abgesagt**, nicht umgeschrieben.
 
 Statuswerte (`SprechtagStatusEnum`) und die erlaubten Übergänge:
 
@@ -93,15 +98,33 @@ Der Lehrauftrag ist das **Ziel einer Buchung**: Eltern buchen nicht abstrakt „
 Lehrkraft", sondern zu einem bestimmten Fach in der Klasse ihres Kindes. Er ist damit auch die
 Einheit, in der die Eltern-Ansicht auswählt (eine Auswahl pro Lehrauftrag).
 
+Eine Buchung **kopiert** ihr Buchungsziel, statt darauf zu verweisen: Lehrkraft, Klasse und Fach
+werden festgehalten, wie sie im Moment der Buchung galten. Lehraufträge sind Stammdaten und ändern
+sich zwischen Schuljahren — eine vergangene Auswertung muss trotzdem lesbar bleiben, auch wenn es
+den Lehrauftrag inzwischen nicht mehr gibt.
+
+Sprachgebrauch: **Buchungsziel** ist das, worauf sich eine Buchung richtet. Das ist ein Lehrauftrag,
+und nach der Buchung dessen festgehaltener Stand.
+
 ### Termin
 
 Ein **materialisierter** Zeit-Slot einer Lehrkraft an einem Sprechtag: Start- und Endzeitpunkt,
-Status, Lehrkraft, Sprechtag. Termine sind echte Datensätze, keine berechneten Zeitfenster.
+Lehrkraft, Sprechtag. Termine sind echte Datensätze, keine berechneten Zeitfenster.
 
-| Status   | Bedeutung                                   |
-|----------|---------------------------------------------|
-| `FREI`   | Buchbar                                     |
-| `BELEGT` | Durch eine aktive Buchung vergeben          |
+Ein Termin ist genau dann **buchbar**, wenn er nicht entfällt und keine aktive Buchung trägt:
+
+| Zustand        | Bedeutung                                                                   |
+|----------------|-----------------------------------------------------------------------------|
+| **buchbar**    | Wird den Eltern zur Wahl angeboten                                          |
+| **vergeben**   | Trägt eine aktive Buchung                                                   |
+| **entfällt**   | Vom Organizer zurückgezogen — die Lehrkraft steht in diesem Slot nicht bereit |
+
+**Vergeben ist kein eigener Zustand, sondern eine Folge.** Ob ein Termin belegt ist, ergibt sich aus
+seinen Buchungen und wird nicht daneben geführt — sonst gäbe es zwei Wahrheiten, die auseinanderlaufen
+können. Nur **entfällt** ist eine eigene Angabe, denn das ist eine Entscheidung des Organizers.
+
+*Noch nicht gebaut:* **entfällt** ist beschlossen
+([`ABDECKUNG.md`](docs/arc/ABDECKUNG.md) Z. 230), aber noch nicht umgesetzt.
 
 **Materialisierung:** Beim Veröffentlichen erzeugt der Sprechtag für jede teilnehmende Lehrkraft
 × jeden Zeit-Slot einen freien Termin. Jede Lehrkraft bekommt **einen** Slot-Satz, geteilt über
@@ -114,13 +137,19 @@ Sprachgebrauch: **Termin** ist der Datensatz, **Slot** dasselbe aus Sicht der Au
 
 ### Buchung
 
-Die Eltern-Buchung eines Termins gegen einen Lehrauftrag. Trägt Elternname, Schülername, die
-Pflicht-**E-Mail der Eltern** und eine optionale Notiz.
+Die Buchung eines Termins durch eine **Familie**, gerichtet auf ein **Buchungsziel**. Trägt die
+Angaben der Familie, das festgehaltene Buchungsziel und eine optionale Notiz an die Lehrkraft.
 
-| Status      | Bedeutung                                                   |
-|-------------|-------------------------------------------------------------|
-| `ZUGESAGT`  | Aktive Buchung; belegt ihren Termin                         |
-| `ABGESAGT`  | Storniert; im Modell vorgesehen, bislang nicht ausgelöst     |
+| Status       | Bedeutung                                                  |
+|--------------|------------------------------------------------------------|
+| `ZUGESAGT`   | Aktive Buchung; ihr Termin gilt als vergeben               |
+| `STORNIERT`  | Zurückgenommen; der Termin ist wieder buchbar              |
+
+Sprachgebrauch: Eine **Buchung wird storniert**, ein **Sprechtag wird abgesagt**. Beides sind
+verschiedene Vorgänge und heißen deshalb verschieden — auch in Statuswerten und Methodennamen.
+
+*Noch nicht gebaut:* `STORNIERT` ist im Modell vorgesehen, wird bislang von nichts ausgelöst
+([`ABDECKUNG.md`](docs/arc/ABDECKUNG.md) Z. 166).
 
 Eigenschaften, die zur Domäne gehören (nicht nur zur Technik):
 
@@ -130,7 +159,24 @@ Eigenschaften, die zur Domäne gehören (nicht nur zur Technik):
 - **Kein Zeitkonflikt:** Zwei Buchungen derselben Auswahl dürfen nicht auf dieselbe Uhrzeit
   fallen — man kann nicht an zwei Tischen gleichzeitig sitzen. Die Regel wird heute beim
   Auswählen durchgesetzt (`BookingSession`), nicht beim Speichern.
-- **Es gibt keine Eltern-Entity.** Namen und E-Mail hängen denormalisiert an der Buchung.
+- **Die Buchung hält alles fest, was sie bezeugt.** Weder die Familie noch das Buchungsziel sind
+  Verweise: Beides steht an der Buchung selbst, mit dem Stand vom Buchungszeitpunkt. Eine Buchung
+  bleibt dadurch vollständig lesbar, auch wenn sich die Stammdaten später ändern.
+
+### Familie
+
+Wer bucht und für wen: Name des buchenden Elternteils, Name des Kindes und die Pflicht-**E-Mail der
+Eltern**. Die Familie ist die Gegenseite des Gesprächs — die Schule spricht mit ihr, nicht mit einem
+Benutzerkonto.
+
+**Es gibt keine Eltern-Entity und keine Familien-Entity.** Eine Familie ist kein eigener Datensatz,
+den man verwalten könnte, sondern schlicht die Angaben an einer Buchung. Zwei Buchungen derselben
+Familie wissen nichts voneinander; erkannt wird sie höchstens an der E-Mail-Adresse.
+
+Sprachgebrauch: **Familie** für die buchende Seite. Nicht **Anmeldung** — das Wort ist im Projekt
+doppelt vergeben (das Organizer-Login heißt so, und der **Anmeldeschluss** meint den Buchungsschluss
+der Eltern). „Eltern" bleibt richtig, wo wirklich die Erwachsenen gemeint sind (Eltern-Ansicht,
+E-Mail der Eltern, Eltern-Zugang).
 
 ### Organizer
 
@@ -174,11 +220,14 @@ eine neue Entscheidung und braucht einen ADR.
 
 ## Begriffe, die wir nicht benutzen
 
-| Nicht                          | Sondern                                                |
-|--------------------------------|--------------------------------------------------------|
-| Lehrer (in Prosa/UI)           | **Lehrkraft** (Entity heißt weiterhin `Lehrer`)         |
-| Admin, Sekretariat             | **Organizer**                                          |
-| Einladungscode, Passwort       | **Access-Token** / **Zugangs-Link**                    |
-| Elternsprechtag (als Entity)   | **Sprechtag**                                          |
-| Zeitfenster (für einen Termin) | **Termin** bzw. **Slot**                               |
-| Konto, Account (für Eltern)    | gibt es nicht — anonymer Zugang per Token              |
+| Nicht                            | Sondern                                                        |
+|----------------------------------|----------------------------------------------------------------|
+| Lehrer (in Prosa/UI)             | **Lehrkraft** (Entity heißt weiterhin `Lehrer`)                 |
+| Admin, Sekretariat               | **Organizer**                                                  |
+| Einladungscode, Passwort         | **Access-Token** / **Zugangs-Link**                            |
+| Elternsprechtag (als Entity)     | **Sprechtag**                                                  |
+| Zeitfenster (für einen Termin)   | **Termin** bzw. **Slot**                                       |
+| Konto, Account (für Eltern)      | gibt es nicht — anonymer Zugang per Token                      |
+| Anmeldung (für die Buchungsdaten)| **Familie** — „Anmeldung" ist das Organizer-Login, „Anmeldeschluss" der Buchungsschluss |
+| Buchung absagen                  | Buchung **stornieren** (abgesagt wird der Sprechtag)           |
+| Belegt (als eigener Zustand)     | **vergeben** — ergibt sich aus den Buchungen, wird nicht geführt |
