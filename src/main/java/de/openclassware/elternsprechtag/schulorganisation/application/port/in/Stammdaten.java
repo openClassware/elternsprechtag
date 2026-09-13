@@ -30,6 +30,12 @@ public interface Stammdaten {
    * Lehrkraft dort unterrichtet (alle ihre Einträge). Zwei getrennte Abfragen dafür wären zweimal
    * dieselbe Zeilenmenge, einmal je Blickrichtung gefaltet — und die Faltung gehört dorthin, wo
    * entschieden wird, was angezeigt wird.
+   *
+   * <p><b>Offen für den Import:</b> Stillgelegte fallen hier heraus, auch mitten in einem bereits
+   * veröffentlichten Sprechtag. Die Termine einer so stillgelegten Lehrkraft blieben dann
+   * materialisiert, verschwänden aber aus der Buchungsansicht — ihre freien Slots wären nicht mehr
+   * buchbar. Heute kann das nicht passieren, weil niemand etwas stilllegt; was beim Stilllegen
+   * während eines laufenden Sprechtags geschehen soll, wird mit dem Import entschieden (#140).
    */
   List<LehrauftragSchnappschuss> lehrauftraegeEinerKlasse(UUID klasseId);
 

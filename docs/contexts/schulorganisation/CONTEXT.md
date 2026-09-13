@@ -84,7 +84,15 @@ Stilllegen ist das Gegenstück zum Löschen, und es ist die tragende Entscheidun
 Dass das überhaupt geht, hängt daran, dass eine **Buchung ihr Ziel einfriert** (siehe
 `CONTEXT-MAP.md`). Ohne das dürfte hier nichts stillgelegt werden.
 
-Zweimal stilllegen ist kein Fehler — der Import darf denselben Abgleich wiederholen.
+Zweimal stilllegen ist kein Fehler — der Import darf denselben Abgleich wiederholen. Einen Weg
+zurück gibt es nicht: Was wieder gebraucht wird, wird neu angelegt. Die Eindeutigkeit des
+Lehrauftrags gilt deshalb nur unter den aktiven — sonst wäre ein Tripel nach dem Stilllegen für
+immer verbrannt.
+
+**Noch nicht entschieden:** was geschieht, wenn mitten in einem veröffentlichten Sprechtag
+stillgelegt wird. Die Termine der Lehrkraft bleiben dann stehen, verschwinden aber aus der
+Buchungsansicht der Eltern. Heute kann das nicht eintreten, weil niemand etwas stilllegt; die Frage
+gehört zum Import.
 
 ### Import
 

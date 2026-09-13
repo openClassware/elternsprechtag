@@ -18,8 +18,9 @@ public interface Lehrauftraege {
    * Schreibt das Aggregat.
    *
    * @throws org.springframework.dao.DuplicateKeyException wenn es das Tripel (Lehrkraft, Klasse,
-   *     Fach) schon gibt — die Eindeutigkeit steht als Constraint in der Datenbank, nicht als
-   *     Invariante im Aggregat
+   *     Fach) unter den <b>aktiven</b> Lehraufträgen schon gibt — die Eindeutigkeit steht als
+   *     Teil-Index in der Datenbank, nicht als Invariante im Aggregat. Stillgelegte Lehraufträge
+   *     stehen ihr nicht im Weg: Dasselbe Tripel darf im nächsten Schuljahr wieder erteilt werden.
    */
   void speichere(Lehrauftrag lehrauftrag);
 }

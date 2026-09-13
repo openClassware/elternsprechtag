@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.OeffentlicherSprechtag;
@@ -22,6 +23,7 @@ import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
@@ -457,5 +459,34 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
             "Karl Kind",
             "eltern@example.com",
             List.of(new BuchungsWunsch(lehrauftragId, termin.id().wert(), null))));
+  }
+
+  // --- Klassenauswahl -----------------------------------------------------------------------
+
+  @Test
+  void klassenauswahl_beimAnlegen_bietetNurAktiveKlassen() {
+    UUID aktiv = persistKlasse("5a");
+    UUID stillgelegt = persistKlasse("7b");
+    stammdatenpflege.legeKlasseStill(stillgelegt);
+
+    assertThat(klassenauswahl.waehlbareKlassen(Set.of()))
+        .extracting(Klassenauswahl.KlasseOption::id)
+        .containsExactly(aktiv);
+  }
+
+  /**
+   * Der Fall, der einem Entwurf sonst still eine Klasse nähme: Das Formular kann nur
+   * zurückschreiben, was es anbietet. Wer nur den Titel ändert, darf die inzwischen stillgelegte
+   * Klasse nicht dabei verlieren.
+   */
+  @Test
+  void klassenauswahl_beimBearbeiten_behaeltDieBereitsGewaehlteStillgelegteKlasse() {
+    UUID aktiv = persistKlasse("5a");
+    UUID stillgelegt = persistKlasse("7b");
+    stammdatenpflege.legeKlasseStill(stillgelegt);
+
+    assertThat(klassenauswahl.waehlbareKlassen(Set.of(stillgelegt)))
+        .extracting(Klassenauswahl.KlasseOption::id)
+        .containsExactly(aktiv, stillgelegt);
   }
 }

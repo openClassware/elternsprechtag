@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.in;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,14 +14,19 @@ import java.util.UUID;
 public interface Klassenauswahl {
 
   /**
-   * Die Klassen, die ein Sprechtag einladen kann — nach Namen aufsteigend, ohne stillgelegte.
+   * Die Klassen, die zur Auswahl stehen — nach Namen aufsteigend: die aktiven, <b>ergänzt um die
+   * bereits gewählten</b>, auch wenn eine davon inzwischen stillgelegt ist.
    *
-   * <p>Nicht dasselbe wie „alle Klassen": Wer die Namen eines <em>bestehenden</em> Sprechtags
-   * auflösen will, fragt nicht hier, sondern bekommt sie vom Use Case, der den Sprechtag liefert
-   * ({@link Sprechtagsuebersicht}, {@link Sprechtagszugang}). Der Unterschied trägt, sobald eine
-   * Klasse stillgelegt wird.
+   * <p>Die Ergänzung ist der Punkt. Ein Formular zeigt keine Auswahl an, es <em>ist</em> die
+   * Auswahl: Was es nicht anbietet, kann es beim Speichern auch nicht zurückschreiben. Böte es nur
+   * die aktiven Klassen an, verlöre ein Entwurf eine inzwischen stillgelegte Klasse still beim
+   * nächsten Speichern — auch wenn der Organizer nur den Titel geändert hat. Wer eine Klasse aus
+   * einem Sprechtag nehmen will, soll das Häkchen entfernen, nicht warten, bis das Formular es für
+   * ihn tut.
+   *
+   * @param bereitsGewaehlt die Klassen des bearbeiteten Sprechtags; leer beim Anlegen
    */
-  List<KlasseOption> waehlbareKlassen();
+  List<KlasseOption> waehlbareKlassen(Collection<UUID> bereitsGewaehlt);
 
   /** Eine wählbare Klasse — Id und Anzeigename, mehr braucht keine Ansicht. */
   record KlasseOption(UUID id, String name) {}

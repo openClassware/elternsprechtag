@@ -146,6 +146,27 @@ class StammdatenPersistenzTest {
         .isInstanceOf(DuplicateKeyException.class);
   }
 
+  /**
+   * Die Gegenprobe, und der Grund für den Teil-Index: Klassennamen wiederholen sich jedes Jahr.
+   * Spannte die Eindeutigkeit über alle Zeilen, wäre „Berg unterrichtet Deutsch in der 5a" nach dem
+   * ersten Stilllegen für immer verbrannt — und aus dem Stilllegen führt bewusst kein Weg zurück.
+   */
+  @Test
+  void nachDemStilllegenLaesstSichDasselbeTripelWiederErteilen() {
+    Lehrauftrag altesJahr = erteile("Anna", "Berg", "BER", "5a", "Deutsch", "D");
+    Lehrauftrag stillzulegen = stammdaten.lade(altesJahr.id()).orElseThrow();
+    stillzulegen.legeStill();
+    stammdaten.speichere(stillzulegen);
+
+    Lehrauftrag neuesJahr =
+        Lehrauftrag.erteile(altesJahr.lehrkraft(), altesJahr.klasse(), altesJahr.fach());
+    stammdaten.speichere(neuesJahr);
+
+    assertThat(ansichten.lehrauftraegeEinerKlasse(altesJahr.klasse().wert()))
+        .extracting(LehrauftragDaten::id)
+        .containsExactly(neuesJahr.id().wert());
+  }
+
   @Test
   void dieLehrauftraegeEinerKlasseKommenNachFachnameSortiert() {
     Klasse klasse = Klasse.richteEin("5a");

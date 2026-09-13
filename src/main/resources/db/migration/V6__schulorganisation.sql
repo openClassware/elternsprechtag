@@ -39,5 +39,12 @@ alter table lehrauftrag alter column lehrer_id set not null;
 alter table lehrauftrag alter column klasse_id set not null;
 alter table lehrauftrag alter column fach_id   set not null;
 
-alter table lehrauftrag
-    add constraint uq_lehrauftrag_lehrkraft_klasse_fach unique (lehrer_id, klasse_id, fach_id);
+-- Ein Teil-Index und keine Tabellen-Constraint: Die Eindeutigkeit gilt nur unter den AKTIVEN
+-- Lehraufträgen. Über alle Zeilen gespannt wäre sie eine Falle — Frau Berg unterrichtet Deutsch in
+-- der 5a, der Lehrauftrag wird zum Schuljahresende stillgelegt, im nächsten Jahr unterrichtet sie
+-- wieder Deutsch in der 5a (Klassennamen wiederholen sich, siehe das Glossar der
+-- Schulorganisation). Das Tripel wäre dann für immer verbrannt, und einen Weg zurück aus dem
+-- Stilllegen gibt es bewusst nicht.
+create unique index uq_lehrauftrag_lehrkraft_klasse_fach
+    on lehrauftrag (lehrer_id, klasse_id, fach_id)
+ where not stillgelegt;

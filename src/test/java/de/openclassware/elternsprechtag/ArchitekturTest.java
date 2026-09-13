@@ -144,12 +144,17 @@ class ArchitekturTest {
   /**
    * Und in der erlaubten Richtung geht es nur durch die Tür: über {@code port/in}, nicht an den
    * Aggregaten, Ports out oder Persistenzmodellen des anderen Kontexts vorbei.
+   *
+   * <p>Die Regel gilt für <b>alles außerhalb</b> der Schulorganisation, nicht nur für den
+   * Sprechtag-Kontext. Sonst bliebe die Tür für die noch nicht migrierten Pakete offen, und
+   * ausgerechnet dort — im {@code ui} — wäre ein Presenter mit einem {@code Lehrkraft}-Aggregat in
+   * der Hand genau der Fehler, den diese Regel verhindern soll.
    */
   @Test
-  void derSprechtagErreichtDieSchulorganisationNurUeberDerenPortIn() {
+  void vonAussenFuehrtInDieSchulorganisationNurIhrPortIn() {
     noClasses()
         .that()
-        .resideInAPackage(SPRECHTAG + "..")
+        .resideOutsideOfPackage(SCHULORGANISATION + "..")
         .should()
         .dependOnClassesThat()
         .resideInAnyPackage(

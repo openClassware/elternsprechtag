@@ -9,6 +9,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Bearbeiten
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Duplizieren;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
@@ -79,6 +80,7 @@ abstract class AbstractServiceTest {
   @Autowired protected Absagen absagen;
   @Autowired protected Abschliessen abschliessen;
   @Autowired protected ZurueckAufEntwurf zurueckAufEntwurf;
+  @Autowired protected Klassenauswahl klassenauswahl;
   @Autowired protected Sprechtagsuebersicht sprechtagsuebersicht;
   @Autowired protected Sprechtagszugang sprechtagszugang;
 
