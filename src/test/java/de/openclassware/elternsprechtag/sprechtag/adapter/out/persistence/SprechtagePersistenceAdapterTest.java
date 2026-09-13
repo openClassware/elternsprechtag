@@ -23,6 +23,7 @@ import org.springframework.boot.data.jdbc.test.autoconfigure.DataJdbcTest;
 import org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
@@ -188,6 +189,12 @@ class SprechtagePersistenceAdapterTest {
    * Ein Aggregat ist nach dem Speichern verbraucht: Es trägt noch die alte Version, die Datenbank
    * längst die neue. Ein zweites {@code speichere} derselben Instanz meldet deshalb einen Konflikt,
    * auch wenn niemand dazwischengekommen ist.
+   *
+   * <p>Bei einem frisch angelegten Sprechtag steht die Version der Instanz weiter auf 0 — Spring
+   * Data JDBC hält sie darum für neu und setzt ein zweites INSERT auf dieselbe Id ab. Die Datenbank
+   * meldet den Konflikt hier also als Schlüsseldublette und nicht als Versionskonflikt; Letzteren
+   * zeigt {@link #zweiFensterAufDemselbenSprechtag_dasZweiteSchreibenScheitert()} am geladenen
+   * Aggregat.
    */
   @Test
   void zweimalSpeichernDerselbenInstanzMeldetEinenKonflikt() {
@@ -195,7 +202,8 @@ class SprechtagePersistenceAdapterTest {
     sprechtage.speichere(sprechtag);
 
     assertThatThrownBy(() -> sprechtage.speichere(sprechtag))
-        .isInstanceOf(OptimisticLockingFailureException.class);
+        .as("verbrauchtes Aggregat, Version 0 — INSERT auf eine Id, die schon steht")
+        .isInstanceOf(DuplicateKeyException.class);
   }
 
   @Test
