@@ -8,6 +8,7 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import de.openclassware.elternsprechtag.schulorganisation.domain.Aggregat;
 import de.openclassware.elternsprechtag.sprechtag.domain.AggregateRoot;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
 import org.junit.jupiter.api.Test;
@@ -19,28 +20,31 @@ import org.junit.jupiter.api.Test;
  * der Beleg, und zwar bei deutlich einfacheren Regeln als diesen. Fragen wie „kennt dieser View ein
  * Aggregat?" sind im Review nicht zuverlässig zu beantworten, im Test schon.
  *
- * <p>Geprüft wird ausschließlich der neue Kontext. Die noch nicht migrierten Pakete
- * ({@code domain}, {@code repositories}, {@code services}) stehen bewusst außen vor — sie sind der
- * Bestand, den die folgenden Scheiben abräumen.
+ * <p>Geprüft werden die beiden migrierten Kontexte. Das noch nicht migrierte Paket
+ * ({@code services}, der Versand) steht bewusst außen vor — es ist der Bestand, den die letzte
+ * Scheibe abräumt.
  */
 class ArchitekturTest {
 
   private static final String BASIS = "de.openclassware.elternsprechtag";
   private static final String SPRECHTAG = BASIS + ".sprechtag";
+  private static final String SCHULORGANISATION = BASIS + ".schulorganisation";
 
   private final JavaClasses klassen =
       new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS).importPackages(BASIS);
 
   @Test
   void domaene_importiertNurJdk() {
-    noClasses()
-        .that()
-        .resideInAPackage(SPRECHTAG + ".domain..")
-        .should()
-        .dependOnClassesThat()
-        .resideOutsideOfPackages(SPRECHTAG + ".domain..", "java..", "javax..")
-        .as("Die Domäne ist technologiefrei: kein Spring, kein Lombok, kein JPA, kein Vaadin")
-        .check(klassen);
+    for (String kontext : new String[] {SPRECHTAG, SCHULORGANISATION}) {
+      noClasses()
+          .that()
+          .resideInAPackage(kontext + ".domain..")
+          .should()
+          .dependOnClassesThat()
+          .resideOutsideOfPackages(kontext + ".domain..", "java..", "javax..")
+          .as("Die Domäne ist technologiefrei: kein Spring, kein Lombok, kein JPA, kein Vaadin")
+          .check(klassen);
+    }
   }
 
   @Test
@@ -58,54 +62,121 @@ class ArchitekturTest {
         .check(klassen);
   }
 
-  /**
-   * Heute gibt es genau eine Aggregat-Wurzel, die Regel ist also noch nicht auf die Probe gestellt.
-   * Sie steht trotzdem: Sie soll greifen, wenn die nächste Scheibe die zweite hinzufügt — nicht erst,
-   * wenn jemand sie vermisst.
-   */
   @Test
   void aggregateReferenzierenEinanderNurUeberTypisierteIds() {
     noFields()
         .that()
         .areDeclaredInClassesThat()
         .areAssignableTo(AggregateRoot.class)
+        .or()
+        .areDeclaredInClassesThat()
+        .areAssignableTo(Aggregat.class)
         .should()
         .haveRawType(assignableTo(AggregateRoot.class))
+        .orShould()
+        .haveRawType(assignableTo(Aggregat.class))
         .as("Über eine Aggregat-Grenze führt eine typisierte Id, keine Objektnavigation")
         .check(klassen);
   }
 
   @Test
   void adapterKennenEinanderNicht() {
-    slices()
-        .matching(SPRECHTAG + ".adapter.(**)")
-        .should()
-        .notDependOnEachOther()
-        .as("Ein Adapter erfüllt einen Port; ein zweiter Adapter ist ihm gleichgültig")
-        .check(klassen);
+    for (String kontext : new String[] {SPRECHTAG, SCHULORGANISATION}) {
+      slices()
+          .matching(kontext + ".adapter.(**)")
+          .should()
+          .notDependOnEachOther()
+          .as("Ein Adapter erfüllt einen Port; ein zweiter Adapter ist ihm gleichgültig")
+          .check(klassen);
+    }
   }
 
   @Test
   void anwendungKenntKeinenAdapter() {
-    noClasses()
-        .that()
-        .resideInAPackage(SPRECHTAG + ".application..")
-        .should()
-        .dependOnClassesThat()
-        .resideInAPackage(SPRECHTAG + ".adapter..")
-        .as("Die Abhängigkeit zeigt nach innen: Adapter kennen Ports, nicht umgekehrt")
-        .check(klassen);
+    for (String kontext : new String[] {SPRECHTAG, SCHULORGANISATION}) {
+      noClasses()
+          .that()
+          .resideInAPackage(kontext + ".application..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage(kontext + ".adapter..")
+          .as("Die Abhängigkeit zeigt nach innen: Adapter kennen Ports, nicht umgekehrt")
+          .check(klassen);
+    }
   }
 
   @Test
   void domaeneKenntKeineAnwendungUndKeinenAdapter() {
+    for (String kontext : new String[] {SPRECHTAG, SCHULORGANISATION}) {
+      noClasses()
+          .that()
+          .resideInAPackage(kontext + ".domain..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(kontext + ".application..", kontext + ".adapter..")
+          .as("Der Kern weiß nichts von dem, was ihn benutzt")
+          .check(klassen);
+    }
+  }
+
+  // --- Die Kontextgrenze (Issue #140) -----------------------------------------------------------
+
+  /**
+   * Die Abhängigkeit ist <b>einseitig</b>: Der Sprechtag liest Stammdaten, die Schulorganisation
+   * weiß von Sprechtagen nichts.
+   *
+   * <p>Das ist die Regel, ohne die der zweite Kontext keiner wäre. Ein einziger Import in die
+   * Gegenrichtung — und sei es nur eine {@code KlasseId}, die sich bequem wiederverwenden ließe —
+   * macht aus zwei Kontexten ein Paket mit zwei Unterordnern.
+   */
+  @Test
+  void dieSchulorganisationKenntDenSprechtagNicht() {
     noClasses()
         .that()
-        .resideInAPackage(SPRECHTAG + ".domain..")
+        .resideInAPackage(SCHULORGANISATION + "..")
         .should()
         .dependOnClassesThat()
-        .resideInAnyPackage(SPRECHTAG + ".application..", SPRECHTAG + ".adapter..")
-        .as("Der Kern weiß nichts von dem, was ihn benutzt")
+        .resideInAPackage(SPRECHTAG + "..")
+        .as("Die Schulorganisation weiß nichts vom Sprechtag — die Abhängigkeit ist einseitig")
+        .check(klassen);
+  }
+
+  /**
+   * Und in der erlaubten Richtung geht es nur durch die Tür: über {@code port/in}, nicht an den
+   * Aggregaten, Ports out oder Persistenzmodellen des anderen Kontexts vorbei.
+   *
+   * <p>Die Regel gilt für <b>alles außerhalb</b> der Schulorganisation, nicht nur für den
+   * Sprechtag-Kontext. Sonst bliebe die Tür für die noch nicht migrierten Pakete offen, und
+   * ausgerechnet dort — im {@code ui} — wäre ein Presenter mit einem {@code Lehrkraft}-Aggregat in
+   * der Hand genau der Fehler, den diese Regel verhindern soll.
+   */
+  @Test
+  void vonAussenFuehrtInDieSchulorganisationNurIhrPortIn() {
+    noClasses()
+        .that()
+        .resideOutsideOfPackage(SCHULORGANISATION + "..")
+        .should()
+        .dependOnClassesThat()
+        .resideInAnyPackage(
+            SCHULORGANISATION + ".domain..",
+            SCHULORGANISATION + ".adapter..",
+            SCHULORGANISATION + ".application.service..",
+            SCHULORGANISATION + ".application.port.out..")
+        .as("In einen fremden Kontext führt genau ein Weg: sein port/in")
+        .check(klassen);
+  }
+
+  /**
+   * Die Schulorganisation hat <b>keinen Web-Adapter</b>. Alle Anwendungsfälle mit Oberfläche gehören
+   * dem Sprechtag; entstünde hier eine zweite Eingangstür, gäbe es zwei Orte, an denen dieselbe
+   * Frage beantwortet wird.
+   */
+  @Test
+  void dieSchulorganisationHatKeinenWebAdapter() {
+    noClasses()
+        .should()
+        .resideInAPackage(SCHULORGANISATION + ".adapter.in..")
+        .as("Die Schulorganisation hat keine Oberfläche — ihre Use Cases ruft der Sprechtag")
         .check(klassen);
   }
 }

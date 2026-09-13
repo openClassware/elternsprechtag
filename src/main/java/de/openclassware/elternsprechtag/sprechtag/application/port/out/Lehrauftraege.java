@@ -10,8 +10,9 @@ import java.util.UUID;
  * Der Blick in die Schulorganisation — Stammdaten, die dieser Kontext liest und nie schreibt. Die
  * Abhängigkeit ist einseitig, und kein SQL-Statement joint über diese Grenze (ADR 0003).
  *
- * <p>Übergangsweise liest der Adapter die bestehenden Tabellen; mit dem Schnitt des zweiten Kontexts
- * wird daraus ein echter Fremdkontext-Zugriff.
+ * <p>Der Adapter dahinter ruft den {@code port/in} der Schulorganisation. Er ist die einzige Stelle
+ * dieses Kontexts, die den anderen überhaupt kennt — was hier durchkommt, ist Text und eine Id,
+ * kein fremdes Aggregat.
  */
 public interface Lehrauftraege {
 

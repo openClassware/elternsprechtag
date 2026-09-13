@@ -16,14 +16,17 @@ Die Codebasis stellt auf eine **hexagonale Architektur mit DDD-Aggregaten** um
 [0005](docs/adr/0005-eltern-submit-bricht-eine-transaktion-ein-aggregat.md)). Prüfe zuerst, in
 welcher Hälfte du arbeitest — die Regeln unterscheiden sich:
 
-- **`sprechtag.{domain,application,adapter}`** — migriert (Scheibe 1: `Termin` mit `Buchung`,
-  Buchen/Auswerten/Buchungsoptionen). Hier gelten die ADRs; Spring Data JDBC, Aggregate ohne
-  Framework-Annotationen, Ports statt Repositories.
-- **`domain`, `repositories`, `services`, `ui`** — Bestand (`Sprechtag`, Stammdaten, Versand,
-  gesamte Oberfläche). Hier gelten die Schichtenregeln unten weiter.
+- **`sprechtag.{domain,application,adapter}`** und **`schulorganisation.{domain,application,adapter}`**
+  — migriert (Scheiben 1–3: `Termin` mit `Buchung`, `Sprechtag`, und die Stammdaten als eigener
+  Kontext). Hier gelten die ADRs; Spring Data JDBC, Aggregate ohne Framework-Annotationen, Ports
+  statt Repositories.
+- **`services`, `ui`** — Bestand (Versand, gesamte Oberfläche). Hier gelten die Schichtenregeln
+  unten weiter.
 
-Neue Arbeit an Buchen/Auswerten gehört in die migrierte Hälfte. Neue JPA-Entities kommen nicht
-mehr dazu.
+Neue fachliche Arbeit gehört in die migrierte Hälfte. **Neue JPA-Entities kommen nicht mehr dazu**
+— es gibt keine mehr.
+
+Die beiden Kontexte und ihre Grenze stehen in [`CONTEXT-MAP.md`](CONTEXT-MAP.md).
 
 ## Architektur & Schichten (Bestand)
 
@@ -41,10 +44,13 @@ mehr dazu.
 - **Sichtbarkeit**: Presenter sind package-private; View-Klassen `public` (Vaadin-Route), ihre
   Konstruktoren aber package-private.
 
-## Architektur & Schichten (migrierter Kontext)
+## Architektur & Schichten (migrierte Kontexte)
 
 - Die **Domäne importiert nur JDK** — kein Spring, kein Lombok, kein JPA. Aggregate referenzieren
   einander ausschließlich über **typisierte IDs**.
+- **In einen fremden Kontext führt genau ein Weg: sein `port/in`.** Der Sprechtag liest die
+  Schulorganisation, nie umgekehrt; geteilte Typen gibt es über die Grenze nicht — dort gehen
+  `UUID`s und Text.
 - Presenter rufen **ausschließlich Use-Case-Ports** (`port/in`), auch für Abfragen. Die Records
   liegen dort, nicht im Service — `Buchen.BuchungsAnfrage`, `Auswerten.SprechtagAuswertung`.
 - **Zwei Wege in die Datenbank**: Aggregat-Repository zum Schreiben, Query-Port mit
@@ -112,4 +118,4 @@ Die fünf kanonischen Standard-Rollen, unverändert. See `docs/agents/triage-lab
 
 ### Domain docs
 
-Single-context (`CONTEXT.md` + `docs/adr/` im Repo-Root). See `docs/agents/domain.md`.
+Zwei Kontexte: `CONTEXT-MAP.md` im Repo-Root verweist auf je ein `CONTEXT.md` unter `docs/contexts/`; ADRs gemeinsam in `docs/adr/`. See `docs/agents/domain.md`.

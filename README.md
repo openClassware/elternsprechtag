@@ -157,7 +157,7 @@ docker exec elternsprechtag-database-1 psql -U myuser -d elternsprechtag \
 | [Konfiguration & gespeicherte Daten](docs/konfiguration.md) | Alle Umgebungsvariablen, Defaults, Profile und die Frage, welche Daten entstehen |
 | [Deploy](docs/deploy.md)                              | Wie die öffentliche Demo betrieben wird                          |
 | [CI](docs/ci.md)                                      | Was auf dem Weg nach `main` geprüft wird                         |
-| [Domänen-Kontext](CONTEXT.md)                         | Das Vokabular des Projekts: Sprechtag, Termin, Buchung, Lehrauftrag |
+| [Context Map](CONTEXT-MAP.md)                         | Die zwei Kontexte und ihre Grenze; von dort je ein Glossar          |
 | [Architektur](docs/arc/ARCHITECTURE.md)               | Schichtung, Auth-Modell, Entscheidungen                          |
 
 ## Lizenz

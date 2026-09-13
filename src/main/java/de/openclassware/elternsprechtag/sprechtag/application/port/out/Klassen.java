@@ -14,7 +14,17 @@ import java.util.UUID;
  */
 public interface Klassen {
 
-  /** Alle Klassen, nach Namen aufsteigend. */
+  /**
+   * Die Klassen, die ein Sprechtag einladen kann — nach Namen aufsteigend. Eine stillgelegte Klasse
+   * ist nicht dabei.
+   */
+  List<KlasseDaten> waehlbare();
+
+  /**
+   * Alle Klassen, <b>auch stillgelegte</b>, nach Namen aufsteigend — zum Auflösen der Namen, die an
+   * einem bestehenden Sprechtag hängen. Ein veröffentlichter Sprechtag hat seine Klassen
+   * eingeladen; dass eine davon inzwischen stillgelegt ist, darf ihm den Namen nicht wegnehmen.
+   */
   List<KlasseDaten> alle();
 
   record KlasseDaten(UUID id, String name) {}

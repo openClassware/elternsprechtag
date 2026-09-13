@@ -1,14 +1,16 @@
-# Domänen-Kontext — Elternsprechtag
+# Domänen-Kontext — Sprechtag
 
-Einstiegspunkt ins **Domänenwissen**: das Vokabular des Projekts und was die Begriffe fachlich
-bedeuten. Wer hier nachschlägt, soll die Sprache des Projekts benutzen statt eigene zu erfinden.
+Das Vokabular des **Ablaufs**: anlegen, veröffentlichen, buchen, auswerten. Der erste der beiden
+Kontexte des Projekts — die Übersicht steht in [`CONTEXT-MAP.md`](../../../CONTEXT-MAP.md), die
+Stammdaten (Lehrkraft, Klasse, Fach, Lehrauftrag) im zweiten:
+[`../schulorganisation/CONTEXT.md`](../schulorganisation/CONTEXT.md).
 
 **Was hier _nicht_ steht:** Architekturregeln (Schichtung, DTO-Grenze, Auth-Modell, i18n, Tests)
-stehen in [`docs/arc/ARCHITECTURE.md`](docs/arc/ARCHITECTURE.md), die Kurzfassung in
-[`CLAUDE.md`](CLAUDE.md), einzelne Entscheidungen in [`docs/adr/`](docs/adr/). Von hier wird
-darauf verwiesen, nicht wiederholt.
+stehen in [`docs/arc/ARCHITECTURE.md`](../../arc/ARCHITECTURE.md), die Kurzfassung in
+[`CLAUDE.md`](../../../CLAUDE.md), einzelne Entscheidungen in [`docs/adr/`](../../adr/). Von hier
+wird darauf verwiesen, nicht wiederholt.
 
-Ergänzend visuell: [`docs/arc/domain.puml`](docs/arc/domain.puml) (Domänen-Klassendiagramm).
+Ergänzend visuell: [`docs/arc/domain.puml`](../../arc/domain.puml) (Domänen-Klassendiagramm).
 Bei Abweichungen zwischen Diagramm und Code gilt der **Code**.
 
 ## Worum es geht
@@ -25,6 +27,10 @@ Die Kernkette lautet:
 Ein Sprechtag bietet Termine an; eine Buchung belegt genau einen Termin und richtet sich dabei
 auf einen Lehrauftrag — also auf die konkrete Kombination aus Lehrkraft, Klasse und Fach, über
 die gesprochen werden soll.
+
+**Lehrkraft, Klasse, Fach und Lehrauftrag gehören nicht diesem Kontext.** Sie sind Stammdaten der
+[Schulorganisation](../schulorganisation/CONTEXT.md); dieser Kontext liest sie und schreibt sie nie.
+Was er von ihnen kennt, sind ihre Ids und die Namen, die er anzeigt.
 
 ## Glossar
 
@@ -69,39 +75,20 @@ ablenken. Die Eltern haben ihn schwarz auf weiß, sobald sie ihn brauchen.
 Nicht zu verwechseln mit der **E-Mail der Eltern** an der Buchung: Das ist die Adresse, an die
 *wir* schreiben. Der Schulkontakt ist die Richtung zurück.
 
-### Klasse
+### Buchungsziel
 
-Eine Schulklasse (`10a`). Ein Sprechtag umfasst eine oder mehrere Klassen — daraus leitet sich
-ab, welche Lehrkräfte teilnehmen und welche Gespräche buchbar sind.
+Das, worauf sich eine Buchung richtet: ein **Lehrauftrag** — also die konkrete Kombination aus
+Lehrkraft, Klasse und Fach. Eltern buchen nicht abstrakt „bei einer Lehrkraft", sondern zu einem
+bestimmten Fach in der Klasse ihres Kindes. Der Lehrauftrag ist damit auch die Einheit, in der die
+Eltern-Ansicht auswählt (eine Auswahl pro Lehrauftrag).
 
-### Lehrkraft (Entity `Lehrer`)
-
-Die Person, mit der gesprochen wird: Vorname, Nachname, Kürzel.
-
-Sprachgebrauch: Nach außen — in allen UI-Texten — heißt sie **Lehrkraft**. Die Entity heißt aus
-historischen Gründen `Lehrer`. **Bevorzugter Begriff in Prosa, Issues und neuen Bezeichnern:
-Lehrkraft** (`LehrkraftOption`, `LehrkraftPlan`). „Lehrer" bleibt dort stehen, wo es den
-Entity-/Spaltennamen meint.
-
-Lehrkräfte haben **kein Login** — sie sind Stammdaten, keine Benutzer. Siehe Abschnitt „Auth" in
-[`ARCHITECTURE.md`](docs/arc/ARCHITECTURE.md).
-
-### Fach
-
-Das Unterrichtsfach (Name + Kürzel). Nur als Teil des Lehrauftrags relevant.
-
-### Lehrauftrag
-
-Die Verknüpfung **Lehrkraft × Klasse × Fach** — „Frau X unterrichtet Mathematik in der 10a".
-
-Der Lehrauftrag ist das **Ziel einer Buchung**: Eltern buchen nicht abstrakt „bei einer
-Lehrkraft", sondern zu einem bestimmten Fach in der Klasse ihres Kindes. Er ist damit auch die
-Einheit, in der die Eltern-Ansicht auswählt (eine Auswahl pro Lehrauftrag).
+Der Lehrauftrag selbst gehört der [Schulorganisation](../schulorganisation/CONTEXT.md). Was diesen
+Kontext angeht, ist, was er mit ihm tut:
 
 Eine Buchung **kopiert** ihr Buchungsziel, statt darauf zu verweisen: Lehrkraft, Klasse und Fach
-werden festgehalten, wie sie im Moment der Buchung galten. Lehraufträge sind Stammdaten und ändern
-sich zwischen Schuljahren — eine vergangene Auswertung muss trotzdem lesbar bleiben, auch wenn es
-den Lehrauftrag inzwischen nicht mehr gibt.
+werden festgehalten, wie sie im Moment der Buchung galten; mitgeführt wird nur noch die Id des
+Lehrauftrags, aus dem sie stammen. Stammdaten ändern sich zwischen Schuljahren — eine vergangene
+Auswertung muss trotzdem lesbar bleiben, auch wenn der Lehrauftrag inzwischen stillgelegt ist.
 
 Sprachgebrauch: **Buchungsziel** ist das, worauf sich eine Buchung richtet. Das ist ein Lehrauftrag,
 und nach der Buchung dessen festgehaltener Stand.
@@ -124,7 +111,7 @@ seinen Buchungen und wird nicht daneben geführt — sonst gäbe es zwei Wahrhei
 können. Nur **entfällt** ist eine eigene Angabe, denn das ist eine Entscheidung des Organizers.
 
 *Noch nicht gebaut:* **entfällt** ist beschlossen
-([`ABDECKUNG.md`](docs/arc/ABDECKUNG.md) Z. 230), aber noch nicht umgesetzt.
+([`ABDECKUNG.md`](../../arc/ABDECKUNG.md) Z. 230), aber noch nicht umgesetzt.
 
 **Materialisierung:** Beim Veröffentlichen erzeugt der Sprechtag für jede teilnehmende Lehrkraft
 × jeden Zeit-Slot einen freien Termin. Jede Lehrkraft bekommt **einen** Slot-Satz, geteilt über
@@ -149,7 +136,7 @@ Sprachgebrauch: Eine **Buchung wird storniert**, ein **Sprechtag wird abgesagt**
 verschiedene Vorgänge und heißen deshalb verschieden — auch in Statuswerten und Methodennamen.
 
 *Noch nicht gebaut:* `STORNIERT` ist im Modell vorgesehen, wird bislang von nichts ausgelöst
-([`ABDECKUNG.md`](docs/arc/ABDECKUNG.md) Z. 166).
+([`ABDECKUNG.md`](../../arc/ABDECKUNG.md) Z. 166).
 
 Eigenschaften, die zur Domäne gehören (nicht nur zur Technik):
 
@@ -210,10 +197,10 @@ Zwei E-Mails an die bei der Buchung hinterlegte Adresse:
 
 - **Absage-Benachrichtigung** — der Organizer sagt einen veröffentlichten Sprechtag ab, alle
   Eltern mit zugesagten Buchungen werden informiert
-  ([ADR 0001](docs/adr/0001-eltern-email-pflicht-fuer-absage-benachrichtigung.md)).
+  ([ADR 0001](../../adr/0001-eltern-email-pflicht-fuer-absage-benachrichtigung.md)).
 - **Buchungsbestätigung** — direkt nach erfolgreicher Buchung, als Beleg über Datum, Uhrzeiten
   und Lehrkräfte
-  ([ADR 0002](docs/adr/0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md)).
+  ([ADR 0002](../../adr/0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md)).
 
 Die E-Mail-Adresse ist **zweckgebunden** auf genau diese beiden Fälle; eine weitere Nutzung wäre
 eine neue Entscheidung und braucht einen ADR.
@@ -222,10 +209,10 @@ eine neue Entscheidung und braucht einen ADR.
 
 | Nicht                            | Sondern                                                        |
 |----------------------------------|----------------------------------------------------------------|
-| Lehrer (in Prosa/UI)             | **Lehrkraft** (Entity heißt weiterhin `Lehrer`)                 |
+| Lehrer                           | **Lehrkraft** — siehe [Schulorganisation](../schulorganisation/CONTEXT.md) |
 | Admin, Sekretariat               | **Organizer**                                                  |
 | Einladungscode, Passwort         | **Access-Token** / **Zugangs-Link**                            |
-| Elternsprechtag (als Entity)     | **Sprechtag**                                                  |
+| Elternsprechtag (als Aggregat)   | **Sprechtag**                                                  |
 | Zeitfenster (für einen Termin)   | **Termin** bzw. **Slot**                                       |
 | Konto, Account (für Eltern)      | gibt es nicht — anonymer Zugang per Token                      |
 | Anmeldung (für die Buchungsdaten)| **Familie** — „Anmeldung" ist das Organizer-Login, „Anmeldeschluss" der Buchungsschluss |

@@ -4,10 +4,6 @@ import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import de.openclassware.elternsprechtag.domain.Fach;
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Lehrauftrag;
-import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
@@ -45,29 +41,29 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   }
 
   /** Ein veröffentlichter Sprechtag mit einer Lehrkraft (4 materialisierte Slots). */
-  private record Fixture(Sprechtag sprechtag, Lehrauftrag lehrauftrag, Lehrer lehrer) {}
+  private record Fixture(Sprechtag sprechtag, UUID lehrauftrag, UUID lehrkraft) {}
 
   private Fixture publishedSprechtag() {
-    Klasse klasse = persistKlasse("5a");
-    Lehrer lehrer = persistLehrer("Anna", "Berg", "BER");
-    Fach fach = persistFach("Deutsch", "D");
-    Lehrauftrag lehrauftrag = persistLehrauftrag(lehrer, klasse, fach);
+    UUID klasse = persistKlasse("5a");
+    UUID lehrkraft = persistLehrkraft("Anna", "Berg", "BER");
+    UUID fach = persistFach("Deutsch", "D");
+    UUID lehrauftrag = persistLehrauftrag(lehrkraft, klasse, fach);
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
             SprechtagStatus.ENTWURF, klasse);
     veroeffentlichen.veroeffentliche(sprechtag.id().wert());
-    return new Fixture(sprechtag, lehrauftrag, lehrer);
+    return new Fixture(sprechtag, lehrauftrag, lehrkraft);
   }
 
   /** Bucht einen Slot mit gegebener Eltern-E-Mail und liefert die erzeugte Buchung. */
-  private void book(Lehrauftrag auftrag, Termin termin, String email) {
+  private void book(UUID auftrag, Termin termin, String email) {
     buchen.buchen(
         new BuchungsAnfrage(
             "Eltern " + email,
             "Kind " + email,
             email,
-            List.of(new BuchungsWunsch(auftrag.getId(), termin.id().wert(), "n"))));
+            List.of(new BuchungsWunsch(auftrag, termin.id().wert(), "n"))));
   }
 
   @Test
@@ -95,8 +91,8 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
             "Kind Müller",
             "mueller@example.com",
             List.of(
-                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).id().wert(), "n"),
-                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(1).id().wert(), "n"))));
+                new BuchungsWunsch(f.lehrauftrag(), slots.get(0).id().wert(), "n"),
+                new BuchungsWunsch(f.lehrauftrag(), slots.get(1).id().wert(), "n"))));
 
     absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
 

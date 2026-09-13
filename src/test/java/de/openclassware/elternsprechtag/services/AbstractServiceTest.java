@@ -1,13 +1,6 @@
 package de.openclassware.elternsprechtag.services;
 
-import de.openclassware.elternsprechtag.domain.Fach;
-import de.openclassware.elternsprechtag.domain.Klasse;
-import de.openclassware.elternsprechtag.domain.Lehrauftrag;
-import de.openclassware.elternsprechtag.domain.Lehrer;
-import de.openclassware.elternsprechtag.repositories.FachRepository;
-import de.openclassware.elternsprechtag.repositories.KlassenRepository;
-import de.openclassware.elternsprechtag.repositories.LehrauftragRepository;
-import de.openclassware.elternsprechtag.repositories.LehrerRepository;
+import de.openclassware.elternsprechtag.schulorganisation.application.port.in.Stammdatenpflege;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Absagen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Abschliessen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Anlegen;
@@ -16,6 +9,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Bearbeiten
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Duplizieren;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
@@ -67,10 +61,12 @@ abstract class AbstractServiceTest {
    */
   protected static final String SCHULKONTAKT = "Sekretariat, Tel. 0123 456789";
 
-  @Autowired protected LehrauftragRepository lehrauftragRepository;
-  @Autowired protected KlassenRepository klassenRepository;
-  @Autowired protected FachRepository fachRepository;
-  @Autowired protected LehrerRepository lehrerRepository;
+  /**
+   * Die Stammdaten der Fixtures entstehen über den Use-Case-Port der Schulorganisation — denselben
+   * Weg, den später der Import geht. Das ist kein Umweg, sondern der Grund, warum die Schreibseite
+   * dieses Kontexts nicht ungeprüft bleibt, solange es den Import noch nicht gibt.
+   */
+  @Autowired protected Stammdatenpflege stammdatenpflege;
 
   /** Die Schreibwege auf die Aggregate — dieselben Ports, die die Use Cases benutzen. */
   @Autowired protected Sprechtage sprechtage;
@@ -84,6 +80,7 @@ abstract class AbstractServiceTest {
   @Autowired protected Absagen absagen;
   @Autowired protected Abschliessen abschliessen;
   @Autowired protected ZurueckAufEntwurf zurueckAufEntwurf;
+  @Autowired protected Klassenauswahl klassenauswahl;
   @Autowired protected Sprechtagsuebersicht sprechtagsuebersicht;
   @Autowired protected Sprechtagszugang sprechtagszugang;
 
@@ -102,16 +99,18 @@ abstract class AbstractServiceTest {
   @BeforeEach
   @AfterEach
   void cleanDb() {
-    // FK-sichere Reihenfolge. Sprechtag, Termin und Buchung gehören keinem JPA-Repository mehr; sie
-    // werden als das geleert, was sie sind — die Tabellen zweier Aggregate.
+    // FK-sichere Reihenfolge. Kein Aggregat-Port hat ein `deleteAll` und keiner soll eins bekommen:
+    // Löschen ist im Betrieb kein Vorgang — Stammdaten werden stillgelegt, Sprechtage abgesagt.
+    // Die Tabellen werden hier als das geleert, was sie sind, und das bleibt auf den Testaufbau
+    // beschränkt.
     jdbc.update("delete from buchungen");
     jdbc.update("delete from termin");
     jdbc.update("delete from sprechtage_klassen");
     jdbc.update("delete from sprechtage");
-    lehrauftragRepository.deleteAll();
-    klassenRepository.deleteAll();
-    fachRepository.deleteAll();
-    lehrerRepository.deleteAll();
+    jdbc.update("delete from lehrauftrag");
+    jdbc.update("delete from klassen");
+    jdbc.update("delete from faecher");
+    jdbc.update("delete from lehrer");
   }
 
   /** Alle Termin-Aggregate der Datenbank, chronologisch. */
@@ -122,8 +121,8 @@ abstract class AbstractServiceTest {
   }
 
   /** Die Termine genau dieser Lehrkraft, chronologisch. */
-  protected List<Termin> termineVon(Lehrer lehrer) {
-    LehrkraftId lehrkraft = LehrkraftId.von(lehrer.getId());
+  protected List<Termin> termineVon(UUID lehrkraftId) {
+    LehrkraftId lehrkraft = LehrkraftId.von(lehrkraftId);
     return alleTermine().stream().filter(termin -> termin.lehrkraft().equals(lehrkraft)).toList();
   }
 
@@ -149,35 +148,24 @@ abstract class AbstractServiceTest {
     return alleTermine().stream().flatMap(termin -> termin.buchungen().stream()).toList();
   }
 
-  protected Fach persistFach(String name, String shortName) {
-    Fach fach = new Fach();
-    fach.setId(UUID.randomUUID());
-    fach.setName(name);
-    fach.setShortName(shortName);
-    return fachRepository.save(fach);
+  // Die Stammdaten-Fixtures geben Ids zurück, keine Aggregate: Die Aggregate der Schulorganisation
+  // gehören ihrem Kontext, und was dieser hier braucht, ist genau der Verweis, den auch die
+  // Anwendung über die Grenze reicht.
+
+  protected UUID persistFach(String name, String kuerzel) {
+    return stammdatenpflege.legeFachAn(name, kuerzel);
   }
 
-  protected Lehrer persistLehrer(String vorname, String nachname, String kuerzel) {
-    Lehrer lehrer = new Lehrer();
-    lehrer.setVorname(vorname);
-    lehrer.setNachname(nachname);
-    lehrer.setKuerzel(kuerzel);
-    return lehrerRepository.save(lehrer);
+  protected UUID persistLehrkraft(String vorname, String nachname, String kuerzel) {
+    return stammdatenpflege.legeLehrkraftAn(vorname, nachname, kuerzel);
   }
 
-  protected Klasse persistKlasse(String name) {
-    Klasse klasse = new Klasse();
-    klasse.setId(UUID.randomUUID());
-    klasse.setName(name);
-    return klassenRepository.save(klasse);
+  protected UUID persistKlasse(String name) {
+    return stammdatenpflege.legeKlasseAn(name);
   }
 
-  protected Lehrauftrag persistLehrauftrag(Lehrer lehrer, Klasse klasse, Fach fach) {
-    Lehrauftrag lehrauftrag = new Lehrauftrag();
-    lehrauftrag.setLehrer(lehrer);
-    lehrauftrag.setKlasse(klasse);
-    lehrauftrag.setFach(fach);
-    return lehrauftragRepository.save(lehrauftrag);
+  protected UUID persistLehrauftrag(UUID lehrkraft, UUID klasse, UUID fach) {
+    return stammdatenpflege.erteileLehrauftrag(lehrkraft, klasse, fach);
   }
 
   /**
@@ -192,7 +180,7 @@ abstract class AbstractServiceTest {
       LocalTime ende,
       int slotMinuten,
       SprechtagStatus status,
-      Klasse... klassen) {
+      UUID... klassen) {
     return persistSprechtag(titel, null, datum, beginn, ende, slotMinuten, status, klassen);
   }
 
@@ -205,7 +193,7 @@ abstract class AbstractServiceTest {
       LocalTime ende,
       int slotMinuten,
       SprechtagStatus status,
-      Klasse... klassen) {
+      UUID... klassen) {
     Sprechtag sprechtag =
         Sprechtag.entwirf(
             titel,
@@ -216,7 +204,7 @@ abstract class AbstractServiceTest {
             datum,
             new Zeitfenster(beginn, ende),
             Slotdauer.vonMinuten(slotMinuten),
-            Arrays.stream(klassen).map(klasse -> KlasseId.von(klasse.getId())).toList());
+            Arrays.stream(klassen).map(KlasseId::von).toList());
     switch (status) {
       case ENTWURF -> {}
       case VEROEFFENTLICHT -> sprechtag.veroeffentliche();

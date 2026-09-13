@@ -146,7 +146,23 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     return auswahl.stream().map(KlasseOption::id).collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
-  /** Eine Klasse, die es nicht mehr gibt, fällt aus der Auswahl — angeboten wird nur Vorhandenes. */
+  /**
+   * Füllt die Klassen-Auswahl. Welche Klassen darin stehen, entscheidet der Use Case — er nimmt die
+   * bereits gewählten mit auf, auch stillgelegte.
+   */
+  private void zeigeKlassen(Set<UUID> bereitsGewaehlt) {
+    List<KlasseOption> optionen =
+        presenter.waehlbareKlassen(bereitsGewaehlt == null ? Set.of() : bereitsGewaehlt);
+    klassenById.clear();
+    optionen.forEach(option -> klassenById.put(option.id(), option));
+    klassen.setItems(optionen);
+  }
+
+  /**
+   * Eine Klasse, die es gar nicht mehr gibt, fällt aus der Auswahl. Das bleibt der einzige Fall:
+   * Stillgelegte Klassen bietet {@link #zeigeKlassen(Set)} weiterhin an, sonst nähme das Formular
+   * sie dem Sprechtag beim nächsten Speichern kommentarlos weg.
+   */
   private Set<KlasseOption> zuOptionen(Set<UUID> ids) {
     return ids.stream()
         .map(klassenById::get)
@@ -166,6 +182,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
       return;
     }
     editingId = id.get();
+    // Vor dem Lesen, nicht danach: Der Konverter unten schlägt die Ids in `klassenById` nach, und
+    // was dort fehlt, fiele beim nächsten Speichern still aus dem Sprechtag.
+    zeigeKlassen(form.get().getKlasseIds());
     binder.readBean(form.get());
     if (form.get().isZeitstrukturEingefroren()) {
       sperreZeitstruktur();
@@ -305,9 +324,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     panel.setDescription(getTranslation("edit-sprechtag.klassen.description"));
 
     klassen = new CheckboxGroup<>();
-    List<KlasseOption> optionen = presenter.findAllKlassen();
-    optionen.forEach(option -> klassenById.put(option.id(), option));
-    klassen.setItems(optionen);
+    zeigeKlassen(Set.of());
     klassen.setHelperText(getTranslation("edit-sprechtag.klassen.helper", 0));
     klassen.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
     klassen.setRenderer(new TextRenderer<>(KlasseOption::name));

@@ -14,9 +14,9 @@ fertig, wenn die Fälle seiner Phase, die auf `muss` stehen, sich verhalten wie 
 *bevor zum ersten Mal ein echter Sprechtag an einer Schule damit gefahren wird.* Alle Fälle dieser
 Stufe tragen dieselbe Annahme — dass kein Ernstfall bevorsteht. Fällt sie, fallen sie gemeinsam.
 
-Die Begriffe kommen aus [`CONTEXT.md`](../../CONTEXT.md) (Sprechtag, Termin, Buchung, Lehrauftrag,
-Organizer, Access-Token), die Architekturregeln aus [`ARCHITECTURE.md`](ARCHITECTURE.md). Beides
-wird von hier **verwiesen, nicht wiederholt**.
+Die Begriffe (Sprechtag, Termin, Buchung, Lehrauftrag, Organizer, Access-Token) kommen aus den
+beiden Glossaren, auf die [`CONTEXT-MAP.md`](../../CONTEXT-MAP.md) verweist; die Architekturregeln
+aus [`ARCHITECTURE.md`](ARCHITECTURE.md). Beides wird von hier **verwiesen, nicht wiederholt**.
 
 Entstanden aus der Wayfinder-Karte
 [#93](https://github.com/openClassware/elternsprechtag/issues/93); die Begründungen einzelner
@@ -149,7 +149,7 @@ bei einem realen Missbrauchsfall neu bewerten. Das ist der einzige Eintrag diese
 Abbau statt Aufbau verlangt.
 
 **Missbrauch des Links — bewusst nein.** Wer den Link hat, darf buchen; das Token ist der gesamte
-Zugangsschutz und laut `CONTEXT.md` eine bewusste Entscheidung. Personenbezogene Daten gibt die
+Zugangsschutz und laut `docs/contexts/sprechtag/CONTEXT.md` eine bewusste Entscheidung. Personenbezogene Daten gibt die
 Elternsicht dabei nicht preis — `SlotOption` trägt nur Termin-Id, Uhrzeit und ein `belegt`-Flag
 (`BuchungService:45`). Festzuhalten bleibt: Gegen mutwilliges Blockieren hat der Organizer kein
 Mittel außer der Absage des ganzen Sprechtags.
@@ -208,7 +208,7 @@ technisch am optimistischen Locking über `@Version` auf `Termin` hängt (siehe
 **Geschwisterkinder — bewusst zurückgestellt; neu zu bewerten, sobald sie real auftreten.** Der
 Fall ist real und wäre über einen Buchungsvorgang für mehrere Kinder abbildbar. Vorerst bleibt es
 bei einem Kind je Vorgang. Folge, die hier stehen muss: Die Domänenregel „kein Zeitkonflikt" aus
-`CONTEXT.md` ist damit nur *innerhalb* eines Vorgangs durchgesetzt. Eltern können für zwei Kinder
+`docs/contexts/sprechtag/CONTEXT.md` ist damit nur *innerhalb* eines Vorgangs durchgesetzt. Eltern können für zwei Kinder
 dieselbe Uhrzeit buchen; bemerken kann das niemand, auch der Organizer nicht, weil die Auswertung
 nach Lehrkraft gruppiert und nicht nach Familie.
 

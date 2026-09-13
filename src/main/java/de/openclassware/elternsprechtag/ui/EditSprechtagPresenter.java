@@ -6,6 +6,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenaus
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,8 +21,12 @@ class EditSprechtagPresenter {
   private final Anlegen anlegen;
   private final Bearbeiten bearbeiten;
 
-  List<KlasseOption> findAllKlassen() {
-    return klassenauswahl.alleKlassen();
+  /**
+   * Was die Klassen-Auswahl anbieten darf: die aktiven Klassen plus die, die dieser Sprechtag schon
+   * gewählt hat. Beim Anlegen ist {@code bereitsGewaehlt} leer.
+   */
+  List<KlasseOption> waehlbareKlassen(Collection<UUID> bereitsGewaehlt) {
+    return klassenauswahl.waehlbareKlassen(bereitsGewaehlt);
   }
 
   Optional<SprechtagFormular> loadForm(UUID id) {
