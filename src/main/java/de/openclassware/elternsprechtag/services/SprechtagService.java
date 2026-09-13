@@ -5,13 +5,15 @@ import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.domain.Termin;
-import de.openclassware.elternsprechtag.domain.TerminStatusEnum;
 import de.openclassware.elternsprechtag.repositories.KlassenRepository;
 import de.openclassware.elternsprechtag.repositories.LehrauftragRepository;
 import de.openclassware.elternsprechtag.repositories.SprechtagRepository;
-import de.openclassware.elternsprechtag.repositories.TerminRepository;
 import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
+import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
+import de.openclassware.elternsprechtag.sprechtag.domain.Zeitraum;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -39,7 +41,7 @@ public class SprechtagService {
 
   private final SprechtagRepository sprechtagRepository;
   private final LehrauftragRepository lehrauftragRepository;
-  private final TerminRepository terminRepository;
+  private final Termine termine;
   private final KlassenRepository klassenRepository;
   private final ApplicationEventPublisher eventPublisher;
 
@@ -235,7 +237,7 @@ public class SprechtagService {
    */
   private void materialisiereWennNoetig(Sprechtag sprechtag) {
     if (sprechtag.getStatus() == SprechtagStatusEnum.VEROEFFENTLICHT
-        && !terminRepository.existsBySprechtag(sprechtag)) {
+        && !termine.existierenFuer(SprechtagId.von(sprechtag.getId()))) {
       materialisiereTermine(sprechtag);
     }
   }
@@ -264,19 +266,24 @@ public class SprechtagService {
     LocalDate datum = sprechtag.getStartDate();
     int slot = sprechtag.getSlotInMinutes();
 
-    List<Termin> termine = new ArrayList<>();
+    // Übergangsweise: Der Sprechtag ist noch eine Entity, die Termine sind schon Aggregate. Die
+    // Materialisierung schreibt deshalb über den Port — sie ist die einzige Stelle, an der die
+    // alte und die neue Welt aufeinandertreffen, und wandert mit der Sprechtag-Scheibe weiter.
+    SprechtagId sprechtagId = SprechtagId.von(sprechtag.getId());
+    List<Termin> neue = new ArrayList<>();
     for (Lehrer lehrer : lehrerById.values()) {
+      LehrkraftId lehrkraft = LehrkraftId.von(lehrer.getId());
       for (LocalTime start : slotStarts) {
-        Termin termin = new Termin();
-        termin.setStartzeit(LocalDateTime.of(datum, start));
-        termin.setEndzeit(LocalDateTime.of(datum, start.plusMinutes(slot)));
-        termin.setStatus(TerminStatusEnum.FREI);
-        termin.setLehrer(lehrer);
-        termin.setSprechtag(sprechtag);
-        termine.add(termin);
+        neue.add(
+            Termin.neu(
+                sprechtagId,
+                lehrkraft,
+                new Zeitraum(
+                    LocalDateTime.of(datum, start),
+                    LocalDateTime.of(datum, start.plusMinutes(slot)))));
       }
     }
-    terminRepository.saveAll(termine);
+    termine.speichereAlle(neue);
   }
 
   /** Slot-Startzeiten von startTime bis endTime; ein Rest-Slot, der nicht mehr voll passt, entfällt. */

@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.services;
 
+import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -9,15 +10,14 @@ import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.domain.Termin;
+import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
-import de.openclassware.elternsprechtag.services.BuchungService.TerminBelegtException;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +30,7 @@ import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
- * End-to-End der Bestätigungs-Naht: Ein Eltern-Submit über {@link BuchungService#buchen} löst nach
+ * End-to-End der Bestätigungs-Naht: Ein Eltern-Submit über {@link de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen#buchen} löst nach
  * Commit den Versand genau einer Bestätigungsmail aus. Angetrieben wird über den Service, beobachtet
  * am {@link BenachrichtigungSender}-Port — Event-Klassen, Listener-Verdrahtung und die interne
  * Aufteilung der Services bleiben dem Test bewusst unbekannt. Der {@code @Async}-Executor ist ein
@@ -39,7 +39,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @ServiceTest
 @Import({
   SprechtagService.class,
-  BuchungService.class,
+  SprechtagKontextTestConfig.class,
   KlassenService.class,
   BuchungBestaetigungService.class,
   BuchungBestaetigungListener.class,
@@ -84,27 +84,21 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     return new Fixture(sprechtag, lehrauftrag);
   }
 
-  private List<Termin> termineSorted() {
-    return terminRepository.findAll().stream()
-        .sorted(Comparator.comparing(Termin::getStartzeit))
-        .toList();
-  }
-
   private void book(Lehrauftrag auftrag, String email, String notiz, Termin... termine) {
-    buchungService.buchen(
+    buchen.buchen(
         new BuchungsAnfrage(
             "Elke Elternteil",
             "Karl Kind",
             email,
             Arrays.stream(termine)
-                .map(t -> new BuchungsWunsch(auftrag.getId(), t.getId(), notiz))
+                .map(t -> new BuchungsWunsch(auftrag.getId(), t.id().wert(), notiz))
                 .toList()));
   }
 
   @Test
   void singleBooking_afterCommit_sendsOneConfirmation() {
     Fixture f = publishedSprechtag("Aula");
-    book(f.lehrauftrag(), "eltern@example.com", "Bitte pünktlich", termineSorted().get(0));
+    book(f.lehrauftrag(), "eltern@example.com", "Bitte pünktlich", alleTermine().get(0));
 
     assertThat(sender.empfangen).hasSize(1);
     Nachricht nachricht = sender.empfangen.get(0);
@@ -119,7 +113,7 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   @Test
   void multipleSlots_inOneSubmit_sendOneChronologicalConfirmation() {
     Fixture f = publishedSprechtag("Aula");
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     // Bewusst in umgekehrter Reihenfolge gewünscht — die Mail muss trotzdem chronologisch listen.
     book(f.lehrauftrag(), "eltern@example.com", null, slots.get(2), slots.get(0));
 
@@ -130,9 +124,29 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   }
 
   @Test
+  void vierTermineInEinemSubmit_ergebenGenauEineBestaetigung() {
+    Fixture f = publishedSprechtag("Aula");
+    List<Termin> slots = alleTermine();
+
+    book(
+        f.lehrauftrag(),
+        "eltern@example.com",
+        null,
+        slots.get(0),
+        slots.get(1),
+        slots.get(2),
+        slots.get(3));
+
+    // Der Punkt der Bündelung: vier Aggregate melden vier Ereignisse, der Use Case macht daraus
+    // einen Vorgang — und die Familie bekommt eine Mail, nicht vier.
+    assertThat(sender.empfangen).hasSize(1);
+    assertThat(sender.empfangen.get(0).text()).contains("14:00", "14:15", "14:30", "14:45");
+  }
+
+  @Test
   void twoSubmits_sameAddress_sendTwoConfirmationsEachWithOwnSlots() {
     Fixture f = publishedSprechtag("Aula");
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), "eltern@example.com", null, slots.get(0));
     book(f.lehrauftrag(), "eltern@example.com", null, slots.get(3));
 
@@ -144,7 +158,7 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   @Test
   void withoutLocation_noEmptyLocationLine() {
     Fixture f = publishedSprechtag(null);
-    book(f.lehrauftrag(), "eltern@example.com", null, termineSorted().get(0));
+    book(f.lehrauftrag(), "eltern@example.com", null, alleTermine().get(0));
 
     assertThat(sender.empfangen).hasSize(1);
     assertThat(sender.empfangen.get(0).text()).doesNotContain("Ort:");
@@ -153,7 +167,7 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   @Test
   void withSchulkontakt_appearsAsOwnParagraph() {
     Fixture f = publishedSprechtag("Aula");
-    book(f.lehrauftrag(), "eltern@example.com", null, termineSorted().get(0));
+    book(f.lehrauftrag(), "eltern@example.com", null, alleTermine().get(0));
 
     String text = sender.empfangen.get(0).text();
     // Eigener, beschrifteter Absatz zwischen Hinweis und Grußformel.
@@ -163,7 +177,7 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   @Test
   void withoutNote_noNoteLineAtAll() {
     Fixture f = publishedSprechtag("Aula");
-    book(f.lehrauftrag(), "eltern@example.com", "   ", termineSorted().get(0));
+    book(f.lehrauftrag(), "eltern@example.com", "   ", alleTermine().get(0));
 
     assertThat(sender.empfangen).hasSize(1);
     assertThat(sender.empfangen.get(0).text()).doesNotContain("Notiz");
@@ -172,17 +186,17 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   @Test
   void noteBelongsToItsAppointment_indentedUnderIt() {
     Fixture f = publishedSprechtag("Aula");
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     // Zwei Termine, nur der zweite trägt eine Notiz.
-    buchungService.buchen(
+    buchen.buchen(
         new BuchungsAnfrage(
             "Elke Elternteil",
             "Karl Kind",
             "eltern@example.com",
             List.of(
-                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).getId(), null),
+                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).id().wert(), null),
                 new BuchungsWunsch(
-                    f.lehrauftrag().getId(), slots.get(1).getId(), "Bitte über Mathe sprechen"))));
+                    f.lehrauftrag().getId(), slots.get(1).id().wert(), "Bitte über Mathe sprechen"))));
 
     assertThat(sender.empfangen).hasSize(1);
     String text = sender.empfangen.get(0).text();
@@ -199,18 +213,18 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag("Aula");
     sender.scheitertFuer.add("eltern@example.com");
 
-    book(f.lehrauftrag(), "eltern@example.com", null, termineSorted().get(0));
+    book(f.lehrauftrag(), "eltern@example.com", null, alleTermine().get(0));
 
     // Versendet wurde versucht, die Zustellung scheiterte — die Buchung steht trotzdem.
     assertThat(sender.versucht).hasSize(1);
     assertThat(sender.empfangen).isEmpty();
-    assertThat(buchungRepository.findAll()).hasSize(1);
+    assertThat(alleBuchungen()).hasSize(1);
   }
 
   @Test
   void failedBooking_onTakenSlot_triggersNoSend() {
     Fixture f = publishedSprechtag("Aula");
-    Termin slot = termineSorted().get(0);
+    Termin slot = alleTermine().get(0);
     book(f.lehrauftrag(), "erste@example.com", null, slot);
     sender.reset();
 
@@ -224,7 +238,7 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
   void submitWithoutSlots_triggersNoSend() {
     publishedSprechtag("Aula");
 
-    buchungService.buchen(
+    buchen.buchen(
         new BuchungsAnfrage("Elke", "Karl", "eltern@example.com", List.of()));
 
     assertThat(sender.versucht).isEmpty();

@@ -8,6 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.data.jdbc.autoconfigure.DataJdbcRepositoriesAutoConfiguration;
 import org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.test.context.ActiveProfiles;
@@ -41,7 +42,13 @@ import org.springframework.transaction.annotation.Transactional;
 // ließe den Kontext gar nicht erst hochkommen. Mit ihr läuft in Tests dieselbe Migrationskette
 // wie im Betrieb — und der Kontextstart prüft nebenbei, dass Migrationen und Entitäten
 // zusammenpassen.
-@ImportAutoConfiguration(FlywayAutoConfiguration.class)
+// Ebenso wenig kennt der @DataJpaTest-Schnitt Spring Data JDBC — auf dem aber liegt seit dem
+// Termin-Aggregat die Schreibseite dieses Kontexts. Ohne diese Zeile fehlte dem Slice das
+// Repository des Aggregats, und jeder Service-Test scheiterte am fehlenden Adapter.
+@ImportAutoConfiguration({
+  FlywayAutoConfiguration.class,
+  DataJdbcRepositoriesAutoConfiguration.class
+})
 // Eigene Test-Datenbank statt der Entwicklungsdatenbank. Zwingend, nicht kosmetisch: Die
 // Fixture-Reinigung in AbstractServiceTest räumt vor jedem Test alle Tabellen ab — gegen
 // `elternsprechtag` würde ein Testlauf die Daten leeren, mit denen gerade entwickelt wird.

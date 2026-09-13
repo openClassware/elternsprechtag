@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.ui;
 
+
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -11,7 +12,6 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -23,12 +23,12 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import de.openclassware.elternsprechtag.services.BuchungService;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftOption;
-import de.openclassware.elternsprechtag.services.BuchungService.SlotOption;
 import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagPublic;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
+import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import de.openclassware.elternsprechtag.ui.components.StepHeader;
 import java.util.List;
 
@@ -527,7 +527,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     try {
       int gebucht = presenter.buchen(anfrage);
       showConfirmation(gebucht, angaben);
-    } catch (BuchungService.TerminBelegtException conflict) {
+    } catch (TerminBelegtException conflict) {
       Notification notification =
           Notification.show(getTranslation("elternsprechtag.footer.conflict"));
       notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

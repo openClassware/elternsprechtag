@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.services;
 
+import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.Import;
  * Datenbank-Client oder einen künftigen Schreibweg, der die Service-Prüfung umgeht.
  */
 @ServiceTest
-@Import({SprechtagService.class, BuchungService.class, KlassenService.class})
+@Import({SprechtagService.class, KlassenService.class, SprechtagKontextTestConfig.class})
 class SchulkontaktConstraintTest extends AbstractServiceTest {
 
   @Autowired private DataSource dataSource;

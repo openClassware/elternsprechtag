@@ -4,6 +4,9 @@
 ' Domain-Diagramm (schlanke Variante): Elternsprechtag
 ' Attribut-Markierung:  ! = erforderlich,  ? = optional
 ' Beziehungs-Multiplizitaet: 1, 0..1, 0..*, 1..*
+'
+' Der Umbau auf Aggregate laeuft (ADR 0003). Scheibe 1 ist geschnitten: Termin ist
+' Aggregat-Root, Buchung liegt darin. Alles Uebrige ist noch Bestand.
 ' ==========================================================
 
 left to right direction
@@ -17,14 +20,17 @@ enum SprechtagStatusEnum {
   ABGESAGT
 }
 
-enum TerminStatusEnum {
-  FREI
-  BELEGT
+' Kein "belegt": Das ist die Frage, ob eine aktive Buchung existiert, und wird abgeleitet.
+' Gespeichert ist nur die Absicht des Organizers, den Slot anzubieten.
+enum Verfuegbarkeit {
+  VERFUEGBAR
+  ENTFAELLT
 }
 
-enum BuchungStatusEnum {
+' STORNIERT, nicht ABGESAGT: Eine Buchung wird storniert, ein Sprechtag wird abgesagt.
+enum Buchungsstatus {
   ZUGESAGT
-  ABGESAGT
+  STORNIERT
 }
 
 ' Auth ist bewusst in-memory (ein Organizer, ohne DB-Account) — daher keine Account-Entity.
@@ -40,6 +46,7 @@ class Sprechtag {
   + zugangstoken! : String
   + ort? : String
   + hinweis? : String
+  + schulkontakt! : String
   + status! : SprechtagStatusEnum
 }
 
@@ -65,21 +72,42 @@ class Lehrauftrag {
   + id! : UUID
 }
 
-class Termin {
-  + id! : UUID
-  + startzeit! : DateTime
-  + endzeit! : DateTime
-  + status! : TerminStatusEnum
+class Termin <<Aggregat-Root>> {
+  + id! : TerminId
+  + sprechtag! : SprechtagId
+  + lehrkraft! : LehrkraftId
+  + zeitraum! : Zeitraum
+  + verfuegbarkeit! : Verfuegbarkeit
+  --
+  + buche(...) : BuchungId
+  + storniere(BuchungId)
+  + istBuchbar() : boolean
 }
 
-class Buchung {
-  + id! : UUID
+class Buchung <<innere Entity>> {
+  + id! : BuchungId
   + erstelltAm! : DateTime
-  + status! : BuchungStatusEnum
-  + schuelerName! : String
+  + status! : Buchungsstatus
+  + familie! : Familie
+  + ziel! : Buchungsziel
+  + notiz? : Notiz
+}
+
+class Familie <<Value Object>> {
   + elternName! : String
-  + elternEmail! : String
-  + notiz? : String
+  + schuelerName! : String
+  + email! : String
+}
+
+' Stand zum Buchungszeitpunkt, kein Verweis: Ein Import darf die Auswertung eines
+' vergangenen Sprechtags nicht veraendern.
+class Buchungsziel <<Value Object>> {
+  + herkunft! : LehrauftragId
+  + lehrkraft! : LehrkraftId
+  + lehrkraftName! : String
+  + lehrkraftKuerzel! : String
+  + klasse! : String
+  + fach! : String
 }
 
 Sprechtag "0..*" --> "1..*" Klasse : umfasst
@@ -88,19 +116,23 @@ Klasse "1" --> "0..*" Lehrauftrag : Unterricht in
 Fach "1" --> "0..*" Lehrauftrag : unterrichtet als
 Lehrer "1" --> "0..*" Lehrauftrag : erteilt
 
-Sprechtag "1" --> "0..*" Termin : bietet
-Lehrer "1" --> "0..*" Termin : hält
+' Gestrichelt: nur eine typisierte Id, keine Objektnavigation ueber die Aggregat-Grenze.
+Sprechtag "1" <.. "0..*" Termin : SprechtagId
+Lehrer "1" <.. "0..*" Termin : LehrkraftId
 
-Termin "1" --> "0..1" Buchung : gebucht als
-Lehrauftrag "1" --> "0..*" Buchung : betrifft
+Termin "1" *--> "0..*" Buchung : enthaelt\n(hoechstens eine aktiv)
+Buchung *--> Familie
+Buchung *--> Buchungsziel
+Lehrauftrag "1" <.. "0..*" Buchungsziel : LehrauftragId\n(nur Herkunftsspur)
 
 Sprechtag ..> SprechtagStatusEnum
-Termin ..> TerminStatusEnum
-Buchung ..> BuchungStatusEnum
+Termin ..> Verfuegbarkeit
+Buchung ..> Buchungsstatus
 
 legend left
   !  = erforderlich
   ?  = optional
+  durchgezogen = Objektbeziehung, gestrichelt = Referenz per Id
 endlegend
 
 @enduml

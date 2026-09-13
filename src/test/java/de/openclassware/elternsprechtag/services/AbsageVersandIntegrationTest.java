@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.services;
 
+import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import de.openclassware.elternsprechtag.domain.Fach;
@@ -8,13 +9,12 @@ import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.domain.Termin;
+import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -36,7 +36,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @ServiceTest
 @Import({
   SprechtagService.class,
-  BuchungService.class,
+  SprechtagKontextTestConfig.class,
   KlassenService.class,
   AbsageBenachrichtigungService.class,
   AbsageBenachrichtigungListener.class,
@@ -79,25 +79,19 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     return new Fixture(sprechtag, lehrauftrag);
   }
 
-  private List<Termin> termineSorted() {
-    return terminRepository.findAll().stream()
-        .sorted(Comparator.comparing(Termin::getStartzeit))
-        .toList();
-  }
-
   private void book(Lehrauftrag auftrag, Termin termin, String email) {
-    buchungService.buchen(
+    buchen.buchen(
         new BuchungsAnfrage(
             "Eltern " + email,
             "Kind " + email,
             email,
-            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId(), "n"))));
+            List.of(new BuchungsWunsch(auftrag.getId(), termin.id().wert(), "n"))));
   }
 
   @Test
   void absage_afterCommit_notifiesActiveBookings() {
     Fixture f = publishedSprechtag();
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), slots.get(0), "a@example.com");
     book(f.lehrauftrag(), slots.get(1), "b@example.com");
 
@@ -131,7 +125,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
   @Test
   void absage_stands_evenWhenSendFails() {
     Fixture f = publishedSprechtag();
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), slots.get(0), "fehlerhaft@example.com");
     book(f.lehrauftrag(), slots.get(1), "ok@example.com");
     sender.scheitertFuer.add("fehlerhaft@example.com");
@@ -149,7 +143,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
   @Test
   void statusChangeOtherThanCancel_triggersNoSend() {
     Fixture f = publishedSprechtag();
-    book(f.lehrauftrag(), termineSorted().get(0), "eltern@example.com");
+    book(f.lehrauftrag(), alleTermine().get(0), "eltern@example.com");
 
     sprechtagService.changeStatus(f.sprechtag().getId(), SprechtagStatusEnum.ABGESCHLOSSEN);
 

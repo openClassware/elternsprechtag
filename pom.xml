@@ -34,8 +34,15 @@
         <java.version>25</java.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
         <vaadin.version>25.2.6</vaadin.version>
+        <archunit.version>1.4.2</archunit.version>
     </properties>
     <dependencies>
+        <!-- Spring Data JDBC trägt die Aggregate des Sprechtag-Kontexts (ADR 0004). JPA steht
+             übergangsweise daneben, solange `Sprechtag` noch eine Entity ist. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jdbc</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -87,7 +94,19 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jdbc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Die Architekturregeln aus ADR 0003 stehen als Test im Build, nicht nur in Markdown. -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit</artifactId>
+            <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

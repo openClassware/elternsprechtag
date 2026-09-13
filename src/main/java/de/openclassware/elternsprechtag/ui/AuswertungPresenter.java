@@ -1,8 +1,8 @@
 package de.openclassware.elternsprechtag.ui;
 
-import de.openclassware.elternsprechtag.services.BuchungService;
-import de.openclassware.elternsprechtag.services.BuchungService.LehrkraftPlan;
-import de.openclassware.elternsprechtag.services.BuchungService.SprechtagAuswertung;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 @Component
 class AuswertungPresenter {
 
-  private final BuchungService buchungService;
+  private final Auswerten auswerten;
 
   Optional<SprechtagAuswertung> werteAus(UUID sprechtagId) {
-    return buchungService.werteAus(sprechtagId);
+    return auswerten.werteAus(sprechtagId);
   }
 
   /**

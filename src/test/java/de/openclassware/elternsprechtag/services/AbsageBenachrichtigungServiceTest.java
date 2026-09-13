@@ -1,23 +1,21 @@
 package de.openclassware.elternsprechtag.services;
 
+import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import de.openclassware.elternsprechtag.domain.Buchung;
-import de.openclassware.elternsprechtag.domain.BuchungStatusEnum;
 import de.openclassware.elternsprechtag.domain.Fach;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.domain.Termin;
+import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.services.BuchungService.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +26,7 @@ import org.springframework.context.annotation.Import;
 @ServiceTest
 @Import({
   SprechtagService.class,
-  BuchungService.class,
+  SprechtagKontextTestConfig.class,
   KlassenService.class,
   AbsageBenachrichtigungService.class,
   FakeBenachrichtigungSender.class,
@@ -62,26 +60,20 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     return new Fixture(sprechtag, lehrauftrag, lehrer);
   }
 
-  private List<Termin> termineSorted() {
-    return terminRepository.findAll().stream()
-        .sorted(Comparator.comparing(Termin::getStartzeit))
-        .toList();
-  }
-
   /** Bucht einen Slot mit gegebener Eltern-E-Mail und liefert die erzeugte Buchung. */
   private void book(Lehrauftrag auftrag, Termin termin, String email) {
-    buchungService.buchen(
+    buchen.buchen(
         new BuchungsAnfrage(
             "Eltern " + email,
             "Kind " + email,
             email,
-            List.of(new BuchungsWunsch(auftrag.getId(), termin.getId(), "n"))));
+            List.of(new BuchungsWunsch(auftrag.getId(), termin.id().wert(), "n"))));
   }
 
   @Test
   void benachrichtige_activeBookings_yieldOneRecipientEach() {
     Fixture f = publishedSprechtag();
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), slots.get(0), "a@example.com");
     book(f.lehrauftrag(), slots.get(1), "b@example.com");
 
@@ -95,16 +87,16 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   @Test
   void benachrichtige_sameParentMultipleBookings_dedupedToOne() {
     Fixture f = publishedSprechtag();
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     // Dieselbe Adresse an zwei Slots — darf nur eine Benachrichtigung erzeugen.
-    buchungService.buchen(
+    buchen.buchen(
         new BuchungsAnfrage(
             "Eltern Müller",
             "Kind Müller",
             "mueller@example.com",
             List.of(
-                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).getId(), "n"),
-                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(1).getId(), "n"))));
+                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).id().wert(), "n"),
+                new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(1).id().wert(), "n"))));
 
     absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
 
@@ -116,16 +108,10 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   @Test
   void benachrichtige_cancelledBookingsExcluded_activeIncluded() {
     Fixture f = publishedSprechtag();
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), slots.get(0), "aktiv@example.com");
     book(f.lehrauftrag(), slots.get(1), "storniert@example.com");
-    Buchung storniert =
-        buchungRepository.findAll().stream()
-            .filter(b -> b.getElternEmail().equals("storniert@example.com"))
-            .findFirst()
-            .orElseThrow();
-    storniert.setStatus(BuchungStatusEnum.ABGESAGT);
-    buchungRepository.save(storniert);
+    storniere(b -> b.familie().email().equals("storniert@example.com"));
 
     absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
 
@@ -137,7 +123,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   @Test
   void benachrichtige_message_carriesBetreffUndText() {
     Fixture f = publishedSprechtag();
-    book(f.lehrauftrag(), termineSorted().get(0), "eltern@example.com");
+    book(f.lehrauftrag(), alleTermine().get(0), "eltern@example.com");
 
     absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
 
@@ -183,17 +169,11 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   @Test
   void zaehleAktiveEmpfaenger_dedupedByEmail_excludesCancelled() {
     Fixture f = publishedSprechtag();
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), slots.get(0), "a@example.com");
     book(f.lehrauftrag(), slots.get(1), "a@example.com"); // dieselbe Adresse -> zählt einmal
     book(f.lehrauftrag(), slots.get(2), "b@example.com");
-    Buchung storniert =
-        buchungRepository.findAll().stream()
-            .filter(b -> b.getElternEmail().equals("b@example.com"))
-            .findFirst()
-            .orElseThrow();
-    storniert.setStatus(BuchungStatusEnum.ABGESAGT);
-    buchungRepository.save(storniert);
+    storniere(b -> b.familie().email().equals("b@example.com"));
 
     // a@ (aktiv, dedupliziert) zählt; b@ (storniert) nicht.
     assertThat(absageBenachrichtigungService.zaehleAktiveEmpfaenger(f.sprechtag().getId()))
@@ -211,7 +191,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   @Test
   void benachrichtige_senderFailsForOneAddress_othersStillDelivered() {
     Fixture f = publishedSprechtag();
-    List<Termin> slots = termineSorted();
+    List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), slots.get(0), "fehlerhaft@example.com");
     book(f.lehrauftrag(), slots.get(1), "ok@example.com");
     sender.scheitertFuer.add("fehlerhaft@example.com");

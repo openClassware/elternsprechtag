@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.services;
 
+import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -8,7 +9,6 @@ import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Lehrer;
 import de.openclassware.elternsprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.domain.TerminStatusEnum;
 import de.openclassware.elternsprechtag.services.KlassenService.KlasseOption;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagForm;
 import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
@@ -23,7 +23,7 @@ import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 
 @ServiceTest
-@Import({SprechtagService.class, BuchungService.class, KlassenService.class})
+@Import({SprechtagService.class, KlassenService.class, SprechtagKontextTestConfig.class})
 @RecordApplicationEvents
 class SprechtagServiceTest extends AbstractServiceTest {
 
@@ -60,7 +60,7 @@ class SprechtagServiceTest extends AbstractServiceTest {
     assertThat(saved.getTitel()).isEqualTo("Frühling");
     assertThat(saved.getStatus()).isEqualTo(SprechtagStatusEnum.ENTWURF);
     assertThat(saved.getKlassen()).extracting(Klasse::getName).containsExactly("5a");
-    assertThat(terminRepository.count()).as("Entwurf materialisiert keine Termine").isZero();
+    assertThat(alleTermine().size()).as("Entwurf materialisiert keine Termine").isZero();
   }
 
   @Test
@@ -94,11 +94,11 @@ class SprechtagServiceTest extends AbstractServiceTest {
 
     sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
 
-    // 14:00–15:00 in 15-min-Slots => 4 Slots, 1 Lehrkraft => 4 Termine, alle FREI.
-    assertThat(terminRepository.count()).isEqualTo(4);
-    assertThat(terminRepository.findAll())
-        .allSatisfy(t -> assertThat(t.getStatus()).isEqualTo(TerminStatusEnum.FREI))
-        .allSatisfy(t -> assertThat(t.getLehrer().getId()).isEqualTo(lehrer.getId()));
+    // 14:00–15:00 in 15-min-Slots => 4 Slots, 1 Lehrkraft => 4 Termine, alle buchbar.
+    assertThat(alleTermine())
+        .hasSize(4)
+        .allSatisfy(t -> assertThat(t.istBuchbar()).isTrue())
+        .allSatisfy(t -> assertThat(t.lehrkraft().wert()).isEqualTo(lehrer.getId()));
   }
 
   @Test
@@ -114,7 +114,7 @@ class SprechtagServiceTest extends AbstractServiceTest {
     sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
 
     // 14:00 und 14:20 passen (je +20). 14:40+20=15:00 > 14:50 => entfällt. => 2 Slots.
-    assertThat(terminRepository.count()).isEqualTo(2);
+    assertThat(alleTermine().size()).isEqualTo(2);
   }
 
   @Test
@@ -128,7 +128,7 @@ class SprechtagServiceTest extends AbstractServiceTest {
             SprechtagStatusEnum.ENTWURF, klasse);
 
     sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
-    assertThat(terminRepository.count()).isEqualTo(4);
+    assertThat(alleTermine().size()).isEqualTo(4);
 
     // Erneutes Speichern eines bereits veröffentlichten Sprechtags erzeugt keine neuen Termine.
     sprechtagService.createOrUpdate(
@@ -136,7 +136,7 @@ class SprechtagServiceTest extends AbstractServiceTest {
         form("Frühling", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse),
         SprechtagStatusEnum.VEROEFFENTLICHT);
 
-    assertThat(terminRepository.count()).isEqualTo(4);
+    assertThat(alleTermine().size()).isEqualTo(4);
   }
 
   @Test
@@ -265,7 +265,7 @@ class SprechtagServiceTest extends AbstractServiceTest {
             () -> sprechtagService.createOrUpdate(null, form, SprechtagStatusEnum.VEROEFFENTLICHT))
         .isInstanceOf(SprechtagService.SchulkontaktFehltException.class);
 
-    assertThat(terminRepository.count()).as("keine Termine materialisiert").isZero();
+    assertThat(alleTermine().size()).as("keine Termine materialisiert").isZero();
   }
 
   @Test
