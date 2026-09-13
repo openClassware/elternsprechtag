@@ -61,10 +61,15 @@ abgeleitet. Erhalten bleibt ein **gespeichertes** Feld `Verfuegbarkeit` (`VERFUE
 `ENTFAELLT`), denn ein entfallender Termin ist eine Absicht des Organizers, keine Folge — das ist
 zugleich der in `ABDECKUNG.md` Z. 230 geforderte dritte Zustand.
 
+Der Buchungsstatus `ABGESAGT` heißt künftig **`STORNIERT`**. Er kollidierte mit
+`SprechtagStatusEnum.ABGESAGT` bei anderer Bedeutung; `ABDECKUNG.md` spricht durchgängig von Storno.
+Eine Buchung wird storniert, ein Sprechtag wird abgesagt.
+
 ### Einfrieren von Fremddaten
 
-Eine `Buchung` speichert Lehrkraft, Klasse und Fach **als Schnappschuss zum Buchungszeitpunkt**
-(`GebuchterUnterricht`), nicht als Verweis. Die `LehrauftragId` bleibt nur als Herkunftsspur.
+Eine `Buchung` speichert ihr **`Buchungsziel`** — Lehrkraft, Klasse und Fach — als Stand zum
+Buchungszeitpunkt, nicht als Verweis. Die `LehrauftragId` bleibt nur als Herkunftsspur. Ebenso hält
+sie die **`Familie`** (Elternname, Schülername, E-Mail) an sich selbst.
 Begründung: Ein periodischer Import lässt Lehraufträge verschwinden, während Buchungen daran
 hängen; die Auswertung eines vergangenen Sprechtags muss davon unberührt bleiben.
 `ABDECKUNG.md` Z. 89 beschreibt den Schaden bereits.
