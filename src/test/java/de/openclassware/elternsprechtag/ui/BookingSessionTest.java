@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test;
  */
 class BookingSessionTest {
 
-  private static SlotOption slot(LocalTime zeit, boolean belegt) {
-    return new SlotOption(UUID.randomUUID(), zeit, belegt);
+  private static SlotOption slot(LocalTime zeit, boolean buchbar) {
+    return new SlotOption(UUID.randomUUID(), zeit, buchbar);
   }
 
   private static LehrkraftOption lehrkraft(String kuerzel, SlotOption... slots) {
@@ -33,7 +33,7 @@ class BookingSessionTest {
 
   @Test
   void slotState_belegterSlot_istBelegt() {
-    SlotOption belegt = slot(LocalTime.of(14, 0), true);
+    SlotOption belegt = slot(LocalTime.of(14, 0), false);
     LehrkraftOption a = lehrkraft("A", belegt);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -44,7 +44,7 @@ class BookingSessionTest {
 
   @Test
   void slotState_gewaehlterSlot_istGewaehlt() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -56,9 +56,9 @@ class BookingSessionTest {
 
   @Test
   void slotState_gleicheZeitBeiAndererLehrkraft_istKonflikt() {
-    SlotOption aSlot = slot(LocalTime.of(14, 0), false);
-    SlotOption bSlot = slot(LocalTime.of(14, 0), false); // andere Lehrkraft, gleiche Zeit
-    SlotOption bSlotSpaeter = slot(LocalTime.of(14, 15), false);
+    SlotOption aSlot = slot(LocalTime.of(14, 0), true);
+    SlotOption bSlot = slot(LocalTime.of(14, 0), true); // andere Lehrkraft, gleiche Zeit
+    SlotOption bSlotSpaeter = slot(LocalTime.of(14, 15), true);
     LehrkraftOption a = lehrkraft("A", aSlot);
     LehrkraftOption b = lehrkraft("B", bSlot, bSlotSpaeter);
     BookingSession session = new BookingSession();
@@ -76,7 +76,7 @@ class BookingSessionTest {
 
   @Test
   void reload_wirftZwischenzeitlichBelegtenSlotAusDerAuswahl() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -85,7 +85,7 @@ class BookingSessionTest {
     assertThat(session.hatAuswahl()).isTrue();
 
     // Derselbe Termin ist jetzt belegt -> Auswahl muss verworfen werden.
-    SlotOption belegt = new SlotOption(frei.terminId(), frei.zeit(), true);
+    SlotOption belegt = new SlotOption(frei.terminId(), frei.zeit(), false);
     session.reload(List.of(lehrkraftMitId(a, belegt)));
 
     assertThat(session.hatAuswahl()).isFalse();
@@ -93,9 +93,9 @@ class BookingSessionTest {
 
   @Test
   void reload_wirftVerschwundeneLehrkraftAusDerAuswahl() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
-    LehrkraftOption b = lehrkraft("B", slot(LocalTime.of(14, 0), false));
+    LehrkraftOption b = lehrkraft("B", slot(LocalTime.of(14, 0), true));
     BookingSession session = new BookingSession();
     session.reset(List.of(a, b));
     session.setActive(a);
@@ -110,8 +110,8 @@ class BookingSessionTest {
 
   @Test
   void toWuensche_gibtJedemWunschDieNotizSeinerLehrkraft() {
-    SlotOption aSlot = slot(LocalTime.of(14, 0), false);
-    SlotOption bSlot = slot(LocalTime.of(14, 15), false);
+    SlotOption aSlot = slot(LocalTime.of(14, 0), true);
+    SlotOption bSlot = slot(LocalTime.of(14, 15), true);
     LehrkraftOption a = lehrkraft("A", aSlot);
     LehrkraftOption b = lehrkraft("B", bSlot);
     BookingSession session = new BookingSession();
@@ -132,7 +132,7 @@ class BookingSessionTest {
 
   @Test
   void setNotiz_leererTextZaehltAlsKeineNotiz() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -147,7 +147,7 @@ class BookingSessionTest {
 
   @Test
   void setNotiz_laesstDenTextStehen_undBeschneidetErstBeimBuchen() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -165,7 +165,7 @@ class BookingSessionTest {
 
   @Test
   void setNotiz_ohneWahl_verpufft() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -178,8 +178,8 @@ class BookingSessionTest {
 
   @Test
   void waehle_slotWechselInnerhalbDerselbenLehrkraft_erhaeltDieNotiz() {
-    SlotOption frueh = slot(LocalTime.of(14, 0), false);
-    SlotOption spaet = slot(LocalTime.of(14, 15), false);
+    SlotOption frueh = slot(LocalTime.of(14, 0), true);
+    SlotOption spaet = slot(LocalTime.of(14, 15), true);
     LehrkraftOption a = lehrkraft("A", frueh, spaet);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -195,7 +195,7 @@ class BookingSessionTest {
 
   @Test
   void abwaehlen_verwirftDieNotizStill() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -210,7 +210,7 @@ class BookingSessionTest {
 
   @Test
   void entferne_verwirftDieNotizDerZeile() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -225,7 +225,7 @@ class BookingSessionTest {
 
   @Test
   void reset_verwirftAlleNotizen() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));
@@ -240,8 +240,8 @@ class BookingSessionTest {
 
   @Test
   void reload_behaeltNotizenGueltigerWahlenUndVerwirftDieDerWeggefallenen() {
-    SlotOption aSlot = slot(LocalTime.of(14, 0), false);
-    SlotOption bSlot = slot(LocalTime.of(14, 15), false);
+    SlotOption aSlot = slot(LocalTime.of(14, 0), true);
+    SlotOption bSlot = slot(LocalTime.of(14, 15), true);
     LehrkraftOption a = lehrkraft("A", aSlot);
     LehrkraftOption b = lehrkraft("B", bSlot);
     BookingSession session = new BookingSession();
@@ -256,7 +256,7 @@ class BookingSessionTest {
     // A ist zwischenzeitlich vergeben, B bleibt frei.
     session.reload(
         List.of(
-            lehrkraftMitId(a, new SlotOption(aSlot.terminId(), aSlot.zeit(), true)),
+            lehrkraftMitId(a, new SlotOption(aSlot.terminId(), aSlot.zeit(), false)),
             lehrkraftMitId(b, bSlot)));
 
     assertThat(session.notiz(a.lehrauftragId())).isEmpty();
@@ -265,7 +265,7 @@ class BookingSessionTest {
 
   @Test
   void reset_verwirftAuswahlUndAktiveLehrkraft() {
-    SlotOption frei = slot(LocalTime.of(14, 0), false);
+    SlotOption frei = slot(LocalTime.of(14, 0), true);
     LehrkraftOption a = lehrkraft("A", frei);
     BookingSession session = new BookingSession();
     session.reset(List.of(a));

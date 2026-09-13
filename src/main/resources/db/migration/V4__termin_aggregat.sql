@@ -23,10 +23,27 @@
 -- zu holen sind; danach ist die Verbindung fachlich gekappt.
 
 -- 1. termin.status -> termin.verfuegbarkeit -------------------------------------------------
--- Der Check stammt aus der Spaltendefinition in V1 und trägt deshalb den von PostgreSQL
--- vergebenen Namen. Er muss vor dem Umbenennen weg: FREI/BELEGT sind keine Verfügbarkeiten.
-alter table termin
-    drop constraint termin_status_check;
+-- Der Check stammt aus der Spaltendefinition in V1 und hat deshalb keinen selbst gewählten Namen,
+-- sondern einen von PostgreSQL vergebenen. Ihn hier hart hinzuschreiben hieße, sich auf eine
+-- Namenskonvention zu verlassen, die diese Migration nicht kontrolliert — deshalb wird er über den
+-- Katalog gesucht: „der Check-Constraint an genau dieser Spalte". Weg muss er in jedem Fall, denn
+-- FREI/BELEGT sind keine Verfügbarkeiten.
+do $$
+declare
+    constraint_name text;
+begin
+    select con.conname into constraint_name
+      from pg_constraint con
+      join pg_class rel on rel.oid = con.conrelid
+      join pg_attribute att on att.attrelid = rel.oid and att.attnum = any (con.conkey)
+     where rel.relname = 'termin'
+       and con.contype = 'c'
+       and att.attname = 'status';
+    if constraint_name is null then
+        raise exception 'Kein Check-Constraint auf termin.status gefunden';
+    end if;
+    execute format('alter table termin drop constraint %I', constraint_name);
+end $$;
 
 alter table termin
     rename column status to verfuegbarkeit;
@@ -44,8 +61,23 @@ alter table termin
     alter column lehrer_id set not null;
 
 -- 2. buchungen.status: ABGESAGT -> STORNIERT ------------------------------------------------
-alter table buchungen
-    drop constraint buchungen_status_check;
+-- Derselbe Fall wie oben: unbenannter Spalten-Check aus V1, über den Katalog gesucht.
+do $$
+declare
+    constraint_name text;
+begin
+    select con.conname into constraint_name
+      from pg_constraint con
+      join pg_class rel on rel.oid = con.conrelid
+      join pg_attribute att on att.attrelid = rel.oid and att.attnum = any (con.conkey)
+     where rel.relname = 'buchungen'
+       and con.contype = 'c'
+       and att.attname = 'status';
+    if constraint_name is null then
+        raise exception 'Kein Check-Constraint auf buchungen.status gefunden';
+    end if;
+    execute format('alter table buchungen drop constraint %I', constraint_name);
+end $$;
 
 update buchungen
    set status = 'STORNIERT'

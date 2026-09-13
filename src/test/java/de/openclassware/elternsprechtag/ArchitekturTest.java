@@ -1,6 +1,8 @@
 package de.openclassware.elternsprechtag;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -53,6 +55,23 @@ class ArchitekturTest {
         .dependOnClassesThat()
         .haveFullyQualifiedName(Buchung.class.getName())
         .as("Über die Presenter-Grenze gehen ausschließlich Records, nie ein Aggregat")
+        .check(klassen);
+  }
+
+  /**
+   * Heute gibt es genau eine Aggregat-Wurzel, die Regel ist also noch nicht auf die Probe gestellt.
+   * Sie steht trotzdem: Sie soll greifen, wenn die nächste Scheibe die zweite hinzufügt — nicht erst,
+   * wenn jemand sie vermisst.
+   */
+  @Test
+  void aggregateReferenzierenEinanderNurUeberTypisierteIds() {
+    noFields()
+        .that()
+        .areDeclaredInClassesThat()
+        .areAssignableTo(AggregateRoot.class)
+        .should()
+        .haveRawType(assignableTo(AggregateRoot.class))
+        .as("Über eine Aggregat-Grenze führt eine typisierte Id, keine Objektnavigation")
         .check(klassen);
   }
 

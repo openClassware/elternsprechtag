@@ -15,8 +15,13 @@ public interface TerminAnsichten {
   List<SlotZeile> slots(SprechtagId sprechtag);
 
   /**
-   * Ein Slot, wie die Datenbank ihn kennt. {@code belegt} ist abgeleitet — aktive Buchung vorhanden
-   * oder Verfügbarkeit {@code ENTFAELLT}; es gibt keine Spalte dafür.
+   * Ein Slot, wie die Datenbank ihn kennt. {@code buchbar} ist abgeleitet — angeboten und ohne
+   * aktive Buchung; es gibt keine Spalte dafür. Dieselbe Frage, die
+   * {@code Termin.istBuchbar()} am Aggregat beantwortet, und deshalb dasselbe Wort.
+   *
+   * <p>Warum ein Flag und nicht der Zustand: Diese Scheibe unterscheidet auf der Leseseite noch
+   * nicht zwischen „vergeben" und „entfällt" — die Eltern-Ansicht kennt den dritten Zustand noch
+   * nicht (`ABDECKUNG.md` Z. 230). Gespeichert ist er, sichtbar wird er mit der Ausfall-Strecke.
    */
-  record SlotZeile(UUID terminId, UUID lehrkraftId, LocalTime zeit, boolean belegt) {}
+  record SlotZeile(UUID terminId, UUID lehrkraftId, LocalTime zeit, boolean buchbar) {}
 }

@@ -47,7 +47,7 @@ class BuchungsoptionenService implements Buchungsoptionen {
     for (SlotZeile slot : terminAnsichten.slots(id)) {
       slotsJeLehrkraft
           .computeIfAbsent(slot.lehrkraftId(), k -> new ArrayList<>())
-          .add(new SlotOption(slot.terminId(), slot.zeit(), slot.belegt()));
+          .add(new SlotOption(slot.terminId(), slot.zeit(), slot.buchbar()));
     }
 
     // Fächer je Lehrkraft über alle teilnehmenden Klassen des Sprechtags (Scope: dieser Sprechtag) —
@@ -61,18 +61,11 @@ class BuchungsoptionenService implements Buchungsoptionen {
       }
     }
 
-    // Lehrkräfte der gewählten Klasse dedupliziert; je Lehrkraft der Lehrauftrag mit dem
-    // alphabetisch ersten Fach — der Port liefert nach Fachname sortiert, das erste putIfAbsent
-    // gewinnt.
-    Map<UUID, LehrauftragDaten> auftragJeLehrkraft = new LinkedHashMap<>();
-    for (LehrauftragDaten auftrag : lehrauftraege.fuerKlasse(klasseId)) {
-      auftragJeLehrkraft.putIfAbsent(auftrag.lehrkraft().wert(), auftrag);
-    }
-    List<LehrauftragDaten> auftraege = new ArrayList<>(auftragJeLehrkraft.values());
-    auftraege.sort(Comparator.comparing(LehrauftragDaten::nachname, String.CASE_INSENSITIVE_ORDER));
-
+    // Zur Wahl stehen nur die Lehrkräfte der gewählten Klasse — dieselbe Regel wie in der
+    // Auswertung, nur auf eine Klasse angewandt.
     List<LehrkraftOption> optionen = new ArrayList<>();
-    for (LehrauftragDaten auftrag : auftraege) {
+    for (LehrauftragDaten auftrag :
+        Lehrkraftauswahl.jeLehrkraft(lehrauftraege, List.of(klasseId))) {
       UUID lehrerId = auftrag.lehrkraft().wert();
       optionen.add(
           new LehrkraftOption(

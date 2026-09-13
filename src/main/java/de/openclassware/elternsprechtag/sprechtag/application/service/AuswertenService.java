@@ -66,7 +66,10 @@ class AuswertenService implements Auswerten {
     }
 
     List<LehrkraftPlan> plaene = new ArrayList<>();
-    for (LehrauftragDaten lehrkraft : beteiligteLehrkraefte(kopf.klasseIds())) {
+    // Beteiligt ist, wer einen Lehrauftrag in einer teilnehmenden Klasse hat — deshalb erscheint
+    // auch, wer keine Buchung hat.
+    for (LehrauftragDaten lehrkraft :
+        Lehrkraftauswahl.jeLehrkraft(lehrauftraege, kopf.klasseIds())) {
       UUID lehrerId = lehrkraft.lehrkraft().wert();
       List<BuchungsZeile> zeilen = zeilenJeLehrkraft.remove(lehrerId);
       if (zeilen == null) {
@@ -94,21 +97,4 @@ class AuswertenService implements Auswerten {
     return Optional.of(new SprechtagAuswertung(kopf.titel(), kopf.datum(), plaene));
   }
 
-  /**
-   * Je Lehrkraft der teilnehmenden Klassen ein Eintrag, dedupliziert und nach Nachname sortiert.
-   * Welcher ihrer Lehraufträge den Eintrag stellt, ist gleichgültig — Kürzel und Name sind daran
-   * dieselben.
-   */
-  private List<LehrauftragDaten> beteiligteLehrkraefte(List<UUID> klasseIds) {
-    Map<UUID, LehrauftragDaten> jeLehrkraft = new LinkedHashMap<>();
-    for (UUID klasseId : klasseIds) {
-      for (LehrauftragDaten auftrag : lehrauftraege.fuerKlasse(klasseId)) {
-        jeLehrkraft.putIfAbsent(auftrag.lehrkraft().wert(), auftrag);
-      }
-    }
-    List<LehrauftragDaten> lehrkraefte = new ArrayList<>(jeLehrkraft.values());
-    lehrkraefte.sort(
-        Comparator.comparing(LehrauftragDaten::nachname, String.CASE_INSENSITIVE_ORDER));
-    return lehrkraefte;
-  }
 }

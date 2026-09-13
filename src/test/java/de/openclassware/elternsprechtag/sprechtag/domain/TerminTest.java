@@ -83,6 +83,29 @@ class TerminTest {
   }
 
   @Test
+  void lassEntfallen_mitAktiverBuchung_wirdAbgewiesen() {
+    Termin termin = freierTermin();
+    termin.buche(familie("mueller"), ziel(), null, JETZT);
+
+    // Solange das Storno samt Benachrichtigung nicht gebaut ist, darf dieser Zustand nicht
+    // entstehen: eine Familie, deren Termin entfällt und die davon nie erfährt.
+    assertThatThrownBy(termin::lassEntfallen).isInstanceOf(TerminHatBuchungException.class);
+    assertThat(termin.verfuegbarkeit()).isEqualTo(Verfuegbarkeit.VERFUEGBAR);
+  }
+
+  @Test
+  void lassEntfallen_nachStorno_istWiederMoeglich() {
+    Termin termin = freierTermin();
+    BuchungId buchung = termin.buche(familie("mueller"), ziel(), null, JETZT);
+    termin.storniere(buchung);
+
+    termin.lassEntfallen();
+
+    assertThat(termin.verfuegbarkeit()).isEqualTo(Verfuegbarkeit.ENTFAELLT);
+    assertThat(termin.istBuchbar()).isFalse();
+  }
+
+  @Test
   void buche_zielMitFremderLehrkraft_wirdAbgewiesen() {
     Termin termin = freierTermin();
     Buchungsziel fremd =

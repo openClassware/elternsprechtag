@@ -16,11 +16,15 @@ public interface Buchungsoptionen {
   List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId);
 
   /**
-   * Ein Slot in der Eltern-Ansicht. {@code belegt} heißt „nicht wählbar" und fasst beide Gründe
-   * zusammen, die für die Eltern gleich aussehen: Der Slot trägt eine aktive Buchung, oder der
-   * Organizer hat ihn entfallen lassen.
+   * Ein Slot in der Eltern-Ansicht. {@code buchbar} heißt „steht zur Wahl": angeboten und ohne
+   * aktive Buchung. Dieselbe Frage und dasselbe Wort wie {@code Termin.istBuchbar()} — und dieselbe
+   * Antwort, nur womöglich eine ältere.
+   *
+   * <p>Warum die beiden Gründe, nicht zu buchen, hier nicht unterschieden sind: Die Eltern-Ansicht
+   * kennt den dritten Zustand „entfällt" noch nicht (`ABDECKUNG.md` Z. 230). Er ist gespeichert,
+   * sichtbar wird er mit der Ausfall-Strecke.
    */
-  record SlotOption(UUID terminId, LocalTime zeit, boolean belegt) {}
+  record SlotOption(UUID terminId, LocalTime zeit, boolean buchbar) {}
 
   /**
    * Eine wählbare Lehrkraft der gewählten Klasse samt ihrer Slots. {@code lehrauftragId} ist der für

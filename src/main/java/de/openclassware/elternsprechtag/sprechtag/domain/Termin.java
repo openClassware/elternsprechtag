@@ -129,8 +129,20 @@ public final class Termin extends AggregateRoot {
     }
   }
 
-  /** Nimmt den Slot aus dem Angebot — Absicht des Organizers, keine Folge einer Buchung. */
+  /**
+   * Nimmt den Slot aus dem Angebot — Absicht des Organizers, keine Folge einer Buchung.
+   *
+   * <p>Nur für einen Slot ohne aktive Buchung. Was mit einer daran hängenden Buchung geschehen muss,
+   * ist beschlossen (`ABDECKUNG.md`: die Buchung wird storniert und die Familie erfährt davon), aber
+   * noch nicht gebaut — es ist die Ausfall-Strecke. Bis dahin verweigert das Aggregat den Übergang,
+   * statt einen Zustand zuzulassen, dessen Folgen niemand ausführt: ein entfallender Termin mit
+   * einer Familie, die weiter auf ihre Zusage vertraut.
+   */
   public void lassEntfallen() {
+    if (aktiveBuchung().isPresent()) {
+      throw new TerminHatBuchungException(
+          "Ein Termin mit aktiver Buchung kann noch nicht entfallen: " + zeitraum.beginn());
+    }
     verfuegbarkeit = Verfuegbarkeit.ENTFAELLT;
   }
 

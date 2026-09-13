@@ -43,7 +43,7 @@ public class BuchungBestaetigungService {
    * Ein bestätigter Termin des Vorgangs: wann, bei wem, in welchem Fach — und die Notiz, die genau
    * dieser Lehrkraft gilt. {@code notiz} darf {@code null} sein, dann entfällt die Notiz-Zeile.
    */
-  record TerminZeile(LocalTime zeit, String lehrkraft, String fach, String notiz) {}
+  record TerminPosition(LocalTime zeit, String lehrkraft, String fach, String notiz) {}
 
   /**
    * Der komplette Beleg eines Absendevorgangs. Empfänger und Kopfdaten sind aus den geladenen
@@ -58,7 +58,7 @@ public class BuchungBestaetigungService {
       String schulkontakt,
       String schuelerName,
       String klasse,
-      List<TerminZeile> termine) {}
+      List<TerminPosition> termine) {}
 
   /**
    * Bestätigt genau die Buchungen dieses Absendevorgangs mit <b>einer</b> Nachricht an die dort
@@ -120,10 +120,10 @@ public class BuchungBestaetigungService {
       throw new IllegalStateException("Sprechtag zur Buchung nicht gefunden: " + erste.sprechtagId());
     }
 
-    List<TerminZeile> termine = new ArrayList<>();
+    List<TerminPosition> termine = new ArrayList<>();
     for (BelegZeile zeile : zeilen) {
       termine.add(
-          new TerminZeile(zeile.zeit(), zeile.lehrkraftName(), zeile.fach(), zeile.notiz()));
+          new TerminPosition(zeile.zeit(), zeile.lehrkraftName(), zeile.fach(), zeile.notiz()));
     }
 
     return new Bestaetigung(
@@ -161,7 +161,7 @@ public class BuchungBestaetigungService {
 
     List<String> liste = new ArrayList<>();
     liste.add(i18n.getTranslation("buchung.mail.termine", LOCALE));
-    for (TerminZeile termin : b.termine()) {
+    for (TerminPosition termin : b.termine()) {
       liste.add(
           i18n.getTranslation(
               "buchung.mail.termin",

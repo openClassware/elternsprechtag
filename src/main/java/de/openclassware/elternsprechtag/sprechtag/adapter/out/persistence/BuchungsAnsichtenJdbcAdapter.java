@@ -19,6 +19,18 @@ import org.springframework.stereotype.Component;
 @Component
 class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
 
+  /**
+   * „Aktive Buchungen dieses Sprechtags" — dieselbe Einschränkung in drei Statements. Einmal
+   * geschrieben, damit ein späterer Zusatz nicht an zwei von drei Stellen vergessen wird.
+   */
+  private static final String AKTIVE_EINES_SPRECHTAGS =
+      """
+        from buchungen b
+        join termin t on t.id = b.termin_id
+       where t.sprechtag_id = :sprechtagId
+         and b.status = 'ZUGESAGT'
+      """;
+
   private static final String AKTIVE_BUCHUNGEN =
       """
       select b.lehrkraft_id      as lehrkraft_id,
@@ -30,12 +42,9 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
              b.fach_name         as fach_name,
              b.eltern_name       as eltern_name,
              b.notiz             as notiz
-        from buchungen b
-        join termin t on t.id = b.termin_id
-       where t.sprechtag_id = :sprechtagId
-         and b.status = 'ZUGESAGT'
-       order by t.startzeit
-      """;
+      """
+          + AKTIVE_EINES_SPRECHTAGS
+          + " order by t.startzeit";
 
   private static final String BELEGE =
       """
@@ -55,22 +64,10 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
       """;
 
   private static final String AKTIVE_ADRESSEN =
-      """
-      select distinct b.eltern_email
-        from buchungen b
-        join termin t on t.id = b.termin_id
-       where t.sprechtag_id = :sprechtagId
-         and b.status = 'ZUGESAGT'
-      """;
+      "select distinct b.eltern_email" + AKTIVE_EINES_SPRECHTAGS;
 
   private static final String ANZAHL_AKTIVE_ADRESSEN =
-      """
-      select count(distinct b.eltern_email)
-        from buchungen b
-        join termin t on t.id = b.termin_id
-       where t.sprechtag_id = :sprechtagId
-         and b.status = 'ZUGESAGT'
-      """;
+      "select count(distinct b.eltern_email)" + AKTIVE_EINES_SPRECHTAGS;
 
   private final NamedParameterJdbcTemplate jdbc;
 

@@ -80,7 +80,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     assertThat(option.lehrauftragId()).isEqualTo(f.lehrauftrag().getId());
     assertThat(option.faecher()).containsExactly("Deutsch");
     assertThat(option.slots()).hasSize(4);
-    assertThat(option.slots()).allSatisfy(slot -> assertThat(slot.belegt()).isFalse());
+    assertThat(option.slots()).allSatisfy(slot -> assertThat(slot.buchbar()).isTrue());
   }
 
   @Test
@@ -95,7 +95,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     assertThat(optionen.get(0).slots())
         .filteredOn(slot -> slot.terminId().equals(termin.id().wert()))
         .singleElement()
-        .satisfies(slot -> assertThat(slot.belegt()).isTrue());
+        .satisfies(slot -> assertThat(slot.buchbar()).isFalse());
   }
 
   @Test
@@ -111,7 +111,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     assertThat(optionen.get(0).slots())
         .filteredOn(slot -> slot.terminId().equals(termin.id().wert()))
         .singleElement()
-        .satisfies(slot -> assertThat(slot.belegt()).isTrue());
+        .satisfies(slot -> assertThat(slot.buchbar()).isFalse());
   }
 
   @Test

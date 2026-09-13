@@ -18,6 +18,15 @@ public interface Termine {
    * Schreibt das ganze Aggregat. Gibt nichts zurück: Der Aufrufer behält bewusst das Aggregat in der
    * Hand, das er verändert hat — samt seiner noch nicht abgeholten Ereignisse.
    *
+   * <p><b>Ein Aggregat ist nach dem Speichern verbraucht.</b> Der Adapter hebt die Version in der
+   * Datenbank, das Aggregat trägt sie unveränderlich; sein Stand ist damit veraltet. Ein zweites
+   * {@code speichere} derselben Instanz meldet deshalb einen Versionskonflikt, auch wenn niemand
+   * dazwischengekommen ist. Wer nach dem Speichern weiterarbeiten will, lädt neu.
+   *
+   * <p>Das ist Absicht und nicht bloß Sparsamkeit: Ein Aggregat, das seine Version selbst
+   * fortschreibt, verwischt, wer die Wahrheit über den gespeicherten Stand hält. Der Aufruf ist
+   * dadurch unbequemer, aber eindeutig.
+   *
    * @throws org.springframework.dao.OptimisticLockingFailureException wenn der Termin seit dem Laden
    *     verändert wurde
    */

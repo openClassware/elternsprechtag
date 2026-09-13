@@ -144,7 +144,9 @@ class BookingSession {
 
   /** Zustand eines Slots relativ zur aktiven Lehrkraft und zur bisherigen Auswahl. */
   SlotState slotState(SlotOption slot) {
-    if (slot.belegt()) {
+    if (!slot.buchbar()) {
+      // Der Port sagt nur „nicht buchbar"; die Eltern-Ansicht kennt dafür bislang eine Darstellung.
+      // Sobald „entfällt" eigene Wörter bekommt (ABDECKUNG.md Z. 230), verzweigt es hier.
       return SlotState.BELEGT;
     }
     SlotOption chosen = gewaehlterSlot(activeLehrkraft.lehrauftragId());
@@ -190,7 +192,7 @@ class BookingSession {
     LehrkraftOption lehrkraft = findLehrkraft(lehrauftragId);
     return lehrkraft != null
         && lehrkraft.slots().stream()
-            .anyMatch(slot -> slot.terminId().equals(wahl.slot().terminId()) && !slot.belegt());
+            .anyMatch(slot -> slot.terminId().equals(wahl.slot().terminId()) && slot.buchbar());
   }
 
   private LehrkraftOption findLehrkraft(UUID lehrauftragId) {
