@@ -1,9 +1,9 @@
 package de.openclassware.elternsprechtag.ui;
 
 import com.vaadin.flow.spring.security.AuthenticationContext;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.services.SprechtagService;
-import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -14,14 +14,14 @@ import org.springframework.stereotype.Component;
 @Component
 class OrganizerPresenter {
 
-  private static final Set<SprechtagStatusEnum> AKTIVE_STATUS =
-      EnumSet.of(SprechtagStatusEnum.VEROEFFENTLICHT, SprechtagStatusEnum.ENTWURF);
+  private static final Set<SprechtagStatus> AKTIVE_STATUS =
+      EnumSet.of(SprechtagStatus.VEROEFFENTLICHT, SprechtagStatus.ENTWURF);
 
   private final AuthenticationContext authenticationContext;
-  private final SprechtagService sprechtagService;
+  private final Sprechtagsuebersicht uebersicht;
 
   /** View-Model der Organizer-Übersicht: alles, was der View zum Rendern braucht — ohne Logik im View. */
-  record OrganizerModel(String username, List<SprechtagRow> upcoming) {
+  record OrganizerModel(String username, List<SprechtagZeile> upcoming) {
     boolean hasUpcoming() {
       return !upcoming.isEmpty();
     }
@@ -35,8 +35,8 @@ class OrganizerPresenter {
     return authenticationContext.getPrincipalName().orElse("?");
   }
 
-  private List<SprechtagRow> activeAndDraftSprechtage() {
-    return sprechtagService.findAllRows().stream()
+  private List<SprechtagZeile> activeAndDraftSprechtage() {
+    return uebersicht.alle().stream()
         .filter(sprechtag -> AKTIVE_STATUS.contains(sprechtag.status()))
         .toList();
   }

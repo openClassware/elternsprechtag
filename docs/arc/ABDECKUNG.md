@@ -84,21 +84,21 @@ Organizer einen Sprechtag anlegt.
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Zeitfenster oder Slot-Dauer nach dem Veröffentlichen ändern | Organizer | gesperrt, mit Begründung | muss | ändert nur die Anzeige; Termine bleiben unverändert (`SprechtagService:216`) |
-| Klasse hinzufügen, nachdem veröffentlicht wurde | Organizer | gesperrt, mit Begründung | muss | Klasse wird übernommen, ihre Lehrkräfte bekommen nie Termine |
-| Klasse entfernen, deren Eltern gebucht haben | Organizer | gesperrt, mit Begründung | muss | wird übernommen, Buchungen hängen an einem Lehrauftrag außerhalb des Sprechtags |
-| Titel, Ort, Hinweistext nach dem Veröffentlichen ändern | Organizer | bleibt erlaubt | muss | **erfüllt** — kein Handlungsbedarf |
-| Zu früh veröffentlicht, zurück auf Entwurf, keine Buchung vorhanden | Organizer | erlaubt | muss | geschieht nur versehentlich über „Als Entwurf speichern" (`EditSprechtagView:341`), ungeprüft |
-| Zurück auf Entwurf, obwohl gebucht wurde | Organizer | verhindert, Verweis auf Absage | muss | möglich, ohne Prüfung — stiller Datenverlust |
-| Abgesagten oder abgeschlossenen Sprechtag über „Speichern" wiederbeleben | Organizer | verhindert | muss | möglich: `createOrUpdate` setzt den Status ungeprüft (`SprechtagService:157`) und umgeht `allowedTransitions` |
-| Keine der gewählten Klassen hat einen Lehrauftrag | Organizer | Meldung beim Veröffentlichen: keine Termine erzeugt | muss | steigt stumm aus (`SprechtagService:238`), Sprechtag gilt als veröffentlicht |
-| Slot-Dauer geleert (`null`) | Organizer | Pflichtfeld, Speichern nicht möglich | muss | kein `asRequired`; Veröffentlichen läuft in eine `NullPointerException` |
-| Schulkontakt im Sprechtag | Eltern | eigenes Freitextfeld, Pflicht ab dem Entwurf | muss | nur der freie Hinweistext |
-| Zeitfenster geht nicht glatt auf, Rest-Slot entfällt | Organizer | — | darf fehlen | `slotStartTimes` verwirft ihn kommentarlos |
+| Zeitfenster oder Slot-Dauer nach dem Veröffentlichen ändern | Organizer | gesperrt, mit Begründung | muss | **erfüllt** — `Sprechtag.legeZeitstrukturFest` friert ab `VEROEFFENTLICHT` ein (`ZeitstrukturEingefrorenException`), die Oberfläche zeigt die Begründung |
+| Klasse hinzufügen, nachdem veröffentlicht wurde | Organizer | gesperrt, mit Begründung | muss | **erfüllt** — dieselbe Sperre: Die Klassenliste gehört zur Zeitstruktur, aus ihr entstehen die Termine |
+| Klasse entfernen, deren Eltern gebucht haben | Organizer | gesperrt, mit Begründung | muss | **erfüllt** — gebucht wird erst nach dem Veröffentlichen, dieselbe Sperre deckt den Fall ab |
+| Titel, Ort, Hinweistext nach dem Veröffentlichen ändern | Organizer | bleibt erlaubt | muss | **erfüllt** — `Sprechtag.beschreibeNeu` bleibt offen, nur Endzustände sind ausgenommen |
+| Zu früh veröffentlicht, zurück auf Entwurf, keine Buchung vorhanden | Organizer | erlaubt | muss | **erfüllt** — eigener Weg `ZurueckAufEntwurf` im Zeilenmenü; verwirft die Termine, damit das nächste Veröffentlichen neu rechnet |
+| Zurück auf Entwurf, obwohl gebucht wurde | Organizer | verhindert, Verweis auf Absage | muss | **erfüllt** — `SprechtagHatBuchungenException`; auch eine stornierte Buchung zählt, benachrichtigt wurde trotzdem |
+| Abgesagten oder abgeschlossenen Sprechtag über „Speichern" wiederbeleben | Organizer | verhindert | muss | **erfüllt** — Speichern setzt keinen Status mehr; Endzustände weisen jede Änderung ab (`StatusuebergangException`) |
+| Keine der gewählten Klassen hat einen Lehrauftrag | Organizer | Meldung beim Veröffentlichen: keine Termine erzeugt | muss | **erfüllt** — `Veroeffentlichen.Ergebnis.ohneTermine()`, die Oberfläche meldet es |
+| Slot-Dauer geleert (`null`) | Organizer | Pflichtfeld, Speichern nicht möglich | muss | **erfüllt** — `asRequired` am Feld, `Slotdauer` verlangt zusätzlich einen positiven Wert |
+| Schulkontakt im Sprechtag | Eltern | eigenes Freitextfeld, Pflicht ab dem Entwurf | muss | **erfüllt** — eigene Spalte seit V3, in der Domäne der Wert `Schulkontakt` (nicht leer, getrimmt), im Formular `asRequired` |
+| Zeitfenster geht nicht glatt auf, Rest-Slot entfällt | Organizer | — | darf fehlen | `Sprechtag.slots()` verwirft ihn kommentarlos |
 | Datum liegt in der Vergangenheit | Organizer | — | darf fehlen | keine Prüfung, `DatePicker` ohne Minimum |
 | Eltern haben den Zugangs-Link verloren | Eltern | — | darf fehlen | Weg drumherum: Anruf in der Schule |
 | Zwei Sprechtage am selben Tag oder überlappend | Organizer | — | darf fehlen | keine Prüfung |
-| Zugangs-Link neu ausstellen | Organizer | — | bewusst nein | vorhanden (`EditSprechtagView:175`) — **wird entfernt** |
+| Zugangs-Link neu ausstellen | Organizer | — | bewusst nein | weiterhin vorhanden (`EditSprechtagView`, `Sprechtag.beschreibeNeu`) — **wird entfernt**, Issue #117 |
 | Link gerät an Fremde, die Slots blockieren | Organizer | — | bewusst nein | Token ist der gesamte Zugangsschutz |
 
 ### Anmerkungen

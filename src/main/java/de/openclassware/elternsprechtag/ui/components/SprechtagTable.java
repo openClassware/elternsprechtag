@@ -7,8 +7,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
 import de.openclassware.elternsprechtag.ui.AuswertungView;
 import de.openclassware.elternsprechtag.ui.EditSprechtagView;
 import de.openclassware.elternsprechtag.ui.Formats;
@@ -19,23 +19,28 @@ import java.util.function.Consumer;
 @CssImport("./styles/components/sprechtag-table.css")
 public class SprechtagTable extends Div {
 
-  /** Display order of the status actions offered in the row menu. */
-  private static final List<SprechtagStatusEnum> TRANSITION_ORDER =
+  /**
+   * Display order of the status actions offered in the row menu. Angeboten wird nur, was
+   * {@link SprechtagStatus#erlaubteUebergaenge()} hergibt — und selbst das nur als Vorschlag: Ob der
+   * Weg wirklich gangbar ist, entscheidet das Aggregat beim Klick.
+   */
+  private static final List<SprechtagStatus> TRANSITION_ORDER =
       List.of(
-          SprechtagStatusEnum.VEROEFFENTLICHT,
-          SprechtagStatusEnum.ABGESCHLOSSEN,
-          SprechtagStatusEnum.ABGESAGT);
+          SprechtagStatus.VEROEFFENTLICHT,
+          SprechtagStatus.ABGESCHLOSSEN,
+          SprechtagStatus.ENTWURF,
+          SprechtagStatus.ABGESAGT);
 
   private final Div body = new Div();
-  private final BiConsumer<SprechtagRow, SprechtagStatusEnum> onStatusChange;
-  private final Consumer<SprechtagRow> onDuplicate;
-  private final Consumer<SprechtagRow> onShare;
+  private final BiConsumer<SprechtagZeile, SprechtagStatus> onStatusChange;
+  private final Consumer<SprechtagZeile> onDuplicate;
+  private final Consumer<SprechtagZeile> onShare;
 
   public SprechtagTable(
-      List<SprechtagRow> sprechtage,
-      BiConsumer<SprechtagRow, SprechtagStatusEnum> onStatusChange,
-      Consumer<SprechtagRow> onDuplicate,
-      Consumer<SprechtagRow> onShare) {
+      List<SprechtagZeile> sprechtage,
+      BiConsumer<SprechtagZeile, SprechtagStatus> onStatusChange,
+      Consumer<SprechtagZeile> onDuplicate,
+      Consumer<SprechtagZeile> onShare) {
     this.onStatusChange = onStatusChange;
     this.onDuplicate = onDuplicate;
     this.onShare = onShare;
@@ -45,7 +50,7 @@ public class SprechtagTable extends Div {
     setSprechtage(sprechtage);
   }
 
-  public void setSprechtage(List<SprechtagRow> sprechtage) {
+  public void setSprechtage(List<SprechtagZeile> sprechtage) {
     body.removeAll();
     if (sprechtage.isEmpty()) {
       body.add(createEmptyState());
@@ -88,11 +93,11 @@ public class SprechtagTable extends Div {
     return empty;
   }
 
-  private Component createRow(SprechtagRow sprechtag) {
+  private Component createRow(SprechtagZeile sprechtag) {
     Div row = new Div();
     row.addClassName("sprechtag-table__row");
     row.add(
-        new DateBadge(sprechtag.startDate()),
+        new DateBadge(sprechtag.datum()),
         createTitle(sprechtag),
         createTime(sprechtag),
         createKlassen(sprechtag),
@@ -101,7 +106,7 @@ public class SprechtagTable extends Div {
     return row;
   }
 
-  private Component createTitle(SprechtagRow sprechtag) {
+  private Component createTitle(SprechtagZeile sprechtag) {
     Div title = new Div();
     title.addClassName("sprechtag-table__title-cell");
 
@@ -110,33 +115,33 @@ public class SprechtagTable extends Div {
     name.setText(sprechtag.titel());
     title.add(name);
 
-    if (sprechtag.location() != null && !sprechtag.location().isBlank()) {
+    if (sprechtag.ort() != null && !sprechtag.ort().isBlank()) {
       Div location = new Div();
       location.addClassName("sprechtag-table__location");
-      location.add(VaadinIcon.MAP_MARKER.create(), new Span(sprechtag.location()));
+      location.add(VaadinIcon.MAP_MARKER.create(), new Span(sprechtag.ort()));
       title.add(location);
     }
 
     return title;
   }
 
-  private Component createTime(SprechtagRow sprechtag) {
+  private Component createTime(SprechtagZeile sprechtag) {
     Div time = new Div();
     time.addClassName("sprechtag-table__time");
     time.add(
         VaadinIcon.CLOCK.create(),
-        new Span(Formats.time(sprechtag.startTime()) + "–" + Formats.time(sprechtag.endTime())));
+        new Span(Formats.time(sprechtag.beginn()) + "–" + Formats.time(sprechtag.ende())));
     return time;
   }
 
-  private Component createKlassen(SprechtagRow sprechtag) {
+  private Component createKlassen(SprechtagZeile sprechtag) {
     Span klassen = new Span();
     klassen.addClassName("sprechtag-table__klassen");
     klassen.setText(String.join(", ", sprechtag.klassen()));
     return klassen;
   }
 
-  private Component createMenu(SprechtagRow sprechtag) {
+  private Component createMenu(SprechtagZeile sprechtag) {
     Div menu = new Div();
     menu.addClassName("sprechtag-table__menu");
     menu.add(VaadinIcon.ELLIPSIS_DOTS_V.create());
@@ -149,20 +154,20 @@ public class SprechtagTable extends Div {
     contextMenu.addItem(
         createMenuItemContent(VaadinIcon.COPY, "manage-sprechtag.menu.duplicate"),
         event -> onDuplicate.accept(sprechtag));
-    if (sprechtag.status() == SprechtagStatusEnum.VEROEFFENTLICHT
-        || sprechtag.status() == SprechtagStatusEnum.ABGESCHLOSSEN) {
+    if (sprechtag.status() == SprechtagStatus.VEROEFFENTLICHT
+        || sprechtag.status() == SprechtagStatus.ABGESCHLOSSEN) {
       contextMenu.addItem(
           createMenuItemContent(VaadinIcon.CLIPBOARD_TEXT, "manage-sprechtag.menu.evaluate"),
           event -> navigateToAuswertung(sprechtag));
     }
-    if (sprechtag.status() == SprechtagStatusEnum.VEROEFFENTLICHT) {
+    if (sprechtag.status() == SprechtagStatus.VEROEFFENTLICHT) {
       contextMenu.addItem(
           createMenuItemContent(VaadinIcon.LINK, "manage-sprechtag.menu.share"),
           event -> onShare.accept(sprechtag));
     }
 
-    for (SprechtagStatusEnum target : TRANSITION_ORDER) {
-      if (sprechtag.status().allowedTransitions().contains(target)) {
+    for (SprechtagStatus target : TRANSITION_ORDER) {
+      if (sprechtag.status().erlaubteUebergaenge().contains(target)) {
         contextMenu.addItem(
             createMenuItemContent(iconFor(target), labelKeyFor(target)),
             event -> onStatusChange.accept(sprechtag, target));
@@ -172,7 +177,7 @@ public class SprechtagTable extends Div {
     return menu;
   }
 
-  private VaadinIcon iconFor(SprechtagStatusEnum target) {
+  private VaadinIcon iconFor(SprechtagStatus target) {
     return switch (target) {
       case VEROEFFENTLICHT -> VaadinIcon.PLAY;
       case ABGESCHLOSSEN -> VaadinIcon.CHECK;
@@ -181,12 +186,12 @@ public class SprechtagTable extends Div {
     };
   }
 
-  private String labelKeyFor(SprechtagStatusEnum target) {
+  private String labelKeyFor(SprechtagStatus target) {
     return switch (target) {
       case VEROEFFENTLICHT -> "manage-sprechtag.menu.activate";
       case ABGESCHLOSSEN -> "manage-sprechtag.menu.complete";
       case ABGESAGT -> "manage-sprechtag.menu.cancel";
-      case ENTWURF -> "manage-sprechtag.menu.edit";
+      case ENTWURF -> "manage-sprechtag.menu.draft";
     };
   }
 
@@ -197,11 +202,11 @@ public class SprechtagTable extends Div {
     return content;
   }
 
-  private void navigateToEdit(SprechtagRow sprechtag) {
+  private void navigateToEdit(SprechtagZeile sprechtag) {
     getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + sprechtag.id()));
   }
 
-  private void navigateToAuswertung(SprechtagRow sprechtag) {
+  private void navigateToAuswertung(SprechtagZeile sprechtag) {
     getUI().ifPresent(ui -> ui.navigate(AuswertungView.ROUTE + "/" + sprechtag.id()));
   }
 }

@@ -2,8 +2,7 @@ package de.openclassware.elternsprechtag.services;
 
 import com.vaadin.flow.i18n.I18NProvider;
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
-import de.openclassware.elternsprechtag.repositories.SprechtagRepository;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
@@ -31,7 +30,7 @@ public class AbsageBenachrichtigungService {
 
   private static final Locale LOCALE = Locale.GERMANY;
 
-  private final SprechtagRepository sprechtagRepository;
+  private final SprechtagAnsichten sprechtagAnsichten;
   private final BuchungsAnsichten buchungsAnsichten;
   private final BenachrichtigungSender sender;
   private final I18NProvider i18n;
@@ -59,11 +58,12 @@ public class AbsageBenachrichtigungService {
    */
   @Transactional(readOnly = true)
   public void benachrichtige(UUID sprechtagId) {
-    Optional<Sprechtag> gefunden = sprechtagRepository.findById(sprechtagId);
+    Optional<SprechtagAnsichten.Kopf> gefunden =
+        sprechtagAnsichten.kopf(SprechtagId.von(sprechtagId));
     if (gefunden.isEmpty()) {
       return;
     }
-    Sprechtag sprechtag = gefunden.get();
+    SprechtagAnsichten.Kopf sprechtag = gefunden.get();
 
     // Dedup pro E-Mail-Adresse erledigt die Query (distinct); je Adresse genau ein Empfänger.
     List<String> adressen = buchungsAnsichten.aktiveElternAdressen(SprechtagId.von(sprechtagId));
@@ -72,8 +72,8 @@ public class AbsageBenachrichtigungService {
       return;
     }
 
-    String datum = Formats.dateLong(sprechtag.getStartDate());
-    String betreff = i18n.getTranslation("absage.mail.subject", LOCALE, sprechtag.getTitel(), datum);
+    String datum = Formats.dateLong(sprechtag.datum());
+    String betreff = i18n.getTranslation("absage.mail.subject", LOCALE, sprechtag.titel(), datum);
     String text = baueText(sprechtag, datum);
 
     for (String adresse : adressen) {
@@ -91,12 +91,12 @@ public class AbsageBenachrichtigungService {
    * beschrifteter Absatz zwischen Hinweis und Grußformel, nicht in einem bestehenden Satz — er ist
    * mehrzeiliger Freitext. Er ist am Sprechtag ab dem Entwurf Pflicht und daher immer vorhanden.
    */
-  private String baueText(Sprechtag sprechtag, String datum) {
+  private String baueText(SprechtagAnsichten.Kopf sprechtag, String datum) {
     List<String> absaetze = new ArrayList<>();
-    absaetze.add(i18n.getTranslation("absage.mail.body", LOCALE, sprechtag.getTitel(), datum));
+    absaetze.add(i18n.getTranslation("absage.mail.body", LOCALE, sprechtag.titel(), datum));
     absaetze.add(
         i18n.getTranslation(
-            "absage.mail.schulkontakt", LOCALE, sprechtag.getSchulkontakt().trim()));
+            "absage.mail.schulkontakt", LOCALE, sprechtag.schulkontakt().trim()));
     absaetze.add(i18n.getTranslation("absage.mail.closing", LOCALE, properties.getSchoolname()));
     return String.join("\n\n", absaetze);
   }

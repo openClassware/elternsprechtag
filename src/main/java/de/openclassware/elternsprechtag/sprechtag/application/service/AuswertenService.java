@@ -5,7 +5,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsA
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten.AuswertungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege.LehrauftragDaten;
-import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 class AuswertenService implements Auswerten {
 
-  private final Sprechtage sprechtage;
+  private final SprechtagAnsichten sprechtagAnsichten;
   private final Lehrauftraege lehrauftraege;
   private final BuchungsAnsichten buchungsAnsichten;
 
@@ -41,11 +41,11 @@ class AuswertenService implements Auswerten {
   @Transactional(readOnly = true)
   public Optional<SprechtagAuswertung> werteAus(UUID sprechtagId) {
     SprechtagId id = SprechtagId.von(sprechtagId);
-    Optional<Sprechtage.Kopf> gefunden = sprechtage.ladeKopf(id);
+    Optional<SprechtagAnsichten.Kopf> gefunden = sprechtagAnsichten.kopf(id);
     if (gefunden.isEmpty()) {
       return Optional.empty();
     }
-    Sprechtage.Kopf kopf = gefunden.get();
+    SprechtagAnsichten.Kopf kopf = gefunden.get();
 
     // Die Query liefert bereits chronologisch; die Gruppierung erhält die Reihenfolge, sodass jede
     // Zeilenliste sortiert bleibt.

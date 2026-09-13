@@ -7,8 +7,8 @@ import de.openclassware.elternsprechtag.domain.Fach;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
@@ -35,9 +35,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @ServiceTest
 @Import({
-  SprechtagService.class,
+
   SprechtagKontextTestConfig.class,
-  KlassenService.class,
+
   AbsageBenachrichtigungService.class,
   AbsageBenachrichtigungListener.class,
   FakeBenachrichtigungSender.class,
@@ -74,8 +74,8 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
-            SprechtagStatusEnum.ENTWURF, klasse);
-    sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
+            SprechtagStatus.ENTWURF, klasse);
+    veroeffentlichen.veroeffentliche(sprechtag.id().wert());
     return new Fixture(sprechtag, lehrauftrag);
   }
 
@@ -95,7 +95,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     book(f.lehrauftrag(), slots.get(0), "a@example.com");
     book(f.lehrauftrag(), slots.get(1), "b@example.com");
 
-    sprechtagService.changeStatus(f.sprechtag().getId(), SprechtagStatusEnum.ABGESAGT);
+    absagen.sageAb(f.sprechtag().id().wert());
 
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
@@ -115,11 +115,11 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
   void absage_withoutBookings_sendsNothingAndStands() {
     Fixture f = publishedSprechtag();
 
-    sprechtagService.changeStatus(f.sprechtag().getId(), SprechtagStatusEnum.ABGESAGT);
+    absagen.sageAb(f.sprechtag().id().wert());
 
     assertThat(sender.empfangen).isEmpty();
-    assertThat(sprechtagRepository.findById(f.sprechtag().getId()).orElseThrow().getStatus())
-        .isEqualTo(SprechtagStatusEnum.ABGESAGT);
+    assertThat(ladeSprechtag(f.sprechtag().id().wert()).status())
+        .isEqualTo(SprechtagStatus.ABGESAGT);
   }
 
   @Test
@@ -130,11 +130,11 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     book(f.lehrauftrag(), slots.get(1), "ok@example.com");
     sender.scheitertFuer.add("fehlerhaft@example.com");
 
-    sprechtagService.changeStatus(f.sprechtag().getId(), SprechtagStatusEnum.ABGESAGT);
+    absagen.sageAb(f.sprechtag().id().wert());
 
     // Absage ist committet und bleibt, der Fehler bei einer Adresse stoppt die übrigen nicht.
-    assertThat(sprechtagRepository.findById(f.sprechtag().getId()).orElseThrow().getStatus())
-        .isEqualTo(SprechtagStatusEnum.ABGESAGT);
+    assertThat(ladeSprechtag(f.sprechtag().id().wert()).status())
+        .isEqualTo(SprechtagStatus.ABGESAGT);
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
         .containsExactly("ok@example.com");
@@ -145,7 +145,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag();
     book(f.lehrauftrag(), alleTermine().get(0), "eltern@example.com");
 
-    sprechtagService.changeStatus(f.sprechtag().getId(), SprechtagStatusEnum.ABGESCHLOSSEN);
+    abschliessen.schliesseAb(f.sprechtag().id().wert());
 
     assertThat(sender.empfangen).isEmpty();
   }

@@ -9,8 +9,8 @@ import de.openclassware.elternsprechtag.domain.Fach;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
@@ -38,7 +38,7 @@ import org.springframework.context.annotation.Import;
  * steht dagegen ohne Spring und ohne Datenbank in {@code TerminTest} — sie gehört ins Aggregat.
  */
 @ServiceTest
-@Import({SprechtagService.class, KlassenService.class, SprechtagKontextTestConfig.class})
+@Import(SprechtagKontextTestConfig.class)
 class BuchenUndAuswertenTest extends AbstractServiceTest {
 
   private static final LocalDate DATE = LocalDate.of(2026, 7, 20);
@@ -54,8 +54,8 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
-            SprechtagStatusEnum.ENTWURF, klasse);
-    sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
+            SprechtagStatus.ENTWURF, klasse);
+    veroeffentlichen.veroeffentliche(sprechtag.id().wert());
     return new Fixture(sprechtag, klasse, lehrauftrag, lehrer);
   }
 
@@ -73,7 +73,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag();
 
     List<LehrkraftOption> optionen =
-        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().getId(), f.klasse().getId());
+        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse().getId());
 
     assertThat(optionen).hasSize(1);
     LehrkraftOption option = optionen.get(0);
@@ -90,7 +90,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     buchen.buchen(anfrage(f.lehrauftrag(), termin));
 
     List<LehrkraftOption> optionen =
-        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().getId(), f.klasse().getId());
+        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse().getId());
 
     assertThat(optionen.get(0).slots())
         .filteredOn(slot -> slot.terminId().equals(termin.id().wert()))
@@ -106,7 +106,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     termine.speichere(termin);
 
     List<LehrkraftOption> optionen =
-        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().getId(), f.klasse().getId());
+        buchungsoptionen.ladeLehrkraftOptionen(f.sprechtag().id().wert(), f.klasse().getId());
 
     assertThat(optionen.get(0).slots())
         .filteredOn(slot -> slot.terminId().equals(termin.id().wert()))
@@ -274,8 +274,8 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
-            SprechtagStatusEnum.ENTWURF, klasse);
-    sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
+            SprechtagStatus.ENTWURF, klasse);
+    veroeffentlichen.veroeffentliche(sprechtag.id().wert());
     return new AuswertungFixture(sprechtag, klasse, berg, bergAuftrag, adler, adlerAuftrag);
   }
 
@@ -300,7 +300,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
   void werteAus_returnsAllParticipatingTeachers_sortedByNachname() {
     AuswertungFixture f = publishedSprechtagWithTwoTeachers();
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     assertThat(auswertung.titel()).isEqualTo("Frühling");
     assertThat(auswertung.datum()).isEqualTo(DATE);
@@ -314,7 +314,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     AuswertungFixture f = publishedSprechtagWithTwoTeachers();
     book(f.bergAuftrag(), termineVon(f.berg()).get(0), "Eltern A", "Kind A", "n");
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     LehrkraftPlan adler = planOf(auswertung, f.adler());
     assertThat(adler.anzahl()).isZero();
@@ -329,7 +329,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     book(f.bergAuftrag(), bergSlots.get(1), "Eltern B", "Kind B", "n2");
     storniere(buchung -> buchung.familie().schuelerName().equals("Kind A"));
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     LehrkraftPlan berg = planOf(auswertung, f.berg());
     assertThat(berg.anzahl()).isEqualTo(1);
@@ -342,7 +342,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     Termin slot = termineVon(f.berg()).get(0); // 14:00
     book(f.bergAuftrag(), slot, "Eltern Müller", "Lukas Müller", "Leistung besprechen");
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     BuchungsZeile zeile = planOf(auswertung, f.berg()).zeilen().get(0);
     assertThat(zeile.startzeit()).isEqualTo(LocalTime.of(14, 0));
@@ -360,7 +360,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     // Der kommende Import lässt Lehraufträge verschwinden; die Buchung hält ihren Stand selbst.
     jdbc.update("delete from lehrauftrag where id = ?", f.bergAuftrag().getId());
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     BuchungsZeile zeile = planOf(auswertung, f.berg()).zeilen().get(0);
     assertThat(zeile.klasse()).isEqualTo("5a");
@@ -387,7 +387,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
                     termineVon(f.adler()).get(1).id().wert(),
                     "Nur für Adler"))));
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     assertThat(planOf(auswertung, f.berg()).zeilen())
         .extracting(BuchungsZeile::notiz)
@@ -406,7 +406,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     book(f.bergAuftrag(), slots.get(0), "E1", "K1", "n"); // 14:00
     book(f.bergAuftrag(), slots.get(1), "E2", "K2", "n"); // 14:15
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     assertThat(planOf(auswertung, f.berg()).zeilen())
         .extracting(BuchungsZeile::startzeit)
@@ -421,7 +421,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
     book(f.bergAuftrag(), bergSlots.get(1), "E2", "K2", "n");
     book(f.adlerAuftrag(), termineVon(f.adler()).get(0), "E3", "K3", "n");
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     assertThat(planOf(auswertung, f.berg()).anzahl()).isEqualTo(2);
     assertThat(planOf(auswertung, f.adler()).anzahl()).isEqualTo(1);
@@ -431,7 +431,7 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
   void werteAus_sprechtagWithoutAnyBooking_returnsAllTeachersWithZero() {
     AuswertungFixture f = publishedSprechtagWithTwoTeachers();
 
-    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().getId()).orElseThrow();
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
 
     assertThat(auswertung.plaene()).hasSize(2);
     assertThat(auswertung.plaene())

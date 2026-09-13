@@ -5,15 +5,18 @@
 ' Attribut-Markierung:  ! = erforderlich,  ? = optional
 ' Beziehungs-Multiplizitaet: 1, 0..1, 0..*, 1..*
 '
-' Der Umbau auf Aggregate laeuft (ADR 0003). Scheibe 1 ist geschnitten: Termin ist
-' Aggregat-Root, Buchung liegt darin. Alles Uebrige ist noch Bestand.
+' Der Umbau auf Aggregate laeuft (ADR 0003). Zwei Scheiben sind geschnitten: Termin ist
+' Aggregat-Root mit Buchung darin, Sprechtag ist Aggregat-Root mit seinen Invarianten.
+' Die Schulorganisation (Klasse, Lehrer, Fach, Lehrauftrag) ist noch Bestand.
 ' ==========================================================
 
 left to right direction
 hide circle
 skinparam classAttributeIconSize 0
 
-enum SprechtagStatusEnum {
+' Die erlaubten Uebergaenge stehen am Enum und werden vom Aggregat durchgesetzt — es gibt
+' keinen zweiten Schreibpfad mehr, der den Status nebenbei setzt.
+enum SprechtagStatus {
   ENTWURF
   VEROEFFENTLICHT
   ABGESCHLOSSEN
@@ -36,18 +39,28 @@ enum Buchungsstatus {
 ' Auth ist bewusst in-memory (ein Organizer, ohne DB-Account) — daher keine Account-Entity.
 ' Siehe ARCHITECTURE.md, Abschnitt "Auth".
 
-class Sprechtag {
-  + id! : UUID
+' Die Zeitstruktur (datum, zeitfenster, slotdauer, klassen) friert ab VEROEFFENTLICHT ein:
+' genau aus ihr sind die Termine entstanden. Titel, Ort, Hinweis und Schulkontakt nicht.
+class Sprechtag <<Aggregat-Root>> {
+  + id! : SprechtagId
   + titel! : String
   + datum! : Date
-  + startzeit! : Time
-  + endzeit! : Time
-  + slotdauerMin! : Integer
-  + zugangstoken! : String
+  + zeitfenster! : Zeitfenster
+  + slotdauer! : Slotdauer
+  + klassen! : List<KlasseId>
+  + zugangstoken! : AccessToken
   + ort? : String
   + hinweis? : String
-  + schulkontakt! : String
-  + status! : SprechtagStatusEnum
+  + schulkontakt! : Schulkontakt
+  + status! : SprechtagStatus
+  --
+  + legeZeitstrukturFest(...)
+  + beschreibeNeu(...)
+  + veroeffentliche()
+  + sageAb()
+  + schliesseAb()
+  + nimmVeroeffentlichungZurueck(boolean)
+  + slots() : List<Zeitraum>
 }
 
 class Klasse {
@@ -110,13 +123,14 @@ class Buchungsziel <<Value Object>> {
   + fach! : String
 }
 
-Sprechtag "0..*" --> "1..*" Klasse : umfasst
-
 Klasse "1" --> "0..*" Lehrauftrag : Unterricht in
 Fach "1" --> "0..*" Lehrauftrag : unterrichtet als
 Lehrer "1" --> "0..*" Lehrauftrag : erteilt
 
 ' Gestrichelt: nur eine typisierte Id, keine Objektnavigation ueber die Aggregat-Grenze.
+' Der Termin liegt bewusst NICHT im Sprechtag, obwohl er daraus entsteht: Ein Lock ueber alle
+' rund 600 Termine wuerde jede buchende Familie serialisieren (ADR 0003).
+Klasse "1" <.. "0..*" Sprechtag : KlasseId
 Sprechtag "1" <.. "0..*" Termin : SprechtagId
 Lehrer "1" <.. "0..*" Termin : LehrkraftId
 
@@ -125,7 +139,7 @@ Buchung *--> Familie
 Buchung *--> Buchungsziel
 Lehrauftrag "1" <.. "0..*" Buchungsziel : LehrauftragId\n(nur Herkunftsspur)
 
-Sprechtag ..> SprechtagStatusEnum
+Sprechtag ..> SprechtagStatus
 Termin ..> Verfuegbarkeit
 Buchung ..> Buchungsstatus
 

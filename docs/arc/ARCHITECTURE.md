@@ -31,21 +31,21 @@ Bounded Contexts und DDD-Aggregaten ([ADR 0003](../adr/0003-hexagonale-architekt
 [0004](../adr/0004-spring-data-jdbc-statt-jpa.md), [0005](../adr/0005-eltern-submit-bricht-eine-transaktion-ein-aggregat.md)).
 Zwei Welten stehen deshalb nebeneinander, und das ist für die Dauer der Migration Absicht:
 
-| | migriert (Scheibe 1, #138) | Bestand |
+| | migriert (Scheiben 1–2, #138/#139) | Bestand |
 |---|---|---|
 | Paket | `sprechtag.{domain,application,adapter}` | `domain`, `repositories`, `services`, `ui` |
-| Inhalt | `Termin` mit `Buchung`; Buchen, Auswerten, Buchungsoptionen | `Sprechtag`, Stammdaten, Versand, gesamte Oberfläche |
+| Inhalt | `Sprechtag`, `Termin` mit `Buchung`; Anlegen/Bearbeiten/Veröffentlichen/Absagen/Abschließen/Duplizieren, Materialisieren, Buchen, Auswerten, Buchungsoptionen | Stammdaten (Klasse, Lehrer, Fach, Lehrauftrag), Versand, gesamte Oberfläche |
 | Persistenz | Spring Data JDBC, Aggregat + getrenntes Persistenzmodell | JPA-`@Entity` |
 
 Was unten über Schichten, DTO-Grenze und Lazy Loading steht, beschreibt den **Bestand**. Für den
 migrierten Kontext gelten die ADRs, und die Regeln daraus stehen als **ArchUnit-Test**
 (`ArchitekturTest`) im Build — nicht nur hier.
 
-Die Berührungspunkte sind gezählt und benannt: `SprechtagService` materialisiert Termine über den
-`Termine`-Port; `BuchungBestaetigungService` und `AbsageBenachrichtigungService` lesen über
-Query-Ports; die Presenter rufen ausschließlich Use-Case-Ports. Die Adapter `SprechtageJdbcAdapter`
-und `LehrauftraegeJdbcAdapter` lesen übergangsweise direkt die Tabellen, die noch dem alten Modell
-gehören.
+Die Berührungspunkte sind gezählt und benannt: `BuchungBestaetigungService` und
+`AbsageBenachrichtigungService` lesen über Query-Ports und hängen an Domänen-Ereignissen; die
+Presenter rufen ausschließlich Use-Case-Ports. Die Adapter `KlassenJdbcAdapter` und
+`LehrauftraegeJdbcAdapter` lesen übergangsweise direkt die Tabellen der Schulorganisation — mit dem
+Schnitt des Stammdaten-Kontexts (#140) wird daraus ein echter Fremdkontext-Zugriff.
 
 ## Schichten & Datenfluss (Bestand)
 
@@ -72,11 +72,12 @@ Domain / @Entity   (JPA)              — Persistenzmodell
   im View ist detached, jeder Lazy-Zugriff wirft `LazyInitializationException`.)
 - **Entity→Record-Mapping ausschließlich im Service** (dort ist die Transaktion offen und
   Lazy-Zugriffe sind sicher). Der Presenter delegiert nur.
-- Records liegen **verschachtelt im erzeugenden Service** (`SprechtagService.SprechtagPublic`,
-  `KlassenService.KlasseOption`, …) — Definition und Mapping bleiben beieinander. Im migrierten
-  Kontext liegen sie stattdessen **im Use-Case-Port**, der sie zusagt
-  (`Buchungsoptionen.LehrkraftOption`, `Auswerten.SprechtagAuswertung`, `Buchen.BuchungsAnfrage`):
-  Dort steht der Vertrag, und der Presenter kennt nur ihn.
+- Records liegen **verschachtelt im erzeugenden Service** — Definition und Mapping bleiben
+  beieinander. Im migrierten Kontext liegen sie stattdessen **im Use-Case-Port**, der sie zusagt
+  (`Buchungsoptionen.LehrkraftOption`, `Auswerten.SprechtagAuswertung`, `Buchen.BuchungsAnfrage`,
+  `Sprechtagsuebersicht.SprechtagZeile`): Dort steht der Vertrag, und der Presenter kennt nur ihn.
+  Die eine Ausnahme ist `SprechtagFormular` — veränderlich, weil der Vaadin-`Binder` Feld für Feld
+  hinein- und herausschreibt.
 
 ## UI-Architektur (MVP)
 
@@ -96,8 +97,13 @@ Domain / @Entity   (JPA)              — Persistenzmodell
 
 Kern-Kette: **Sprechtag → Termin → Buchung**, mit **Lehrauftrag** als Buchungsziel.
 
-- **Sprechtag** — Ein Sprechtag-Event: Datum, Zeitfenster, Slot-Dauer, Status, teilnehmende
-  Klassen, Access-Token für den Eltern-Link.
+- **Sprechtag** — Ein Sprechtag-Event: Datum, `Zeitfenster`, `Slotdauer`, Status, teilnehmende
+  Klassen, `AccessToken` für den Eltern-Link, `Schulkontakt`. Seit Scheibe 2 ein **Aggregat-Root**
+  (`sprechtag.domain.Sprechtag`) mit zwei tragenden Invarianten: Die **Statusübergänge** laufen
+  ausschließlich über ihn (kein zweiter Schreibpfad setzt den Status mehr nebenbei), und die
+  **Zeitstruktur friert ab `VEROEFFENTLICHT` ein** — Datum, Zeitfenster, Slot-Dauer und
+  Klassenliste, denn genau daraus sind die Termine entstanden. Titel, Ort, Hinweistext,
+  Schulkontakt und Token bleiben änderbar. Die Klassen stehen als `KlasseId` darin.
 - **Lehrauftrag** — Verknüpft (Lehrer × Klasse × Fach). Das fachlich-organisatorische
   Ziel einer Buchung.
 - **Termin** — Ein **materialisierter** Zeit-Slot einer Lehrkraft an einem Sprechtag. Seit Scheibe 1
@@ -115,10 +121,16 @@ Kern-Kette: **Sprechtag → Termin → Buchung**, mit **Lehrauftrag** als Buchun
 
 ### Slot-Materialisierung
 
-Beim Wechsel auf `VEROEFFENTLICHT` erzeugt `SprechtagService` für **jede teilnehmende
-Lehrkraft × jeden Zeit-Slot** einen freien `Termin`. Der Existenz-Check macht das
-idempotent (kein Doppel-Erzeugen bei erneutem Speichern). Teilnehmende Lehrkräfte werden aus
-den Lehraufträgen der Sprechtag-Klassen abgeleitet.
+Beim Wechsel auf `VEROEFFENTLICHT` erzeugt der Use Case `Materialisieren` für **jede teilnehmende
+Lehrkraft × jeden Zeit-Slot** einen freien `Termin`. Die Slots rechnet das Sprechtag-Aggregat selbst
+aus (`Sprechtag.slots()`); ein Rest-Slot, der nicht mehr voll ins Zeitfenster passt, entfällt.
+Teilnehmende Lehrkräfte kommen über den `Lehrauftraege`-Port aus der Schulorganisation — jede genau
+einmal, geteilt über all ihre Fächer. Der Existenz-Check macht den Aufruf idempotent.
+
+Der Gegenzug ist `ZurueckAufEntwurf`: Es **verwirft** die Termine, denn sie haben ihre Grundlage
+verloren. Nur so ist die Zeitstruktur danach wieder änderbar und das nächste Veröffentlichen rechnet
+neu. Gebucht sein darf dabei nichts — auch nicht storniert; benachrichtigt wurde trotzdem, und dann
+führt nur die Absage weiter.
 
 ## Nebenläufigkeit & Persistenz
 
@@ -126,8 +138,10 @@ Dieser Bereich gilt als solide und ist **bewusst** so gebaut:
 
 - **`spring.jpa.open-in-view=false`** — Sessions enden mit der Service-Transaktion; deshalb
   die DTO-Grenze (s. o.). Gilt nur noch für den Bestand: Spring Data JDBC lädt nichts lazy.
-- **Optimistisches Locking** über `@Version` — am Persistenzmodell des `Termin`-Roots
-  (`TerminZeile`), niemals am Aggregat. Es sperrt den Termin samt seiner Buchungen.
+- **Optimistisches Locking** über `@Version` — am Persistenzmodell des jeweiligen Roots
+  (`TerminZeile`, `SprechtagZeile`), niemals am Aggregat. Am Termin trägt es die
+  Buchungs-Kollision und sperrt ihn samt seiner Buchungen; am Sprechtag die harmlosere, aber ebenso
+  reale Kollision zweier Organizer-Fenster.
 - **Atomare Buchung** (`BuchenService.buchen`): Ein Eltern-Submit mit N Wünschen ist
   „alles oder nichts". Ist auch nur ein Slot vergeben, rollt die ganze Transaktion zurück
   (`TerminBelegtException`) und es wird kein Ereignis veröffentlicht. Jedes Aggregat wird sofort
@@ -135,11 +149,12 @@ Dieser Bereich gilt als solide und ist **bewusst** so gebaut:
   parallele Doppelbuchung eines Slots ist fachlich derselbe Fall.
 - Das ist die **einzige** Stelle, die mehrere Aggregate in einer Transaktion ändert — ein benannter
   Bruch von „eine Transaktion, ein Aggregat" ([ADR 0005](../adr/0005-eltern-submit-bricht-eine-transaktion-ein-aggregat.md)).
-- **Domain-Events**: Das Aggregat *meldet* feinkörnig (`BuchungAngelegt`, `BuchungStorniert`), der
-  Use Case *holt ab und bündelt* zu `BuchungenBestaetigt`. Daran hängt der Versand — deshalb bekommt
-  eine Familie mit vier Terminen eine Mail und nicht vier. Veröffentlicht wird über den
-  `Ereignisse`-Port; dessen Adapter ist die einzige Stelle, die `ApplicationEventPublisher` kennt.
-  Semantik unverändert: `@TransactionalEventListener(AFTER_COMMIT)` plus `@Async`.
+- **Domain-Events**: Das Aggregat *meldet* feinkörnig (`BuchungAngelegt`, `BuchungStorniert`,
+  `SprechtagVeroeffentlicht`, `SprechtagAbgesagt`), der Use Case *holt ab und bündelt* — beim Buchen
+  zu `BuchungenBestaetigt`. Daran hängt der Versand; deshalb bekommt eine Familie mit vier Terminen
+  eine Mail und nicht vier, und die Absage-Mails hängen an `SprechtagAbgesagt`. Veröffentlicht wird
+  über den `Ereignisse`-Port; dessen Adapter ist die einzige Stelle, die `ApplicationEventPublisher`
+  kennt. Semantik unverändert: `@TransactionalEventListener(AFTER_COMMIT)` plus `@Async`.
 - **Stabile Kind-Ids**: Spring Data JDBC schreibt die Buchungszeilen beim Speichern neu
   (Delete-and-Insert). Weil die Domäne ihre Ids selbst vergibt, bleiben sie stabil — Voraussetzung
   dafür, dass der `@Async`-Listener sie nach dem Commit noch findet. Bewiesen in
@@ -153,9 +168,15 @@ Dieser Bereich gilt als solide und ist **bewusst** so gebaut:
 
 Im migrierten Kontext gibt es sie bewusst:
 
-- **Aggregat-Repository** (`Termine`-Port) — der Schreibweg. Lädt und speichert ganze Aggregate.
-- **Query-Ports** (`TerminAnsichten`, `BuchungsAnsichten`) — die Leseseite, handgeschriebenes SQL
-  an den Aggregaten vorbei. Die Auswertung über Aggregate zu bauen wären rund 600 Ladevorgänge.
+- **Aggregat-Repositories** (`Termine`, `Sprechtage`) — der Schreibweg. Laden und speichern ganze
+  Aggregate.
+- **Query-Ports** (`TerminAnsichten`, `BuchungsAnsichten`, `SprechtagAnsichten`) — die Leseseite,
+  handgeschriebenes SQL an den Aggregaten vorbei. Die Auswertung über Aggregate zu bauen wären rund
+  600 Ladevorgänge.
+
+Eine Ausnahme, die man kennen sollte: Der **Eltern-Zugang** (`Sprechtagszugang`) liest über das
+Aggregat, nicht über einen Query-Port. Es geht um genau einen Sprechtag, und „darf hier gebucht
+werden" ist keine Anzeigefrage — sie gehört an dieselbe Stelle wie die Regel.
 
 Daraus folgt eine Regel, die man kennen muss: **Read-Modelle dürfen veraltet sein.** Jede
 Entscheidung, die auf ihnen beruht, wird beim Schreiben am Aggregat erneut geprüft. Dass ein Slot in
@@ -193,13 +214,13 @@ als eigene, saubere Entscheidung.
 
 - **Service-Layer-Tests sind das Rückgrat.** Neue oder geänderte Geschäftslogik im Service ⇒
   Test (`@DataJpaTest` / `@SpringBootTest`).
-- Priorität: der Buchungs-Use-Case (Atomarität, `TerminBelegtException`) und `SprechtagService`
-  (Materialisierung, Status-Übergänge).
 - Im migrierten Kontext verteilt sich das auf drei Stellen, jede mit eigenem Zweck:
-  **Aggregat** (`TerminTest`, plain JUnit — die Kernregel, ohne Spring und ohne Datenbank),
-  **Persistenz-Adapter** (`TerminePersistenceAdapterTest`, `@DataJdbcTest` — stabile Buchungs-Ids,
-  optimistisches Sperren) und **Use Case** (`BuchenUndAuswertenTest` gegen eine echte Postgres —
-  Rollback und die Zusammenführung zweier Ports).
+  **Aggregat** (`TerminTest`, `SprechtagTest`, plain JUnit — die Kernregeln, ohne Spring und ohne
+  Datenbank), **Persistenz-Adapter** (`TerminePersistenceAdapterTest`, `@DataJdbcTest` — stabile
+  Buchungs-Ids, optimistisches Sperren) und **Use Case** (`BuchenUndAuswertenTest`,
+  `SprechtagUseCaseTest` gegen eine echte Postgres — Rollback, Materialisierung, die
+  Zusammenführung zweier Ports). Eine Regel, die ins Aggregat gehört, wird nicht auf Service-Ebene
+  getestet.
 - **Die Architekturregeln stehen als Test im Build** (`ArchitekturTest`, ArchUnit): Die Domäne
   importiert nur JDK, kein View kennt ein Aggregat, Adapter kennen einander nicht, die Anwendung
   kennt keinen Adapter. Regeln, die niemand prüfen kann, driften — F1–F9 sind der Beleg.

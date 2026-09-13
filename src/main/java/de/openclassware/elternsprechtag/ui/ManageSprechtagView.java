@@ -9,9 +9,9 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
 import de.openclassware.elternsprechtag.security.Roles;
-import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.ui.components.Breadcrumb;
 import de.openclassware.elternsprechtag.ui.components.CancelSprechtagDialog;
 import de.openclassware.elternsprechtag.ui.components.ShareLinkDialog;
@@ -34,9 +34,9 @@ public class ManageSprechtagView extends Div {
   private final TextField search;
   private final Div filterRow;
 
-  private List<SprechtagRow> sprechtage;
+  private List<SprechtagZeile> sprechtage;
   private SprechtagFilterBar filterBar;
-  private SprechtagStatusEnum statusFilter;
+  private SprechtagStatus statusFilter;
 
   ManageSprechtagView(ManageSprechtagPresenter presenter) {
     this.presenter = presenter;
@@ -92,13 +92,13 @@ public class ManageSprechtagView extends Div {
     return field;
   }
 
-  private void onStatusSelected(SprechtagStatusEnum status) {
+  private void onStatusSelected(SprechtagStatus status) {
     this.statusFilter = status;
     applyFilters();
   }
 
-  private void onStatusChange(SprechtagRow sprechtag, SprechtagStatusEnum newStatus) {
-    if (newStatus == SprechtagStatusEnum.ABGESAGT) {
+  private void onStatusChange(SprechtagZeile sprechtag, SprechtagStatus newStatus) {
+    if (newStatus == SprechtagStatus.ABGESAGT) {
       long betroffene = presenter.zaehleBetroffeneEltern(sprechtag.id());
       new CancelSprechtagDialog(
               sprechtag.titel(), betroffene, () -> applyStatusChange(sprechtag, newStatus))
@@ -108,17 +108,19 @@ public class ManageSprechtagView extends Div {
     applyStatusChange(sprechtag, newStatus);
   }
 
-  private void applyStatusChange(SprechtagRow sprechtag, SprechtagStatusEnum newStatus) {
-    presenter.changeStatus(sprechtag.id(), newStatus);
+  private void applyStatusChange(SprechtagZeile sprechtag, SprechtagStatus newStatus) {
+    presenter
+        .wechsleStatus(sprechtag.id(), newStatus)
+        .ifPresent(meldung -> SprechtagMeldungen.zeige(this, meldung));
     reload();
   }
 
-  private void onDuplicate(SprechtagRow sprechtag) {
+  private void onDuplicate(SprechtagZeile sprechtag) {
     UUID copyId = presenter.duplicate(sprechtag.id());
     getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + copyId));
   }
 
-  private void onShare(SprechtagRow sprechtag) {
+  private void onShare(SprechtagZeile sprechtag) {
     getUI()
         .ifPresent(
             ui ->

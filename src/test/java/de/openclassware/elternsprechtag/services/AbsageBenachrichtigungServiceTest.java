@@ -8,8 +8,8 @@ import de.openclassware.elternsprechtag.domain.Fach;
 import de.openclassware.elternsprechtag.domain.Klasse;
 import de.openclassware.elternsprechtag.domain.Lehrauftrag;
 import de.openclassware.elternsprechtag.domain.Lehrer;
-import de.openclassware.elternsprechtag.domain.Sprechtag;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
+import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.services.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
@@ -25,9 +25,9 @@ import org.springframework.context.annotation.Import;
 
 @ServiceTest
 @Import({
-  SprechtagService.class,
+
   SprechtagKontextTestConfig.class,
-  KlassenService.class,
+
   AbsageBenachrichtigungService.class,
   FakeBenachrichtigungSender.class,
   BenachrichtigungTextConfig.class
@@ -55,8 +55,8 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     Sprechtag sprechtag =
         persistSprechtag(
             "Frühling", DATE, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
-            SprechtagStatusEnum.ENTWURF, klasse);
-    sprechtagService.changeStatus(sprechtag.getId(), SprechtagStatusEnum.VEROEFFENTLICHT);
+            SprechtagStatus.ENTWURF, klasse);
+    veroeffentlichen.veroeffentliche(sprechtag.id().wert());
     return new Fixture(sprechtag, lehrauftrag, lehrer);
   }
 
@@ -77,7 +77,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     book(f.lehrauftrag(), slots.get(0), "a@example.com");
     book(f.lehrauftrag(), slots.get(1), "b@example.com");
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
 
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
@@ -98,7 +98,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
                 new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(0).id().wert(), "n"),
                 new BuchungsWunsch(f.lehrauftrag().getId(), slots.get(1).id().wert(), "n"))));
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
 
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
@@ -113,7 +113,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     book(f.lehrauftrag(), slots.get(1), "storniert@example.com");
     storniere(b -> b.familie().email().equals("storniert@example.com"));
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
 
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
@@ -125,7 +125,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag();
     book(f.lehrauftrag(), alleTermine().get(0), "eltern@example.com");
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
 
     assertThat(sender.empfangen).hasSize(1);
     Nachricht nachricht = sender.empfangen.get(0);
@@ -154,7 +154,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   void benachrichtige_sprechtagWithoutActiveBooking_sendsNothing() {
     Fixture f = publishedSprechtag();
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
 
     assertThat(sender.empfangen).isEmpty();
   }
@@ -176,7 +176,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     storniere(b -> b.familie().email().equals("b@example.com"));
 
     // a@ (aktiv, dedupliziert) zählt; b@ (storniert) nicht.
-    assertThat(absageBenachrichtigungService.zaehleAktiveEmpfaenger(f.sprechtag().getId()))
+    assertThat(absageBenachrichtigungService.zaehleAktiveEmpfaenger(f.sprechtag().id().wert()))
         .isEqualTo(1);
   }
 
@@ -184,7 +184,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   void zaehleAktiveEmpfaenger_withoutActiveBooking_isZero() {
     Fixture f = publishedSprechtag();
 
-    assertThat(absageBenachrichtigungService.zaehleAktiveEmpfaenger(f.sprechtag().getId()))
+    assertThat(absageBenachrichtigungService.zaehleAktiveEmpfaenger(f.sprechtag().id().wert()))
         .isZero();
   }
 
@@ -196,7 +196,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     book(f.lehrauftrag(), slots.get(1), "ok@example.com");
     sender.scheitertFuer.add("fehlerhaft@example.com");
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().getId());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
 
     // Der Fehler bei der ersten Adresse stoppt den Versand an die übrigen nicht.
     assertThat(sender.empfangen)

@@ -25,9 +25,6 @@ public class Klasse {
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
-    @ManyToMany(mappedBy = "klassen")
-    private List<Sprechtag> sprechtage = new ArrayList<>();
-
     @OneToMany(mappedBy = "klasse")
     private List<Lehrauftrag> lehrauftraege = new ArrayList<>();
 

@@ -3,8 +3,8 @@ package de.openclassware.elternsprechtag.ui.components;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
-import de.openclassware.elternsprechtag.domain.SprechtagStatusEnum;
-import de.openclassware.elternsprechtag.services.SprechtagService.SprechtagRow;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -12,24 +12,24 @@ import java.util.function.Consumer;
 @CssImport("./styles/components/sprechtag-filter.css")
 public class SprechtagFilterBar extends Div {
 
-  private record Option(String labelKey, SprechtagStatusEnum status) {}
+  private record Option(String labelKey, SprechtagStatus status) {}
 
   private static final List<Option> OPTIONS =
       List.of(
           new Option("manage-sprechtag.filter.alle", null),
-          new Option("manage-sprechtag.filter.aktiv", SprechtagStatusEnum.VEROEFFENTLICHT),
-          new Option("manage-sprechtag.filter.entwuerfe", SprechtagStatusEnum.ENTWURF),
-          new Option("manage-sprechtag.filter.abgeschlossen", SprechtagStatusEnum.ABGESCHLOSSEN),
-          new Option("manage-sprechtag.filter.abgesagt", SprechtagStatusEnum.ABGESAGT));
+          new Option("manage-sprechtag.filter.aktiv", SprechtagStatus.VEROEFFENTLICHT),
+          new Option("manage-sprechtag.filter.entwuerfe", SprechtagStatus.ENTWURF),
+          new Option("manage-sprechtag.filter.abgeschlossen", SprechtagStatus.ABGESCHLOSSEN),
+          new Option("manage-sprechtag.filter.abgesagt", SprechtagStatus.ABGESAGT));
 
   /**
    * @param activeStatus the status whose tab is initially active, or {@code null} for "Alle".
    * @param onSelect receives the selected status to filter by, or {@code null} for "Alle".
    */
   public SprechtagFilterBar(
-      List<SprechtagRow> sprechtage,
-      SprechtagStatusEnum activeStatus,
-      Consumer<SprechtagStatusEnum> onSelect) {
+      List<SprechtagZeile> sprechtage,
+      SprechtagStatus activeStatus,
+      Consumer<SprechtagStatus> onSelect) {
     addClassName("sprechtag-filter");
 
     List<Div> tabs = new ArrayList<>();
@@ -49,7 +49,7 @@ public class SprechtagFilterBar extends Div {
     }
   }
 
-  private Div createTab(Option option, List<SprechtagRow> sprechtage) {
+  private Div createTab(Option option, List<SprechtagZeile> sprechtage) {
     Div tab = new Div();
     tab.addClassName("sprechtag-filter__tab");
 
@@ -63,7 +63,7 @@ public class SprechtagFilterBar extends Div {
     return tab;
   }
 
-  private long count(Option option, List<SprechtagRow> sprechtage) {
+  private long count(Option option, List<SprechtagZeile> sprechtage) {
     if (option.status() == null) {
       return sprechtage.size();
     }

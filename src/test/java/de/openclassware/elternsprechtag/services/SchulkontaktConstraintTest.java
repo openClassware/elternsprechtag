@@ -22,13 +22,13 @@ import org.springframework.context.annotation.Import;
  * Der Check-Constraint aus Migration V3 — geprüft dort, wo er wirkt: am nackten SQL, an Service und
  * Hibernate vorbei.
  *
- * <p>Die Service-Prüfung in {@link SprechtagService} ist die getestete Wahrheit für die Anwendung;
+ * <p>Der Wert {@code Schulkontakt} der Domäne ist die getestete Wahrheit für die Anwendung;
  * dieser Test beantwortet die andere Frage: Kann ein Sprechtag ohne Schulkontakt überhaupt in der
  * Datenbank stehen? Er darf es nicht — in keinem Status und auch nicht durch ein Skript, einen
- * Datenbank-Client oder einen künftigen Schreibweg, der die Service-Prüfung umgeht.
+ * Datenbank-Client oder einen künftigen Schreibweg, der die Domäne umgeht.
  */
 @ServiceTest
-@Import({SprechtagService.class, KlassenService.class, SprechtagKontextTestConfig.class})
+@Import(SprechtagKontextTestConfig.class)
 class SchulkontaktConstraintTest extends AbstractServiceTest {
 
   @Autowired private DataSource dataSource;
@@ -54,7 +54,7 @@ class SchulkontaktConstraintTest extends AbstractServiceTest {
   @Test
   void insert_withSchulkontakt_isAllowed() {
     assertThatCode(() -> insertSprechtag("ENTWURF", SCHULKONTAKT)).doesNotThrowAnyException();
-    assertThat(sprechtagRepository.count()).isEqualTo(1);
+    assertThat(jdbc.queryForObject("select count(*) from sprechtage", Long.class)).isEqualTo(1);
   }
 
   @Test
