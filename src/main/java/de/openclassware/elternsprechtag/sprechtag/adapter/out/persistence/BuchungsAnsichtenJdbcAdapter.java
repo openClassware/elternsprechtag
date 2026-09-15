@@ -33,7 +33,8 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
 
   private static final String AKTIVE_BUCHUNGEN =
       """
-      select b.lehrkraft_id      as lehrkraft_id,
+      select b.id                as buchung_id,
+             b.lehrkraft_id      as lehrkraft_id,
              b.lehrkraft_name    as lehrkraft_name,
              b.lehrkraft_kuerzel as lehrkraft_kuerzel,
              t.startzeit         as startzeit,
@@ -78,6 +79,7 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
         Map.of("sprechtagId", sprechtag.wert()),
         (rs, zeile) ->
             new AuswertungsZeile(
+                rs.getObject("buchung_id", UUID.class),
                 rs.getObject("lehrkraft_id", UUID.class),
                 rs.getString("lehrkraft_name"),
                 rs.getString("lehrkraft_kuerzel"),

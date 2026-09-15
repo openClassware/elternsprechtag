@@ -156,6 +156,24 @@ class TerminePersistenceAdapterTest {
   }
 
   @Test
+  void ladeZuBuchung_findetDasGanzeAggregat() {
+    Termin termin = neuerTermin();
+    BuchungId buchung = termin.buche(familie("mueller"), ziel(), null, BEGINN);
+    termine.speichere(termin);
+
+    Termin geladen = termine.ladeZuBuchung(buchung).orElseThrow();
+
+    assertThat(geladen.id()).isEqualTo(termin.id());
+    // Ganz heißt: samt seiner Buchungen — ein Select nur auf `termin` brächte sie nicht mit.
+    assertThat(geladen.aktiveBuchung().orElseThrow().id()).isEqualTo(buchung);
+  }
+
+  @Test
+  void ladeZuBuchung_unbekannteBuchung_liefertNichts() {
+    assertThat(termine.ladeZuBuchung(BuchungId.neu())).isEmpty();
+  }
+
+  @Test
   void stornoUndNeubuchung_lassenDieAlteBuchungsIdUnveraendert() {
     Termin termin = neuerTermin();
     BuchungId ersteId = termin.buche(familie("mueller"), ziel(), null, BEGINN);

@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.out;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
@@ -13,6 +14,13 @@ import java.util.Optional;
 public interface Termine {
 
   Optional<Termin> lade(TerminId id);
+
+  /**
+   * Das Termin-Aggregat, zu dem diese Buchung gehört. Die Buchung ist innere Entity und hat kein
+   * eigenes Repository — wer sie ändern will, braucht ihren Root. Die Oberfläche kennt von einer
+   * Buchungszeile nur deren Id; den Weg zurück zum Aggregat geht dieser Port.
+   */
+  Optional<Termin> ladeZuBuchung(BuchungId buchung);
 
   /**
    * Schreibt das ganze Aggregat. Gibt nichts zurück: Der Aufrufer behält bewusst das Aggregat in der

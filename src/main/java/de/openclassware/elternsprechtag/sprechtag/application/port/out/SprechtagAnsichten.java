@@ -39,12 +39,19 @@ public interface SprechtagAnsichten {
       String accessToken,
       List<UUID> klasseIds) {}
 
-  /** {@code ort} darf {@code null} sein; {@code schulkontakt} ist am Sprechtag Pflicht. */
+  /**
+   * {@code ort} darf {@code null} sein; {@code schulkontakt} ist am Sprechtag Pflicht.
+   *
+   * <p>Der {@code status} steht mit dabei, weil die Auswertung daran hängt, ob sie überhaupt eine
+   * Storno-Aktion anbietet. Er darf veraltet sein wie jedes Read-Modell — verbindlich geprüft wird
+   * beim Schreiben am Aggregat.
+   */
   record Kopf(
       SprechtagId id,
       String titel,
       LocalDate datum,
       String ort,
       String schulkontakt,
+      SprechtagStatus status,
       List<UUID> klasseIds) {}
 }

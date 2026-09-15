@@ -89,9 +89,20 @@
     color: #8a909a;
 }
 
+/* Die Aktionsspalte gibt es nur, wenn die Auswertung eine Aktion anbietet — an einem
+   abgeschlossenen Sprechtag stünde sonst eine leere Spalte im Plan. Der Modifier hängt an der
+   Tabelle, weil er für Kopfzeile und Zeilen gemeinsam gelten muss. */
+.auswertung__table {
+    --auswertung-row-columns: var(--auswertung-columns);
+}
+
+.auswertung__table--mit-aktion {
+    --auswertung-row-columns: var(--auswertung-columns) 64px;
+}
+
 .auswertung__row {
     display: grid;
-    grid-template-columns: var(--auswertung-columns);
+    grid-template-columns: var(--auswertung-row-columns);
     align-items: baseline;
     gap: 16px;
     padding: 12px 20px;
@@ -136,6 +147,19 @@
     color: #8a909a;
 }
 
+.auswertung__cell--aktion {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.auswertung__storno {
+    /* Mindestens 44 px Trefferfläche — dieselbe Untergrenze wie am Telefon (375 × 667 px). */
+    min-width: 44px;
+    height: 44px;
+    margin: -10px 0;
+    cursor: pointer;
+}
+
 /* Tablet: schmalere Spalten, Notiz umbricht früher. */
 @media (max-width: 1024px) {
     .auswertung {
@@ -178,5 +202,13 @@
     .auswertung__cell--notiz {
         grid-column: 2;
         font-size: 13px;
+    }
+
+    /* Die Aktion rückt unter den Zeit-Anker in die feste erste Spalte: Der Scan-Anker bleibt, wie
+       er ist, und die Karte wird nicht breiter — bei 375 px scrollt die Seite nicht seitwärts. */
+    .auswertung__cell--aktion {
+        grid-column: 1;
+        grid-row: 3;
+        justify-content: flex-start;
     }
 }
