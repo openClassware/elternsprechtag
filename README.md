@@ -92,9 +92,9 @@ SPRING_PROFILES_ACTIVE=demo ./mvnw spring-boot:run
 
 Das Schema gehört [Flyway](https://flywaydb.org/): Die Skripte liegen unter
 [`src/main/resources/db/migration`](src/main/resources/db/migration) und laufen beim Start in
-jedem Profil, auch in Tests. Hibernate prüft das Ergebnis nur noch
-(`spring.jpa.hibernate.ddl-auto=validate`) und ändert nichts mehr selbst — passen Entitäten und
-Migrationen nicht zusammen, startet die Anwendung gar nicht erst.
+jedem Profil, auch in Tests. Sie sind die einzige Beschreibung des Schemas: Spring Data JDBC
+erzeugt und prüft nichts. Ob Persistenzmodell und Migration zusammenpassen, zeigen die
+Persistenz-Tests (`@DataJdbcTest` gegen dieselbe migrierte Datenbank).
 
 Das `demo`-Profil nimmt zusätzlich [`db/demo`](src/main/resources/db/demo) in die Suchpfade auf;
 dort liegen die Demo-Stammdaten als wiederholbare Migration. Eine Schulinstanz aktiviert dieses

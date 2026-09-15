@@ -2,7 +2,7 @@ package de.openclassware.elternsprechtag.config;
 
 import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
 import de.openclassware.elternsprechtag.security.Roles;
-import de.openclassware.elternsprechtag.ui.LoginView;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.LoginView;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

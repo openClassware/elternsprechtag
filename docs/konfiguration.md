@@ -49,11 +49,9 @@ Lesen und Schreiben von Daten.
 | `SPRING_DATASOURCE_USERNAME` | `myuser`                                             | Datenbank-Benutzer.                                           |
 | `SPRING_DATASOURCE_PASSWORD` | `mysecret`                                           | Passwort des Datenbank-Benutzers.                             |
 
-Die JPA-Einstellungen selbst (`spring.jpa.hibernate.ddl-auto=validate`, `show-sql=false`,
-`open-in-view=false`) sind bewusst fest verdrahtet und keine Konfigurationspunkte für Betreiber.
-Über Relaxed Binding ließen sie sich überschreiben — davon ist abzuraten: `validate` heißt, dass
-Hibernate das migrierte Schema nur noch prüft und nichts daran ändert. Jeder andere `ddl-auto`-Wert
-lässt Hibernate am Schema arbeiten, das Flyway besitzt; `create-drop` verwirft dabei alle Daten.
+Das Schema selbst ist kein Konfigurationspunkt: Es gehört ausschließlich Flyway. Die Anwendung
+benutzt Spring Data JDBC und bringt weder Schema-Generierung noch Schema-Validierung mit — es gibt
+also nichts, was ein Betreiber hier einstellen könnte oder sollte.
 
 ## Organizer-Zugang
 
@@ -126,7 +124,7 @@ Plattform-Charset korrekt ankommen.
 ### Fallstrick: ohne Mailhost verschickt die Anwendung nichts
 
 `spring.mail.host` hat **absichtlich keinen Default**. Davon hängt ab, welche Implementierung
-[`BenachrichtigungConfig`](../src/main/java/de/openclassware/elternsprechtag/services/BenachrichtigungConfig.java)
+[`BenachrichtigungConfig`](../src/main/java/de/openclassware/elternsprechtag/sprechtag/adapter/out/mail/BenachrichtigungConfig.java)
 auswählt:
 
 - **`SPRING_MAIL_HOST` gesetzt** → echter Versand über JavaMail.

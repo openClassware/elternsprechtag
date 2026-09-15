@@ -33,8 +33,8 @@ class DemoSeedMigrationTest {
 
   @Test
   void migrationskettePlusSeedErgibtDieDemoStammdaten() {
-    // Kommt der Kontext überhaupt hoch, haben Migration und Hibernate-Validierung schon
-    // zusammengepasst. Bleibt die Frage, ob danach auch der Seed gelaufen ist.
+    // Kommt der Kontext überhaupt hoch, ist die Migrationskette durchgelaufen.
+    // Bleibt die Frage, ob danach auch der Seed gelaufen ist.
     assertThat(count("faecher")).isEqualTo(8);
     assertThat(count("klassen")).isEqualTo(6);
     assertThat(count("lehrer")).isEqualTo(10);

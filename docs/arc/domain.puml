@@ -1,152 +1,187 @@
 @startuml elternsprechtag
 
 ' ==========================================================
-' Domain-Diagramm (schlanke Variante): Elternsprechtag
+' Domain-Diagramm: Elternsprechtag
 ' Attribut-Markierung:  ! = erforderlich,  ? = optional
 ' Beziehungs-Multiplizitaet: 1, 0..1, 0..*, 1..*
 '
-' Der Umbau auf Aggregate laeuft (ADR 0003). Zwei Scheiben sind geschnitten: Termin ist
-' Aggregat-Root mit Buchung darin, Sprechtag ist Aggregat-Root mit seinen Invarianten.
-' Die Schulorganisation (Klasse, Lehrer, Fach, Lehrauftrag) ist noch Bestand.
+' Gezeichnet ist der Aggregat-Schnitt aus ADR 0003, nicht ein Tabellenmodell. Zwei Dinge
+' sind deshalb wichtiger als die Attribute:
+'   - Jede Box mit <<Aggregat-Root>> ist eine Konsistenzgrenze. Was darin liegt, wird
+'     gemeinsam geladen, geaendert und gespeichert; ueber die Grenze fuehrt kein Verweis.
+'   - Gestrichelte Pfeile sind typisierte Ids, keine Objektnavigation. Man kann ihnen im
+'     Code nicht folgen — man laedt das andere Aggregat ueber seinen Port.
+' Die Rahmen sind die beiden Bounded Contexts (CONTEXT-MAP.md). Ueber die Kontextgrenze
+' fuehren nur Ids und Text, nie ein geteilter Typ.
 ' ==========================================================
 
 left to right direction
 hide circle
 skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
 
-' Die erlaubten Uebergaenge stehen am Enum und werden vom Aggregat durchgesetzt — es gibt
-' keinen zweiten Schreibpfad mehr, der den Status nebenbei setzt.
-enum SprechtagStatus {
-  ENTWURF
-  VEROEFFENTLICHT
-  ABGESCHLOSSEN
-  ABGESAGT
+package "schulorganisation" <<Rectangle>> {
+
+  ' Vier eigenstaendige Aggregate, jedes fuer sich winzig — genau das ist der Punkt: Sie
+  ' gehoeren fachlich einem anderen System (dem kuenftigen Import) und teilen keine
+  ' Invariante, die ein gemeinsamer Root huetten muesste.
+  ' Geloescht wird hier nichts, sondern stillgelegt: Ein Import darf einen Lehrauftrag
+  ' verschwinden lassen, ohne alte Buchungen mitzunehmen.
+
+  class Klasse <<Aggregat-Root>> {
+    + id! : KlasseId
+    + name! : String
+    + stillgelegt! : boolean
+  }
+
+  class Lehrkraft <<Aggregat-Root>> {
+    + id! : LehrkraftId
+    + vorname! : String
+    + nachname! : String
+    + kuerzel! : String
+    + stillgelegt! : boolean
+  }
+
+  class Fach <<Aggregat-Root>> {
+    + id! : FachId
+    + name! : String
+    + kuerzel? : String
+    + stillgelegt! : boolean
+  }
+
+  class Lehrauftrag <<Aggregat-Root>> {
+    + id! : LehrauftragId
+    + lehrkraft! : LehrkraftId
+    + klasse! : KlasseId
+    + fach! : FachId
+    + stillgelegt! : boolean
+  }
+
+  ' Auch innerhalb des Kontexts: Ids, keine Objektbeziehung. Der Lehrauftrag ist die
+  ' Verknuepfung (Lehrkraft x Klasse x Fach), nicht ihr Besitzer.
+  Lehrkraft "1" <.. "0..*" Lehrauftrag : LehrkraftId
+  Klasse "1" <.. "0..*" Lehrauftrag : KlasseId
+  Fach "1" <.. "0..*" Lehrauftrag : FachId
 }
 
-' Kein "belegt": Das ist die Frage, ob eine aktive Buchung existiert, und wird abgeleitet.
-' Gespeichert ist nur die Absicht des Organizers, den Slot anzubieten.
-enum Verfuegbarkeit {
-  VERFUEGBAR
-  ENTFAELLT
+package "sprechtag" <<Rectangle>> {
+
+  ' Die erlaubten Uebergaenge setzt das Aggregat durch — es gibt keinen zweiten
+  ' Schreibpfad mehr, der den Status nebenbei setzt.
+  enum SprechtagStatus {
+    ENTWURF
+    VEROEFFENTLICHT
+    ABGESCHLOSSEN
+    ABGESAGT
+  }
+
+  ' Kein "belegt": Das ist die Frage, ob eine aktive Buchung existiert, und wird abgeleitet.
+  ' Gespeichert ist nur die Absicht des Organizers, den Slot anzubieten.
+  enum Verfuegbarkeit {
+    VERFUEGBAR
+    ENTFAELLT
+  }
+
+  ' STORNIERT, nicht ABGESAGT: Eine Buchung wird storniert, ein Sprechtag wird abgesagt.
+  enum Buchungsstatus {
+    ZUGESAGT
+    STORNIERT
+  }
+
+  ' Die Zeitstruktur (datum, zeitfenster, slotdauer, klassen) friert ab VEROEFFENTLICHT ein:
+  ' genau aus ihr sind die Termine entstanden. Titel, Ort, Hinweis und Schulkontakt nicht.
+  class Sprechtag <<Aggregat-Root>> {
+    + id! : SprechtagId
+    + titel! : String
+    + datum! : Date
+    + zeitfenster! : Zeitfenster
+    + slotdauer! : Slotdauer
+    + klassen! : List<KlasseId>
+    + zugangstoken! : AccessToken
+    + ort? : String
+    + hinweis? : String
+    + schulkontakt! : Schulkontakt
+    + status! : SprechtagStatus
+    --
+    + legeZeitstrukturFest(...)
+    + beschreibeNeu(...)
+    + veroeffentliche()
+    + sageAb()
+    + schliesseAb()
+    + nimmVeroeffentlichungZurueck(boolean)
+    + slots() : List<Zeitraum>
+  }
+
+  ' Der Huether der Kernregel: ein Slot, hoechstens eine aktive Buchung. Sie gilt genau
+  ' deshalb, weil Buchung INNERHALB dieser Grenze liegt und nicht daneben.
+  class Termin <<Aggregat-Root>> {
+    + id! : TerminId
+    + sprechtag! : SprechtagId
+    + lehrkraft! : LehrkraftId
+    + zeitraum! : Zeitraum
+    + verfuegbarkeit! : Verfuegbarkeit
+    --
+    + buche(...) : BuchungId
+    + storniere(BuchungId)
+    + istBuchbar() : boolean
+  }
+
+  class Buchung <<innere Entity>> {
+    + id! : BuchungId
+    + erstelltAm! : DateTime
+    + status! : Buchungsstatus
+    + familie! : Familie
+    + ziel! : Buchungsziel
+    + notiz? : Notiz
+  }
+
+  class Familie <<Value Object>> {
+    + elternName! : String
+    + schuelerName! : String
+    + email! : String
+  }
+
+  ' Stand zum Buchungszeitpunkt, kein Verweis: Ein Import darf die Auswertung eines
+  ' vergangenen Sprechtags nicht veraendern. Die Namen stehen als Text darin, nicht als
+  ' Beziehung — sie kommen aus dem fremden Kontext und altern dort weiter.
+  class Buchungsziel <<Value Object>> {
+    + herkunft! : LehrauftragId
+    + lehrkraft! : LehrkraftId
+    + lehrkraftName! : String
+    + lehrkraftKuerzel! : String
+    + klasse! : String
+    + fach! : String
+  }
+
+  ' Innerhalb des Aggregats: echte Objektbeziehung, gemeinsam geladen und gespeichert.
+  Termin "1" *--> "0..*" Buchung : enthaelt\n(hoechstens eine aktiv)
+  Buchung *--> Familie
+  Buchung *--> Buchungsziel
+
+  ' Der Termin liegt bewusst NICHT im Sprechtag, obwohl er daraus entsteht: Ein Lock ueber
+  ' alle rund 600 Termine wuerde jede buchende Familie serialisieren (ADR 0003).
+  Sprechtag "1" <.. "0..*" Termin : SprechtagId
+
+  Sprechtag ..> SprechtagStatus
+  Termin ..> Verfuegbarkeit
+  Buchung ..> Buchungsstatus
 }
 
-' STORNIERT, nicht ABGESAGT: Eine Buchung wird storniert, ein Sprechtag wird abgesagt.
-enum Buchungsstatus {
-  ZUGESAGT
-  STORNIERT
-}
-
-' Auth ist bewusst in-memory (ein Organizer, ohne DB-Account) — daher keine Account-Entity.
-' Siehe ARCHITECTURE.md, Abschnitt "Auth".
-
-' Die Zeitstruktur (datum, zeitfenster, slotdauer, klassen) friert ab VEROEFFENTLICHT ein:
-' genau aus ihr sind die Termine entstanden. Titel, Ort, Hinweis und Schulkontakt nicht.
-class Sprechtag <<Aggregat-Root>> {
-  + id! : SprechtagId
-  + titel! : String
-  + datum! : Date
-  + zeitfenster! : Zeitfenster
-  + slotdauer! : Slotdauer
-  + klassen! : List<KlasseId>
-  + zugangstoken! : AccessToken
-  + ort? : String
-  + hinweis? : String
-  + schulkontakt! : Schulkontakt
-  + status! : SprechtagStatus
-  --
-  + legeZeitstrukturFest(...)
-  + beschreibeNeu(...)
-  + veroeffentliche()
-  + sageAb()
-  + schliesseAb()
-  + nimmVeroeffentlichungZurueck(boolean)
-  + slots() : List<Zeitraum>
-}
-
-class Klasse {
-  + id! : UUID
-  + bezeichnung! : String
-}
-
-class Lehrer {
-  + id! : UUID
-  + vorname! : String
-  + nachname! : String
-  + kuerzel! : String
-}
-
-class Fach {
-  + id! : UUID
-  + bezeichnung! : String
-  + kuerzel? : String
-}
-
-class Lehrauftrag {
-  + id! : UUID
-}
-
-class Termin <<Aggregat-Root>> {
-  + id! : TerminId
-  + sprechtag! : SprechtagId
-  + lehrkraft! : LehrkraftId
-  + zeitraum! : Zeitraum
-  + verfuegbarkeit! : Verfuegbarkeit
-  --
-  + buche(...) : BuchungId
-  + storniere(BuchungId)
-  + istBuchbar() : boolean
-}
-
-class Buchung <<innere Entity>> {
-  + id! : BuchungId
-  + erstelltAm! : DateTime
-  + status! : Buchungsstatus
-  + familie! : Familie
-  + ziel! : Buchungsziel
-  + notiz? : Notiz
-}
-
-class Familie <<Value Object>> {
-  + elternName! : String
-  + schuelerName! : String
-  + email! : String
-}
-
-' Stand zum Buchungszeitpunkt, kein Verweis: Ein Import darf die Auswertung eines
-' vergangenen Sprechtags nicht veraendern.
-class Buchungsziel <<Value Object>> {
-  + herkunft! : LehrauftragId
-  + lehrkraft! : LehrkraftId
-  + lehrkraftName! : String
-  + lehrkraftKuerzel! : String
-  + klasse! : String
-  + fach! : String
-}
-
-Klasse "1" --> "0..*" Lehrauftrag : Unterricht in
-Fach "1" --> "0..*" Lehrauftrag : unterrichtet als
-Lehrer "1" --> "0..*" Lehrauftrag : erteilt
-
-' Gestrichelt: nur eine typisierte Id, keine Objektnavigation ueber die Aggregat-Grenze.
-' Der Termin liegt bewusst NICHT im Sprechtag, obwohl er daraus entsteht: Ein Lock ueber alle
-' rund 600 Termine wuerde jede buchende Familie serialisieren (ADR 0003).
+' Ueber die Kontextgrenze: nur Ids. Der Sprechtag liest die Schulorganisation ueber deren
+' port/in; die Gegenrichtung gibt es nicht (ArchitekturTest).
 Klasse "1" <.. "0..*" Sprechtag : KlasseId
-Sprechtag "1" <.. "0..*" Termin : SprechtagId
-Lehrer "1" <.. "0..*" Termin : LehrkraftId
-
-Termin "1" *--> "0..*" Buchung : enthaelt\n(hoechstens eine aktiv)
-Buchung *--> Familie
-Buchung *--> Buchungsziel
+Lehrkraft "1" <.. "0..*" Termin : LehrkraftId
 Lehrauftrag "1" <.. "0..*" Buchungsziel : LehrauftragId\n(nur Herkunftsspur)
 
-Sprechtag ..> SprechtagStatus
-Termin ..> Verfuegbarkeit
-Buchung ..> Buchungsstatus
+' Auth ist bewusst in-memory (ein Organizer, ohne DB-Account) — daher kein Account-Aggregat.
+' Siehe ARCHITECTURE.md, Abschnitt "Auth".
 
 legend left
   !  = erforderlich
   ?  = optional
-  durchgezogen = Objektbeziehung, gestrichelt = Referenz per Id
+  durchgezogen = Objektbeziehung innerhalb eines Aggregats
+  gestrichelt  = typisierte Id ueber eine Aggregat-Grenze
+  Rahmen       = Bounded Context
 endlegend
 
 @enduml

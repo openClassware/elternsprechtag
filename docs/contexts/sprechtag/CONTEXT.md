@@ -46,7 +46,8 @@ Klassenliste sind ab `VEROEFFENTLICHT` unveränderlich, weil die bereits erzeugt
 ihm herausfielen. Titel, Ort und Hinweistext bleiben änderbar. Ein Sprechtag, der so nicht mehr
 stattfinden kann, wird **abgesagt**, nicht umgeschrieben.
 
-Statuswerte (`SprechtagStatusEnum`) und die erlaubten Übergänge:
+Statuswerte (`SprechtagStatus`) und die erlaubten Übergänge — durchgesetzt vom Aggregat, nicht
+vom Aufrufer:
 
 | Status           | Bedeutung                                                                 |
 |------------------|---------------------------------------------------------------------------|
@@ -67,7 +68,7 @@ Voraussetzung dafür, dass alles, was die App **nicht** kann, an der Schule land
 Stornieren, Rückfragen zu einer Absage.
 
 Deshalb ist er **Pflicht ab dem Entwurf**: Ein Sprechtag ohne Schulkontakt ist unvollständig, egal
-in welchem Status. Die Regel steht im `SprechtagService` und zusätzlich als `not null` plus
+in welchem Status. Die Regel steht im Wert `Schulkontakt` der Domäne und zusätzlich als `not null` plus
 Check-Constraint gegen den leeren String in der Datenbank. Gezeigt wird er in der Bestätigungs- und
 in der Absagemail — bewusst **nicht** auf der Buchungsseite: Dort soll nichts von der Terminwahl
 ablenken. Die Eltern haben ihn schwarz auf weiß, sobald sie ihn brauchen.
@@ -156,7 +157,7 @@ Wer bucht und für wen: Name des buchenden Elternteils, Name des Kindes und die 
 Eltern**. Die Familie ist die Gegenseite des Gesprächs — die Schule spricht mit ihr, nicht mit einem
 Benutzerkonto.
 
-**Es gibt keine Eltern-Entity und keine Familien-Entity.** Eine Familie ist kein eigener Datensatz,
+**Es gibt kein Eltern-Aggregat und kein Familien-Aggregat.** Eine Familie ist kein eigener Datensatz,
 den man verwalten könnte, sondern schlicht die Angaben an einer Buchung. Zwei Buchungen derselben
 Familie wissen nichts voneinander; erkannt wird sie höchstens an der E-Mail-Adresse.
 

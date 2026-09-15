@@ -65,8 +65,8 @@ class TerminePersistenceAdapterTest {
   private LehrauftragId lehrauftrag;
 
   /**
-   * Fremdschlüssel-Kulisse per SQL statt über die JPA-Fixtures: Dieser Test kennt bewusst nur den
-   * Persistenz-Adapter, nicht die halbe Anwendung.
+   * Fremdschlüssel-Kulisse per SQL statt über die Fixtures der Use-Case-Naht: Dieser Test kennt
+   * bewusst nur den Persistenz-Adapter, nicht die halbe Anwendung.
    */
   @BeforeEach
   void stammdaten() {
