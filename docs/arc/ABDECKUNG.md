@@ -163,15 +163,15 @@ Organizer selbst korrigierbar, bevor Schaden entsteht.
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Buchung stornieren, Slot wird wieder frei | Organizer | Storno in der Auswertung, Termin geht auf `FREI` zurück | muss | fehlt — `BuchungStatusEnum.ABGESAGT` wird von nichts ausgelöst, ein belegter Slot wird nie wieder frei |
+| Buchung stornieren, Slot wird wieder frei | Organizer | Storno in der Auswertung, Termin geht auf `FREI` zurück | muss | **erfüllt** — Storno-Aktion je Zeile mit Bestätigungsdialog, `Stornieren`-Use-Case setzt die Buchung auf `STORNIERT` und gibt den Slot frei; ohne Mail, nur bei `VEROEFFENTLICHT` |
 | Organizer bucht im Namen einer Familie (Nachtragen, Umbuchen) | Organizer | eigene Buchungsstrecke mit denselben Regeln | muss | fehlt vollständig — die einzige Buchungsstrecke ist die Eltern-Ansicht hinter dem Zugangs-Link |
 | Familie hat keine E-Mail-Adresse | Organizer | Stellvertreteradresse der Schule eintragen | muss | `eltern_email` ist `not null` (`Buchung:41`), aber es gibt keine Strecke, über die der Organizer bucht |
 | Gewählter Slot wird während des Absendens vergeben | Eltern | Meldung, übrige Auswahl bleibt, nur der verlorene Slot neu | muss | **erfüllt** — `TerminBelegtException` wird gefangen, Optionen neu geladen, ungültige Slots verworfen (`ElternsprechtagView:530`, `BookingSession.reload`) |
 | Vergangene Slots sind noch buchbar | Eltern | vergangene Slots nicht mehr wählbar | muss | keine Zeitprüfung — um 15:30 lässt sich ein Slot für 15:00 buchen |
 | Alle Slots einer Lehrkraft belegt | Eltern | sichtbar, dass nichts frei ist | muss | teilweise — belegte Slots werden als `BELEGT` gerendert (`BookingSession.slotState`), ein eigener Hinweistext fehlt |
 | Buchungsschluss vor dem Sprechtag | Organizer | Anmeldeschluss am Sprechtag | muss | fehlt — in Phase 5 erhoben und eingestuft |
-| Eltern stornieren ihre Buchung selbst | Eltern | — | darf fehlen | fehlt; bräuchte ein Token je Buchung. Weg drumherum: Anruf, der Organizer storniert |
-| Dieselbe Familie bucht zweimal | Eltern | — | darf fehlen | keine Dublettenprüfung in `buchen()`; heilbar, sobald der Organizer stornieren kann |
+| Eltern stornieren ihre Buchung selbst | Eltern | — | darf fehlen | fehlt; bräuchte ein Token je Buchung. Weg drumherum: Anruf, der Organizer storniert — der Weg drumherum ist gebaut |
+| Dieselbe Familie bucht zweimal | Eltern | — | darf fehlen | keine Dublettenprüfung in `buchen()`; heilbar, weil der Organizer eine der beiden Zeilen storniert |
 | Geschwisterkinder in zwei Klassen | Eltern | — | darf fehlen | ein Kind je Buchungsvorgang; die Zeitkonfliktprüfung greift nur innerhalb eines Vorgangs |
 | Eltern wollen ihre Buchung später einsehen | Eltern | — | darf fehlen | die Bestätigungsmail ist der Beleg; sonst Anruf |
 | Tippfehler in der E-Mail, Bestätigung kommt nie an | Eltern | — | darf fehlen | `EmailField` prüft nur das Format; die Buchung steht, die Bestätigungsseite hat sie gezeigt |
@@ -183,6 +183,15 @@ zurück, der Slot wird frei. Die Selbstbedienung der Eltern bräuchte einen Iden
 Produkt bewusst nicht hat — der Zugangs-Link gehört dem *Sprechtag*, nicht der Familie. Ein Token
 je Buchung samt eigenem Routenzweig wäre das zweite Zugangskonzept im Produkt; dafür fehlt der
 Anlass.
+
+Das Storno **verschickt nichts**. Der Anlass ist praktisch immer der Anruf der Familie; beim
+Tippfehler in der Adresse ginge eine Mail erneut an einen Dritten, beim Löschverlangen wäre sie
+widersinnig — und sie wäre der dritte Zweck der Eltern-Adresse und damit nach
+[ADR 0002](../adr/0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md) ein eigener ADR. Der
+Fall, in dem die Familie *nichts* weiß, ist der Ausfall einer Lehrkraft; er hat einen eigenen
+Termin-Zustand und eine eigene Mail. Storniert wird nur an einem **veröffentlichten** Sprechtag:
+Danach bucht niemand mehr, „wieder frei" wäre eine Lüge, und ein Löschverlangen nach dem Sprechtag
+ist die Anonymisierung aus Phase 6.
 
 **Der Organizer muss buchen können — das ist eine Zugangsfrage, kein Komfort.** Ohne eigene Strecke
 gibt es für eine Familie ohne E-Mail oder ohne Gerät *keinen* Weg in einen Termin, auch nicht über

@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -19,6 +20,14 @@ interface TerminZeilen extends CrudRepository<TerminZeile, UUID> {
    */
   @Query("select count(*) from termin where sprechtag_id = :sprechtagId")
   long zaehleFuerSprechtag(@Param("sprechtagId") UUID sprechtagId);
+
+  /**
+   * Die Id des Termins, an dem diese Buchung hängt. Bewusst nur die Id: Ein eigenes Select könnte
+   * die {@code @MappedCollection} des Roots nicht mitbringen, das Aggregat wird deshalb anschließend
+   * ganz normal über {@code findById} geladen.
+   */
+  @Query("select b.termin_id from buchungen b where b.id = :buchungId")
+  Optional<UUID> findeTerminIdZuBuchung(@Param("buchungId") UUID buchungId);
 
   /**
    * Wie viele Buchungen es an diesem Sprechtag je gab — stornierte eingeschlossen. Die Frage lautet

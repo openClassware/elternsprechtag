@@ -34,11 +34,15 @@ public interface BuchungsAnsichten {
   /**
    * Eine Zeile des Terminplans einer Lehrkraft. {@code notiz} darf {@code null} sein.
    *
+   * <p>Die {@code buchungId} trägt die Zeile, damit die Oberfläche eine Aktion auf genau diese
+   * Buchung beziehen kann — ohne sie wäre eine Zeile im Terminplan nicht adressierbar.
+   *
    * <p>Name und Kürzel der Lehrkraft stehen mit dabei, obwohl sie in aller Regel auch aus den
    * Stammdaten kämen: Sie sind der eingefrorene Stand und die einzige Quelle, wenn der Lehrauftrag
    * inzwischen verschwunden ist.
    */
   record AuswertungsZeile(
+      UUID buchungId,
       UUID lehrkraftId,
       String lehrkraftName,
       String lehrkraftKuerzel,

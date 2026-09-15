@@ -131,13 +131,20 @@ Angaben der Familie, das festgehaltene Buchungsziel und eine optionale Notiz an 
 | Status       | Bedeutung                                                  |
 |--------------|------------------------------------------------------------|
 | `ZUGESAGT`   | Aktive Buchung; ihr Termin gilt als vergeben               |
-| `STORNIERT`  | Zurückgenommen; der Termin ist wieder buchbar              |
+| `STORNIERT`  | Vom Organizer zurückgenommen; der Termin ist wieder buchbar. Endzustand |
 
 Sprachgebrauch: Eine **Buchung wird storniert**, ein **Sprechtag wird abgesagt**. Beides sind
 verschiedene Vorgänge und heißen deshalb verschieden — auch in Statuswerten und Methodennamen.
 
-*Noch nicht gebaut:* `STORNIERT` ist im Modell vorgesehen, wird bislang von nichts ausgelöst
-([`ABDECKUNG.md`](../../arc/ABDECKUNG.md) Z. 166).
+**Wer storniert:** ausschließlich der Organizer, aus der Auswertung heraus. Eltern rufen an; ein
+Eltern-Storno bräuchte ein Token je Buchung und ist bewusst nicht vorgesehen (ADR 0002). Das Storno
+gibt den Termin auf `FREI` zurück und ist der Endzustand der Buchung — ein zweites Storno derselben
+Buchung scheitert. Der Datensatz bleibt erhalten, die Zeile verschwindet nur aus dem Plan.
+
+**Das Storno benachrichtigt niemanden.** Keine Mail, kein Ereignis über die Kontextgrenze hinaus:
+Der Anlass ist praktisch immer der Anruf der Familie; beim Tippfehler in der Adresse ginge eine Mail
+erneut an einen Dritten, beim Löschverlangen wäre sie widersinnig. Der Fall, in dem die Familie
+nichts weiß (Ausfall einer Lehrkraft), ist eine eigene Strecke mit eigenem Termin-Zustand.
 
 Eigenschaften, die zur Domäne gehören (nicht nur zur Technik):
 

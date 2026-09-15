@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
+import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
@@ -20,6 +21,14 @@ class TerminePersistenceAdapter implements Termine {
   @Override
   public Optional<Termin> lade(TerminId id) {
     return zeilen.findById(id.wert()).map(TerminMapper::zuAggregat);
+  }
+
+  @Override
+  public Optional<Termin> ladeZuBuchung(BuchungId buchung) {
+    return zeilen
+        .findeTerminIdZuBuchung(buchung.wert())
+        .flatMap(zeilen::findById)
+        .map(TerminMapper::zuAggregat);
   }
 
   @Override

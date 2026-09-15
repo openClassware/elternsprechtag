@@ -57,6 +57,7 @@ class AuswertenService implements Auswerten {
           .computeIfAbsent(roh.lehrkraftId(), k -> new ArrayList<>())
           .add(
               new BuchungsZeile(
+                  roh.buchungId(),
                   roh.startzeit(),
                   roh.schuelerName(),
                   roh.klasse(),
@@ -94,7 +95,8 @@ class AuswertenService implements Auswerten {
               uebrig.getValue().size(),
               uebrig.getValue()));
     }
-    return Optional.of(new SprechtagAuswertung(kopf.titel(), kopf.datum(), plaene));
+    return Optional.of(
+        new SprechtagAuswertung(kopf.titel(), kopf.datum(), kopf.status(), plaene));
   }
 
 }
