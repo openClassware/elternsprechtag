@@ -308,7 +308,17 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   }
 
   private void openUmbuchenDialog(LehrkraftPlan plan, BuchungsZeile zeile) {
-    List<SlotOption> optionen = presenter.freieSlots(zeile.buchungId());
+    // Die Auswertung ist ein Read-Modell und darf veraltet sein: Zwischen dem Rendern der Zeile
+    // und dem Klick kann die Buchung anderswo storniert oder umgebucht worden sein. Derselbe Fang
+    // wie bei storniere()/umbuche() — sonst crashte der Klick statt einer Meldung.
+    List<SlotOption> optionen;
+    try {
+      optionen = presenter.freieSlots(zeile.buchungId());
+    } catch (RuntimeException fehler) {
+      SprechtagMeldungen.zeige(this, SprechtagMeldungen.zu(fehler));
+      reload();
+      return;
+    }
     new UmbuchenDialog(
             zeile.schuelerName(),
             plan.anzeigeName(),

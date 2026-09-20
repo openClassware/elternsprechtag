@@ -14,6 +14,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungBereitsStorniertException;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungNichtGefundenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchungsstatus;
+import de.openclassware.elternsprechtag.sprechtag.domain.FremdeLehrkraftException;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
@@ -164,6 +165,35 @@ class UmbuchenTest extends AbstractServiceTest {
     // Der alte Browser-Tab des Organizers klickt dieselbe Zeile noch einmal.
     assertThatThrownBy(() -> umbuchen.umbuche(new UmbuchAnfrage(alte, slots.get(2).id().wert())))
         .isInstanceOf(BuchungBereitsStorniertException.class);
+  }
+
+  @Test
+  void umbuche_wunschslotAndererLehrkraft_wirdAbgewiesenUndLaesstAlteBuchungBestehen() {
+    // Ein Wechsel der Lehrkraft ist ausdrücklich kein Umbuchen (Umbuchen-Javadoc). Der
+    // Umbuchen-Dialog bietet nur Slots derselben Lehrkraft an, aber die Domäne selbst — nicht nur
+    // die Oberfläche — muss das verhindern: Termin.buche() vergleicht die Lehrkraft des Ziel-Slots
+    // mit der eingefrorenen Lehrkraft des Buchungsziels, bevor überhaupt storniert wird.
+    UUID klasse = persistKlasse("5a");
+    UUID berg = persistLehrkraft("Anna", "Berg", "BER");
+    UUID adler = persistLehrkraft("Carl", "Adler", "ADL");
+    UUID bergAuftrag = persistLehrauftrag(berg, klasse, persistFach("Deutsch", "D"));
+    persistLehrauftrag(adler, klasse, persistFach("Mathe", "M"));
+    Sprechtag sprechtag =
+        persistSprechtag(
+            "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatus.ENTWURF, klasse);
+    veroeffentlichen.veroeffentliche(sprechtag.id().wert());
+    Termin bergSlot = termineVon(berg).get(0);
+    Termin adlerSlot = termineVon(adler).get(0);
+    UUID alte = buche(bergAuftrag, bergSlot, "Eltern Müller", "Lukas Müller", null);
+
+    assertThatThrownBy(() -> umbuchen.umbuche(new UmbuchAnfrage(alte, adlerSlot.id().wert())))
+        .isInstanceOf(FremdeLehrkraftException.class);
+
+    Termin alterTermin = termine.lade(bergSlot.id()).orElseThrow();
+    assertThat(alterTermin.aktiveBuchung()).isPresent();
+    assertThat(alterTermin.aktiveBuchung().orElseThrow().id().wert()).isEqualTo(alte);
+    assertThat(termine.lade(adlerSlot.id()).orElseThrow().aktiveBuchung()).isEmpty();
   }
 
   @Test
