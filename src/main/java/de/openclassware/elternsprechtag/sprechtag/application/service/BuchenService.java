@@ -16,9 +16,13 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Notiz;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
+import de.openclassware.elternsprechtag.sprechtag.domain.ZeitkonfliktException;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -56,18 +60,14 @@ class BuchenService implements Buchen {
     Familie familie =
         new Familie(anfrage.elternName(), anfrage.schuelerName(), anfrage.elternEmail());
     LocalDateTime jetzt = LocalDateTime.now();
+    // Geladen und auf Zeitkonflikt geprüft, bevor irgendetwas geschrieben wird — die Ablehnung
+    // darf keine halbe Buchung, kein Ereignis und keine Mail hinterlassen.
+    List<Termin> geladen = ladeUndPruefeZeitkonflikt(anfrage.wuensche());
     List<BuchungId> gebucht = new ArrayList<>();
     try {
-      for (BuchungsWunsch wunsch : anfrage.wuensche()) {
-        TerminId terminId = TerminId.von(wunsch.terminId());
-        Termin termin =
-            termine
-                .lade(terminId)
-                .orElseThrow(
-                    () ->
-                        new IllegalArgumentException(
-                            "Termin nicht gefunden: " + wunsch.terminId()));
-
+      for (int i = 0; i < anfrage.wuensche().size(); i++) {
+        BuchungsWunsch wunsch = anfrage.wuensche().get(i);
+        Termin termin = geladen.get(i);
         termin.buche(familie, ziel(wunsch), Notiz.vielleicht(wunsch.notiz()).orElse(null), jetzt);
         // Sofort speichern, damit ein Versionskonflikt hier auftritt und nicht erst beim Commit,
         // wo ihn kein catch mehr in TerminBelegtException übersetzen könnte.
@@ -82,6 +82,33 @@ class BuchenService implements Buchen {
       ereignisse.veroeffentliche(new BuchungenBestaetigt(gebucht));
     }
     return gebucht.size();
+  }
+
+  /**
+   * Lädt jeden gewünschten Termin genau einmal und weist den Vorgang ab, sobald zwei Wünsche auf
+   * dieselbe Uhrzeit fallen — Aussagen über mehrere {@link Termin}e kann kein einzelnes Aggregat
+   * treffen, deshalb sitzt die Prüfung hier statt in {@link Termin#buche}. Gilt nur innerhalb
+   * dieses einen Vorgangs; zwei Familien in getrennten Vorgängen dürfen dieselbe Uhrzeit bei
+   * verschiedenen Lehrkräften wählen.
+   */
+  private List<Termin> ladeUndPruefeZeitkonflikt(List<BuchungsWunsch> wuensche) {
+    List<Termin> geladen = new ArrayList<>();
+    Set<LocalTime> uhrzeiten = new HashSet<>();
+    for (BuchungsWunsch wunsch : wuensche) {
+      TerminId terminId = TerminId.von(wunsch.terminId());
+      Termin termin =
+          termine
+              .lade(terminId)
+              .orElseThrow(
+                  () -> new IllegalArgumentException("Termin nicht gefunden: " + wunsch.terminId()));
+      if (!uhrzeiten.add(termin.zeitraum().uhrzeit())) {
+        throw new ZeitkonfliktException(
+            "Zwei Wünsche dieses Vorgangs fallen auf dieselbe Uhrzeit: "
+                + termin.zeitraum().uhrzeit());
+      }
+      geladen.add(termin);
+    }
+    return geladen;
   }
 
   /**

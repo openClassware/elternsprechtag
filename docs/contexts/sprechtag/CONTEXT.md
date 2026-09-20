@@ -152,8 +152,10 @@ Eigenschaften, die zur Domäne gehören (nicht nur zur Technik):
   Nachmittag) und wird als Einheit gebucht. Ist auch nur ein Slot inzwischen vergeben, kommt
   **keine** der Buchungen zustande und die Eltern wählen neu.
 - **Kein Zeitkonflikt:** Zwei Buchungen derselben Auswahl dürfen nicht auf dieselbe Uhrzeit
-  fallen — man kann nicht an zwei Tischen gleichzeitig sitzen. Die Regel wird heute beim
-  Auswählen durchgesetzt (`BookingSession`), nicht beim Speichern.
+  fallen — man kann nicht an zwei Tischen gleichzeitig sitzen. Die Regel wird beim Speichern
+  durchgesetzt (`Buchen`-Use-Case, `ZeitkonfliktException`) und gilt innerhalb eines Vorgangs;
+  `BookingSession` zeigt sie zusätzlich vorab an, damit Eltern gar nicht erst in den Konflikt
+  laufen.
 - **Die Buchung hält alles fest, was sie bezeugt.** Weder die Familie noch das Buchungsziel sind
   Verweise: Beides steht an der Buchung selbst, mit dem Stand vom Buchungszeitpunkt. Eine Buchung
   bleibt dadurch vollständig lesbar, auch wenn sich die Stammdaten später ändern.
