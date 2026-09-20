@@ -158,6 +158,46 @@ Eigenschaften, die zur Domäne gehören (nicht nur zur Technik):
   Verweise: Beides steht an der Buchung selbst, mit dem Stand vom Buchungszeitpunkt. Eine Buchung
   bleibt dadurch vollständig lesbar, auch wenn sich die Stammdaten später ändern.
 
+### Nachtragen
+
+Der Organizer bucht **im Namen einer Familie**, die noch keine Buchung hat: Sie ruft an, steht vor
+der Tür, hat kein Gerät oder keine E-Mail-Adresse. Fachlich ist es derselbe Vorgang wie der
+Eltern-Submit — mehrere Wünsche, alles oder nichts, kein Zeitkonflikt —, nur tippt ihn jemand
+anderes. Ohne diesen Weg gäbe es für eine Familie ohne Gerät **keinen** Zugang zu einem Termin;
+das ist eine Zugangsfrage, kein Komfort.
+
+**Die E-Mail bleibt Pflicht.** Hat die Familie keine Adresse, trägt der Organizer die
+**Stellvertreteradresse der Schule** ein. Absage und Bestätigung landen dann im Sekretariat, und
+dort liegt die Pflicht, die Familie anzurufen — die letzte Meile ist menschlich, nicht technisch.
+Die Pflicht selbst wird dadurch nicht aufgeweicht (ADR 0001), nur der Empfänger verlegt.
+
+Sprachgebrauch: **Nachtragen** für den Vorgang, **Stellvertreteradresse** für die Adresse der
+Schule. Nicht „Organizer-Buchung" — gebucht wird für die Familie, nicht für den Organizer.
+
+Noch nicht gebaut ([#104](https://github.com/openClassware/elternsprechtag/issues/104)).
+
+### Umbuchen
+
+Eine **bestehende** Buchung wechselt auf einen anderen Slot **derselben Lehrkraft**. Anlass ist
+fast immer, dass die Familie zur gebuchten Zeit doch nicht kann. Alles außer der Uhrzeit wird
+mitgenommen: Familie, Buchungsziel und Notiz. Das Buchungsziel wird dabei **übernommen, nicht neu
+ermittelt** — deshalb lässt sich auch eine Buchung noch umbuchen, deren Lehrauftrag in den
+Stammdaten inzwischen stillgelegt ist.
+
+**In einem Zug.** Storno und Neubuchung gehören zu einem Vorgang; der alte Slot wird nicht
+freigegeben, solange der neue nicht sicher ist. Sonst stünde die Familie ohne Termin da, wenn der
+Wunschslot zwischendurch vergeben wird.
+
+**Eine Mail, keine zwei.** Die Familie erhält die Bestätigung der geänderten Buchung, keine Absage
+plus Bestätigung — zwei Nachrichten für einen Vorgang verwirren.
+
+Sprachgebrauch: **Umbuchen** für die einzelne Buchung. Nicht **verschieben** — das Wort ist für
+den ganzen Sprechtag vergeben („einen Sprechtag verschieben"), und das ist ein anderer, bewusst
+nicht vorgesehener Vorgang. Die neue Buchung ist eine **neue** Buchung; die alte bleibt als
+`STORNIERT` stehen und verschwindet aus dem Plan.
+
+Noch nicht gebaut ([#104](https://github.com/openClassware/elternsprechtag/issues/104)).
+
 ### Familie
 
 Wer bucht und für wen: Name des buchenden Elternteils, Name des Kindes und die Pflicht-**E-Mail der
@@ -226,3 +266,5 @@ eine neue Entscheidung und braucht einen ADR.
 | Anmeldung (für die Buchungsdaten)| **Familie** — „Anmeldung" ist das Organizer-Login, „Anmeldeschluss" der Buchungsschluss |
 | Buchung absagen                  | Buchung **stornieren** (abgesagt wird der Sprechtag)           |
 | Belegt (als eigener Zustand)     | **vergeben** — ergibt sich aus den Buchungen, wird nicht geführt |
+| Buchung verschieben              | Buchung **umbuchen** — „verschieben" meint den ganzen Sprechtag |
+| Organizer-Buchung                | **Nachtragen** — gebucht wird für die Familie, nicht für den Organizer |
