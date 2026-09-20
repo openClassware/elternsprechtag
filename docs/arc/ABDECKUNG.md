@@ -200,13 +200,20 @@ ohne dass der Slot zwischendurch an jemand anderen geht) und das Nachtragen. Sie
 Regeln durchsetzen wie die Eltern-Ansicht: kein Zeitkonflikt, alles oder nichts.
 
 **Die E-Mail bleibt Pflicht, auch für die Organizer-Buchung.** Hat die Familie keine Adresse, trägt
-der Organizer die **Stellvertreteradresse der Schule** ein. Die Absage-Benachrichtigung landet dann
-im Sekretariat, und dort liegt die Pflicht, diese Familie anzurufen — die letzte Meile ist
-menschlich, die Kette bleibt formal intakt.
+der Organizer die **Stellvertreteradresse der Schule** ein — einen konfigurierten Wert, nicht
+Freitext. Die Absage-Benachrichtigung landet dann im Sekretariat, und dort liegt die Pflicht, diese
+Familie anzurufen: Die letzte Meile ist menschlich.
 [ADR 0001](../adr/0001-eltern-email-pflicht-fuer-absage-benachrichtigung.md) bleibt unangetastet:
 Seine Absicht ist, dass niemand zu spät von einer Absage erfährt; hier wird der Empfänger bewusst
-zur Schule verlegt, statt die Pflicht aufzuweichen. Diese Meile kann das Sekretariat allerdings nur
-gehen, wenn es *weiß*, wen es anrufen muss — siehe Zustellzustand in Phase 4.
+zur Schule verlegt, statt die Pflicht aufzuweichen.
+
+**Diese Meile kann das Sekretariat heute nicht gehen — die Kette reißt am Ende.** Der Satz „formal
+intakt" stand hier und war falsch. Die Empfänger werden per `distinct` auf der Adresse ermittelt,
+also entsteht für drei Familien an derselben Stellvertreteradresse **eine** Mail; ihr Text nennt
+keinen Familiennamen; und die Auswertung führt die E-Mail-Adresse gar nicht, sodass auch kein
+Nachschlagen hilft. Das Sekretariat erfährt, dass der Sprechtag ausfällt, aber nicht, wen es
+anrufen muss — und niemand bemerkt die Lücke. Erhoben als [#148](https://github.com/openClassware/elternsprechtag/issues/148);
+der allgemeine Fall steht als Zustellzustand in Phase 4.
 
 **Der Konfliktfall ist bereits fertig.** Er war der Musterfall für Härtegrad 3 beim Aufstellen des
 Rasters und ist genau so gebaut: Meldung, Neuladen, gezieltes Verwerfen nur der ungültig gewordenen
@@ -545,6 +552,7 @@ doppelt geführt.
 | [#104](https://github.com/openClassware/elternsprechtag/issues/104) | Buchungsstrecke für den Organizer (Nachtragen, Umbuchen, Familien ohne E-Mail) |
 | [#118](https://github.com/openClassware/elternsprechtag/issues/118) | Vergangene Slots nicht mehr buchbar |
 | [#119](https://github.com/openClassware/elternsprechtag/issues/119) | Hinweistext, wenn bei einer Lehrkraft nichts mehr frei ist |
+| [#148](https://github.com/openClassware/elternsprechtag/issues/148) | Absage an die Stellvertreteradresse nennt die betroffenen Familien nicht |
 
 **Phase 4 — Kurz vor dem Termin**
 

@@ -1,10 +1,9 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
-
-import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
@@ -20,83 +19,88 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
-import com.vaadin.flow.router.OptionalParameter;
+import com.vaadin.flow.router.NotFoundException;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.auth.AnonymousAllowed;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.OeffentlicherSprechtag;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
-import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
+import de.openclassware.elternsprechtag.security.Roles;
+import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.NachtragenPresenter.SprechtagKopf;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AuswahlZeile;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.LehrkraftKarte;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.SlotLegende;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.StepHeader;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.TerminRaster;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.MainLayout;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsAnfrage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
+import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
+import de.openclassware.elternsprechtag.sprechtag.domain.ZeitkonfliktException;
+import jakarta.annotation.security.RolesAllowed;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-@Route(value = ElternsprechtagView.ROUTE, autoLayout = false)
-@AnonymousAllowed
+/**
+ * Organizer-Nachtrag: der Organizer bucht im Namen einer Familie, die noch keine Buchung hat —
+ * derselbe Ablauf wie die Eltern-Strecke ({@link ElternsprechtagView}), nur hinter der Anmeldung
+ * und im Anwendungs-Layout. Eine eigene Ansicht statt eines Modus an der Eltern-Ansicht: Die
+ * beiden Zugangsniveaus (anonym per Token vs. angemeldeter Organizer) heißen in Vaadin zwei
+ * Ansichtsklassen.
+ *
+ * <p>Baut aus denselben Komponenten wie die Eltern-Ansicht ({@code components}-Paket) und nutzt
+ * denselben {@link BookingSession}-Warenkorb unverändert mit.
+ */
+@Route(value = NachtragenView.ROUTE, layout = MainLayout.class)
+@RolesAllowed(Roles.ORGANIZER)
 @CssImport("./styles/elternsprechtag-view.css")
-public class ElternsprechtagView extends Div implements HasUrlParameter<String> {
+@CssImport("./styles/nachtragen-view.css")
+public class NachtragenView extends Div implements HasUrlParameter<String> {
 
-  public static final String ROUTE = "elternsprechtag";
+  public static final String ROUTE = "nachtragen";
 
-  private final ElternsprechtagPresenter presenter;
+  private final NachtragenPresenter presenter;
 
-  private OeffentlicherSprechtag sprechtag;
+  private UUID sprechtagId;
+  private SprechtagKopf sprechtag;
 
   private TextField elternName;
   private TextField schuelerName;
   private EmailField elternEmail;
+  private Checkbox stellvertreterSchalter;
   private Select<KlasseOption> klasse;
 
   private Div footerStatus;
   private Button bookButton;
 
-  /** Buchungs-„Warenkorb" + Entscheidungslogik; Vaadin-frei und unit-getestet. */
+  /** Buchungs-„Warenkorb" + Entscheidungslogik; Vaadin-frei und unit-getestet — unverändert wie in {@link ElternsprechtagView}. */
   private final BookingSession session = new BookingSession();
 
   private Div lehrkraftListe;
   private Div summaryContainer;
 
-  ElternsprechtagView(ElternsprechtagPresenter presenter) {
+  NachtragenView(NachtragenPresenter presenter) {
     this.presenter = presenter;
-    addClassName("elternsprechtag-view");
+    addClassName("nachtragen-view");
   }
 
   @Override
-  public void setParameter(BeforeEvent event, @OptionalParameter String token) {
+  public void setParameter(BeforeEvent event, String sprechtagId) {
     removeAll();
-    ElternsprechtagPresenter.ZugangsErgebnis ergebnis = presenter.pruefeZugang(token);
-    switch (ergebnis.zugang()) {
-      case BUCHBAR -> add(createHeader(), createBookingCard(ergebnis.sprechtag()));
-      case ABGESAGT ->
-          add(
-              createMessage(
-                  "elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
-      case NICHT_VERFUEGBAR ->
-          add(
-              createMessage(
-                  "elternsprechtag.unavailable.title", "elternsprechtag.unavailable.description"));
+    Optional<UUID> id = parseId(sprechtagId);
+    Optional<SprechtagKopf> geladen = id.flatMap(presenter::ladeSprechtag);
+    if (geladen.isEmpty()) {
+      event.rerouteToError(NotFoundException.class, "Sprechtag not found: " + sprechtagId);
+      return;
     }
+    this.sprechtagId = id.get();
+    add(createBreadcrumb(), createBookingCard(geladen.get()));
   }
 
-  private Component createHeader() {
-    Div header = new Div();
-    header.addClassName("elternsprechtag-header");
-
-    Span name = new Span(presenter.getSchoolname());
-    name.addClassName("elternsprechtag-header__school");
-
-    header.add(name);
-    return header;
-  }
-
-  /** Single card holding the Sprechtag head plus all booking steps and the footer. */
-  private Component createBookingCard(OeffentlicherSprechtag sprechtag) {
+  private Component createBookingCard(SprechtagKopf sprechtag) {
     this.sprechtag = sprechtag;
     session.reset(List.of());
 
@@ -107,7 +111,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     body.addClassName("elternsprechtag-view__body");
     body.add(createAngaben(sprechtag), createBuchung(sprechtag), createAuswahl());
 
-    card.add(createInfo(sprechtag), body, createFooter());
+    card.add(createKopf(sprechtag), body, createFooter());
 
     refreshLehrkraefte();
     refreshSummary();
@@ -115,15 +119,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return card;
   }
 
-  private Component createInfo(OeffentlicherSprechtag sprechtag) {
-    return createKopf(sprechtag, true);
-  }
-
-  /**
-   * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs- und Bestätigungsseite. Nur beim Buchen kommen
-   * die Intro-Zeile und die Beschreibung dazu.
-   */
-  private Div createKopf(OeffentlicherSprechtag sprechtag, boolean withBookingText) {
+  private Div createKopf(SprechtagKopf sprechtag) {
     Div kopf = new Div();
     kopf.addClassName("elternsprechtag-view__kopf");
 
@@ -143,22 +139,14 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     }
     kopf.add(meta);
 
-    if (withBookingText) {
-      Paragraph intro = new Paragraph(getTranslation("elternsprechtag.intro"));
-      intro.addClassName("elternsprechtag-view__intro");
-      kopf.add(intro);
-
-      if (sprechtag.beschreibung() != null && !sprechtag.beschreibung().isBlank()) {
-        Paragraph description = new Paragraph(sprechtag.beschreibung());
-        description.addClassName("elternsprechtag-view__description");
-        kopf.add(description);
-      }
-    }
+    Paragraph intro = new Paragraph(getTranslation("nachtragen.intro"));
+    intro.addClassName("elternsprechtag-view__intro");
+    kopf.add(intro);
 
     return kopf;
   }
 
-  private Component createAngaben(OeffentlicherSprechtag sprechtag) {
+  private Component createAngaben(SprechtagKopf sprechtag) {
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
     section.add(new StepHeader(1, getTranslation("elternsprechtag.angaben.step-title")));
@@ -177,7 +165,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
     elternEmail = new EmailField(getTranslation("elternsprechtag.angaben.email.label"));
     elternEmail.setPlaceholder(getTranslation("elternsprechtag.angaben.email.placeholder"));
-    elternEmail.setHelperText(getTranslation("elternsprechtag.angaben.email.helper"));
     elternEmail.setRequiredIndicatorVisible(true);
     elternEmail.setErrorMessage(getTranslation("elternsprechtag.angaben.email.error"));
     elternEmail.setClearButtonVisible(true);
@@ -199,15 +186,38 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     form.add(elternName, schuelerName, elternEmail, klasse);
 
     section.add(form);
+    if (presenter.stellvertreteradresseVerfuegbar()) {
+      section.add(createStellvertreterSchalter());
+    }
     return section;
   }
 
   /**
-   * Schritt 2: die Lehrkräfte der Klasse als einspaltige Liste. Das Terminraster der aufgeklappten
-   * Lehrkraft wird beim Rendern direkt hinter ihre Karte gesetzt, sodass Auswahl und Termine als ein
-   * Block gelesen werden.
+   * Schalter für Familien ohne eigene E-Mail-Adresse: setzt die konfigurierte Stellvertreteradresse
+   * ein und sperrt das Feld, solange er aktiv ist. Ob er überhaupt erscheint, hat der Presenter
+   * bereits entschieden — die Ansicht fragt nur noch danach.
    */
-  private Component createBuchung(OeffentlicherSprechtag sprechtag) {
+  private Component createStellvertreterSchalter() {
+    stellvertreterSchalter = new Checkbox(getTranslation("nachtragen.stellvertreter.label"));
+    stellvertreterSchalter.addClassName("nachtragen-view__stellvertreter-schalter");
+    stellvertreterSchalter.getElement().getThemeList().add("switch");
+    stellvertreterSchalter.setHelperText(getTranslation("nachtragen.stellvertreter.helper"));
+    stellvertreterSchalter.addValueChangeListener(event -> onStellvertreterChanged(event.getValue()));
+    return stellvertreterSchalter;
+  }
+
+  private void onStellvertreterChanged(boolean aktiv) {
+    if (aktiv) {
+      elternEmail.setValue(presenter.stellvertreteradresse());
+      elternEmail.setReadOnly(true);
+    } else {
+      elternEmail.setReadOnly(false);
+      elternEmail.clear();
+    }
+    refreshFooter();
+  }
+
+  private Component createBuchung(SprechtagKopf sprechtag) {
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
 
@@ -218,8 +228,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         new SlotLegende());
     section.add(stepHead);
 
-    // Über der Liste, nicht darunter: Der Satz trägt die Mehrfachbuchungs-Botschaft und bliebe
-    // unter einer langen Liste mit aufgeklapptem Raster ungelesen.
     Paragraph hint =
         new Paragraph(getTranslation("elternsprechtag.termin.hint", sprechtag.slotInMinuten()));
     hint.addClassName("elternsprechtag-view__slot-hint");
@@ -232,7 +240,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return section;
   }
 
-  /** Schritt 3: die gewählten Termine als Kontrolle vor dem Absenden. */
   private Component createAuswahl() {
     Div section = new Div();
     section.addClassName("elternsprechtag-view__section");
@@ -245,7 +252,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return section;
   }
 
-  /** Reagiert auf die Klassenwahl: lädt die echten Lehrkräfte/Termine und verwirft die Auswahl. */
   private void onKlasseChanged() {
     session.reset(loadOptionen());
     refreshAfterSelectionChange();
@@ -255,10 +261,9 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     KlasseOption selected = klasse.getValue();
     return selected == null
         ? List.of()
-        : presenter.ladeLehrkraftOptionen(sprechtag.id(), selected.id());
+        : presenter.ladeLehrkraftOptionen(sprechtagId, selected.id());
   }
 
-  /** Gestrichelter Hinweiskasten für einen leeren Bereich. */
   private Component placeholder(String translationKey) {
     Div placeholder = new Div();
     placeholder.addClassName("elternsprechtag-view__placeholder");
@@ -266,10 +271,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return placeholder;
   }
 
-  /**
-   * Rendert die Lehrkraft-Liste samt dem Terminraster der aufgeklappten Lehrkraft und gibt deren
-   * Eintrag zurück — oder {@code null}, wenn keine aufgeklappt ist.
-   */
   private Component refreshLehrkraefte() {
     lehrkraftListe.removeAll();
     if (!session.hatOptionen()) {
@@ -305,7 +306,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         });
   }
 
-  /** Terminraster der aufgeklappten Lehrkraft; sitzt in der Liste direkt hinter ihrer Karte. */
   private Component createSlotPanel(LehrkraftOption lehrkraft) {
     UUID lehrauftragId = lehrkraft.lehrauftragId();
     return new TerminRaster(
@@ -346,7 +346,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     refreshFooter();
   }
 
-  /** Springt zur Lehrkraft einer Auswahl-Zeile: klappt sie auf und scrollt ihre Karte ins Bild. */
   private void springeZu(LehrkraftOption lehrkraft) {
     session.setActive(lehrkraft);
     Component offenes = refreshLehrkraefte();
@@ -365,11 +364,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
       return;
     }
 
-    // Ohne eigenen Kopf: Der Schritt trägt bereits den Titel, die Anzahl steht im Footer.
     Div panel = new Div();
     panel.addClassName("elternsprechtag-view__summary");
-
-    // In Lehrkraft-Reihenfolge rendern, nicht in Auswahl-Reihenfolge.
     for (LehrkraftOption lehrkraft : session.optionen()) {
       SlotOption slot = session.gewaehlterSlot(lehrkraft.lehrauftragId());
       if (slot != null) {
@@ -418,46 +414,67 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (!bookingValid()) {
       return;
     }
-    // Snapshot vor removeAll(): Die Bestätigungskarte rendert aus diesen Werten, nicht aus dem
-    // dann bereits geleerten Formular.
     Angaben angaben =
         new Angaben(
             schuelerName.getValue().trim(),
             klasse.getValue().name(),
             elternName.getValue().trim(),
             elternEmail.getValue().trim());
-    BuchungsAnfrage anfrage =
-        new BuchungsAnfrage(
-            angaben.eltern(), angaben.kind(), angaben.email(), session.toWuensche());
+    NachtragsAnfrage anfrage =
+        new NachtragsAnfrage(angaben.eltern(), angaben.kind(), angaben.email(), zuWuenschen());
 
     try {
-      int gebucht = presenter.buchen(anfrage);
+      int gebucht = presenter.trageNach(anfrage);
       showConfirmation(gebucht, angaben);
     } catch (TerminBelegtException conflict) {
-      Notification notification =
-          Notification.show(getTranslation("elternsprechtag.footer.conflict"));
-      notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+      zeigeFehler("nachtragen.footer.conflict");
       handleConflict();
+    } catch (ZeitkonfliktException zeitkonflikt) {
+      zeigeFehler("nachtragen.footer.zeitkonflikt");
+      handleConflict();
+    } catch (SprechtagNichtVeroeffentlichtException nichtVeroeffentlicht) {
+      zeigeFehler("nachtragen.footer.nicht-veroeffentlicht");
     }
   }
 
-  /** Nach einem Konflikt: Optionen neu laden und ungültig gewordene Slots aus der Auswahl werfen. */
+  private List<NachtragsWunsch> zuWuenschen() {
+    return session.toWuensche().stream()
+        .map(wunsch -> new NachtragsWunsch(wunsch.lehrauftragId(), wunsch.terminId(), wunsch.notiz()))
+        .toList();
+  }
+
+  private void zeigeFehler(String translationKey) {
+    Notification notification = Notification.show(getTranslation(translationKey));
+    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+  }
+
   private void handleConflict() {
     session.reload(loadOptionen());
     refreshAfterSelectionChange();
   }
 
-  /** Die abgeschickten Formularwerte; überdauert das Leeren des Formulars. */
   private record Angaben(String kind, String klasseName, String eltern, String email) {}
 
-  /** Bestätigungskarte im Stil der Buchungsseite: Erfolgs-Banner, Sprechtag-Kopf, Empfänger, Termine. */
   private void showConfirmation(int count, Angaben angaben) {
     removeAll();
     Div card = new Div();
     card.addClassName("elternsprechtag-view__card");
-    card.add(
-        createSuccessBanner(count), createKopf(sprechtag, false), createConfirmBody(angaben, count));
-    add(createHeader(), card);
+    card.add(createSuccessBanner(count), createConfirmKopf(), createConfirmBody(angaben, count));
+    add(createBreadcrumb(), card);
+  }
+
+  private Div createConfirmKopf() {
+    Div kopf = new Div();
+    kopf.addClassName("elternsprechtag-view__kopf");
+    H1 title = new H1(sprechtag.titel());
+    title.addClassName("elternsprechtag-view__title");
+    kopf.add(title);
+
+    Div meta = new Div();
+    meta.addClassName("elternsprechtag-view__meta");
+    meta.add(metaItem(VaadinIcon.CALENDAR, Formats.dateLong(sprechtag.datum())));
+    kopf.add(meta);
+    return kopf;
   }
 
   private Component createSuccessBanner(int count) {
@@ -469,10 +486,10 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
     Div texts = new Div();
     texts.addClassName("elternsprechtag-view__confirm-success-text");
-    H1 title = new H1(getTranslation("elternsprechtag.success.title"));
+    H1 title = new H1(getTranslation("nachtragen.success.title"));
     title.addClassName("elternsprechtag-view__confirm-success-title");
     Paragraph description =
-        new Paragraph(getTranslation("elternsprechtag.success.description", countLabel(count)));
+        new Paragraph(getTranslation("nachtragen.success.description", countLabel(count)));
     description.addClassName("elternsprechtag-view__confirm-success-desc");
     texts.add(title, description);
 
@@ -483,7 +500,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   private Component createConfirmBody(Angaben angaben, int count) {
     Div body = new Div();
     body.addClassName("elternsprechtag-view__body");
-    body.add(createRecipient(angaben), createBookedTermine(count));
+    body.add(createRecipient(angaben), createBookedTermine(count), createZurueckButton());
     return body;
   }
 
@@ -500,7 +517,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     elternLine.addClassName("elternsprechtag-view__confirm-eltern");
     elternLine.setText(getTranslation("elternsprechtag.confirm.eltern", angaben.eltern()));
 
-    // Zukunftsform: Die Mail geht asynchron nach Commit raus, ist beim Rendern also unterwegs.
     Div mailLine = new Div();
     mailLine.addClassName("elternsprechtag-view__confirm-mail");
     mailLine.setText(getTranslation("elternsprechtag.confirm.mail", angaben.email()));
@@ -515,14 +531,13 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
     Div head = new Div();
     head.addClassName("elternsprechtag-view__summary-head");
-    Span title = new Span(getTranslation("elternsprechtag.confirm.termine.title"));
+    Span title = new Span(getTranslation("nachtragen.confirm.termine.title"));
     title.addClassName("elternsprechtag-view__summary-title");
     Span countLabel = new Span(countLabel(count));
     countLabel.addClassName("elternsprechtag-view__summary-count");
     head.add(title, countLabel);
     panel.add(head);
 
-    // In Lehrkraft-Reihenfolge, wie die Auswahl-Zusammenfassung — nur statisch (ohne Entfernen).
     for (LehrkraftOption lehrkraft : session.optionen()) {
       SlotOption slot = session.gewaehlterSlot(lehrkraft.lehrauftragId());
       if (slot != null) {
@@ -536,6 +551,28 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return new AuswahlZeile(lehrkraft, slot, session.notiz(lehrkraft.lehrauftragId()), null, null);
   }
 
+  private Component createZurueckButton() {
+    Div wrapper = new Div();
+    wrapper.addClassName("nachtragen-view__zurueck");
+    Button zurueck = new Button(getTranslation("nachtragen.confirm.zurueck"));
+    zurueck.addThemeVariants(ButtonVariant.TERTIARY);
+    zurueck.addClickListener(
+        event ->
+            getUI().ifPresent(ui -> ui.navigate(AuswertungView.ROUTE + "/" + sprechtagId)));
+    wrapper.add(zurueck);
+    return wrapper;
+  }
+
+  private Breadcrumb createBreadcrumb() {
+    Breadcrumb breadcrumb = new Breadcrumb();
+    breadcrumb.addClassName("nachtragen-view__breadcrumb");
+    breadcrumb.addLink(getTranslation("breadcrumb.uebersicht"), OrganizerView.class);
+    breadcrumb.addLink(
+        getTranslation("manage-sprechtag.header.title"), ManageSprechtagView.class);
+    breadcrumb.addCurrent(getTranslation("nachtragen.breadcrumb.title"));
+    return breadcrumb;
+  }
+
   private void refreshFooter() {
     if (footerStatus == null) {
       return;
@@ -544,8 +581,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     bookButton.setEnabled(bookingValid());
     bookButton.setText(
         count == 0
-            ? getTranslation("elternsprechtag.footer.button.empty")
-            : getTranslation("elternsprechtag.footer.button", countLabel(count)));
+            ? getTranslation("nachtragen.footer.button.empty")
+            : getTranslation("nachtragen.footer.button", countLabel(count)));
     footerStatus.setText(footerStatusText(count));
   }
 
@@ -574,7 +611,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return !elternName.getValue().isBlank() && !schuelerName.getValue().isBlank();
   }
 
-  /** E-Mail ist Pflicht und muss dem Format genügen; {@link EmailField} prüft das Muster selbst. */
   private boolean emailValid() {
     return !elternEmail.getValue().isBlank() && !elternEmail.isInvalid();
   }
@@ -586,14 +622,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return item;
   }
 
-  private Component createMessage(String titleKey, String descriptionKey) {
-    Div message = new Div();
-    message.addClassName("elternsprechtag-view__message");
-    H1 title = new H1(getTranslation(titleKey));
-    title.addClassName("elternsprechtag-view__message-title");
-    Paragraph description = new Paragraph(getTranslation(descriptionKey));
-    description.addClassName("elternsprechtag-view__message-description");
-    message.add(title, description);
-    return message;
+  private Optional<UUID> parseId(String id) {
+    try {
+      return Optional.of(UUID.fromString(id));
+    } catch (IllegalArgumentException e) {
+      return Optional.empty();
+    }
   }
 }

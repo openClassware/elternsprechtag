@@ -147,6 +147,26 @@ Beleg, den Eltern über ihre Termine erhalten.
 Der Wert hat in `application.properties` keinen Platzhalter — er wird über Relaxed Binding
 gesetzt und ist der einzige Wert, den eine Schule zwingend an sich anpassen will.
 
+## Nachtragen
+
+Trägt der Organizer eine Familie **ohne eigene E-Mail-Adresse** nach, kann ein Schalter in der
+Nachtrag-Ansicht die E-Mail-Adresse durch eine Stellvertreteradresse der Schule ersetzen — etwa ein
+Sekretariats-Postfach, das die Buchungsbestätigung entgegennimmt.
+
+| Umgebungsvariable                       | Default            | Bedeutung                                                        |
+|------------------------------------------|---------------------|-------------------------------------------------------------------|
+| `ELTERNSPRECHTAG_STELLVERTRETERADRESSE`   | *(nicht gesetzt)*  | Stellvertreteradresse für Familien ohne eigene E-Mail-Adresse.    |
+
+### Fallstrick: ohne gesetzte Adresse erscheint der Schalter gar nicht
+
+`elternsprechtag.stellvertreteradresse` hat **absichtlich keinen Beispiel-Default** in
+`application.properties` — anders als `ELTERNSPRECHTAG_SCHOOLNAME`. Ein Beispielwert wäre hier
+kein harmloser Platzhalter: Ohne gesetzte Variable gingen echte Absage-Benachrichtigungen an eine
+erfundene Adresse.
+
+Ist die Variable nicht gesetzt, bietet die Nachtrag-Ansicht den Schalter deshalb **gar nicht erst
+an** — der Organizer muss dann für jede nachgetragene Familie eine echte E-Mail-Adresse erfassen.
+
 ## Weitere Werte
 
 | Umgebungsvariable                  | Default | Bedeutung                                                                                                                  |

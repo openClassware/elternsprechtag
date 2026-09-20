@@ -25,6 +25,28 @@
     margin: 0;
 }
 
+.auswertung__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.auswertung__nachtragen-button {
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .auswertung__title-row {
+        width: 100%;
+    }
+
+    .auswertung__nachtragen-button {
+        width: 100%;
+    }
+}
+
 .auswertung__meta {
     display: flex;
     align-items: center;
@@ -97,7 +119,7 @@
 }
 
 .auswertung__table--mit-aktion {
-    --auswertung-row-columns: var(--auswertung-columns) 64px;
+    --auswertung-row-columns: var(--auswertung-columns) 116px;
 }
 
 .auswertung__row {
@@ -150,9 +172,11 @@
 .auswertung__cell--aktion {
     display: flex;
     justify-content: flex-end;
+    gap: 4px;
 }
 
-.auswertung__storno {
+.auswertung__storno,
+.auswertung__umbuchen {
     /* Mindestens 44 px Trefferfläche — dieselbe Untergrenze wie am Telefon (375 × 667 px). */
     min-width: 44px;
     height: 44px;
@@ -204,10 +228,11 @@
         font-size: 13px;
     }
 
-    /* Die Aktion rückt unter den Zeit-Anker in die feste erste Spalte: Der Scan-Anker bleibt, wie
-       er ist, und die Karte wird nicht breiter — bei 375 px scrollt die Seite nicht seitwärts. */
+    /* Die Aktion rückt unter den Zeit-Anker — über beide Spalten, weil zwei Buttons in der
+       schmalen ersten Spalte (64px) keinen Platz hätten. Die Karte wird dadurch nicht breiter —
+       bei 375 px scrollt die Seite nicht seitwärts. */
     .auswertung__cell--aktion {
-        grid-column: 1;
+        grid-column: 1 / span 2;
         grid-row: 3;
         justify-content: flex-start;
     }

@@ -19,6 +19,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.sprechtag.domain.Notiz;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
+import de.openclassware.elternsprechtag.sprechtag.domain.ZeitkonfliktException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
@@ -251,6 +252,73 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
   // Der Versionskonflikt am Root braucht echte Nebenläufigkeit und steht deshalb dort, wo er
   // entsteht: in TerminePersistenceAdapterTest. Hier ist nur die Übersetzung in
   // TerminBelegtException interessant, und die ist drei Zeilen im try/catch des Use Case.
+
+  // --- Zeitkonflikt innerhalb eines Vorgangs ---
+  // Die Regel selbst gehört in den Vorgang (ADR 0005), nicht ins Aggregat — deshalb steht sie
+  // nur hier und nicht zusätzlich in TerminTest.
+
+  @Test
+  void buchen_zweiWuenscheZurSelbenUhrzeit_wirdAbgewiesen() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    Termin bergUmVierzehnUhr = termineVon(f.berg()).get(0);
+    Termin adlerUmVierzehnUhr = termineVon(f.adler()).get(0);
+
+    assertThatThrownBy(
+            () ->
+                buchen.buchen(
+                    new BuchungsAnfrage(
+                        "Eltern Müller",
+                        "Kind Müller",
+                        "eltern.mueller@example.com",
+                        List.of(
+                            new BuchungsWunsch(
+                                f.bergAuftrag(), bergUmVierzehnUhr.id().wert(), null),
+                            new BuchungsWunsch(
+                                f.adlerAuftrag(), adlerUmVierzehnUhr.id().wert(), null)))))
+        .isInstanceOf(ZeitkonfliktException.class);
+
+    assertThat(alleBuchungen()).isEmpty();
+  }
+
+  @Test
+  void buchen_verschiedeneUhrzeiten_bleibtUnveraendert() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    Termin bergUmVierzehnUhr = termineVon(f.berg()).get(0);
+    Termin adlerUmViertelNachVierzehn = termineVon(f.adler()).get(1);
+
+    int gebucht =
+        buchen.buchen(
+            new BuchungsAnfrage(
+                "Eltern Müller",
+                "Kind Müller",
+                "eltern.mueller@example.com",
+                List.of(
+                    new BuchungsWunsch(f.bergAuftrag(), bergUmVierzehnUhr.id().wert(), null),
+                    new BuchungsWunsch(
+                        f.adlerAuftrag(), adlerUmViertelNachVierzehn.id().wert(), null))));
+
+    assertThat(gebucht).isEqualTo(2);
+    assertThat(alleBuchungen()).hasSize(2);
+  }
+
+  @Test
+  void buchen_selbeUhrzeitInVerschiedenenVorgaengen_bleibtErlaubt() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    Termin bergUmVierzehnUhr = termineVon(f.berg()).get(0);
+    Termin adlerUmVierzehnUhr = termineVon(f.adler()).get(0);
+    book(f.bergAuftrag(), bergUmVierzehnUhr, "Eltern Müller", "Kind Müller", null);
+
+    int gebucht =
+        buchen.buchen(
+            new BuchungsAnfrage(
+                "Eltern Schmidt",
+                "Kind Schmidt",
+                "schmidt@example.com",
+                List.of(new BuchungsWunsch(f.adlerAuftrag(), adlerUmVierzehnUhr.id().wert(), null))));
+
+    assertThat(gebucht).isEqualTo(1);
+    assertThat(alleBuchungen()).hasSize(2);
+  }
 
   // --- Auswertung (Terminplan je Lehrkraft) ---
 

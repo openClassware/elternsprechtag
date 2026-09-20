@@ -1,0 +1,16 @@
+/* Wörtliche Werte, keine `--lumo-*`-Variablen: Das Projekt bindet Lumo nicht ein, eine
+   Deklaration mit unbekannter Variable fiele ersatzlos aus (siehe cancel-sprechtag-dialog.css). */
+.umbuchen-dialog__message {
+  margin-bottom: 1rem;
+  max-width: 28rem;
+}
+
+.umbuchen-dialog__auswahl {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.umbuchen-dialog__empty {
+  font-style: italic;
+  color: #5a6069;
+}

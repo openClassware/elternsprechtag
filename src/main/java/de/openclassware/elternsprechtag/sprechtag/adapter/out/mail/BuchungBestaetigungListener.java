@@ -31,6 +31,6 @@ class BuchungBestaetigungListener {
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   void onBuchungenBestaetigt(BuchungenBestaetigt ereignis) {
-    service.bestaetige(ereignis.buchungen());
+    service.bestaetige(ereignis.buchungen(), ereignis.anlass());
   }
 }
