@@ -16,7 +16,6 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.EmailField;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEvent;
@@ -30,8 +29,13 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.Buc
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AuswahlZeile;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.LehrkraftKarte;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.SlotLegende;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.StepHeader;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.TerminRaster;
 import java.util.List;
+import java.util.UUID;
 
 @Route(value = ElternsprechtagView.ROUTE, autoLayout = false)
 @AnonymousAllowed
@@ -39,9 +43,6 @@ import java.util.List;
 public class ElternsprechtagView extends Div implements HasUrlParameter<String> {
 
   public static final String ROUTE = "elternsprechtag";
-
-  /** Zeichengrenze einer Notiz; deckt sich mit der Spaltenlänge in der Buchung. */
-  private static final int NOTIZ_MAX_LENGTH = 500;
 
   private final ElternsprechtagPresenter presenter;
 
@@ -213,7 +214,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     Div stepHead = new Div();
     stepHead.addClassName("elternsprechtag-view__step-head");
     stepHead.add(
-        new StepHeader(2, getTranslation("elternsprechtag.lehrkraft.step-title")), createLegend());
+        new StepHeader(2, getTranslation("elternsprechtag.lehrkraft.step-title")),
+        new SlotLegende());
     section.add(stepHead);
 
     // Über der Liste, nicht darunter: Der Satz trägt die Mehrfachbuchungs-Botschaft und bliebe
@@ -256,25 +258,6 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         : presenter.ladeLehrkraftOptionen(sprechtag.id(), selected.id());
   }
 
-  private Component createLegend() {
-    Div legend = new Div();
-    legend.addClassName("elternsprechtag-view__legend");
-    legend.add(
-        legendItem("frei", "elternsprechtag.termin.legend.frei"),
-        legendItem("belegt", "elternsprechtag.termin.legend.belegt"));
-    return legend;
-  }
-
-  private Component legendItem(String modifier, String translationKey) {
-    Div item = new Div();
-    item.addClassName("elternsprechtag-view__legend-item");
-    Span swatch = new Span();
-    swatch.addClassName("elternsprechtag-view__legend-swatch");
-    swatch.addClassName("elternsprechtag-view__legend-swatch--" + modifier);
-    item.add(swatch, new Span(getTranslation(translationKey)));
-    return item;
-  }
-
   /** Gestrichelter Hinweiskasten für einen leeren Bereich. */
   private Component placeholder(String translationKey) {
     Div placeholder = new Div();
@@ -309,108 +292,42 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private Component createLehrkraftCard(LehrkraftOption lehrkraft) {
-    Div card = new Div();
-    card.addClassName("elternsprechtag-view__lehrkraft");
-    if (session.isActive(lehrkraft) || session.istGewaehlt(lehrkraft.lehrauftragId())) {
-      card.addClassName("elternsprechtag-view__lehrkraft--selected");
-    }
-
-    Span badge = new Span(lehrkraft.kuerzel());
-    badge.addClassName("elternsprechtag-view__lehrkraft-badge");
-
-    Div info = new Div();
-    info.addClassName("elternsprechtag-view__lehrkraft-info");
-    Div name = new Div();
-    name.addClassName("elternsprechtag-view__lehrkraft-name");
-    name.setText(lehrkraft.lehrerName());
-    Div faecher = new Div();
-    faecher.addClassName("elternsprechtag-view__lehrkraft-faecher");
-    faecher.setText(String.join(", ", lehrkraft.faecher()));
-    info.add(name, faecher);
-
-    card.add(badge, info);
-
+    boolean selected =
+        session.isActive(lehrkraft) || session.istGewaehlt(lehrkraft.lehrauftragId());
     SlotOption chosen = session.gewaehlterSlot(lehrkraft.lehrauftragId());
-    if (chosen != null) {
-      Span pill = new Span();
-      pill.addClassName("elternsprechtag-view__lehrkraft-pill");
-      pill.add(VaadinIcon.CHECK.create(), new Span(Formats.time(chosen.zeit())));
-      card.add(pill);
-    }
-
-    card.addClickListener(
-        event -> {
+    return new LehrkraftKarte(
+        lehrkraft,
+        selected,
+        chosen,
+        () -> {
           session.setActive(lehrkraft);
           refreshLehrkraefte();
         });
-    return card;
   }
 
   /** Terminraster der aufgeklappten Lehrkraft; sitzt in der Liste direkt hinter ihrer Karte. */
   private Component createSlotPanel(LehrkraftOption lehrkraft) {
-    Div panel = new Div();
-    panel.addClassName("elternsprechtag-view__slot-panel");
-
-    if (lehrkraft.slots().isEmpty()) {
-      Div placeholder = new Div();
-      placeholder.addClassName("elternsprechtag-view__placeholder");
-      placeholder.setText(getTranslation("elternsprechtag.termin.empty"));
-      panel.add(placeholder);
-      return panel;
-    }
-
-    Div grid = new Div();
-    grid.addClassName("elternsprechtag-view__slot-grid");
-    lehrkraft.slots().forEach(slot -> grid.add(createSlot(slot)));
-    panel.add(grid, createNotizField(lehrkraft));
-    return panel;
-  }
-
-  /**
-   * Notizfeld der aufgeklappten Lehrkraft. Es steht von Anfang an da, bleibt aber ausgegraut, bis
-   * ein Termin gewählt ist — ohne Termin gibt es keine Buchung, an der die Notiz hängen könnte, und
-   * ausgegraut zeigt das an, statt das Feld erst später aus dem Nichts auftauchen zu lassen.
-   *
-   * <p>Es schreibt bei jedem Tastendruck ins Modell, damit beim Panel-Wechsel nichts verloren geht,
-   * und frischt nur die Zusammenfassung auf — ein Neuaufbau des Panels würde dem Feld den Fokus
-   * nehmen.
-   */
-  private Component createNotizField(LehrkraftOption lehrkraft) {
-    TextArea notiz = new TextArea(getTranslation("elternsprechtag.notiz.label"));
-    notiz.addClassName("elternsprechtag-view__notiz-field");
-    notiz.setPlaceholder(getTranslation("elternsprechtag.notiz.placeholder"));
-    notiz.setWidthFull();
-    notiz.setMaxLength(NOTIZ_MAX_LENGTH);
-    notiz.setValue(session.notiz(lehrkraft.lehrauftragId()));
-    notiz.setEnabled(session.istGewaehlt(lehrkraft.lehrauftragId()));
-    notiz.setValueChangeMode(ValueChangeMode.EAGER);
-    notiz.addValueChangeListener(
-        event -> {
-          session.setNotiz(lehrkraft.lehrauftragId(), event.getValue());
+    UUID lehrauftragId = lehrkraft.lehrauftragId();
+    return new TerminRaster(
+        lehrkraft.slots(),
+        this::zustandVon,
+        this::selectSlot,
+        this::deselectSlot,
+        session.notiz(lehrauftragId),
+        session.istGewaehlt(lehrauftragId),
+        notizText -> {
+          session.setNotiz(lehrauftragId, notizText);
           refreshSummary();
         });
-    return notiz;
   }
 
-  private Component createSlot(SlotOption slot) {
-    Div slotEl = new Div();
-    slotEl.addClassName("elternsprechtag-view__slot");
-    slotEl.add(new Span(Formats.time(slot.zeit())));
-
-    switch (session.slotState(slot)) {
-      case BELEGT -> slotEl.addClassName("elternsprechtag-view__slot--belegt");
-      case KONFLIKT -> slotEl.addClassName("elternsprechtag-view__slot--konflikt");
-      case GEWAEHLT -> {
-        slotEl.addClassName("elternsprechtag-view__slot--selected");
-        Span check = new Span();
-        check.addClassName("elternsprechtag-view__slot-check");
-        check.add(VaadinIcon.CHECK.create());
-        slotEl.add(check);
-        slotEl.addClickListener(event -> deselectSlot());
-      }
-      case FREI -> slotEl.addClickListener(event -> selectSlot(slot));
-    }
-    return slotEl;
+  private TerminRaster.SlotZustand zustandVon(SlotOption slot) {
+    return switch (session.slotState(slot)) {
+      case FREI -> TerminRaster.SlotZustand.FREI;
+      case BELEGT -> TerminRaster.SlotZustand.BELEGT;
+      case GEWAEHLT -> TerminRaster.SlotZustand.GEWAEHLT;
+      case KONFLIKT -> TerminRaster.SlotZustand.KONFLIKT;
+    };
   }
 
   private void selectSlot(SlotOption slot) {
@@ -469,27 +386,15 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private Component createSummaryRow(LehrkraftOption lehrkraft, SlotOption slot) {
-    Div row = new Div();
-    row.addClassName("elternsprechtag-view__summary-row");
-
-    // Klickfläche für den Sprung zur Lehrkraft; der Entfernen-Button liegt bewusst außerhalb,
-    // damit sein Klick nicht zugleich das Panel aufklappt.
-    Div link = new Div();
-    link.addClassName("elternsprechtag-view__summary-link");
-    link.add(createSummaryBadge(lehrkraft), createSummaryInfo(lehrkraft, slot));
-    link.addClickListener(event -> springeZu(lehrkraft));
-
-    Button remove = new Button(VaadinIcon.CLOSE_SMALL.create());
-    remove.addClassName("elternsprechtag-view__summary-remove");
-    remove.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
-    remove.addClickListener(
-        event -> {
+    return new AuswahlZeile(
+        lehrkraft,
+        slot,
+        session.notiz(lehrkraft.lehrauftragId()),
+        () -> springeZu(lehrkraft),
+        () -> {
           session.entferne(lehrkraft.lehrauftragId());
           refreshAfterSelectionChange();
         });
-
-    row.add(link, remove);
-    return row;
   }
 
   private Component createFooter() {
@@ -628,45 +533,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private Component createConfirmRow(LehrkraftOption lehrkraft, SlotOption slot) {
-    Div row = new Div();
-    row.addClassName("elternsprechtag-view__summary-row");
-    row.add(createSummaryBadge(lehrkraft), createSummaryInfo(lehrkraft, slot));
-    return row;
-  }
-
-  private Component createSummaryBadge(LehrkraftOption lehrkraft) {
-    Span badge = new Span(lehrkraft.kuerzel());
-    badge.addClassName("elternsprechtag-view__summary-badge");
-    return badge;
-  }
-
-  /**
-   * Textblock einer Terminzeile — Lehrkraft mit Uhrzeit, ihre Fächer und, sofern geschrieben, die
-   * Notiz schreibgeschützt und im vollen Wortlaut. Auswahl und Bestätigung teilen ihn sich; nur die
-   * Auswahl hängt noch den Entfernen-Button daneben.
-   */
-  private Component createSummaryInfo(LehrkraftOption lehrkraft, SlotOption slot) {
-    Div info = new Div();
-    info.addClassName("elternsprechtag-view__summary-info");
-
-    Div main = new Div();
-    main.addClassName("elternsprechtag-view__summary-main");
-    main.setText(
-        getTranslation(
-            "elternsprechtag.summary.row", lehrkraft.lehrerName(), Formats.time(slot.zeit())));
-
-    Div sub = new Div();
-    sub.addClassName("elternsprechtag-view__summary-sub");
-    sub.setText(String.join(", ", lehrkraft.faecher()));
-    info.add(main, sub);
-
-    String text = session.notiz(lehrkraft.lehrauftragId());
-    if (!text.isEmpty()) {
-      Paragraph notiz = new Paragraph(text);
-      notiz.addClassName("elternsprechtag-view__summary-notiz");
-      info.add(notiz);
-    }
-    return info;
+    return new AuswahlZeile(lehrkraft, slot, session.notiz(lehrkraft.lehrauftragId()), null, null);
   }
 
   private void refreshFooter() {
