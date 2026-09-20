@@ -176,7 +176,11 @@ Die Pflicht selbst wird dadurch nicht aufgeweicht (ADR 0001), nur der Empfänger
 Sprachgebrauch: **Nachtragen** für den Vorgang, **Stellvertreteradresse** für die Adresse der
 Schule. Nicht „Organizer-Buchung" — gebucht wird für die Familie, nicht für den Organizer.
 
-Noch nicht gebaut ([#104](https://github.com/openClassware/elternsprechtag/issues/104)).
+Der Kern — eigener Port `Nachtragen`, geteilte Mechanik mit `Buchen` über einen package-privaten
+Service, bis einschließlich Mailversand — ist gebaut
+([#151](https://github.com/openClassware/elternsprechtag/issues/151)). Ohne Oberfläche und ohne
+Stellvertreteradresse noch
+([#104](https://github.com/openClassware/elternsprechtag/issues/104)).
 
 ### Umbuchen
 
