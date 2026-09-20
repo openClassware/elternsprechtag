@@ -44,6 +44,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
 
   private final H2 headerTitle = new H2();
   private final Div headerMeta = new Div();
+  private final Button headerNachtragenButton = new Button();
   private final ComboBox<LehrkraftPlan> lehrkraftFilter = new ComboBox<>();
   private final Div sections = new Div();
 
@@ -51,6 +52,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private UUID sprechtagId;
   private UUID filterLehrkraft;
   private boolean stornoMoeglich;
+  private boolean nachtragenMoeglich;
 
   AuswertungView(AuswertungPresenter presenter) {
     this.presenter = presenter;
@@ -86,6 +88,8 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
 
     allePlaene = auswertung.plaene();
     stornoMoeglich = presenter.darfStornieren(auswertung);
+    nachtragenMoeglich = presenter.darfNachtragen(auswertung);
+    headerNachtragenButton.setVisible(nachtragenMoeglich);
     // Die Filterauswahl ist Per-View-Zustand und soll ein Storno überleben: gemerkt, die Items
     // getauscht, dieselbe Lehrkraft wieder gesetzt. Steht sie nicht mehr im Plan, bleibt „alle".
     UUID gewaehlt = filterLehrkraft;
@@ -134,8 +138,26 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     header.addClassName("auswertung__header");
     Span eyebrow = new Span(getTranslation("auswertung.header.title"));
     eyebrow.addClassName("auswertung__eyebrow");
-    header.add(eyebrow, headerTitle, headerMeta);
+
+    Div titleRow = new Div();
+    titleRow.addClassName("auswertung__title-row");
+    titleRow.add(headerTitle, createNachtragenButton());
+
+    header.add(eyebrow, titleRow, headerMeta);
     return header;
+  }
+
+  /** Einstieg ins Nachtragen — nur an einem veröffentlichten Sprechtag sichtbar. */
+  private Button createNachtragenButton() {
+    headerNachtragenButton.setText(getTranslation("auswertung.nachtragen.button"));
+    headerNachtragenButton.addClassName("auswertung__nachtragen-button");
+    headerNachtragenButton.setIcon(VaadinIcon.PLUS.create());
+    headerNachtragenButton.addThemeVariants(ButtonVariant.PRIMARY);
+    headerNachtragenButton.setVisible(false);
+    headerNachtragenButton.addClickListener(
+        event ->
+            getUI().ifPresent(ui -> ui.navigate(NachtragenView.ROUTE + "/" + sprechtagId)));
+    return headerNachtragenButton;
   }
 
   private Component createFilter() {

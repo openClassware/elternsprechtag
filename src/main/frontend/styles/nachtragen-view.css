@@ -1,0 +1,32 @@
+/* Organizer-facing Nachtrag page: hosts the shared booking card (elternsprechtag-view__card)
+   inside the application layout, centered like the public booking page but without its own
+   branding header — the MainLayout header already carries that. */
+.nachtragen-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem 1.5rem 3rem;
+}
+
+.nachtragen-view__breadcrumb {
+    width: 100%;
+    max-width: 720px;
+}
+
+.nachtragen-view__stellvertreter-schalter {
+    margin-top: 1.25rem;
+}
+
+.nachtragen-view__zurueck {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+    .nachtragen-view {
+        gap: 1rem;
+        padding: 1rem 1rem 2rem;
+    }
+}

@@ -25,6 +25,28 @@
     margin: 0;
 }
 
+.auswertung__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.auswertung__nachtragen-button {
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .auswertung__title-row {
+        width: 100%;
+    }
+
+    .auswertung__nachtragen-button {
+        width: 100%;
+    }
+}
+
 .auswertung__meta {
     display: flex;
     align-items: center;

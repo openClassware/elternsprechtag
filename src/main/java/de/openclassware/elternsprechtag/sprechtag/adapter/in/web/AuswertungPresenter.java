@@ -36,6 +36,17 @@ class AuswertungPresenter {
   }
 
   /**
+   * Ob die Ansicht den Einstieg ins Nachtragen anbietet. Dieselbe Bedingung wie beim Storno: Nur an
+   * einem veröffentlichten Sprechtag gibt es Termine, die eine Familie belegen könnte.
+   *
+   * <p>Verbindlich ist auch das erst im {@code Nachtragen}-Use-Case — die Route ist per URL für
+   * jeden Status erreichbar.
+   */
+  boolean darfNachtragen(SprechtagAuswertung auswertung) {
+    return auswertung.status() == SprechtagStatus.VEROEFFENTLICHT;
+  }
+
+  /**
    * Reicht das Storno an den Use Case durch.
    *
    * @return leer, wenn es geklappt hat — sonst die Begründung der Weigerung. Eine verletzte
