@@ -12,6 +12,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.adapter.out.mail.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.UmbuchAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -237,6 +238,40 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
 
     buchen.buchen(
         new BuchungsAnfrage("Elke", "Karl", "eltern@example.com", List.of()));
+
+    assertThat(sender.versucht).isEmpty();
+  }
+
+  @Test
+  void umbuchen_afterCommit_sendsOneConfirmationWithChangedIntroAndOnlyTheNewAppointment() {
+    Fixture f = publishedSprechtag("Aula");
+    List<Termin> slots = alleTermine();
+    book(f.lehrauftrag(), "eltern@example.com", null, slots.get(0));
+    UUID alte = termine.lade(slots.get(0).id()).orElseThrow().aktiveBuchung().orElseThrow().id().wert();
+    sender.reset();
+
+    umbuchen.umbuche(new UmbuchAnfrage(alte, slots.get(2).id().wert()));
+
+    // Genau eine Mail für den Umbuchen-Vorgang, nicht die bisherige Eingangsbestätigung: Wer
+    // mehrere Termine hätte, dürfte nicht glauben, die anderen seien weg.
+    assertThat(sender.empfangen).hasSize(1);
+    String text = sender.empfangen.get(0).text();
+    assertThat(text).contains("Einer Ihrer Termine wurde verschoben");
+    assertThat(text).doesNotContain("Ihre Buchung ist eingegangen");
+    assertThat(text).contains("14:30").doesNotContain("14:00");
+  }
+
+  @Test
+  void umbuchen_onTakenSlot_triggersNoSend() {
+    Fixture f = publishedSprechtag("Aula");
+    List<Termin> slots = alleTermine();
+    book(f.lehrauftrag(), "erste@example.com", null, slots.get(0));
+    book(f.lehrauftrag(), "zweite@example.com", null, slots.get(1));
+    UUID alte = termine.lade(slots.get(0).id()).orElseThrow().aktiveBuchung().orElseThrow().id().wert();
+    sender.reset();
+
+    assertThatThrownBy(() -> umbuchen.umbuche(new UmbuchAnfrage(alte, slots.get(1).id().wert())))
+        .isInstanceOf(TerminBelegtException.class);
 
     assertThat(sender.versucht).isEmpty();
   }

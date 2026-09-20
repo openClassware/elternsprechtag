@@ -19,9 +19,11 @@ import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.StornoBuchungDialog;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.UmbuchenDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 import java.util.List;
@@ -268,6 +270,13 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     aktion.addClassName("auswertung__cell");
     aktion.addClassName("auswertung__cell--aktion");
 
+    Button umbuchen = new Button(VaadinIcon.EXCHANGE.create());
+    umbuchen.addClassName("auswertung__umbuchen");
+    umbuchen.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
+    umbuchen.setAriaLabel(getTranslation("auswertung.umbuchen.button"));
+    umbuchen.setTooltipText(getTranslation("auswertung.umbuchen.button"));
+    umbuchen.addClickListener(_ -> openUmbuchenDialog(plan, zeile));
+
     Button storno = new Button(VaadinIcon.CLOSE_SMALL.create());
     storno.addClassName("auswertung__storno");
     storno.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.ERROR, ButtonVariant.SMALL);
@@ -275,7 +284,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     storno.setTooltipText(getTranslation("auswertung.storno.button"));
     storno.addClickListener(_ -> openStornoDialog(plan, zeile));
 
-    aktion.add(storno);
+    aktion.add(umbuchen, storno);
     return aktion;
   }
 
@@ -294,6 +303,26 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
       SprechtagMeldungen.zeige(this, weigerung.get());
     } else {
       Notification.show(getTranslation("auswertung.storno.erfolg", zeile.schuelerName()));
+    }
+    reload();
+  }
+
+  private void openUmbuchenDialog(LehrkraftPlan plan, BuchungsZeile zeile) {
+    List<SlotOption> optionen = presenter.freieSlots(zeile.buchungId());
+    new UmbuchenDialog(
+            zeile.schuelerName(),
+            plan.anzeigeName(),
+            optionen,
+            neuerTerminId -> umbuche(zeile, neuerTerminId))
+        .open();
+  }
+
+  private void umbuche(BuchungsZeile zeile, UUID neuerTerminId) {
+    Optional<Meldung> weigerung = presenter.umbuche(zeile.buchungId(), neuerTerminId);
+    if (weigerung.isPresent()) {
+      SprechtagMeldungen.zeige(this, weigerung.get());
+    } else {
+      Notification.show(getTranslation("auswertung.umbuchen.erfolg", zeile.schuelerName()));
     }
     reload();
   }

@@ -4,6 +4,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.out.Ereigniss
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege.LehrauftragDaten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
+import de.openclassware.elternsprechtag.sprechtag.domain.Anlass;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungAngelegt;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungenBestaetigt;
@@ -114,7 +115,10 @@ class BuchungsVorgangService {
       throw new TerminBelegtException("Ein gewählter Termin wurde soeben vergeben.");
     }
     if (!gebucht.isEmpty()) {
-      ereignisse.veroeffentliche(new BuchungenBestaetigt(gebucht));
+      // Eltern-Submit und Organizer-Nachtrag sind derselbe Anlass — beide listen den vollständigen
+      // Vorgang. Das Umbuchen baut sein Ereignis nicht über diesen Service, weil es Storno und
+      // Neubuchung in einem Zug mischt (siehe UmbuchenService).
+      ereignisse.veroeffentliche(new BuchungenBestaetigt(gebucht, Anlass.BUCHUNG));
     }
     return gebucht.size();
   }
@@ -144,8 +148,11 @@ class BuchungsVorgangService {
   /**
    * Holt dem Aggregat ab, was es gemeldet hat, und behält die Buchungs-Ids. Abgeholt wird genau
    * einmal — der Puffer ist danach leer, und nur deshalb bündelt der Vorgang jede Buchung einmal.
+   *
+   * <p>Paketsichtbar statt privat: {@code UmbuchenService} mischt Storno und Neubuchung in einem
+   * Zug und braucht dieselbe Abholung für sein eigenes, gebündeltes Ereignis.
    */
-  private static List<BuchungId> angelegteBuchungen(Termin termin) {
+  static List<BuchungId> angelegteBuchungen(Termin termin) {
     List<BuchungId> ids = new ArrayList<>();
     for (Ereignis ereignis : termin.ereignisseAbholen()) {
       if (ereignis instanceof BuchungAngelegt angelegt) {

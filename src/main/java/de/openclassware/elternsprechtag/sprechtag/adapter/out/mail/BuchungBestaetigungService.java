@@ -7,6 +7,7 @@ import de.openclassware.elternsprechtag.sprechtag.adapter.out.mail.Benachrichtig
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten.BelegZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
+import de.openclassware.elternsprechtag.sprechtag.domain.Anlass;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import java.time.LocalDate;
@@ -76,8 +77,11 @@ class BuchungBestaetigungService {
    *
    * <p>Dass die Ids nach dem Commit überhaupt noch gelten, liegt daran, dass die Domäne sie selbst
    * vergibt und ein erneutes Speichern des Termin-Aggregats sie nicht verändert (ADR 0004).
+   *
+   * @param anlass wählt den Einstiegsbaustein — ein Umbuchen listet nur den einen geänderten
+   *     Termin, nicht den vollständigen Vorgang, und der Standardtext würde hier in die Irre führen
    */
-  public void bestaetige(List<BuchungId> buchungIds) {
+  public void bestaetige(List<BuchungId> buchungIds, Anlass anlass) {
     if (buchungIds == null || buchungIds.isEmpty()) {
       return;
     }
@@ -98,7 +102,7 @@ class BuchungBestaetigungService {
               LOCALE,
               bestaetigung.sprechtagTitel(),
               Formats.dateLong(bestaetigung.datum()));
-      sender.sende(new Nachricht(bestaetigung.empfaenger(), betreff, baueText(bestaetigung)));
+      sender.sende(new Nachricht(bestaetigung.empfaenger(), betreff, baueText(bestaetigung, anlass)));
     } catch (RuntimeException e) {
       // Best-effort: Weder ein Zustellproblem noch ein Fehler beim Formulieren (fehlender
       // Textbaustein, verschwundener Sprechtag) darf die festgeschriebene Buchung entwerten oder
@@ -144,10 +148,14 @@ class BuchungBestaetigungService {
    * Schulkontakt ist Pflicht und daher immer dabei. Die Notiz steht eingerückt unter ihrer
    * Terminzeile; ein Termin ohne Notiz bleibt einzeilig.
    */
-  private String baueText(Bestaetigung b) {
+  private String baueText(Bestaetigung b, Anlass anlass) {
     List<String> absaetze = new ArrayList<>();
     absaetze.add(i18n.getTranslation("buchung.mail.greeting", LOCALE));
-    absaetze.add(i18n.getTranslation("buchung.mail.intro", LOCALE));
+    // Ein Umbuchen trägt nur den einen geänderten Termin, nicht den vollständigen Vorgang — der
+    // Standardtext würde eine Familie mit mehreren Terminen glauben lassen, die anderen seien weg.
+    String introKey =
+        anlass == Anlass.UMBUCHUNG ? "buchung.mail.intro.umgebucht" : "buchung.mail.intro";
+    absaetze.add(i18n.getTranslation(introKey, LOCALE));
 
     List<String> kopf = new ArrayList<>();
     kopf.add(

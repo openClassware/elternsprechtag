@@ -8,6 +8,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.BuchungNichtGefundenExc
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagHatBuchungenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.StatusuebergangException;
+import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.ZeitstrukturEingefrorenException;
 
 /**
@@ -78,6 +79,9 @@ final class SprechtagMeldungen {
     }
     if (fehler instanceof SprechtagNichtVeroeffentlichtException) {
       return Meldung.fehler("buchung.fehler.sprechtag-nicht-veroeffentlicht");
+    }
+    if (fehler instanceof TerminBelegtException) {
+      return Meldung.fehler("buchung.fehler.termin-belegt");
     }
     throw fehler;
   }

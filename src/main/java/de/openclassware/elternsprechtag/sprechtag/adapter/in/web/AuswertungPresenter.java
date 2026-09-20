@@ -4,6 +4,9 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Stornieren;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.UmbuchAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.util.List;
@@ -18,6 +21,7 @@ class AuswertungPresenter {
 
   private final Auswerten auswerten;
   private final Stornieren stornieren;
+  private final Umbuchen umbuchen;
 
   Optional<SprechtagAuswertung> werteAus(UUID sprechtagId) {
     return auswerten.werteAus(sprechtagId);
@@ -56,6 +60,28 @@ class AuswertungPresenter {
   Optional<Meldung> storniere(UUID buchungId) {
     try {
       stornieren.storniere(buchungId);
+      return Optional.empty();
+    } catch (RuntimeException fehler) {
+      return Optional.of(SprechtagMeldungen.zu(fehler));
+    }
+  }
+
+  /**
+   * Die freien Slots derselben Lehrkraft wie die übergebene Buchung — das Angebot des
+   * Umbuchen-Dialogs. Reicht nur durch: Die Auswahl trifft {@code Umbuchen} selbst.
+   */
+  List<SlotOption> freieSlots(UUID buchungId) {
+    return umbuchen.freieSlots(buchungId);
+  }
+
+  /**
+   * Reicht das Umbuchen an den Use Case durch — Spiegelbild zu {@link #storniere(UUID)}.
+   *
+   * @return leer, wenn es geklappt hat — sonst die Begründung der Weigerung.
+   */
+  Optional<Meldung> umbuche(UUID buchungId, UUID neuerTerminId) {
+    try {
+      umbuchen.umbuche(new UmbuchAnfrage(buchungId, neuerTerminId));
       return Optional.empty();
     } catch (RuntimeException fehler) {
       return Optional.of(SprechtagMeldungen.zu(fehler));
