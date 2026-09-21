@@ -27,6 +27,7 @@ import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.FormPanel;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.MainLayout;
@@ -66,6 +67,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private TimePicker startTime;
   private TimePicker endTime;
   private CheckboxGroup<KlasseOption> klassen;
+  private ComboBox<ErinnerungsVorlauf> erinnerungsVorlauf;
   private TextField accessToken;
   private TextField shareLink;
   private String origin;
@@ -123,6 +125,11 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     binder
         .forField(accessToken)
         .bind(SprechtagFormular::getAccessToken, SprechtagFormular::setAccessToken);
+
+    binder
+        .forField(erinnerungsVorlauf)
+        .bind(
+            SprechtagFormular::getErinnerungsVorlauf, SprechtagFormular::setErinnerungsVorlauf);
 
     // Die Oberfläche wählt Klassen als Optionen, das Formular trägt ihre Ids: Die Namen gehören der
     // Schulorganisation und haben im Sprechtag nichts zu suchen.
@@ -374,10 +381,28 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     schulkontakt.setMaxLength(1000);
     fourthRow.add(schulkontakt, 2);
 
+    FormRow fifthRow = new FormRow();
+    erinnerungsVorlauf = new ComboBox<>();
+    erinnerungsVorlauf.setLabel(getTranslation("edit-sprechtag.field.erinnerung.label"));
+    erinnerungsVorlauf.setItems(ErinnerungsVorlauf.values());
+    erinnerungsVorlauf.setValue(ErinnerungsVorlauf.KEINE);
+    erinnerungsVorlauf.setRenderer(
+        new TextRenderer<>(vorlauf -> getTranslation(erinnerungLabelKey(vorlauf))));
+    fifthRow.add(erinnerungsVorlauf);
+
     FormLayout formLayout = panel.getFormLayout();
-    formLayout.add(firstRow, secondRow, thirdRow, fourthRow);
+    formLayout.add(firstRow, secondRow, thirdRow, fourthRow, fifthRow);
 
     return panel;
+  }
+
+  private String erinnerungLabelKey(ErinnerungsVorlauf vorlauf) {
+    return switch (vorlauf) {
+      case KEINE -> "edit-sprechtag.erinnerung.item.keine";
+      case EIN_TAG -> "edit-sprechtag.erinnerung.item.ein-tag";
+      case ZWEI_TAGE -> "edit-sprechtag.erinnerung.item.zwei-tage";
+      case DREI_TAGE -> "edit-sprechtag.erinnerung.item.drei-tage";
+    };
   }
 
   private Component createTimingPanel() {

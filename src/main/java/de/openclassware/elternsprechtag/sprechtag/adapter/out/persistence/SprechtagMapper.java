@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 
 import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.KlasseId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Schulkontakt;
 import de.openclassware.elternsprechtag.sprechtag.domain.Slotdauer;
@@ -35,7 +36,8 @@ final class SprechtagMapper {
         new Zeitfenster(zeile.getStartTime(), zeile.getEndTime()),
         Slotdauer.vonMinuten(zeile.getSlotInMinutes()),
         klassen,
-        zeile.getStatus());
+        zeile.getStatus(),
+        zeile.getErinnerungVorlauf());
   }
 
   static SprechtagZeile zuZeile(Sprechtag sprechtag) {
@@ -55,6 +57,7 @@ final class SprechtagMapper {
         sprechtag.slotdauer().minuten(),
         sprechtag.accessToken().wert(),
         sprechtag.status(),
+        sprechtag.erinnerungsVorlauf(),
         sprechtag.version(),
         klassen);
   }

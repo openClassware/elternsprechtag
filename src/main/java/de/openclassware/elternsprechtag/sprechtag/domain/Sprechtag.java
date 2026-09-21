@@ -45,6 +45,7 @@ public final class Sprechtag extends AggregateRoot {
   private final List<KlasseId> klassen;
 
   private SprechtagStatus status;
+  private ErinnerungsVorlauf erinnerungsVorlauf;
 
   private Sprechtag(
       SprechtagId id,
@@ -58,7 +59,8 @@ public final class Sprechtag extends AggregateRoot {
       Zeitfenster zeitfenster,
       Slotdauer slotdauer,
       List<KlasseId> klassen,
-      SprechtagStatus status) {
+      SprechtagStatus status,
+      ErinnerungsVorlauf erinnerungsVorlauf) {
     this.id = Objects.requireNonNull(id, "id");
     this.version = version;
     this.titel = pflichtTitel(titel);
@@ -71,6 +73,7 @@ public final class Sprechtag extends AggregateRoot {
     this.slotdauer = Objects.requireNonNull(slotdauer, "slotdauer");
     this.klassen = new ArrayList<>(Objects.requireNonNull(klassen, "klassen"));
     this.status = Objects.requireNonNull(status, "status");
+    this.erinnerungsVorlauf = Objects.requireNonNull(erinnerungsVorlauf, "erinnerungsVorlauf");
   }
 
   /** Ein frischer Entwurf. Nur so entsteht ein Sprechtag — jeder beginnt als Entwurf. */
@@ -83,7 +86,8 @@ public final class Sprechtag extends AggregateRoot {
       LocalDate datum,
       Zeitfenster zeitfenster,
       Slotdauer slotdauer,
-      List<KlasseId> klassen) {
+      List<KlasseId> klassen,
+      ErinnerungsVorlauf erinnerungsVorlauf) {
     return new Sprechtag(
         SprechtagId.neu(),
         0L,
@@ -96,7 +100,8 @@ public final class Sprechtag extends AggregateRoot {
         zeitfenster,
         slotdauer,
         klassen,
-        SprechtagStatus.ENTWURF);
+        SprechtagStatus.ENTWURF,
+        erinnerungsVorlauf);
   }
 
   /**
@@ -115,7 +120,8 @@ public final class Sprechtag extends AggregateRoot {
       Zeitfenster zeitfenster,
       Slotdauer slotdauer,
       List<KlasseId> klassen,
-      SprechtagStatus status) {
+      SprechtagStatus status,
+      ErinnerungsVorlauf erinnerungsVorlauf) {
     return new Sprechtag(
         id,
         version,
@@ -128,7 +134,8 @@ public final class Sprechtag extends AggregateRoot {
         zeitfenster,
         slotdauer,
         klassen,
-        status);
+        status,
+        erinnerungsVorlauf);
   }
 
   /**
@@ -155,6 +162,18 @@ public final class Sprechtag extends AggregateRoot {
     this.beschreibung = beschreibung;
     this.schulkontakt = Objects.requireNonNull(schulkontakt, "schulkontakt");
     this.accessToken = Objects.requireNonNull(accessToken, "accessToken");
+  }
+
+  /**
+   * Ändert den Erinnerungsvorlauf. Nicht Teil der Zeitstruktur — er verschiebt keinen Termin und
+   * macht keine Buchung ungültig — und bleibt deshalb auch nach dem Veröffentlichen änderbar
+   * (ADR 0006). Eine Änderung wirkt erst ab dem nächsten Lauf des Erinnerungs-Schedulers (#107).
+   *
+   * @throws StatusuebergangException an einem abgesagten oder abgeschlossenen Sprechtag
+   */
+  public void aendereErinnerungsVorlauf(ErinnerungsVorlauf erinnerungsVorlauf) {
+    verlangeOffen("in seinem Erinnerungsvorlauf geändert");
+    this.erinnerungsVorlauf = Objects.requireNonNull(erinnerungsVorlauf, "erinnerungsVorlauf");
   }
 
   /**
@@ -273,7 +292,8 @@ public final class Sprechtag extends AggregateRoot {
         datum,
         zeitfenster,
         slotdauer,
-        List.copyOf(klassen));
+        List.copyOf(klassen),
+        erinnerungsVorlauf);
   }
 
   private void wechsleNach(SprechtagStatus ziel) {
@@ -347,5 +367,9 @@ public final class Sprechtag extends AggregateRoot {
 
   public SprechtagStatus status() {
     return status;
+  }
+
+  public ErinnerungsVorlauf erinnerungsVorlauf() {
+    return erinnerungsVorlauf;
   }
 }

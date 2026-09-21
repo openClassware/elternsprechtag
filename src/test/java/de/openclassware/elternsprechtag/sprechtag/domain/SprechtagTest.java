@@ -36,7 +36,8 @@ class SprechtagTest {
         DATUM,
         NACHMITTAG,
         VIERTELSTUNDE,
-        List.of(KLASSE_5A));
+        List.of(KLASSE_5A),
+        ErinnerungsVorlauf.KEINE);
   }
 
   private static Sprechtag veroeffentlicht() {
@@ -67,7 +68,8 @@ class SprechtagTest {
                       DATUM,
                       NACHMITTAG,
                       VIERTELSTUNDE,
-                      List.of(KLASSE_5A)))
+                      List.of(KLASSE_5A),
+                      ErinnerungsVorlauf.KEINE))
           .isInstanceOf(IllegalArgumentException.class);
     }
   }
@@ -237,6 +239,45 @@ class SprechtagTest {
               () ->
                   sprechtag.legeZeitstrukturFest(
                       DATUM.plusDays(1), NACHMITTAG, VIERTELSTUNDE, List.of(KLASSE_5A)))
+          .isInstanceOf(StatusuebergangException.class);
+    }
+  }
+
+  @Nested
+  class Erinnerung {
+
+    @Test
+    void standardIstKeineErinnerung() {
+      assertThat(entwurf().erinnerungsVorlauf()).isEqualTo(ErinnerungsVorlauf.KEINE);
+    }
+
+    /** Nicht Teil der Zeitstruktur — bleibt anders als diese auch nach dem Veröffentlichen offen. */
+    @Test
+    void bleibtNachDemVeroeffentlichenAenderbar() {
+      Sprechtag sprechtag = veroeffentlicht();
+
+      sprechtag.aendereErinnerungsVorlauf(ErinnerungsVorlauf.ZWEI_TAGE);
+
+      assertThat(sprechtag.erinnerungsVorlauf()).isEqualTo(ErinnerungsVorlauf.ZWEI_TAGE);
+    }
+
+    @Test
+    void abgesagterSprechtagAendertDenErinnerungsVorlaufNichtMehr() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.sageAb();
+
+      assertThatThrownBy(
+              () -> sprechtag.aendereErinnerungsVorlauf(ErinnerungsVorlauf.EIN_TAG))
+          .isInstanceOf(StatusuebergangException.class);
+    }
+
+    @Test
+    void abgeschlossenerSprechtagAendertDenErinnerungsVorlaufNichtMehr() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.schliesseAb();
+
+      assertThatThrownBy(
+              () -> sprechtag.aendereErinnerungsVorlauf(ErinnerungsVorlauf.EIN_TAG))
           .isInstanceOf(StatusuebergangException.class);
     }
   }

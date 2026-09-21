@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -46,6 +47,7 @@ class SprechtagZeile {
   private int slotInMinutes;
   private String accessToken;
   private SprechtagStatus status;
+  private ErinnerungsVorlauf erinnerungVorlauf;
   @Version private long version;
 
   /**

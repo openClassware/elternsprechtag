@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
 import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.KlasseId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Schulkontakt;
 import de.openclassware.elternsprechtag.sprechtag.domain.Slotdauer;
@@ -58,6 +59,11 @@ final class Formularwerte {
     return formular.getKlasseIds().stream().map(KlasseId::von).toList();
   }
 
+  static ErinnerungsVorlauf erinnerungsVorlauf(SprechtagFormular formular) {
+    ErinnerungsVorlauf vorlauf = formular.getErinnerungsVorlauf();
+    return vorlauf == null ? ErinnerungsVorlauf.KEINE : vorlauf;
+  }
+
   /** Der Rückweg: ein gespeicherter Sprechtag als Formular. */
   static SprechtagFormular zuFormular(Sprechtag sprechtag) {
     SprechtagFormular formular = new SprechtagFormular();
@@ -70,6 +76,7 @@ final class Formularwerte {
     formular.setEnde(sprechtag.zeitfenster().ende());
     formular.setSlotInMinuten(sprechtag.slotdauer().minuten());
     formular.setAccessToken(sprechtag.accessToken().wert());
+    formular.setErinnerungsVorlauf(sprechtag.erinnerungsVorlauf());
     // Dieselbe Bedingung, die das Aggregat beim Schreiben prüft — hier nur vorgezogen, damit die
     // Oberfläche gar nicht erst zur Eingabe einlädt.
     formular.setZeitstrukturEingefroren(sprechtag.status() != SprechtagStatus.ENTWURF);

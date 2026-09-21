@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.in;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.LinkedHashSet;
@@ -30,6 +31,7 @@ public class SprechtagFormular {
   private Integer slotInMinuten = 15;
   private String accessToken = UUID.randomUUID().toString();
   private Set<UUID> klasseIds = new LinkedHashSet<>();
+  private ErinnerungsVorlauf erinnerungsVorlauf = ErinnerungsVorlauf.KEINE;
 
   /**
    * Ob Datum, Zeitfenster, Slot-Dauer und Klassen schon festliegen. Kein Eingabewert, sondern die
@@ -120,6 +122,15 @@ public class SprechtagFormular {
 
   public void setKlasseIds(Set<UUID> klasseIds) {
     this.klasseIds = klasseIds == null ? new LinkedHashSet<>() : new LinkedHashSet<>(klasseIds);
+  }
+
+  public ErinnerungsVorlauf getErinnerungsVorlauf() {
+    return erinnerungsVorlauf;
+  }
+
+  public void setErinnerungsVorlauf(ErinnerungsVorlauf erinnerungsVorlauf) {
+    this.erinnerungsVorlauf =
+        erinnerungsVorlauf == null ? ErinnerungsVorlauf.KEINE : erinnerungsVorlauf;
   }
 
   public boolean isZeitstrukturEingefroren() {

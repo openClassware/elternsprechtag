@@ -21,6 +21,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtag
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
 import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.KlasseId;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Schulkontakt;
@@ -210,7 +211,8 @@ public abstract class AbstractServiceTest {
             datum,
             new Zeitfenster(beginn, ende),
             Slotdauer.vonMinuten(slotMinuten),
-            Arrays.stream(klassen).map(KlasseId::von).toList());
+            Arrays.stream(klassen).map(KlasseId::von).toList(),
+            ErinnerungsVorlauf.KEINE);
     switch (status) {
       case ENTWURF -> {}
       case VEROEFFENTLICHT -> sprechtag.veroeffentliche();

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.KlasseId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Schulkontakt;
 import de.openclassware.elternsprechtag.sprechtag.domain.Slotdauer;
@@ -90,7 +91,8 @@ class SprechtagePersistenceAdapterTest {
         DATUM,
         NACHMITTAG,
         Slotdauer.vonMinuten(15),
-        List.of(klassen));
+        List.of(klassen),
+        ErinnerungsVorlauf.KEINE);
   }
 
   @Test
@@ -112,6 +114,22 @@ class SprechtagePersistenceAdapterTest {
     assertThat(geladen.klassen()).containsExactlyInAnyOrder(klasse5a, klasse7b);
   }
 
+  /**
+   * Eigener Test statt einer Assertion in {@link #speichertUndLaedtDasGanzeAggregat()}: Der
+   * Standardwert {@code KEINE} dort würde einen falschen Spaltennamen, eine falsche
+   * Enum-Konvertierung oder einen zu engen Check-Constraint nicht aufdecken.
+   */
+  @Test
+  void erinnerungsVorlaufWirdMitgespeichert() {
+    Sprechtag sprechtag = entwurf(klasse5a);
+    sprechtag.aendereErinnerungsVorlauf(ErinnerungsVorlauf.ZWEI_TAGE);
+
+    sprechtage.speichere(sprechtag);
+
+    Sprechtag geladen = sprechtage.lade(sprechtag.id()).orElseThrow();
+    assertThat(geladen.erinnerungsVorlauf()).isEqualTo(ErinnerungsVorlauf.ZWEI_TAGE);
+  }
+
   @Test
   void ortUndBeschreibungDuerfenFehlen() {
     Sprechtag sprechtag =
@@ -124,7 +142,8 @@ class SprechtagePersistenceAdapterTest {
             DATUM,
             NACHMITTAG,
             Slotdauer.vonMinuten(15),
-            List.of(klasse5a));
+            List.of(klasse5a),
+            ErinnerungsVorlauf.KEINE);
 
     sprechtage.speichere(sprechtag);
 
