@@ -32,6 +32,14 @@ public interface BuchungsAnsichten {
   long zaehleAktiveElternAdressen(SprechtagId sprechtag);
 
   /**
+   * Die Ids der aktiven, noch nicht erinnerten Buchungen dieses Sprechtags — die Kandidaten eines
+   * Scheduler-Laufs (Issue #107). Der Zeitstempel steht an der Buchung, nicht im Read-Modell hier:
+   * Es liefert nur, wen der Scheduler ansehen muss; verbindlich geprüft und gesetzt wird am
+   * Aggregat über {@code Termin.erinnereBuchung}.
+   */
+  List<BuchungId> aktiveUnerinnerteBuchungen(SprechtagId sprechtag);
+
+  /**
    * Eine Zeile des Terminplans einer Lehrkraft. {@code notiz} darf {@code null} sein.
    *
    * <p>Die {@code buchungId} trägt die Zeile, damit die Oberfläche eine Aktion auf genau diese

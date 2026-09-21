@@ -70,6 +70,11 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
   private static final String ANZAHL_AKTIVE_ADRESSEN =
       "select count(distinct b.eltern_email)" + AKTIVE_EINES_SPRECHTAGS;
 
+  private static final String AKTIVE_UNERINNERTE_BUCHUNGEN =
+      "select b.id as buchung_id"
+          + AKTIVE_EINES_SPRECHTAGS
+          + "  and b.erinnerung_versendet_am is null";
+
   private final NamedParameterJdbcTemplate jdbc;
 
   @Override
@@ -126,5 +131,13 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
         jdbc.queryForObject(
             ANZAHL_AKTIVE_ADRESSEN, Map.of("sprechtagId", sprechtag.wert()), Long.class);
     return anzahl == null ? 0L : anzahl;
+  }
+
+  @Override
+  public List<BuchungId> aktiveUnerinnerteBuchungen(SprechtagId sprechtag) {
+    return jdbc.query(
+        AKTIVE_UNERINNERTE_BUCHUNGEN,
+        Map.of("sprechtagId", sprechtag.wert()),
+        (rs, zeile) -> BuchungId.von(rs.getObject("buchung_id", UUID.class)));
   }
 }

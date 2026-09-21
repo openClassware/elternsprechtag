@@ -1,5 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.domain;
 
+import java.time.LocalDate;
+
 /**
  * Der Vorlauf, mit dem Eltern vor ihrem gebuchten Termin erinnert werden — feste Optionen statt
  * einer freien Datumsangabe, damit ein Erinnerungszeitpunkt nach dem Sprechtag gar nicht erst
@@ -26,5 +28,14 @@ public enum ErinnerungsVorlauf {
   /** Wie viele Tage vor dem Termin die Erinnerung läuft; {@code 0} heißt: keine Erinnerung. */
   public int tageVorher() {
     return tageVorher;
+  }
+
+  /**
+   * Ob der Erinnerungs-Scheduler an genau diesem Tag laufen soll — „verfallen statt nachholen"
+   * (Issue #107): Ein verpasster Lauf holt den Versand am Folgetag nicht nach, weil eine Erinnerung
+   * am Sprechtagmorgen niemandem mehr hilft. {@code KEINE} ist nie fällig.
+   */
+  public boolean istFaelligAm(LocalDate sprechtagDatum, LocalDate heute) {
+    return tageVorher > 0 && sprechtagDatum.minusDays(tageVorher).isEqual(heute);
   }
 }

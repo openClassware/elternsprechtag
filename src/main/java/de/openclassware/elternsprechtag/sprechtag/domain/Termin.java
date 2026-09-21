@@ -130,6 +130,30 @@ public final class Termin extends AggregateRoot {
   }
 
   /**
+   * Markiert die Erinnerung einer Buchung als versendet und meldet {@link BuchungErinnert} — für
+   * den Erinnerungs-Scheduler (Issue #107). Gibt zurück, ob sich dadurch etwas geändert hat:
+   * {@code false} bei einer bereits erinnerten oder einer inzwischen stornierten Buchung, ohne
+   * Fehler und ohne Meldung — der Scheduler geht dann einfach zur nächsten über.
+   *
+   * @throws BuchungNichtGefundenException wenn die Buchung nicht zu diesem Termin gehört
+   */
+  public boolean erinnereBuchung(BuchungId buchungId, LocalDateTime jetzt) {
+    Buchung buchung =
+        buchungen.stream()
+            .filter(kandidat -> kandidat.id().equals(buchungId))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new BuchungNichtGefundenException(
+                        "Buchung gehört nicht zu diesem Termin: " + buchungId.wert()));
+    if (!buchung.erinnere(jetzt)) {
+      return false;
+    }
+    melde(new BuchungErinnert(id, buchungId));
+    return true;
+  }
+
+  /**
    * Nimmt den Slot aus dem Angebot — Absicht des Organizers, keine Folge einer Buchung.
    *
    * <p>Nur für einen Slot ohne aktive Buchung. Was mit einer daran hängenden Buchung geschehen muss,
