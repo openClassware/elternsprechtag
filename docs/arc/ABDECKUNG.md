@@ -283,7 +283,7 @@ Sprechtag* und damit eine neue Zwischenentität, für die es sonst keinen Anlass
 über Änderungen an genau dem gebuchten Sprechtag" — der Ausfall einer Lehrkraft ist genau so eine
 Änderung. Die Komplettabsage war der damalige Anlass, nicht die Grenze.
 
-**Erinnerung — muss, und damit ADR 0003.** Terminvergessen ist die Hauptursache leerer Slots;
+**Erinnerung — muss, und damit ADR 0006.** Terminvergessen ist die Hauptursache leerer Slots;
 zwischen Buchung und Sprechtag liegen oft drei Wochen. Die Erinnerung meldet aber **keine Änderung**
 und ist damit der dritte Zweck der Eltern-Adresse nach Absage (ADR 0001) und Bestätigung (ADR 0002)
 — die Zweckerweiterung ist **Voraussetzung** des Features, nicht sein Nachtrag. Sie ist zugleich der
@@ -496,7 +496,7 @@ bräuchte einen eigenen ADR.
 
 **Der tägliche Scheduler ist der größte gemeinsame Baustein dieses Maßstabs.** Er trägt drei
 Aufgaben: die Erinnerung vor dem Sprechtag (Phase 4), den automatischen Abschluss und die
-Anonymisierung. ADR 0003 (aus Phase 4) ist seine Voraussetzung. Die Anonymisierung stellt die
+Anonymisierung. ADR 0006 (aus Phase 4) ist seine Voraussetzung. Die Anonymisierung stellt die
 E-Mail-Zweckbindung nicht in Frage — sie **beendet** sie.
 
 ---
@@ -558,7 +558,7 @@ doppelt geführt.
 
 | Issue | Fall |
 |---|---|
-| [#105](https://github.com/openClassware/elternsprechtag/issues/105) | ADR 0003: Zweckerweiterung der Eltern-E-Mail auf die Erinnerung |
+| [#105](https://github.com/openClassware/elternsprechtag/issues/105) | ADR 0006: Zweckerweiterung der Eltern-E-Mail auf die Erinnerung |
 | [#106](https://github.com/openClassware/elternsprechtag/issues/106) | Erinnerungszeitpunkt als Auswahl am Sprechtag |
 | [#107](https://github.com/openClassware/elternsprechtag/issues/107) | Erinnerung vor dem Sprechtag versenden (täglicher Scheduler) |
 | [#108](https://github.com/openClassware/elternsprechtag/issues/108) | Terminzustand `ENTFAELLT` und Sammelaktion „Lehrkraft fällt aus" |
@@ -591,5 +591,5 @@ doppelt geführt.
 
 Die Reihenfolge und die Triage-Labels dieser Issues sind noch offen; sie tragen zunächst
 `needs-triage`, blockierte zusätzlich `blocked`. Der tiefste Abhängigkeitsstrang läuft über
-ADR 0003 (#105) und den Erinnerungszeitpunkt (#106) zur Erinnerung (#107), von dort in den
+ADR 0006 (#105) und den Erinnerungszeitpunkt (#106) zur Erinnerung (#107), von dort in den
 täglichen Scheduler mit automatischem Abschluss (#124) und Anonymisierung (#126).
