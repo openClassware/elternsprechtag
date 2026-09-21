@@ -386,6 +386,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     erinnerungsVorlauf.setLabel(getTranslation("edit-sprechtag.field.erinnerung.label"));
     erinnerungsVorlauf.setItems(ErinnerungsVorlauf.values());
     erinnerungsVorlauf.setValue(ErinnerungsVorlauf.KEINE);
+    erinnerungsVorlauf.setItemLabelGenerator(vorlauf -> getTranslation(erinnerungLabelKey(vorlauf)));
     erinnerungsVorlauf.setRenderer(
         new TextRenderer<>(vorlauf -> getTranslation(erinnerungLabelKey(vorlauf))));
     fifthRow.add(erinnerungsVorlauf);
@@ -420,6 +421,8 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     slotInMinutes.setLabel(getTranslation("edit-sprechtag.field.slot.label"));
     slotInMinutes.setItems(5, 10, 15, 20, 25, 30);
     slotInMinutes.setValue(15);
+    slotInMinutes.setItemLabelGenerator(
+        minutes -> getTranslation("edit-sprechtag.slot.item", minutes));
     slotInMinutes.setRenderer(
         new TextRenderer<>(minutes -> getTranslation("edit-sprechtag.slot.item", minutes)));
 
