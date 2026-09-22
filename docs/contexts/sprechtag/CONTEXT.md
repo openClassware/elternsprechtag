@@ -125,9 +125,20 @@ ausfällt. Der Baustein bleibt dabei der **Termin**, nicht die Lehrkraft: Der Au
 ein ganzer Tag, und die Lehrkraft ist Stammdatum ohne Tageszustand. „Lehrkraft fällt aus" ist die
 Erzählung des Dialogs über eine Terminauswahl, nicht der Vertrag des Use Case.
 
+**Wen es trifft, erfährt es — einmal.** Ein Ausfall-Vorgang schickt an jede betroffene Adresse
+genau eine Nachricht, die alle ihre entfallenden Termine aufzählt, nicht drei fast gleiche Mails.
+Gebündelt wird nach der **Adresse**, nicht nach einem Familien-Objekt: Eine Eltern-Entity gibt es
+bewusst nicht. Die Nachricht enthält wie die Absage-Mail **keine Aktion**, sondern verweist an die
+Schule, und keinen Ort — für einen Termin, der nicht stattfindet, ist er gegenstandslos.
+
+Als einzige der vier Mails nennt sie auch **kein Kind**. Genau das folgt aus dem Bündeln über die
+Adresse: Zwei Geschwister teilen sie sich, eine Kopfzeile aus der ersten Beleg-Zeile nennte dann
+eines von beiden, während darunter die Termine beider stehen. Wer welchen Termin hatte, steht an
+der Position — Uhrzeit, Lehrkraft, Fach. Eine Zeile, die falsch sein kann, ist schlechter als keine.
+
 Der Kern — Aggregat und Use Case `EntfallenLassen` — ist gebaut
-([#157](https://github.com/openClassware/elternsprechtag/issues/157)). Ohne Benachrichtigung der
-Familien und ohne Dialog noch
+([#157](https://github.com/openClassware/elternsprechtag/issues/157)), der Versand ebenso
+([#158](https://github.com/openClassware/elternsprechtag/issues/158)). Ohne Dialog noch
 ([#156](https://github.com/openClassware/elternsprechtag/issues/156)).
 
 **Materialisierung:** Beim Veröffentlichen erzeugt der Sprechtag für jede teilnehmende Lehrkraft
@@ -263,7 +274,7 @@ Gesprächen — die Liste, die am Sprechtag tatsächlich benutzt wird.
 
 ### Benachrichtigungen
 
-Zwei E-Mails an die bei der Buchung hinterlegte Adresse:
+Vier E-Mails an die bei der Buchung hinterlegte Adresse:
 
 - **Absage-Benachrichtigung** — der Organizer sagt einen veröffentlichten Sprechtag ab, alle
   Eltern mit zugesagten Buchungen werden informiert
@@ -271,8 +282,14 @@ Zwei E-Mails an die bei der Buchung hinterlegte Adresse:
 - **Buchungsbestätigung** — direkt nach erfolgreicher Buchung, als Beleg über Datum, Uhrzeiten
   und Lehrkräfte
   ([ADR 0002](../../adr/0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md)).
+- **Erinnerung** — zum am Sprechtag gewählten Vorlauf vor dem Termin, ein reiner Hinweis auf die
+  unveränderte Buchung ([ADR 0006](../../adr/0006-zweckerweiterung-eltern-email-erinnerung.md)).
+- **Ausfall-Benachrichtigung** — einzelne Termine entfallen, jede betroffene Adresse bekommt eine
+  Nachricht mit ihren entfallenden Terminen. Fällt unter denselben Zweck wie die Absage
+  („Änderungen an genau dem gebuchten Sprechtag", ADR 0001) und braucht deshalb **keine** eigene
+  Zweckerweiterung — sie sagt dieselbe Sache für einen Teil des Tages.
 
-Die E-Mail-Adresse ist **zweckgebunden** auf genau diese beiden Fälle; eine weitere Nutzung wäre
+Die E-Mail-Adresse ist **zweckgebunden** auf genau diese Fälle; eine weitere Nutzung wäre
 eine neue Entscheidung und braucht einen ADR.
 
 ## Begriffe, die wir nicht benutzen
