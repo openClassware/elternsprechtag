@@ -19,6 +19,7 @@ public final class Buchung {
   private final Buchungsziel ziel;
   private final Notiz notiz;
   private Buchungsstatus status;
+  private LocalDateTime erinnerungVersendetAm;
 
   private Buchung(
       BuchungId id,
@@ -26,13 +27,15 @@ public final class Buchung {
       Familie familie,
       Buchungsziel ziel,
       Notiz notiz,
-      Buchungsstatus status) {
+      Buchungsstatus status,
+      LocalDateTime erinnerungVersendetAm) {
     this.id = Objects.requireNonNull(id, "id");
     this.erstelltAm = Objects.requireNonNull(erstelltAm, "erstelltAm");
     this.familie = Objects.requireNonNull(familie, "familie");
     this.ziel = Objects.requireNonNull(ziel, "ziel");
     this.status = Objects.requireNonNull(status, "status");
     this.notiz = notiz;
+    this.erinnerungVersendetAm = erinnerungVersendetAm;
   }
 
   /**
@@ -43,7 +46,7 @@ public final class Buchung {
    */
   static Buchung zugesagt(
       BuchungId id, LocalDateTime erstelltAm, Familie familie, Buchungsziel ziel, Notiz notiz) {
-    return new Buchung(id, erstelltAm, familie, ziel, notiz, Buchungsstatus.ZUGESAGT);
+    return new Buchung(id, erstelltAm, familie, ziel, notiz, Buchungsstatus.ZUGESAGT, null);
   }
 
   /**
@@ -51,6 +54,8 @@ public final class Buchung {
    * keine Invarianten: Was in der Datenbank steht, ist schon geschehen.
    *
    * @param notiz darf {@code null} sein
+   * @param erinnerungVersendetAm darf {@code null} sein — dann ist noch keine Erinnerung
+   *     verschickt worden
    */
   public static Buchung rekonstruiere(
       BuchungId id,
@@ -58,8 +63,9 @@ public final class Buchung {
       Familie familie,
       Buchungsziel ziel,
       Notiz notiz,
-      Buchungsstatus status) {
-    return new Buchung(id, erstelltAm, familie, ziel, notiz, status);
+      Buchungsstatus status,
+      LocalDateTime erinnerungVersendetAm) {
+    return new Buchung(id, erstelltAm, familie, ziel, notiz, status, erinnerungVersendetAm);
   }
 
   /** Nimmt die Zusage zurück; gibt zurück, ob sich dadurch etwas geändert hat. */
@@ -68,6 +74,21 @@ public final class Buchung {
       return false;
     }
     status = Buchungsstatus.STORNIERT;
+    return true;
+  }
+
+  /**
+   * Markiert die Erinnerung als versendet; gibt zurück, ob sich dadurch etwas geändert hat. Nur für
+   * {@link Termin} — er ist die einzige Stelle, die eine Buchung ändert.
+   *
+   * <p>Kein Versand für eine bereits erinnerte oder eine stornierte Buchung (Issue #107,
+   * `ABDECKUNG.md` Z. 250): Beides meldet {@code false}, ohne den Zeitstempel zu berühren.
+   */
+  boolean erinnere(LocalDateTime jetzt) {
+    if (status != Buchungsstatus.ZUGESAGT || erinnerungVersendetAm != null) {
+      return false;
+    }
+    erinnerungVersendetAm = Objects.requireNonNull(jetzt, "jetzt");
     return true;
   }
 
@@ -97,5 +118,9 @@ public final class Buchung {
 
   public Buchungsstatus status() {
     return status;
+  }
+
+  public Optional<LocalDateTime> erinnerungVersendetAm() {
+    return Optional.ofNullable(erinnerungVersendetAm);
   }
 }

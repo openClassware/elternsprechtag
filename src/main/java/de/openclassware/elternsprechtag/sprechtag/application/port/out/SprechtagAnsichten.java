@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.out;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.time.LocalDate;
@@ -24,6 +25,14 @@ public interface SprechtagAnsichten {
 
   /** Die Kopfdaten eines Sprechtags — was Auswertung, Buchungsoptionen und Mailversand brauchen. */
   Optional<Kopf> kopf(SprechtagId id);
+
+  /**
+   * Veröffentlichte Sprechtage mit gesetztem Erinnerungsvorlauf — die Kandidaten eines
+   * Scheduler-Laufs (Issue #107). Ob der Vorlauf an genau diesem Tag fällig ist, entscheidet
+   * {@link ErinnerungsVorlauf#istFaelligAm}, nicht dieses Statement: Die Tageslogik ist
+   * Domänenregel, kein SQL-Filter.
+   */
+  List<ErinnerungsKandidat> mitErinnerung();
 
   /**
    * Eine Zeile der Organizer-Übersicht. {@code ort} darf {@code null} sein.
@@ -54,4 +63,7 @@ public interface SprechtagAnsichten {
       String schulkontakt,
       SprechtagStatus status,
       List<UUID> klasseIds) {}
+
+  /** Ein Kandidat für {@link #mitErinnerung()} — Datum und Vorlauf, mehr braucht der Scheduler nicht. */
+  record ErinnerungsKandidat(SprechtagId id, LocalDate datum, ErinnerungsVorlauf erinnerungsVorlauf) {}
 }

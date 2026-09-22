@@ -191,4 +191,65 @@ class TerminTest {
     assertThatThrownBy(() -> new Zeitraum(JETZT, JETZT))
         .isInstanceOf(IllegalArgumentException.class);
   }
+
+  @Test
+  void erinnereBuchung_markiertDieAktiveBuchungUndMeldetEineAenderung() {
+    Termin termin = freierTermin();
+    BuchungId id = termin.buche(familie("mueller"), ziel(), null, JETZT);
+
+    boolean geaendert = termin.erinnereBuchung(id, JETZT.plusDays(2));
+
+    assertThat(geaendert).isTrue();
+    assertThat(termin.aktiveBuchung().orElseThrow().erinnerungVersendetAm())
+        .contains(JETZT.plusDays(2));
+  }
+
+  @Test
+  void erinnereBuchung_meldetBuchungErinnert_nurBeimErstenMal() {
+    Termin termin = freierTermin();
+    BuchungId id = termin.buche(familie("mueller"), ziel(), null, JETZT);
+    termin.ereignisseAbholen();
+
+    termin.erinnereBuchung(id, JETZT.plusDays(2));
+    assertThat(termin.ereignisseAbholen())
+        .containsExactly(new BuchungErinnert(termin.id(), id));
+
+    termin.erinnereBuchung(id, JETZT.plusDays(3));
+    assertThat(termin.ereignisseAbholen()).isEmpty();
+  }
+
+  @Test
+  void erinnereBuchung_zweitesMal_meldetKeineAenderungMehr() {
+    Termin termin = freierTermin();
+    BuchungId id = termin.buche(familie("mueller"), ziel(), null, JETZT);
+    termin.erinnereBuchung(id, JETZT.plusDays(2));
+
+    boolean geaendert = termin.erinnereBuchung(id, JETZT.plusDays(3));
+
+    assertThat(geaendert).isFalse();
+    // Der erste Zeitstempel bleibt stehen — kein zweiter Versand überschreibt ihn.
+    assertThat(termin.aktiveBuchung().orElseThrow().erinnerungVersendetAm())
+        .contains(JETZT.plusDays(2));
+  }
+
+  @Test
+  void erinnereBuchung_stornierteBuchung_meldetKeineAenderung() {
+    Termin termin = freierTermin();
+    BuchungId id = termin.buche(familie("mueller"), ziel(), null, JETZT);
+    termin.storniere(id);
+
+    boolean geaendert = termin.erinnereBuchung(id, JETZT.plusDays(2));
+
+    assertThat(geaendert).isFalse();
+    assertThat(termin.buchungen()).singleElement()
+        .satisfies(b -> assertThat(b.erinnerungVersendetAm()).isEmpty());
+  }
+
+  @Test
+  void erinnereBuchung_fremdeBuchung_wirdAbgewiesen() {
+    Termin termin = freierTermin();
+
+    assertThatThrownBy(() -> termin.erinnereBuchung(BuchungId.neu(), JETZT))
+        .isInstanceOf(BuchungNichtGefundenException.class);
+  }
 }

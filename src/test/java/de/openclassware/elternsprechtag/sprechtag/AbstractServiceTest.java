@@ -9,6 +9,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Bearbeiten
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Duplizieren;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Erinnern;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht;
@@ -94,6 +95,7 @@ public abstract class AbstractServiceTest {
   @Autowired protected Umbuchen umbuchen;
   @Autowired protected Auswerten auswerten;
   @Autowired protected Buchungsoptionen buchungsoptionen;
+  @Autowired protected Erinnern erinnern;
 
   /** Nur zum Aufräumen und um Aggregate der Reihe nach einzusammeln — nie für Zusicherungen. */
   @Autowired protected JdbcTemplate jdbc;
@@ -201,6 +203,21 @@ public abstract class AbstractServiceTest {
       int slotMinuten,
       SprechtagStatus status,
       UUID... klassen) {
+    return persistSprechtag(
+        titel, ort, datum, beginn, ende, slotMinuten, status, ErinnerungsVorlauf.KEINE, klassen);
+  }
+
+  /** Wie oben, mit Erinnerungsvorlauf — den braucht nur der Erinnerungs-Scheduler. */
+  protected Sprechtag persistSprechtag(
+      String titel,
+      String ort,
+      LocalDate datum,
+      LocalTime beginn,
+      LocalTime ende,
+      int slotMinuten,
+      SprechtagStatus status,
+      ErinnerungsVorlauf erinnerungsVorlauf,
+      UUID... klassen) {
     Sprechtag sprechtag =
         Sprechtag.entwirf(
             titel,
@@ -212,7 +229,7 @@ public abstract class AbstractServiceTest {
             new Zeitfenster(beginn, ende),
             Slotdauer.vonMinuten(slotMinuten),
             Arrays.stream(klassen).map(KlasseId::von).toList(),
-            ErinnerungsVorlauf.KEINE);
+            erinnerungsVorlauf);
     switch (status) {
       case ENTWURF -> {}
       case VEROEFFENTLICHT -> sprechtag.veroeffentliche();

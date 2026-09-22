@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.util.ArrayList;
@@ -36,6 +37,14 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
       select id, titel, start_date, location, schulkontakt, status
         from sprechtage
        where id = :id
+      """;
+
+  private static final String MIT_ERINNERUNG =
+      """
+      select id, start_date, erinnerung_vorlauf
+        from sprechtage
+       where status = 'VEROEFFENTLICHT'
+         and erinnerung_vorlauf <> 'KEINE'
       """;
 
   private static final String KLASSEN_EINES =
@@ -104,5 +113,17 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
                     klasseIds))
         .stream()
         .findFirst();
+  }
+
+  @Override
+  public List<ErinnerungsKandidat> mitErinnerung() {
+    return jdbc.query(
+        MIT_ERINNERUNG,
+        Map.of(),
+        (rs, zeile) ->
+            new ErinnerungsKandidat(
+                SprechtagId.von(rs.getObject("id", UUID.class)),
+                rs.getDate("start_date").toLocalDate(),
+                ErinnerungsVorlauf.valueOf(rs.getString("erinnerung_vorlauf"))));
   }
 }

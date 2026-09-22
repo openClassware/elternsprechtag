@@ -44,4 +44,7 @@ class BuchungZeile {
   private String lehrkraftKuerzel;
   private String klasseName;
   private String fachName;
+
+  /** {@code null} heißt: noch keine Erinnerung versendet (Issue #107). */
+  private LocalDateTime erinnerungVersendetAm;
 }

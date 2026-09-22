@@ -139,6 +139,23 @@ class TerminePersistenceAdapterTest {
   }
 
   @Test
+  void erinnerungVersendetAm_uebersteht_speichernUndLaden() {
+    Termin termin = neuerTermin();
+    BuchungId buchung = termin.buche(familie("mueller"), ziel(), null, BEGINN);
+    termine.speichere(termin);
+
+    Termin geladen = termine.lade(termin.id()).orElseThrow();
+    assertThat(geladen.aktiveBuchung().orElseThrow().erinnerungVersendetAm()).isEmpty();
+
+    geladen.erinnereBuchung(buchung, BEGINN.plusDays(2));
+    termine.speichere(geladen);
+
+    Termin erneutGeladen = termine.lade(termin.id()).orElseThrow();
+    assertThat(erneutGeladen.aktiveBuchung().orElseThrow().erinnerungVersendetAm())
+        .contains(BEGINN.plusDays(2));
+  }
+
+  @Test
   void buchungIds_bleibenUeberWiederholtesSpeichernStabil() {
     Termin termin = neuerTermin();
     BuchungId ersteId = termin.buche(familie("mueller"), ziel(), null, BEGINN);
