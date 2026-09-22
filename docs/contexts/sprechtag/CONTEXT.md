@@ -136,9 +136,25 @@ Adresse: Zwei Geschwister teilen sie sich, eine Kopfzeile aus der ersten Beleg-Z
 eines von beiden, während darunter die Termine beider stehen. Wer welchen Termin hatte, steht an
 der Position — Uhrzeit, Lehrkraft, Fach. Eine Zeile, die falsch sein kann, ist schlechter als keine.
 
+**Der Dialog zeigt den ganzen Tag, die Zahlen davor sind eine Schätzung.** Ausgelöst wird der
+Vorgang am Lehrkraft-Abschnitt der Auswertung: Ein Dialog listet *alle* Slots dieser Lehrkraft —
+freie, gebuchte und bereits entfallene — zum Ankreuzen, mit „alle auswählen" für den häufigen
+Ganztagsfall. Freie Slots gehören in den Dialog und nicht in die Auswertungstabelle: Die ist die
+Buchungsliste des Organizers, und typisch deutlich mehr freie als gebuchte Zeilen beschädigten
+ihren Zweck.
+
+Vor dem Bestätigen steht „N Termine, **etwa** M Familien". Das *etwa* ist wörtlich gemeint: Der
+Dialog liest ein Read-Modell, das veralten darf. Ein Slot, der zwischen Öffnen und Bestätigen
+frisch gebucht wurde, entfällt trotzdem samt seiner neuen Buchung — verbindlich entschieden wird am
+Aggregat. Deshalb meldet die Oberfläche danach das **tatsächliche** Ergebnis aus dem Rückgabewert,
+nicht die Größe der Auswahl. Die Zahlen entstehen dabei **lokal**: Jede Slot-Zeile trägt ihren
+Familien-Schlüssel (die Eltern-Adresse, nie angezeigt) mit, und ein Vaadin-freies Modell rechnet
+daraus — keine Query je Häkchen.
+
 Der Kern — Aggregat und Use Case `EntfallenLassen` — ist gebaut
 ([#157](https://github.com/openClassware/elternsprechtag/issues/157)), der Versand ebenso
-([#158](https://github.com/openClassware/elternsprechtag/issues/158)). Ohne Dialog noch
+([#158](https://github.com/openClassware/elternsprechtag/issues/158)), der Dialog auch
+([#159](https://github.com/openClassware/elternsprechtag/issues/159)). Damit steht die Strecke
 ([#156](https://github.com/openClassware/elternsprechtag/issues/156)).
 
 **Materialisierung:** Beim Veröffentlichen erzeugt der Sprechtag für jede teilnehmende Lehrkraft

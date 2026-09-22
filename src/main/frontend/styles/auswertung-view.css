@@ -80,6 +80,7 @@
 .auswertung__section-head {
     display: flex;
     align-items: baseline;
+    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 14px 20px;
     background: #f9fafb;
@@ -102,6 +103,15 @@
     margin-left: auto;
     font-size: 13px;
     color: #5a6069;
+}
+
+/* Die Sammelaktion gilt dem ganzen Tag dieser Lehrkraft und sitzt deshalb im Abschnittskopf,
+   nicht in einer Zeile. Mindestens 44 px Trefferfläche wie die Zeilen-Aktionen. */
+.auswertung__ausfall-button {
+    flex-shrink: 0;
+    height: 44px;
+    margin: -10px 0;
+    cursor: pointer;
 }
 
 .auswertung__section-empty {
@@ -203,6 +213,15 @@
 
     .auswertung__row--head {
         display: none;
+    }
+
+    /* Der Abschnittskopf stapelt: Name und Zähler oben, die Sammelaktion über die volle Breite
+       darunter — bei 375 px wäre sie neben dem Namen zu schmal. Der negative Rand der
+       Desktop-Regel muss dabei ganz weg: Er zog die Trefferfläche in die Polsterung des Kopfes,
+       was nur neben einer Textzeile richtig ist, nicht über einer eigenen. */
+    .auswertung__ausfall-button {
+        width: 100%;
+        margin: 0;
     }
 
     .auswertung__row {

@@ -1,0 +1,97 @@
+/* Wörtliche Werte, keine `--lumo-*`-Variablen: Das Projekt bindet Lumo nicht ein, eine
+   Deklaration mit unbekannter Variable fiele ersatzlos aus (siehe cancel-sprechtag-dialog.css). */
+.ausfall-dialog__message {
+    margin-bottom: 0.75rem;
+    max-width: 30rem;
+}
+
+.ausfall-dialog__toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.25rem;
+}
+
+/* Ein ganzer Sprechtag kann zwei Dutzend Slots haben — die Liste scrollt, Vorschau und Warnung
+   bleiben stehen. Sonst stünde der Hinweis „kein Rückweg" unterhalb des Sichtbaren. */
+.ausfall-dialog__liste {
+    max-height: 45vh;
+    overflow-y: auto;
+    border-top: 1px solid #e5e7eb;
+}
+
+.ausfall-dialog__zeile {
+    display: grid;
+    grid-template-columns: 32px 56px 88px 1fr;
+    align-items: center;
+    gap: 4px 10px;
+    padding: 4px 2px;
+    border-bottom: 1px solid #f0f1f3;
+}
+
+.ausfall-dialog__zeile:last-child {
+    border-bottom: none;
+}
+
+.ausfall-dialog__check {
+    /* Mindestens 44 px Trefferfläche — dieselbe Untergrenze wie am Telefon (375 × 667 px). */
+    min-height: 44px;
+}
+
+.ausfall-dialog__zeit {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2933;
+}
+
+.ausfall-dialog__zustand {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8a909a;
+}
+
+.ausfall-dialog__zustand--gebucht {
+    color: #1f2933;
+}
+
+.ausfall-dialog__zustand--entfallen {
+    color: #b3261e;
+}
+
+.ausfall-dialog__familie {
+    font-size: 13px;
+    color: #5a6069;
+    min-width: 0;
+    word-wrap: break-word;
+}
+
+.ausfall-dialog__leer {
+    font-style: italic;
+    color: #5a6069;
+}
+
+.ausfall-dialog__vorschau {
+    margin-top: 0.75rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2933;
+}
+
+.ausfall-dialog__warnung {
+    margin-top: 0.25rem;
+    max-width: 30rem;
+    font-size: 13px;
+    color: #b3261e;
+}
+
+/* Telefon: Die Namen rutschen unter Zeit und Zustand, damit bei 375 px nichts seitwärts scrollt. */
+@media (max-width: 640px) {
+    .ausfall-dialog__zeile {
+        grid-template-columns: 32px 56px 1fr;
+    }
+
+    .ausfall-dialog__familie {
+        grid-column: 2 / span 2;
+    }
+}

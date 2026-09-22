@@ -19,9 +19,12 @@ import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.AusfallSlot;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungPresenter.Ausfallausgang;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.LehrkraftAusfallDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.StornoBuchungDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.UmbuchenDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.MainLayout;
@@ -55,6 +58,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private UUID filterLehrkraft;
   private boolean stornoMoeglich;
   private boolean nachtragenMoeglich;
+  private boolean ausfallMoeglich;
 
   AuswertungView(AuswertungPresenter presenter) {
     this.presenter = presenter;
@@ -91,6 +95,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     allePlaene = auswertung.plaene();
     stornoMoeglich = presenter.darfStornieren(auswertung);
     nachtragenMoeglich = presenter.darfNachtragen(auswertung);
+    ausfallMoeglich = presenter.darfEntfallenLassen(auswertung);
     headerNachtragenButton.setVisible(nachtragenMoeglich);
     // Die Filterauswahl ist Per-View-Zustand und soll ein Storno überleben: gemerkt, die Items
     // getauscht, dieselbe Lehrkraft wieder gesetzt. Steht sie nicht mehr im Plan, bleibt „alle".
@@ -196,7 +201,66 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     count.addClassName("auswertung__section-count");
 
     head.add(name, kuerzel, count);
+    if (ausfallMoeglich) {
+      head.add(createAusfallButton(plan));
+    }
     return head;
+  }
+
+  /**
+   * Die Sammelaktion sitzt am Lehrkraft-Abschnitt und nicht an einer Zeile: Sie gilt dem ganzen Tag
+   * dieser Lehrkraft — auch ihren freien Slots, die in der Buchungsliste gar nicht vorkommen.
+   */
+  private Button createAusfallButton(LehrkraftPlan plan) {
+    Button ausfall = new Button(getTranslation("auswertung.ausfall.button"));
+    ausfall.addClassName("auswertung__ausfall-button");
+    ausfall.setIcon(VaadinIcon.BAN.create());
+    ausfall.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
+    ausfall.addClickListener(_ -> openAusfallDialog(plan));
+    return ausfall;
+  }
+
+  private void openAusfallDialog(LehrkraftPlan plan) {
+    // Derselbe Fang wie beim Umbuchen: Die Auswertung ist ein Read-Modell und darf zwischen dem
+    // Rendern und dem Klick überholt sein.
+    List<AusfallSlot> slots;
+    try {
+      slots = presenter.ausfallSlots(sprechtagId, plan.lehrerId());
+    } catch (RuntimeException fehler) {
+      SprechtagMeldungen.zeige(this, SprechtagMeldungen.zu(fehler));
+      reload();
+      return;
+    }
+    new LehrkraftAusfallDialog(plan.anzeigeName(), slots, this::lassEntfallen).open();
+  }
+
+  /**
+   * Gemeldet wird das tatsächliche Ergebnis des Vorgangs, nicht die Größe der Auswahl: Was
+   * inzwischen anderswo entfallen ist, wurde still übersprungen, und eine Buchung, die zwischen
+   * Öffnen und Bestätigen dazukam, zählt mit.
+   */
+  private void lassEntfallen(List<UUID> terminIds) {
+    Ausfallausgang ausgang = presenter.lassEntfallen(terminIds);
+    if (ausgang.geglueckt()) {
+      Notification.show(
+          getTranslation(
+              "auswertung.ausfall.erfolg",
+              zahlLabel("auswertung.ausfall.erfolg.termine", ausgang.ergebnis().entfalleneTermine()),
+              zahlLabel(
+                  "auswertung.ausfall.erfolg.familien", ausgang.ergebnis().betroffeneAdressen())));
+    } else {
+      SprechtagMeldungen.zeige(this, ausgang.weigerung());
+    }
+    reload();
+  }
+
+  /** Singular, Plural und Null als drei Schlüssel — wie {@link #countLabel(int)} eine Ebene höher. */
+  private String zahlLabel(String praefix, int anzahl) {
+    return switch (anzahl) {
+      case 0 -> getTranslation(praefix + ".none");
+      case 1 -> getTranslation(praefix + ".one");
+      default -> getTranslation(praefix + ".other", anzahl);
+    };
   }
 
   private String countLabel(int anzahl) {

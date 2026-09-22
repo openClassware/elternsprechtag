@@ -3,6 +3,9 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.AusfallSlot;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Ausfallergebnis;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Stornieren;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
@@ -22,6 +25,7 @@ class AuswertungPresenter {
   private final Auswerten auswerten;
   private final Stornieren stornieren;
   private final Umbuchen umbuchen;
+  private final EntfallenLassen entfallenLassen;
 
   Optional<SprechtagAuswertung> werteAus(UUID sprechtagId) {
     return auswerten.werteAus(sprechtagId);
@@ -85,6 +89,52 @@ class AuswertungPresenter {
       return Optional.empty();
     } catch (RuntimeException fehler) {
       return Optional.of(SprechtagMeldungen.zu(fehler));
+    }
+  }
+
+  /**
+   * Ob die Ansicht je Lehrkraft die Sammelaktion „Lehrkraft fällt aus" anbietet. Dieselbe Bedingung
+   * wie beim Storno: Nur an einem veröffentlichten Sprechtag gibt es Termine, deren Ausfall jemanden
+   * erreichen müsste — vorher weiß niemand von ihnen, nachher ist der Tag vorbei.
+   *
+   * <p>Verbindlich ist die Bedingung erst im {@code EntfallenLassen}-Use-Case; die Route ist per URL
+   * für jeden Status erreichbar.
+   */
+  boolean darfEntfallenLassen(SprechtagAuswertung auswertung) {
+    return auswertung.status() == SprechtagStatus.VEROEFFENTLICHT;
+  }
+
+  /**
+   * Alle Slots dieser Lehrkraft — die Vorlage des Ausfall-Dialogs. Reicht nur durch: Zustand und
+   * Familien-Schlüssel setzt der Use Case zusammen.
+   */
+  List<AusfallSlot> ausfallSlots(UUID sprechtagId, UUID lehrerId) {
+    return entfallenLassen.slotsDerLehrkraft(sprechtagId, lehrerId);
+  }
+
+  /**
+   * Reicht den Ausfall-Vorgang an den Use Case durch — Spiegelbild zu {@link #storniere(UUID)}, nur
+   * dass hier auch im Erfolgsfall etwas zurückkommt: die <em>tatsächlichen</em> Zahlen, die die
+   * Oberfläche danach meldet. Die Größe der Auswahl ist nicht dasselbe: Ein Termin, der inzwischen
+   * anderswo entfallen ist, wird still übersprungen, und eine Buchung, die zwischen Öffnen und
+   * Bestätigen dazukam, zählt mit.
+   */
+  Ausfallausgang lassEntfallen(List<UUID> terminIds) {
+    try {
+      return new Ausfallausgang(entfallenLassen.lassEntfallen(terminIds), null);
+    } catch (RuntimeException fehler) {
+      return new Ausfallausgang(null, SprechtagMeldungen.zu(fehler));
+    }
+  }
+
+  /**
+   * Wie ein Ausfall-Vorgang ausgegangen ist: entweder das Ergebnis oder die Begründung einer
+   * Weigerung — nie beides, nie keins.
+   */
+  record Ausfallausgang(Ausfallergebnis ergebnis, Meldung weigerung) {
+
+    boolean geglueckt() {
+      return weigerung == null;
     }
   }
 

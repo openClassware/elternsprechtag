@@ -51,6 +51,19 @@ ein Passwort braucht das Skript nicht. Es schreibt eine echte Buchung in die Dat
 also nur gegen eine lokale Umgebung laufen lassen. Bei Überlauf oder ausbleibender
 Bestätigung endet es mit Exit-Code 1.
 
+## Sammelaktion „Lehrkraft fällt aus" belegen
+
+`ausfall.mjs` öffnet die Auswertung eines Sprechtags, fotografiert den Abschnittskopf mit der
+Aktion und danach den Dialog — leer und mit „alle auswählen" — bei 375, 640 und 1024 px. Zu
+jedem Bild misst es die Zeilen, die Vorschauzeile und den seitlichen Überlauf.
+
+```
+node tools/screenshots/ausfall.mjs <sprechtagId>
+```
+
+Der Sprechtag muss **veröffentlicht** sein, sonst bietet die Auswertung die Aktion nicht an.
+Das Skript schreibt nichts: Der Dialog wird geöffnet, aber nie bestätigt.
+
 ## Umgebungsvariablen
 
 | Variable              | Default                 | Zweck                                        |

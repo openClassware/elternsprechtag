@@ -8,7 +8,9 @@ import de.openclassware.elternsprechtag.sprechtag.AbstractServiceTest;
 import de.openclassware.elternsprechtag.sprechtag.ServiceTest;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.AusfallSlot;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Ausfallergebnis;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Slotzustand;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
@@ -29,12 +31,16 @@ import org.springframework.context.annotation.Import;
  * Wirkung — steht ohne Spring und ohne Datenbank in {@code TerminTest} und wird hier bewusst
  * <b>nicht</b> noch einmal geprüft. Hier geht es um den Vorgang darum herum: Vorbedingung,
  * Transaktionsschnitt und Rückgabewert.
+ *
+ * <p>Dazu der Leseweg des Dialogs (#159), aber nur an seiner Naht: dass aus zwei gespeicherten
+ * Wahrheiten drei Zustände werden. Was am SQL hängt — der Left Join über eine Slot-Historie —
+ * steht in {@code TerminAnsichtenJdbcAdapterTest}.
  */
 @ServiceTest
 @Import(SprechtagKontextTestConfig.class)
 class EntfallenLassenTest extends AbstractServiceTest {
 
-  private record Fixture(Sprechtag sprechtag, UUID lehrauftrag) {}
+  private record Fixture(Sprechtag sprechtag, UUID lehrkraft, UUID lehrauftrag) {}
 
   /** Ein veröffentlichter Sprechtag mit vier materialisierten Slots einer Lehrkraft. */
   private Fixture veroeffentlichterSprechtag() {
@@ -51,7 +57,7 @@ class EntfallenLassenTest extends AbstractServiceTest {
             SprechtagStatus.ENTWURF,
             klasse);
     veroeffentlichen.veroeffentliche(sprechtag.id().wert());
-    return new Fixture(sprechtag, lehrauftrag);
+    return new Fixture(sprechtag, lehrkraft, lehrauftrag);
   }
 
   private void buche(UUID lehrauftrag, Termin termin, String elternEmail) {
@@ -65,6 +71,54 @@ class EntfallenLassenTest extends AbstractServiceTest {
 
   private Termin lade(UUID terminId) {
     return termine.lade(TerminId.von(terminId)).orElseThrow();
+  }
+
+  @Test
+  void slotsDerLehrkraft_unterscheidetFreiGebuchtUndEntfallen() {
+    Fixture f = veroeffentlichterSprechtag();
+    List<Termin> slots = alleTermine();
+    buche(f.lehrauftrag(), slots.get(1), "mueller@example.com");
+    entfallenLassen.lassEntfallen(List.of(slots.get(2).id().wert()));
+
+    List<AusfallSlot> vorlage =
+        entfallenLassen.slotsDerLehrkraft(f.sprechtag().id().wert(), f.lehrkraft());
+
+    // Die Datenbank kennt zwei Wahrheiten — Verfügbarkeit und aktive Buchung. Dass daraus drei
+    // Zustände werden, entsteht hier und nicht im SQL.
+    assertThat(vorlage)
+        .extracting(AusfallSlot::zustand)
+        .containsExactly(
+            Slotzustand.FREI, Slotzustand.GEBUCHT, Slotzustand.ENTFALLEN, Slotzustand.FREI);
+  }
+
+  @Test
+  void slotsDerLehrkraft_gebuchterSlot_traegtNamenUndFamilienSchluessel() {
+    Fixture f = veroeffentlichterSprechtag();
+    buche(f.lehrauftrag(), alleTermine().get(0), "mueller@example.com");
+
+    AusfallSlot gebucht =
+        entfallenLassen.slotsDerLehrkraft(f.sprechtag().id().wert(), f.lehrkraft()).get(0);
+
+    assertThat(gebucht.schuelerName()).isEqualTo("Kind mueller@example.com");
+    assertThat(gebucht.elternName()).isEqualTo("Eltern mueller@example.com");
+    // Der Familien-Schlüssel ist die Adresse — der Dialog rechnet damit, zeigt sie aber nicht.
+    assertThat(gebucht.familienSchluessel()).isEqualTo("mueller@example.com");
+  }
+
+  @Test
+  void slotsDerLehrkraft_entfallenerSlot_nenntNiemanden() {
+    Fixture f = veroeffentlichterSprechtag();
+    Termin slot = alleTermine().get(0);
+    buche(f.lehrauftrag(), slot, "mueller@example.com");
+    entfallenLassen.lassEntfallen(List.of(slot.id().wert()));
+
+    AusfallSlot entfallen =
+        entfallenLassen.slotsDerLehrkraft(f.sprechtag().id().wert(), f.lehrkraft()).get(0);
+
+    // Ein entfallener Termin hat keine aktive Buchung mehr — und damit niemanden zu nennen.
+    assertThat(entfallen.zustand()).isEqualTo(Slotzustand.ENTFALLEN);
+    assertThat(entfallen.schuelerName()).isNull();
+    assertThat(entfallen.familienSchluessel()).isNull();
   }
 
   @Test

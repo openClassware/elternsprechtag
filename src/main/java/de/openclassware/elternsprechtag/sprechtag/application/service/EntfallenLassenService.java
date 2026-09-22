@@ -3,10 +3,13 @@ package de.openclassware.elternsprechtag.sprechtag.application.service;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Ereignisse;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.LehrkraftSlotZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
 import de.openclassware.elternsprechtag.sprechtag.application.service.TerminAusfallService.Ausfall;
 import de.openclassware.elternsprechtag.sprechtag.domain.AusfallGemeldet;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
+import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
@@ -47,7 +50,42 @@ class EntfallenLassenService implements EntfallenLassen {
   private final TerminAusfallService ausfaelle;
   private final Termine termine;
   private final Sprechtage sprechtage;
+  private final TerminAnsichten terminAnsichten;
   private final Ereignisse ereignisse;
+
+  /**
+   * Der Leseweg des Dialogs: eine Query, dann die Ableitung des dritten Zustands in Java.
+   *
+   * <p>Die Datenbank kennt nur zwei Wahrheiten — die gespeicherte Verfügbarkeit und die Existenz
+   * einer aktiven Buchung. Dass daraus drei Zustände werden, ist eine Sicht der Anwendung und steht
+   * deshalb hier und nicht im SQL: „entfallen" schlägt „gebucht", weil ein entfallener Slot seine
+   * Buchung ohnehin storniert hat.
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public List<AusfallSlot> slotsDerLehrkraft(UUID sprechtagId, UUID lehrkraftId) {
+    return terminAnsichten
+        .slotsDerLehrkraft(SprechtagId.von(sprechtagId), LehrkraftId.von(lehrkraftId))
+        .stream()
+        .map(EntfallenLassenService::zuAusfallSlot)
+        .toList();
+  }
+
+  private static AusfallSlot zuAusfallSlot(LehrkraftSlotZeile zeile) {
+    if (zeile.entfaellt()) {
+      return new AusfallSlot(zeile.terminId(), zeile.zeit(), Slotzustand.ENTFALLEN, null, null, null);
+    }
+    if (zeile.elternAdresse() == null) {
+      return new AusfallSlot(zeile.terminId(), zeile.zeit(), Slotzustand.FREI, null, null, null);
+    }
+    return new AusfallSlot(
+        zeile.terminId(),
+        zeile.zeit(),
+        Slotzustand.GEBUCHT,
+        zeile.schuelerName(),
+        zeile.elternName(),
+        zeile.elternAdresse());
+  }
 
   @Override
   @Transactional
