@@ -154,20 +154,31 @@ public final class Termin extends AggregateRoot {
   }
 
   /**
-   * Nimmt den Slot aus dem Angebot — Absicht des Organizers, keine Folge einer Buchung.
+   * Nimmt den Slot aus dem Angebot — Absicht des Organizers, keine Folge einer Buchung — und
+   * <b>kaskadiert dabei selbst</b>: Eine daran hängende aktive Buchung wird storniert und meldet
+   * {@link BuchungStorniert}, der Termin meldet {@link TerminEntfallen}.
    *
-   * <p>Nur für einen Slot ohne aktive Buchung. Was mit einer daran hängenden Buchung geschehen muss,
-   * ist beschlossen (`ABDECKUNG.md`: die Buchung wird storniert und die Familie erfährt davon), aber
-   * noch nicht gebaut — es ist die Ausfall-Strecke. Bis dahin verweigert das Aggregat den Übergang,
-   * statt einen Zustand zuzulassen, dessen Folgen niemand ausführt: ein entfallender Termin mit
-   * einer Familie, die weiter auf ihre Zusage vertraut.
+   * <p>„Ein entfallender Termin hat keine aktive Buchung mehr" ist eine Invariante dieses Aggregats
+   * und keine Choreografie eines Use Case — sie steht deshalb hier und nicht in einem Service, wo
+   * ein künftiger Aufrufer sie umgehen könnte. Beides bleibt innerhalb <em>eines</em> Aggregats.
+   *
+   * <p>Es gibt <b>kein Gegenstück</b>. Ein echtes Rückgängig ist ohnehin unmöglich: Eine stornierte
+   * Buchung ist nicht reaktivierbar, und die Familie hat schwarz auf weiß gelesen, dass ihr Termin
+   * ausfällt. Der Slot wieder freizugeben wäre nur die Lüge in der Gegenrichtung (#156).
+   *
+   * @return ob sich dadurch etwas geändert hat — {@code false} für einen bereits entfallenen
+   *     Termin, ohne Fehler und ohne Meldung. Gleiches Muster wie bei {@link #storniere(BuchungId)}
+   *     und {@link #erinnereBuchung(BuchungId, LocalDateTime)}: zweimal absagen sagt nicht zweimal
+   *     ab
    */
-  public void lassEntfallen() {
-    if (aktiveBuchung().isPresent()) {
-      throw new TerminHatBuchungException(
-          "Ein Termin mit aktiver Buchung kann noch nicht entfallen: " + zeitraum.beginn());
+  public boolean lassEntfallen() {
+    if (verfuegbarkeit == Verfuegbarkeit.ENTFAELLT) {
+      return false;
     }
+    aktiveBuchung().ifPresent(buchung -> storniere(buchung.id()));
     verfuegbarkeit = Verfuegbarkeit.ENTFAELLT;
+    melde(new TerminEntfallen(id));
+    return true;
   }
 
   /** Angeboten und frei. Abgeleitet, nicht gespeichert. */

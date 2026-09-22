@@ -83,14 +83,50 @@ class TerminTest {
   }
 
   @Test
-  void lassEntfallen_mitAktiverBuchung_wirdAbgewiesen() {
+  void lassEntfallen_mitAktiverBuchung_storniertSieUndMeldetBeides() {
     Termin termin = freierTermin();
-    termin.buche(familie("mueller"), ziel(), null, JETZT);
+    BuchungId buchung = termin.buche(familie("mueller"), ziel(), null, JETZT);
+    termin.ereignisseAbholen();
 
-    // Solange das Storno samt Benachrichtigung nicht gebaut ist, darf dieser Zustand nicht
-    // entstehen: eine Familie, deren Termin entfällt und die davon nie erfährt.
-    assertThatThrownBy(termin::lassEntfallen).isInstanceOf(TerminHatBuchungException.class);
-    assertThat(termin.verfuegbarkeit()).isEqualTo(Verfuegbarkeit.VERFUEGBAR);
+    boolean geaendert = termin.lassEntfallen();
+
+    // „Ein entfallender Termin hat keine aktive Buchung mehr" — die Kaskade liegt im Aggregat,
+    // nicht bei einem Aufrufer, der sie vergessen könnte.
+    assertThat(geaendert).isTrue();
+    assertThat(termin.verfuegbarkeit()).isEqualTo(Verfuegbarkeit.ENTFAELLT);
+    assertThat(termin.istBuchbar()).isFalse();
+    assertThat(termin.aktiveBuchung()).isEmpty();
+    assertThat(termin.buchungen())
+        .singleElement()
+        .satisfies(b -> assertThat(b.status()).isEqualTo(Buchungsstatus.STORNIERT));
+    assertThat(termin.ereignisseAbholen())
+        .containsExactly(
+            new BuchungStorniert(termin.id(), buchung), new TerminEntfallen(termin.id()));
+  }
+
+  @Test
+  void lassEntfallen_ohneBuchung_meldetNurDenTermin() {
+    Termin termin = freierTermin();
+
+    boolean geaendert = termin.lassEntfallen();
+
+    assertThat(geaendert).isTrue();
+    assertThat(termin.verfuegbarkeit()).isEqualTo(Verfuegbarkeit.ENTFAELLT);
+    assertThat(termin.ereignisseAbholen()).containsExactly(new TerminEntfallen(termin.id()));
+  }
+
+  @Test
+  void lassEntfallen_zweitesMal_aendertNichtsUndMeldetNichts() {
+    Termin termin = freierTermin();
+    termin.lassEntfallen();
+    termin.ereignisseAbholen();
+
+    boolean geaendert = termin.lassEntfallen();
+
+    // Der zweite Klick aus einem alten Browser-Tab ist kein Fehler — und löst keine zweite
+    // Mailwelle aus.
+    assertThat(geaendert).isFalse();
+    assertThat(termin.ereignisseAbholen()).isEmpty();
   }
 
   @Test

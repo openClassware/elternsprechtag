@@ -242,8 +242,8 @@ in Phase 3.
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Einzelne Lehrkraft fällt aus (ganz oder teilweise) | Eltern | Termine entfallen, betroffene Familien werden benachrichtigt | muss | fehlt — einziger Hebel ist `Absagen.sageAb` auf dem **ganzen** Sprechtag; der Termin kennt den Zustand `ENTFAELLT` inzwischen, aber kein Use Case setzt ihn |
-| Ein Termin ist nicht buchbar, weil er entfällt | Eltern | dritter Terminzustand neben „frei" und „belegt" | muss | **im Modell erfüllt** — `Verfuegbarkeit.ENTFAELLT` ist gespeichert, „belegt" abgeleitet (`Termin.istBuchbar()`); es fehlt der Weg, ihn zu setzen (Zeile darüber) |
+| Einzelne Lehrkraft fällt aus (ganz oder teilweise) | Eltern | Termine entfallen, betroffene Familien werden benachrichtigt | muss | **halb** — der Use Case `EntfallenLassen` setzt `ENTFAELLT` je Termin und storniert die Buchung mit (#157); es fehlen die Benachrichtigung der Familien und die Auswahlfläche (#156) |
+| Ein Termin ist nicht buchbar, weil er entfällt | Eltern | dritter Terminzustand neben „frei" und „belegt" | muss | **erfüllt** — `Verfuegbarkeit.ENTFAELLT` ist gespeichert, „belegt" abgeleitet (`Termin.istBuchbar()`), und `EntfallenLassen` ist der Weg, ihn zu setzen. Für die Eltern bleibt er bewusst als „belegt" zusammengefasst |
 | Absage-Nachricht führt zurück in die Buchung | Eltern | Zugangs-Link in der Mail, Familie bucht selbst neu | muss | fehlt; der Link existiert bereits in der Bestätigungsmail |
 | Erinnerung vor dem Sprechtag | Eltern | automatischer Versand zum gewählten Vorlauf | muss | fehlt vollständig — jeder Mailversand hängt heute an einer Organizer-Handlung |
 | Erinnerungszeitpunkt wählbar | Organizer | Auswahl fester Optionen am `Sprechtag`, auch nach dem Veröffentlichen änderbar | muss | kein Feld |

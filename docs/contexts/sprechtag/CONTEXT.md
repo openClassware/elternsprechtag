@@ -111,8 +111,24 @@ Ein Termin ist genau dann **buchbar**, wenn er nicht entfällt und keine aktive 
 seinen Buchungen und wird nicht daneben geführt — sonst gäbe es zwei Wahrheiten, die auseinanderlaufen
 können. Nur **entfällt** ist eine eigene Angabe, denn das ist eine Entscheidung des Organizers.
 
-*Noch nicht gebaut:* **entfällt** ist beschlossen
-([`ABDECKUNG.md`](../../arc/ABDECKUNG.md) Z. 230), aber noch nicht umgesetzt.
+**Entfallen ist endgültig und kaskadiert.** Ein Termin, den der Organizer entfallen lässt, storniert
+eine daran hängende Buchung gleich mit — „ein entfallender Termin hat keine aktive Buchung mehr" ist
+eine Invariante des Aggregats, kein Schritt, den ein Use Case vergessen könnte. Ein **Gegenstück
+gibt es nicht**: Die stornierte Buchung ist nicht reaktivierbar, und die Familie hat schwarz auf
+weiß gelesen, dass ihr Termin ausfällt. Der Slot wieder freizugeben wäre die Lüge in der
+Gegenrichtung.
+
+Sprachgebrauch: **entfallen** für den einzelnen Termin (`Verfuegbarkeit.ENTFAELLT`,
+`Termin.lassEntfallen`), **Ausfall** für den Vorgang darüber — die Sammelaktion, mit der der
+Organizer mehrere Termine auf einmal entfallen lässt, weil eine Lehrkraft ganz oder teilweise
+ausfällt. Der Baustein bleibt dabei der **Termin**, nicht die Lehrkraft: Der Ausfall ist real selten
+ein ganzer Tag, und die Lehrkraft ist Stammdatum ohne Tageszustand. „Lehrkraft fällt aus" ist die
+Erzählung des Dialogs über eine Terminauswahl, nicht der Vertrag des Use Case.
+
+Der Kern — Aggregat und Use Case `EntfallenLassen` — ist gebaut
+([#157](https://github.com/openClassware/elternsprechtag/issues/157)). Ohne Benachrichtigung der
+Familien und ohne Dialog noch
+([#156](https://github.com/openClassware/elternsprechtag/issues/156)).
 
 **Materialisierung:** Beim Veröffentlichen erzeugt der Sprechtag für jede teilnehmende Lehrkraft
 × jeden Zeit-Slot einen freien Termin. Jede Lehrkraft bekommt **einen** Slot-Satz, geteilt über
