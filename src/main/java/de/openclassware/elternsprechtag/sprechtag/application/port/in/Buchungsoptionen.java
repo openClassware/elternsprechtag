@@ -21,8 +21,8 @@ public interface Buchungsoptionen {
    * Antwort, nur womöglich eine ältere.
    *
    * <p>Warum die beiden Gründe, nicht zu buchen, hier nicht unterschieden sind: Die Eltern-Ansicht
-   * kennt den dritten Zustand „entfällt" noch nicht (`ABDECKUNG.md` Z. 230). Er ist gespeichert,
-   * sichtbar wird er mit der Ausfall-Strecke.
+   * fasst „belegt" und „entfällt" bewusst zusammen — die Buchung ist ohnehin doppelt verhindert
+   * (`ABDECKUNG.md`, Phase 4).
    */
   record SlotOption(UUID terminId, LocalTime zeit, boolean buchbar) {}
 

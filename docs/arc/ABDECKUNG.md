@@ -242,9 +242,9 @@ in Phase 3.
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Einzelne Lehrkraft fällt aus (ganz oder teilweise) | Eltern | Termine entfallen, betroffene Familien werden benachrichtigt | muss | fehlt — einziger Hebel ist `Absagen.sageAb` auf dem **ganzen** Sprechtag; der Termin kennt den Zustand `ENTFAELLT` inzwischen, aber kein Use Case setzt ihn |
-| Ein Termin ist nicht buchbar, weil er entfällt | Eltern | dritter Terminzustand neben „frei" und „belegt" | muss | **im Modell erfüllt** — `Verfuegbarkeit.ENTFAELLT` ist gespeichert, „belegt" abgeleitet (`Termin.istBuchbar()`); es fehlt der Weg, ihn zu setzen (Zeile darüber) |
-| Absage-Nachricht führt zurück in die Buchung | Eltern | Zugangs-Link in der Mail, Familie bucht selbst neu | muss | fehlt; der Link existiert bereits in der Bestätigungsmail |
+| Einzelne Lehrkraft fällt aus (ganz oder teilweise) | Eltern | Termine entfallen, betroffene Familien werden benachrichtigt | muss | **erfüllt** — `EntfallenLassen`-Use-Case setzt `Termin.lassEntfallen()` je gewähltem Termin, storniert eine aktive Buchung mit und benachrichtigt betroffene Familien nach Commit; Sammelaktion „Lehrkraft fällt aus" im `AusfallDialog` der Auswertung |
+| Ein Termin ist nicht buchbar, weil er entfällt | Eltern | nicht buchbar | muss | **erfüllt** — `Verfuegbarkeit.ENTFAELLT` ist gespeichert, `Termin.istBuchbar()` liefert `false`; die Eltern-Ansicht fasst „belegt" und „entfällt" bewusst zu `buchbar=false` zusammen (`Buchungsoptionen.SlotOption`), ein dritter, für die Eltern unterscheidbarer Zustand ist nicht geplant |
+| Absage-Nachricht führt zurück in die Buchung | Eltern | Zugangs-Link in der Mail, Familie bucht selbst neu | muss | fehlt; der Link existiert nirgends — die Bestätigungsmail ist ein reiner Beleg ohne Aktion, und es fehlt eine konfigurierte öffentliche Basis-URL, aus der sich eine absolute Adresse bauen ließe (#109) |
 | Erinnerung vor dem Sprechtag | Eltern | automatischer Versand zum gewählten Vorlauf | muss | fehlt vollständig — jeder Mailversand hängt heute an einer Organizer-Handlung |
 | Erinnerungszeitpunkt wählbar | Organizer | Auswahl fester Optionen am `Sprechtag`, auch nach dem Veröffentlichen änderbar | muss | kein Feld |
 | Keine Erinnerung für abgesagten Sprechtag oder stornierte Buchung | Eltern | Versand überspringt sie | muss | fehlt (mit der Erinnerung selbst) |
@@ -357,8 +357,9 @@ Zustand her, an den draußen niemand mehr glaubt. Die Bremse davor existiert ber
 nennt die Zahl der Betroffenen.
 
 **Ortswechsel — darf fehlen.** Der Weg raus liegt in der App: Die Buchungsseite hinter dem
-Zugangs-Link zeigt immer den aktuellen Stand, und der Link steht in der Bestätigungsmail. Dazu der
-reale Weg, den jede Schule geht — ein Zettel an der Aulatür.
+Zugangs-Link zeigt immer den aktuellen Stand — vorausgesetzt, die Familie hat den Link noch, etwa
+aus der ursprünglichen Einladung. Dazu der reale Weg, den jede Schule geht — ein Zettel an der
+Aulatür.
 
 ---
 
