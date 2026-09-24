@@ -494,6 +494,49 @@ class BuchenUndAuswertenTest extends AbstractServiceTest {
   }
 
   @Test
+  void werteAus_entfalleneAnzahl_zaehltNurEntfalleneTermineDieserLehrkraft() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    List<Termin> bergSlots = termineVon(f.berg());
+    entfallenLassen.entfallenLassen(
+        List.of(bergSlots.get(0).id().wert(), bergSlots.get(1).id().wert()));
+
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
+
+    assertThat(planOf(auswertung, f.berg()).entfalleneAnzahl()).isEqualTo(2);
+    assertThat(planOf(auswertung, f.adler()).entfalleneAnzahl()).isZero();
+  }
+
+  @Test
+  void werteAus_ganztagsAusfall_lehrkraftBleibtSichtbarMitHinweisUndOhneBuchung() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    List<Termin> bergSlots = termineVon(f.berg());
+    book(f.bergAuftrag(), bergSlots.get(0), "Eltern A", "Kind A", "n");
+    entfallenLassen.entfallenLassen(bergSlots.stream().map(t -> t.id().wert()).toList());
+
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
+
+    LehrkraftPlan berg = planOf(auswertung, f.berg());
+    assertThat(berg.anzahl()).isZero();
+    assertThat(berg.zeilen()).isEmpty();
+    assertThat(berg.entfalleneAnzahl()).isEqualTo(bergSlots.size());
+  }
+
+  @Test
+  void werteAus_lehrkraftOhneLehrauftrag_bekommtHinweisEbenso() {
+    AuswertungFixture f = publishedSprechtagWithTwoTeachers();
+    Termin gebucht = termineVon(f.berg()).get(0);
+    Termin entfallen = termineVon(f.berg()).get(1);
+    book(f.bergAuftrag(), gebucht, "Eltern Müller", "Lukas Müller", "n");
+    entfallenLassen.entfallenLassen(List.of(entfallen.id().wert()));
+    // Der kommende Import lässt Lehraufträge verschwinden; die Auswertung bleibt trotzdem stabil.
+    jdbc.update("delete from lehrauftrag where id = ?", f.bergAuftrag());
+
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
+
+    assertThat(planOf(auswertung, f.berg()).entfalleneAnzahl()).isEqualTo(1);
+  }
+
+  @Test
   void werteAus_sprechtagWithoutAnyBooking_returnsAllTeachersWithZero() {
     AuswertungFixture f = publishedSprechtagWithTwoTeachers();
 

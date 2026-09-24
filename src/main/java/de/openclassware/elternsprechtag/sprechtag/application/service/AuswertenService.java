@@ -6,6 +6,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsA
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege.LehrauftragDaten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,10 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Baut den Terminplan je beteiligter Lehrkraft.
  *
- * <p>Das Read-Modell entsteht aus <b>zwei</b> Ports und wird hier in Java zusammengefügt: die
- * beteiligten Lehrkräfte aus der Schulorganisation, die Buchungszeilen aus dem Query-Port dieses
- * Kontexts. Kein SQL-Statement joint über die Kontextgrenze — ein Sprechtag hat rund 30 Lehrkräfte,
- * die Kosten sind vernachlässigbar (ADR 0003).
+ * <p>Das Read-Modell entsteht aus <b>drei</b> Ports und wird hier in Java zusammengefügt: die
+ * beteiligten Lehrkräfte aus der Schulorganisation, die Buchungszeilen und die Anzahl entfallener
+ * Termine aus den Query-Ports dieses Kontexts. Kein SQL-Statement joint über die Kontextgrenze —
+ * ein Sprechtag hat rund 30 Lehrkräfte, die Kosten sind vernachlässigbar (ADR 0003).
  *
  * <p>Beteiligt ist eine Lehrkraft, die einen Lehrauftrag in einer teilnehmenden Klasse hat — deshalb
  * erscheint auch, wer keine Buchung hat.
@@ -36,6 +37,7 @@ class AuswertenService implements Auswerten {
   private final SprechtagAnsichten sprechtagAnsichten;
   private final Lehrauftraege lehrauftraege;
   private final BuchungsAnsichten buchungsAnsichten;
+  private final TerminAnsichten terminAnsichten;
 
   @Override
   @Transactional(readOnly = true)
@@ -46,6 +48,11 @@ class AuswertenService implements Auswerten {
       return Optional.empty();
     }
     SprechtagAnsichten.Kopf kopf = gefunden.get();
+
+    Map<UUID, Integer> entfalleneJeLehrkraft = new LinkedHashMap<>();
+    for (TerminAnsichten.EntfalleneZeile zeile : terminAnsichten.entfalleneJeLehrkraft(id)) {
+      entfalleneJeLehrkraft.put(zeile.lehrkraftId(), zeile.anzahl());
+    }
 
     // Die Query liefert bereits chronologisch; die Gruppierung erhält die Reihenfolge, sodass jede
     // Zeilenliste sortiert bleibt.
@@ -78,7 +85,12 @@ class AuswertenService implements Auswerten {
       }
       plaene.add(
           new LehrkraftPlan(
-              lehrerId, lehrkraft.kuerzel(), lehrkraft.anzeigeName(), zeilen.size(), zeilen));
+              lehrerId,
+              lehrkraft.kuerzel(),
+              lehrkraft.anzeigeName(),
+              zeilen.size(),
+              entfalleneJeLehrkraft.getOrDefault(lehrerId, 0),
+              zeilen));
     }
     // Was jetzt noch übrig ist, gehört Lehrkräften ohne aktuellen Lehrauftrag — ein Import hat ihn
     // entfernt, nachdem gebucht wurde. Ihre Buchungen bleiben trotzdem sichtbar: Der Terminplan
@@ -93,6 +105,7 @@ class AuswertenService implements Auswerten {
               eingefroren.lehrkraftKuerzel(),
               eingefroren.lehrkraftName(),
               uebrig.getValue().size(),
+              entfalleneJeLehrkraft.getOrDefault(uebrig.getKey(), 0),
               uebrig.getValue()));
     }
     return Optional.of(

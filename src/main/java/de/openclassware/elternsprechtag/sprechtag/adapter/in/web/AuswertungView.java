@@ -201,10 +201,25 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     count.addClassName("auswertung__section-count");
 
     head.add(name, kuerzel, count);
+    if (plan.entfalleneAnzahl() > 0) {
+      head.add(createEntfallenHinweis(plan.entfalleneAnzahl()));
+    }
     if (ausfallMoeglich) {
       head.add(createAusfallButton(plan));
     }
     return head;
+  }
+
+  private Component createEntfallenHinweis(int entfalleneAnzahl) {
+    Span hinweis = new Span(entfallenLabel(entfalleneAnzahl));
+    hinweis.addClassName("auswertung__section-entfallen");
+    return hinweis;
+  }
+
+  private String entfallenLabel(int entfalleneAnzahl) {
+    return entfalleneAnzahl == 1
+        ? getTranslation("auswertung.section.entfallen.one")
+        : getTranslation("auswertung.section.entfallen.other", entfalleneAnzahl);
   }
 
   private Component createAusfallButton(LehrkraftPlan plan) {
