@@ -31,9 +31,21 @@ public interface Auswerten {
    * Terminplan einer Lehrkraft: Anzeigename/Kürzel, Anzahl aktiver Buchungen und die Zeilen in
    * chronologischer Reihenfolge. Eine Lehrkraft ohne Buchung hat {@code anzahl == 0} und eine leere
    * Zeilenliste.
+   *
+   * <p>{@code entfalleneAnzahl} ist die Anzahl ihrer entfallenen Termine an diesem Sprechtag
+   * (Issue #160). Solange die Lehrkraft einen Lehrauftrag in einer teilnehmenden Klasse hat oder
+   * aus mindestens einer (auch stornierten) Buchung bekannt ist, bleibt sie nach einem
+   * Ganztags-Ausfall hier sichtbar und trägt den Hinweis. Eine Lehrkraft ohne Lehrauftrag und ohne
+   * je eine Buchung gehabt zu haben, hat schlicht keinen Anzeigenamen — den liefert nur die
+   * Schulorganisation oder eine eingefrorene Buchung, nie der Termin allein.
    */
   record LehrkraftPlan(
-      UUID lehrerId, String kuerzel, String anzeigeName, int anzahl, List<BuchungsZeile> zeilen) {}
+      UUID lehrerId,
+      String kuerzel,
+      String anzeigeName,
+      int anzahl,
+      int entfalleneAnzahl,
+      List<BuchungsZeile> zeilen) {}
 
   /**
    * Eine Buchungszeile im Terminplan einer Lehrkraft. Klasse und Fach sind der eingefrorene Stand

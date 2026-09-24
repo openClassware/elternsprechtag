@@ -54,4 +54,15 @@ public interface TerminAnsichten {
       String schuelerName,
       String elternName,
       String familienSchluessel) {}
+
+  /**
+   * Anzahl entfallener Termine je Lehrkraft an diesem Sprechtag — die dritte Quelle der
+   * Auswertung (Issue #160), neben den Lehrkräften aus der Schulorganisation und den
+   * Buchungszeilen aus {@link BuchungsAnsichten}. Nur Lehrkräfte mit mindestens einem entfallenen
+   * Termin sind enthalten.
+   */
+  List<EntfalleneZeile> entfalleneJeLehrkraft(SprechtagId sprechtag);
+
+  /** {@code anzahl} ist stets größer null — wer keinen entfallenen Termin hat, fehlt in der Liste. */
+  record EntfalleneZeile(UUID lehrkraftId, int anzahl) {}
 }

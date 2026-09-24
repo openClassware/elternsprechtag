@@ -51,6 +51,16 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
        order by t.startzeit
       """;
 
+  private static final String ENTFALLENE_JE_LEHRKRAFT =
+      """
+      select t.lehrer_id as lehrer_id,
+             count(*)    as anzahl
+        from termin t
+       where t.sprechtag_id = :sprechtagId
+         and t.verfuegbarkeit = 'ENTFAELLT'
+       group by t.lehrer_id
+      """;
+
   private final NamedParameterJdbcTemplate jdbc;
 
   @Override
@@ -86,5 +96,15 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
               rs.getString("eltern_name"),
               elternEmail);
         });
+  }
+
+  @Override
+  public List<EntfalleneZeile> entfalleneJeLehrkraft(SprechtagId sprechtag) {
+    return jdbc.query(
+        ENTFALLENE_JE_LEHRKRAFT,
+        Map.of("sprechtagId", sprechtag.wert()),
+        (rs, zeile) ->
+            new EntfalleneZeile(
+                rs.getObject("lehrer_id", java.util.UUID.class), rs.getInt("anzahl")));
   }
 }

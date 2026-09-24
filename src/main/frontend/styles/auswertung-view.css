@@ -79,6 +79,7 @@
 
 .auswertung__section-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     gap: 0.5rem;
     padding: 14px 20px;
@@ -102,6 +103,12 @@
     margin-left: auto;
     font-size: 13px;
     color: #5a6069;
+}
+
+.auswertung__section-entfallen {
+    font-size: 13px;
+    font-weight: 600;
+    color: #b45309;
 }
 
 .auswertung__section-empty {

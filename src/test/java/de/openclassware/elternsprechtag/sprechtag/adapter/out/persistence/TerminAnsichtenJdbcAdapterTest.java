@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.AusfallSlotZustand;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.AusfallZeile;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.EntfalleneZeile;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchungsziel;
 import de.openclassware.elternsprechtag.sprechtag.domain.Familie;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrauftragId;
@@ -145,5 +146,39 @@ class TerminAnsichtenJdbcAdapterTest {
     termine.speichere(neuerTermin(BEGINN));
 
     assertThat(ausfallSlots.ausfallSlots(sprechtag, LehrkraftId.neu())).isEmpty();
+  }
+
+  @Test
+  void entfalleneJeLehrkraft_keinTerminEntfaellt_liefertLeereListe() {
+    termine.speichereAlle(List.of(neuerTermin(BEGINN), neuerTermin(BEGINN.plusMinutes(15))));
+
+    assertThat(ausfallSlots.entfalleneJeLehrkraft(sprechtag)).isEmpty();
+  }
+
+  @Test
+  void entfalleneJeLehrkraft_zaehltNurEntfalleneJeLehrkraft() {
+    LehrkraftId zweiteLehrkraft = LehrkraftId.neu();
+    jdbc.update(
+        "insert into lehrer (id, vorname, nachname, kuerzel) values (?, ?, ?, ?)",
+        zweiteLehrkraft.wert(),
+        "Carl",
+        "Adler",
+        "ADL");
+
+    Termin frei = neuerTermin(BEGINN);
+    Termin entfallenBerg1 = neuerTermin(BEGINN.plusMinutes(15));
+    entfallenBerg1.lassEntfallen();
+    Termin entfallenBerg2 = neuerTermin(BEGINN.plusMinutes(30));
+    entfallenBerg2.lassEntfallen();
+    Termin entfallenAdler =
+        Termin.neu(sprechtag, zweiteLehrkraft, new Zeitraum(BEGINN, BEGINN.plusMinutes(15)));
+    entfallenAdler.lassEntfallen();
+    termine.speichereAlle(List.of(frei, entfallenBerg1, entfallenBerg2, entfallenAdler));
+
+    List<EntfalleneZeile> zeilen = ausfallSlots.entfalleneJeLehrkraft(sprechtag);
+
+    assertThat(zeilen)
+        .extracting(EntfalleneZeile::lehrkraftId, EntfalleneZeile::anzahl)
+        .containsExactlyInAnyOrder(tuple(lehrkraft.wert(), 2), tuple(zweiteLehrkraft.wert(), 1));
   }
 }
