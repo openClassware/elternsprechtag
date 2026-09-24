@@ -154,20 +154,30 @@ public final class Termin extends AggregateRoot {
   }
 
   /**
-   * Nimmt den Slot aus dem Angebot — Absicht des Organizers, keine Folge einer Buchung.
+   * Nimmt den Slot aus dem Angebot und storniert eine daran hängende aktive Buchung mit — Absicht
+   * des Organizers, keine Folge einer Buchung (Sammelaktion „Lehrkraft fällt aus", Issue #156).
    *
-   * <p>Nur für einen Slot ohne aktive Buchung. Was mit einer daran hängenden Buchung geschehen muss,
-   * ist beschlossen (`ABDECKUNG.md`: die Buchung wird storniert und die Familie erfährt davon), aber
-   * noch nicht gebaut — es ist die Ausfall-Strecke. Bis dahin verweigert das Aggregat den Übergang,
-   * statt einen Zustand zuzulassen, dessen Folgen niemand ausführt: ein entfallender Termin mit
-   * einer Familie, die weiter auf ihre Zusage vertraut.
+   * <p>„Ein entfallender Termin hat keine aktive Buchung mehr" ist eine Aggregat-Invariante, keine
+   * Use-Case-Choreografie — die Kaskade liegt deshalb hier, in einer Operation, innerhalb dieses
+   * einen Aggregats. Eine aktive Buchung meldet dabei ihr eigenes {@link BuchungStorniert}.
+   *
+   * <p>Ein bereits entfallener Termin liefert {@code false} und meldet nichts — dreimal entfallen
+   * lassen verschickt nicht dreimal etwas. Gleiches Muster wie {@link #storniere} und
+   * {@link #erinnereBuchung}.
+   *
+   * @return ob sich dadurch etwas geändert hat
    */
-  public void lassEntfallen() {
-    if (aktiveBuchung().isPresent()) {
-      throw new TerminHatBuchungException(
-          "Ein Termin mit aktiver Buchung kann noch nicht entfallen: " + zeitraum.beginn());
+  public boolean lassEntfallen() {
+    if (verfuegbarkeit == Verfuegbarkeit.ENTFAELLT) {
+      return false;
+    }
+    Optional<Buchung> aktive = aktiveBuchung();
+    if (aktive.isPresent() && aktive.get().storniere()) {
+      melde(new BuchungStorniert(id, aktive.get().id()));
     }
     verfuegbarkeit = Verfuegbarkeit.ENTFAELLT;
+    melde(new TerminEntfallen(id));
+    return true;
   }
 
   /** Angeboten und frei. Abgeleitet, nicht gespeichert. */

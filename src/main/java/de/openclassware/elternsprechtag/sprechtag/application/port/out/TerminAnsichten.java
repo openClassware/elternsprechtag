@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.out;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import java.time.LocalTime;
 import java.util.List;
@@ -24,4 +25,33 @@ public interface TerminAnsichten {
    * nicht (`ABDECKUNG.md` Z. 230). Gespeichert ist er, sichtbar wird er mit der Ausfall-Strecke.
    */
   record SlotZeile(UUID terminId, UUID lehrkraftId, LocalTime zeit, boolean buchbar) {}
+
+  /**
+   * Alle Slots dieser Lehrkraft an diesem Sprechtag, chronologisch — das Angebot des
+   * Ausfall-Dialogs (Sammelaktion „Lehrkraft fällt aus", Issue #156). Anders als {@link #slots}
+   * unterscheidet diese Scheibe die drei Zustände eines Slots und trägt bei einer aktiven Buchung
+   * deren Beleg-Daten mit.
+   */
+  List<AusfallZeile> ausfallSlots(SprechtagId sprechtag, LehrkraftId lehrkraft);
+
+  /** Zustand eines Slots aus Sicht der Ausfall-Sammelaktion. */
+  enum AusfallSlotZustand {
+    FREI,
+    GEBUCHT,
+    ENTFALLEN
+  }
+
+  /**
+   * Ein Slot im Ausfall-Dialog. {@code schuelerName}, {@code elternName} und
+   * {@code familienSchluessel} sind nur bei {@link AusfallSlotZustand#GEBUCHT} gesetzt, sonst
+   * {@code null}. Der Familien-Schlüssel ist die Eltern-Adresse — sie wird im Dialog nicht
+   * angezeigt, sondern dient nur der lokalen Zählung betroffener Familien.
+   */
+  record AusfallZeile(
+      UUID terminId,
+      LocalTime zeit,
+      AusfallSlotZustand zustand,
+      String schuelerName,
+      String elternName,
+      String familienSchluessel) {}
 }
