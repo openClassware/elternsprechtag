@@ -19,8 +19,11 @@ import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungPresenter.AusfallAusgang;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AusfallDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.StornoBuchungDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.UmbuchenDialog;
@@ -55,6 +58,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private UUID filterLehrkraft;
   private boolean stornoMoeglich;
   private boolean nachtragenMoeglich;
+  private boolean ausfallMoeglich;
 
   AuswertungView(AuswertungPresenter presenter) {
     this.presenter = presenter;
@@ -91,6 +95,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     allePlaene = auswertung.plaene();
     stornoMoeglich = presenter.darfStornieren(auswertung);
     nachtragenMoeglich = presenter.darfNachtragen(auswertung);
+    ausfallMoeglich = presenter.darfAusfallErfassen(auswertung);
     headerNachtragenButton.setVisible(nachtragenMoeglich);
     // Die Filterauswahl ist Per-View-Zustand und soll ein Storno überleben: gemerkt, die Items
     // getauscht, dieselbe Lehrkraft wieder gesetzt. Steht sie nicht mehr im Plan, bleibt „alle".
@@ -196,7 +201,39 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     count.addClassName("auswertung__section-count");
 
     head.add(name, kuerzel, count);
+    if (ausfallMoeglich) {
+      head.add(createAusfallButton(plan));
+    }
     return head;
+  }
+
+  private Component createAusfallButton(LehrkraftPlan plan) {
+    Button button = new Button(getTranslation("auswertung.ausfall.button"));
+    button.addClassName("auswertung__ausfall-button");
+    button.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
+    button.addClickListener(_ -> openAusfallDialog(plan));
+    return button;
+  }
+
+  private void openAusfallDialog(LehrkraftPlan plan) {
+    // Die Auswertung ist ein Read-Modell und darf veraltet sein — dieselbe Begründung wie beim
+    // Umbuchen-Dialog. Der Dialog zeigt, was der Query-Port gerade liefert.
+    List<SlotZeile> slots = presenter.ausfallSlots(sprechtagId, plan.lehrerId());
+    new AusfallDialog(plan.anzeigeName(), slots, this::entfalleLassen).open();
+  }
+
+  private void entfalleLassen(List<UUID> terminIds) {
+    AusfallAusgang ausgang = presenter.entfalleLassen(terminIds);
+    if (ausgang.istWeigerung()) {
+      SprechtagMeldungen.zeige(this, ausgang.weigerung());
+    } else {
+      Notification.show(
+          getTranslation(
+              "auswertung.ausfall.erfolg",
+              ausgang.ergebnis().entfalleneTermine(),
+              ausgang.ergebnis().benachrichtigteAdressen()));
+    }
+    reload();
   }
 
   private String countLabel(int anzahl) {

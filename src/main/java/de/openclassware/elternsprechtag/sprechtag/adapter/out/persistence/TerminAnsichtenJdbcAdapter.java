@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten;
+import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,21 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
        order by t.startzeit
       """;
 
+  private static final String AUSFALL_SLOTS =
+      """
+      select t.id              as termin_id,
+             t.startzeit        as startzeit,
+             t.verfuegbarkeit   as verfuegbarkeit,
+             b.schueler_name    as schueler_name,
+             b.eltern_name      as eltern_name,
+             b.eltern_email     as eltern_email
+        from termin t
+        left join buchungen b on b.termin_id = t.id and b.status = 'ZUGESAGT'
+       where t.sprechtag_id = :sprechtagId
+         and t.lehrer_id = :lehrkraftId
+       order by t.startzeit
+      """;
+
   private final NamedParameterJdbcTemplate jdbc;
 
   @Override
@@ -48,5 +64,27 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
                 rs.getObject("lehrer_id", java.util.UUID.class),
                 rs.getTimestamp("startzeit").toLocalDateTime().toLocalTime(),
                 rs.getBoolean("buchbar")));
+  }
+
+  @Override
+  public List<AusfallZeile> ausfallSlots(SprechtagId sprechtag, LehrkraftId lehrkraft) {
+    return jdbc.query(
+        AUSFALL_SLOTS,
+        Map.of("sprechtagId", sprechtag.wert(), "lehrkraftId", lehrkraft.wert()),
+        (rs, zeile) -> {
+          String verfuegbarkeit = rs.getString("verfuegbarkeit");
+          String elternEmail = rs.getString("eltern_email");
+          AusfallSlotZustand zustand =
+              "ENTFAELLT".equals(verfuegbarkeit)
+                  ? AusfallSlotZustand.ENTFALLEN
+                  : elternEmail != null ? AusfallSlotZustand.GEBUCHT : AusfallSlotZustand.FREI;
+          return new AusfallZeile(
+              rs.getObject("termin_id", java.util.UUID.class),
+              rs.getTimestamp("startzeit").toLocalDateTime().toLocalTime(),
+              zustand,
+              rs.getString("schueler_name"),
+              rs.getString("eltern_name"),
+              elternEmail);
+        });
   }
 }

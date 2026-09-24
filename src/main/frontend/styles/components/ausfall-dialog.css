@@ -1,0 +1,50 @@
+/* Wörtliche Werte, keine `--lumo-*`-Variablen: Das Projekt bindet Lumo nicht ein, eine
+   Deklaration mit unbekannter Variable fiele ersatzlos aus (siehe cancel-sprechtag-dialog.css). */
+.ausfall-dialog__message {
+  margin-bottom: 1rem;
+  max-width: 28rem;
+}
+
+.ausfall-dialog__empty {
+  font-style: italic;
+  color: #5a6069;
+}
+
+.ausfall-dialog__select-all {
+  margin-bottom: 0.5rem;
+}
+
+.ausfall-dialog__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+}
+
+.ausfall-dialog__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ausfall-dialog__zeit {
+  font-weight: 600;
+  min-width: 3.5rem;
+}
+
+.ausfall-dialog__zustand {
+  color: #5a6069;
+}
+
+.ausfall-dialog__summary {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.ausfall-dialog__warning {
+  color: #b3261e;
+  font-size: 0.875rem;
+}

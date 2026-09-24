@@ -3,6 +3,9 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Ergebnis;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Stornieren;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
@@ -22,6 +25,7 @@ class AuswertungPresenter {
   private final Auswerten auswerten;
   private final Stornieren stornieren;
   private final Umbuchen umbuchen;
+  private final EntfallenLassen entfallenLassen;
 
   Optional<SprechtagAuswertung> werteAus(UUID sprechtagId) {
     return auswerten.werteAus(sprechtagId);
@@ -47,6 +51,15 @@ class AuswertungPresenter {
    * jeden Status erreichbar.
    */
   boolean darfNachtragen(SprechtagAuswertung auswertung) {
+    return auswertung.status() == SprechtagStatus.VEROEFFENTLICHT;
+  }
+
+  /**
+   * Ob die Ansicht die Sammelaktion „Lehrkraft fällt aus" anbietet. Dieselbe Bedingung wie beim
+   * Storno und aus demselben Grund: Verbindlich ist sie ohnehin erst im
+   * {@code EntfallenLassen}-Use-Case — die Route ist per URL für jeden Status erreichbar.
+   */
+  boolean darfAusfallErfassen(SprechtagAuswertung auswertung) {
     return auswertung.status() == SprechtagStatus.VEROEFFENTLICHT;
   }
 
@@ -85,6 +98,43 @@ class AuswertungPresenter {
       return Optional.empty();
     } catch (RuntimeException fehler) {
       return Optional.of(SprechtagMeldungen.zu(fehler));
+    }
+  }
+
+  /**
+   * Die Slots dieser Lehrkraft an diesem Sprechtag — das Angebot des Ausfall-Dialogs. Reicht nur
+   * durch: Die Auswahl trifft der Dialog, verbindlich entschieden wird in
+   * {@link #entfalleLassen(List)}.
+   */
+  List<SlotZeile> ausfallSlots(UUID sprechtagId, UUID lehrkraftId) {
+    return entfallenLassen.slots(sprechtagId, lehrkraftId);
+  }
+
+  /**
+   * Reicht die Sammelaktion an den Use Case durch.
+   *
+   * @return das Ergebnis, wenn es geklappt hat — sonst die Begründung der Weigerung
+   */
+  AusfallAusgang entfalleLassen(List<UUID> terminIds) {
+    try {
+      return AusfallAusgang.erfolg(entfallenLassen.entfallenLassen(terminIds));
+    } catch (RuntimeException fehler) {
+      return AusfallAusgang.weigerung(SprechtagMeldungen.zu(fehler));
+    }
+  }
+
+  /** Ergebnis der Sammelaktion — entweder das echte Ergebnis oder die Begründung der Weigerung. */
+  record AusfallAusgang(Ergebnis ergebnis, Meldung weigerung) {
+    static AusfallAusgang erfolg(Ergebnis ergebnis) {
+      return new AusfallAusgang(ergebnis, null);
+    }
+
+    static AusfallAusgang weigerung(Meldung weigerung) {
+      return new AusfallAusgang(null, weigerung);
+    }
+
+    boolean istWeigerung() {
+      return weigerung != null;
     }
   }
 

@@ -9,6 +9,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Bearbeiten
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Duplizieren;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Erinnern;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen;
@@ -96,6 +97,7 @@ public abstract class AbstractServiceTest {
   @Autowired protected Auswerten auswerten;
   @Autowired protected Buchungsoptionen buchungsoptionen;
   @Autowired protected Erinnern erinnern;
+  @Autowired protected EntfallenLassen entfallenLassen;
 
   /** Nur zum Aufräumen und um Aggregate der Reihe nach einzusammeln — nie für Zusicherungen. */
   @Autowired protected JdbcTemplate jdbc;
