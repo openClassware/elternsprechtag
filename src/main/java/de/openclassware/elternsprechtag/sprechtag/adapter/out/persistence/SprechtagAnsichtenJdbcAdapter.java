@@ -4,6 +4,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtag
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +46,14 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
         from sprechtage
        where status = 'VEROEFFENTLICHT'
          and erinnerung_vorlauf <> 'KEINE'
+      """;
+
+  private static final String ABSCHLUSS_KANDIDATEN =
+      """
+      select id
+        from sprechtage
+       where status = 'VEROEFFENTLICHT'
+         and start_date <= :heute
       """;
 
   private static final String KLASSEN_EINES =
@@ -125,5 +134,13 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
                 SprechtagId.von(rs.getObject("id", UUID.class)),
                 rs.getDate("start_date").toLocalDate(),
                 ErinnerungsVorlauf.valueOf(rs.getString("erinnerung_vorlauf"))));
+  }
+
+  @Override
+  public List<SprechtagId> abschlussKandidaten(LocalDate heute) {
+    return jdbc.query(
+        ABSCHLUSS_KANDIDATEN,
+        Map.of("heute", heute),
+        (rs, zeile) -> SprechtagId.von(rs.getObject("id", UUID.class)));
   }
 }

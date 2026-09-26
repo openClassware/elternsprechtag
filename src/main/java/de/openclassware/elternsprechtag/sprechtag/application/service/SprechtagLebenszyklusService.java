@@ -7,16 +7,20 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffent
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.ZurueckAufEntwurf;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Ereignisse;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
 import de.openclassware.elternsprechtag.sprechtag.domain.Ereignis;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagHatBuchungenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
  * die Transaktion zurück, wird nie zugestellt.
  */
 @RequiredArgsConstructor
+@Slf4j
 @Service
 class SprechtagLebenszyklusService
     implements Veroeffentlichen, Absagen, Abschliessen, ZurueckAufEntwurf {
@@ -38,6 +43,8 @@ class SprechtagLebenszyklusService
   private final Materialisieren materialisieren;
   private final Ereignisse ereignisse;
   private final BuchungsAnsichten buchungsAnsichten;
+  private final SprechtagAnsichten sprechtagAnsichten;
+  private final SprechtagAbschlussService abschluss;
 
   @Override
   @Transactional
@@ -74,6 +81,31 @@ class SprechtagLebenszyklusService
     sprechtag.schliesseAb();
     sprechtage.speichere(sprechtag);
     veroeffentliche(sprechtag.ereignisseAbholen());
+  }
+
+  /**
+   * Bewusst ohne umschließende Transaktion: Jeder Sprechtag wird in {@link SprechtagAbschlussService}
+   * für sich abgeschlossen, ein Fehler bei einem lässt die übrigen stehen — der nächste Lauf holt
+   * ihn nach. Der Abschluss meldet kein Ereignis; die Aufbewahrungsfrist (#126) läuft ab
+   * {@link Sprechtag#endzeit()}, nicht ab diesem Statuswechsel.
+   */
+  @Override
+  public int schliesseVorbeiAb() {
+    LocalDateTime jetzt = LocalDateTime.now();
+    int abgeschlossen = 0;
+    for (SprechtagId id : sprechtagAnsichten.abschlussKandidaten(jetzt.toLocalDate())) {
+      try {
+        if (abschluss.schliesseAbWennVorbei(id, jetzt)) {
+          abgeschlossen++;
+        }
+      } catch (OptimisticLockingFailureException konflikt) {
+        // Der Organizer hat im selben Moment von Hand abgeschlossen oder abgesagt — erwartbar.
+        log.warn("Abschluss von Sprechtag {} übersprungen: gleichzeitig geändert", id.wert());
+      } catch (RuntimeException e) {
+        log.error("Abschluss von Sprechtag {} fehlgeschlagen", id.wert(), e);
+      }
+    }
+    return abgeschlossen;
   }
 
   @Override

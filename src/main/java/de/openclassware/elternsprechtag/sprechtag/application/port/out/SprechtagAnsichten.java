@@ -35,6 +35,13 @@ public interface SprechtagAnsichten {
   List<ErinnerungsKandidat> mitErinnerung();
 
   /**
+   * Veröffentlichte Sprechtage, deren Datum nicht nach {@code heute} liegt — die Kandidaten eines
+   * Abschluss-Laufs (Issue #124). Ob die Endzeit wirklich verstrichen ist, entscheidet
+   * {@code Sprechtag#schliesseAbWennVorbei}, nicht dieses Statement.
+   */
+  List<SprechtagId> abschlussKandidaten(LocalDate heute);
+
+  /**
    * Eine Zeile der Organizer-Übersicht. {@code ort} darf {@code null} sein.
    */
   record SprechtagZeile(
