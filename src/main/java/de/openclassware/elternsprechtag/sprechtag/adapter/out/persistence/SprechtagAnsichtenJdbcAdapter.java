@@ -56,6 +56,15 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
          and start_date <= :heute
       """;
 
+  private static final String ANONYMISIERUNGS_KANDIDATEN =
+      """
+      select id
+        from sprechtage
+       where status <> 'ENTWURF'
+         and anonymisiert_am is null
+         and start_date <= :spaetestensAm
+      """;
+
   private static final String KLASSEN_EINES =
       """
       select klasse_id
@@ -141,6 +150,14 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
     return jdbc.query(
         ABSCHLUSS_KANDIDATEN,
         Map.of("heute", heute),
+        (rs, zeile) -> SprechtagId.von(rs.getObject("id", UUID.class)));
+  }
+
+  @Override
+  public List<SprechtagId> anonymisierungsKandidaten(LocalDate spaetestensAm) {
+    return jdbc.query(
+        ANONYMISIERUNGS_KANDIDATEN,
+        Map.of("spaetestensAm", spaetestensAm),
         (rs, zeile) -> SprechtagId.von(rs.getObject("id", UUID.class)));
   }
 }

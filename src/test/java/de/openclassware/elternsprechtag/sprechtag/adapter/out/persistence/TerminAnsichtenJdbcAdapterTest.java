@@ -148,6 +148,20 @@ class TerminAnsichtenJdbcAdapterTest {
     assertThat(ausfallSlots.ausfallSlots(sprechtag, LehrkraftId.neu())).isEmpty();
   }
 
+  /** Issue #126: Auch ein Slot, dessen einzige Buchung storniert ist, trägt Personenbezogenes. */
+  @Test
+  void mitBuchungen_zaehltStornierteMitUndLaesstFreieAus() {
+    Termin frei = neuerTermin(BEGINN);
+    Termin gebucht = neuerTermin(BEGINN.plusMinutes(15));
+    gebucht.buche(familie("mueller"), ziel(), null, BEGINN);
+    Termin storniert = neuerTermin(BEGINN.plusMinutes(30));
+    storniert.storniere(storniert.buche(familie("schmidt"), ziel(), null, BEGINN));
+    termine.speichereAlle(List.of(frei, gebucht, storniert));
+
+    assertThat(ausfallSlots.mitBuchungen(sprechtag))
+        .containsExactlyInAnyOrder(gebucht.id(), storniert.id());
+  }
+
   @Test
   void entfalleneJeLehrkraft_keinTerminEntfaellt_liefertLeereListe() {
     termine.speichereAlle(List.of(neuerTermin(BEGINN), neuerTermin(BEGINN.plusMinutes(15))));

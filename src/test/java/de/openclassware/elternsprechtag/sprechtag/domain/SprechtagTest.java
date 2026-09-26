@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
@@ -514,6 +515,91 @@ class SprechtagTest {
       assertThat(entwurf.status()).isEqualTo(SprechtagStatus.ENTWURF);
       assertThat(abgesagt.status()).isEqualTo(SprechtagStatus.ABGESAGT);
       assertThat(abgeschlossen.status()).isEqualTo(SprechtagStatus.ABGESCHLOSSEN);
+    }
+  }
+
+  /**
+   * `ABDECKUNG.md` Z. 433–434 — die Aufbewahrungsfrist läuft ab der Endzeit, nicht ab dem
+   * Statuswechsel, und gilt auch für den abgesagten Sprechtag (Issue #126).
+   */
+  @Nested
+  class Anonymisierung {
+
+    private final Aufbewahrungsfrist frist = Aufbewahrungsfrist.vonTagen(30);
+
+    /** Endzeit 20.07. 15:00 — die Frist endet am 19.08. um 15:00. */
+    private final LocalDateTime nachAblauf = DATUM.plusDays(30).atTime(15, 1);
+
+    @Test
+    void nachAblaufDerFrist_wirdDerZeitpunktVermerkt() {
+      Sprechtag sprechtag = abgeschlossen();
+
+      boolean vermerkt = sprechtag.vermerkeAnonymisierung(frist, nachAblauf);
+
+      assertThat(vermerkt).isTrue();
+      assertThat(sprechtag.anonymisiertAm()).contains(nachAblauf);
+      assertThat(sprechtag.ereignisseAbholen()).isEmpty();
+    }
+
+    @Test
+    void vorAblaufDerFrist_istNichtsFaellig() {
+      Sprechtag sprechtag = abgeschlossen();
+      LocalDateTime knappDavor = DATUM.plusDays(30).atTime(14, 59);
+
+      assertThat(sprechtag.istAnonymisierungFaellig(frist, knappDavor)).isFalse();
+      assertThat(sprechtag.vermerkeAnonymisierung(frist, knappDavor)).isFalse();
+      assertThat(sprechtag.anonymisiertAm()).isEmpty();
+    }
+
+    /** Die Frist hängt an der Endzeit — auch ein abgesagter Sprechtag hat eine. */
+    @Test
+    void auchDerAbgesagteSprechtagWirdAnonymisiert() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.sageAb();
+
+      assertThat(sprechtag.istAnonymisierungFaellig(frist, nachAblauf)).isTrue();
+    }
+
+    /** Ob der Abschluss-Lauf einmal ausgefallen ist, spielt keine Rolle. */
+    @Test
+    void auchDerNochVeroeffentlichteSprechtagWirdAnonymisiert() {
+      assertThat(veroeffentlicht().istAnonymisierungFaellig(frist, nachAblauf)).isTrue();
+    }
+
+    /**
+     * Ein Entwurf hat nie Buchungen getragen — und bleibt änderbar: Ein Vermerk daran überlebte ein
+     * neues Datum und hielte den Lauf später von echten Buchungen fern.
+     */
+    @Test
+    void einEntwurfIstNieFaellig() {
+      Sprechtag entwurf = entwurf();
+
+      assertThat(entwurf.istAnonymisierungFaellig(frist, nachAblauf)).isFalse();
+      assertThat(entwurf.vermerkeAnonymisierung(frist, nachAblauf)).isFalse();
+    }
+
+    @Test
+    void einmalVermerkt_bleibtDerErsteZeitpunktStehen() {
+      Sprechtag sprechtag = abgeschlossen();
+      sprechtag.vermerkeAnonymisierung(frist, nachAblauf);
+
+      assertThat(sprechtag.istAnonymisierungFaellig(frist, nachAblauf.plusDays(1))).isFalse();
+      assertThat(sprechtag.vermerkeAnonymisierung(frist, nachAblauf.plusDays(1))).isFalse();
+      assertThat(sprechtag.anonymisiertAm()).contains(nachAblauf);
+    }
+
+    @Test
+    void dieKopieBeginntOhneVermerk() {
+      Sprechtag sprechtag = abgeschlossen();
+      sprechtag.vermerkeAnonymisierung(frist, nachAblauf);
+
+      assertThat(sprechtag.dupliziere(AccessToken.neu()).anonymisiertAm()).isEmpty();
+    }
+
+    @Test
+    void eineFristOhneTageGibtEsNicht() {
+      assertThatThrownBy(() -> Aufbewahrungsfrist.vonTagen(0))
+          .isInstanceOf(IllegalArgumentException.class);
     }
   }
 

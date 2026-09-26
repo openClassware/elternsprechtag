@@ -88,6 +88,23 @@ gespeichertes Datum wäre in der Kopie längst verstrichen — „tot geboren".
 Sprachgebrauch: **Anmeldefrist** für den eingetragenen Abstand, **Anmeldeschluss** für das Datum.
 Nicht „Deadline".
 
+### Aufbewahrungsfrist und Anonymisierung
+
+- **Aufbewahrungsfrist** — wie viele Tage nach dem **Ende des Sprechtags** (Datum und Endzeit) die
+  personenbezogenen Angaben seiner Buchungen stehen bleiben (`Aufbewahrungsfrist`). Betriebs-
+  einstellung, keine Eingabe des Organizers; Default 30 Tage. Sie läuft ab der Endzeit, nicht ab
+  dem Abschluss, und gilt deshalb genauso für einen **abgesagten** Sprechtag.
+- **Anonymisierung** — was nach Ablauf der Frist geschieht: Elternname, Schülername und E-Mail
+  jeder Buchung, auch einer stornierten, weichen einem **Pseudonym** des Laufs (`Eltern-<seed>-001`,
+  `Schueler-<seed>-001`, eine eingestellte Ersatz-E-Mail, Default `noreply@openclassware.de`), die
+  Notiz wird geleert. Die Buchung bleibt, ihr Status und die Belegung des Termins auch — übrig
+  bleibt die Auslastung.
+- **`anonymisiertAm`** — der Zeitpunkt am Sprechtag, an dem der Lauf fertig war. Gesetzt erst,
+  nachdem alle Termine anonymisiert sind; fehlt er, ist der Sprechtag noch nicht (vollständig)
+  anonymisiert.
+
+Sprachgebrauch: **anonymisieren**, nicht „löschen" — es verschwindet kein Datensatz.
+
 ### Schulkontakt
 
 Wie die Eltern die Schule erreichen: ein einzelnes, mehrzeiliges **Freitextfeld** am Sprechtag —

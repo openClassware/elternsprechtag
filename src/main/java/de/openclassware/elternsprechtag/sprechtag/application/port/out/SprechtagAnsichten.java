@@ -42,6 +42,14 @@ public interface SprechtagAnsichten {
   List<SprechtagId> abschlussKandidaten(LocalDate heute);
 
   /**
+   * Noch nicht anonymisierte Sprechtage außer Entwürfen, deren Datum nicht nach {@code
+   * spaetestensAm} liegt — die Kandidaten eines Anonymisierungs-Laufs (Issue #126). Ob die
+   * Aufbewahrungsfrist ab der Endzeit wirklich verstrichen ist, entscheidet {@code
+   * Sprechtag#istAnonymisierungFaellig}, nicht dieses Statement.
+   */
+  List<SprechtagId> anonymisierungsKandidaten(LocalDate spaetestensAm);
+
+  /**
    * Eine Zeile der Organizer-Übersicht. {@code ort} darf {@code null} sein.
    */
   record SprechtagZeile(
