@@ -363,6 +363,50 @@ class SprechtagTest {
     }
   }
 
+  /** `ABDECKUNG.md` Z. 431 — der Sprechtag schließt sich nach Ablauf der Endzeit selbst ab. */
+  @Nested
+  class AutomatischerAbschluss {
+
+    @Test
+    void nachDerEndzeit_wirdAbgeschlossen() {
+      Sprechtag sprechtag = veroeffentlicht();
+
+      boolean abgeschlossen = sprechtag.schliesseAbWennVorbei(DATUM.atTime(15, 1));
+
+      assertThat(abgeschlossen).isTrue();
+      assertThat(sprechtag.status()).isEqualTo(SprechtagStatus.ABGESCHLOSSEN);
+    }
+
+    /** Hält den Job vom Rückweg aus #125 fern: Solange die Endzeit aussteht, bleibt er offen. */
+    @Test
+    void amTagSelbstVorDerEndzeit_bleibtVeroeffentlicht() {
+      Sprechtag sprechtag = veroeffentlicht();
+
+      boolean abgeschlossen = sprechtag.schliesseAbWennVorbei(DATUM.atTime(14, 59));
+
+      assertThat(abgeschlossen).isFalse();
+      assertThat(sprechtag.status()).isEqualTo(SprechtagStatus.VEROEFFENTLICHT);
+    }
+
+    /** Das Read-Modell darf veraltet sein — was nicht mehr veröffentlicht ist, übergeht der Job. */
+    @Test
+    void nurVeroeffentlichteWerdenAbgeschlossen_derRestBleibtOhneFehler() {
+      Sprechtag entwurf = entwurf();
+      Sprechtag abgesagt = veroeffentlicht();
+      abgesagt.sageAb();
+      Sprechtag abgeschlossen = veroeffentlicht();
+      abgeschlossen.schliesseAb();
+      var danach = DATUM.plusDays(1).atStartOfDay();
+
+      assertThat(entwurf.schliesseAbWennVorbei(danach)).isFalse();
+      assertThat(abgesagt.schliesseAbWennVorbei(danach)).isFalse();
+      assertThat(abgeschlossen.schliesseAbWennVorbei(danach)).isFalse();
+      assertThat(entwurf.status()).isEqualTo(SprechtagStatus.ENTWURF);
+      assertThat(abgesagt.status()).isEqualTo(SprechtagStatus.ABGESAGT);
+      assertThat(abgeschlossen.status()).isEqualTo(SprechtagStatus.ABGESCHLOSSEN);
+    }
+  }
+
   @Nested
   class Slots {
 

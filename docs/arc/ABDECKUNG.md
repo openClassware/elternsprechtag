@@ -428,7 +428,7 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Sprechtag schließt sich nach Ablauf der Endzeit selbst ab | Organizer | Statuswechsel durch den Tagesjob; der Menüpunkt bleibt zum Vorziehen | muss | nur von Hand (`SprechtagTable` → `Abschliessen.schliesseAb`) |
+| Sprechtag schließt sich nach Ablauf der Endzeit selbst ab | Organizer | Statuswechsel durch den Tagesjob; der Menüpunkt bleibt zum Vorziehen | muss | **erfüllt** — `AbschlussScheduler` ruft nachts `Abschliessen.schliesseVorbeiAb`; `Sprechtag.schliesseAbWennVorbei` schließt nur Veröffentlichte ab, deren Endzeit verstrichen ist, jeder in eigener Transaktion; der Menüpunkt bleibt |
 | Elternlink nach dem Sprechtag | Eltern | Ansicht „Der Sprechtag ist vorbei" plus Schulkontakt, keine Buchungsauskunft | muss | `NICHT_VERFUEGBAR` — dieselbe Seite wie bei unbekanntem Token oder Entwurf |
 | Verfrüht von Hand abgeschlossen | Organizer | Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT`, solange die Endzeit nicht verstrichen ist | muss | kein Rückweg — aus `ABGESCHLOSSEN` kennt das Aggregat keinen Übergang mehr |
 | Aufbewahrungsfrist | — | ab Ende des Sprechtags, Default 30 Tage, als Property verstellbar | muss | fehlt |

@@ -236,6 +236,20 @@ public final class Sprechtag extends AggregateRoot {
   }
 
   /**
+   * Schließt den Sprechtag ab, sobald seine Endzeit verstrichen ist — der Tagesjob (Issue #124).
+   *
+   * @param jetzt der Zeitpunkt, gegen den die Endzeit geprüft wird
+   * @return ob der Sprechtag dabei abgeschlossen wurde
+   */
+  public boolean schliesseAbWennVorbei(LocalDateTime jetzt) {
+    if (status != SprechtagStatus.VEROEFFENTLICHT || !endzeit().isBefore(jetzt)) {
+      return false;
+    }
+    schliesseAb();
+    return true;
+  }
+
+  /**
    * Nimmt die Veröffentlichung zurück — für den zu früh veröffentlichten Sprechtag (`ABDECKUNG.md`
    * Z. 91). Die materialisierten Termine verlieren damit ihre Grundlage; sie zu entfernen ist Sache
    * des Use Case.
@@ -355,6 +369,14 @@ public final class Sprechtag extends AggregateRoot {
 
   public Zeitfenster zeitfenster() {
     return zeitfenster;
+  }
+
+  /**
+   * Der Zeitpunkt, an dem der Sprechtag vorbei ist: sein Datum zur Endzeit des Zeitfensters. Ab
+   * hier schließt ihn der Tagesjob ab (#124), ab hier läuft auch die Aufbewahrungsfrist (#126).
+   */
+  public LocalDateTime endzeit() {
+    return datum.atTime(zeitfenster.ende());
   }
 
   public Slotdauer slotdauer() {
