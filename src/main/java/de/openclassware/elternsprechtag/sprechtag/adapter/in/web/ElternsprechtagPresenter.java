@@ -27,30 +27,30 @@ class ElternsprechtagPresenter {
   /** Welcher Screen der Eltern-View aus dem Zugriff folgt. */
   enum Zugang {
     BUCHBAR,
+    ANMELDUNG_BEENDET,
     ABGESAGT,
     NICHT_VERFUEGBAR
   }
 
-  /** Ergebnis der Zugriffsprüfung; {@code sprechtag} ist nur bei {@link Zugang#BUCHBAR} gesetzt. */
+  /**
+   * Ergebnis der Zugriffsprüfung; {@code sprechtag} ist nur bei {@link Zugang#BUCHBAR} und {@link
+   * Zugang#ANMELDUNG_BEENDET} gesetzt.
+   */
   record ZugangsErgebnis(Zugang zugang, OeffentlicherSprechtag sprechtag) {}
 
-  /**
-   * Entscheidet aus Token + Status, welcher Screen erscheint: veröffentlicht und vor dem
-   * Anmeldeschluss → buchbar, abgesagt → Absage-Hinweis, sonst (unbekannt/Entwurf/abgeschlossen/
-   * Anmeldeschluss vorbei) → nicht verfügbar. Eine eigene Ansicht „Anmeldung beendet" folgt mit
-   * Issue #123.
-   */
+  /** Spiegelt den Zugangsstand des Use Case; ein unbekanntes Token ist nicht verfügbar. */
   ZugangsErgebnis pruefeZugang(String accessToken) {
     Optional<OeffentlicherSprechtag> gefunden = sprechtagszugang.oeffne(accessToken);
     if (gefunden.isEmpty()) {
       return new ZugangsErgebnis(Zugang.NICHT_VERFUEGBAR, null);
     }
     OeffentlicherSprechtag sprechtag = gefunden.get();
-    if (sprechtag.buchbar()) {
-      return new ZugangsErgebnis(Zugang.BUCHBAR, sprechtag);
-    }
-    return new ZugangsErgebnis(
-        sprechtag.abgesagt() ? Zugang.ABGESAGT : Zugang.NICHT_VERFUEGBAR, null);
+    return switch (sprechtag.stand()) {
+      case BUCHBAR -> new ZugangsErgebnis(Zugang.BUCHBAR, sprechtag);
+      case ANMELDUNG_BEENDET -> new ZugangsErgebnis(Zugang.ANMELDUNG_BEENDET, sprechtag);
+      case ABGESAGT -> new ZugangsErgebnis(Zugang.ABGESAGT, null);
+      case NICHT_VERFUEGBAR -> new ZugangsErgebnis(Zugang.NICHT_VERFUEGBAR, null);
+    };
   }
 
   List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId) {

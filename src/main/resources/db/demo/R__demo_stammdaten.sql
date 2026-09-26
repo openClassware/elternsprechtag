@@ -1,4 +1,5 @@
--- Demo-Stammdaten (Fächer, Klassen, Lehrer, Lehraufträge) – KEIN Sprechtag/Termin/Buchung.
+-- Demo-Daten: Stammdaten (Fächer, Klassen, Lehrer, Lehraufträge) und dahinter vier Sprechtage mit
+-- Terminen und Buchungen, je einer in jedem Zustand (Issue #123).
 --
 -- Diese Migration liegt bewusst NICHT unter `db/migration`, sondern in einem eigenen Verzeichnis,
 -- das nur das 'demo'-Profil in `spring.flyway.locations` aufnimmt (application-demo.properties).
@@ -107,4 +108,120 @@ INSERT INTO lehrauftrag (id, lehrer_id, klasse_id, fach_id) VALUES
   ('00000000-0000-0000-0004-000000000028', '00000000-0000-0000-0003-000000000007', '00000000-0000-0000-0002-000000000006', '00000000-0000-0000-0001-000000000003'), -- E  Fischer
   ('00000000-0000-0000-0004-000000000029', '00000000-0000-0000-0003-000000000010', '00000000-0000-0000-0002-000000000006', '00000000-0000-0000-0001-000000000006'), -- Ch  Koch
   ('00000000-0000-0000-0004-000000000030', '00000000-0000-0000-0003-000000000006', '00000000-0000-0000-0002-000000000006', '00000000-0000-0000-0001-000000000005')  -- Bio Hoffmann
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Sprechtage (Issue #123): je einer in jedem Zustand, den ein Besucher sehen will — aktiv,
+-- Anmeldung beendet, abgeschlossen, Entwurf.
+--
+-- Alle Daten stehen relativ zu CURRENT_DATE: Der Demo-Deploy setzt die Datenbank täglich zurück
+-- und seedet neu, so stimmen die Zustände an jedem Tag. Die Zugangs-Tokens sind fest und
+-- sprechend, damit die Elternlinks gezielt aufrufbar sind (/elternsprechtag/demo-aktiv usw.).
+-- ---------------------------------------------------------------------------
+INSERT INTO sprechtage (id, titel, start_date, start_time, end_time, slot_in_minutes, access_token,
+                        location, description, status, schulkontakt, erinnerung_vorlauf,
+                        anmeldefrist_tage) VALUES
+  -- Aktiv: in drei Wochen, Anmeldeschluss in zwei Wochen.
+  ('00000000-0000-0000-0005-000000000001', 'Elternsprechtag Klassen 5 und 6',
+   CURRENT_DATE + 21, '14:00', '18:00', 10, 'demo-aktiv',
+   'Hauptgebäude, Erdgeschoss', 'Bitte bringen Sie das Hausaufgabenheft Ihres Kindes mit.',
+   'VEROEFFENTLICHT', E'Sekretariat, Frau Albers\nTel. 0123 456789\nMo–Fr 7:30–13:00 Uhr',
+   'EIN_TAG', 7),
+  -- Anmeldung beendet: in drei Tagen, bei sieben Tagen Frist also seit vier Tagen geschlossen.
+  ('00000000-0000-0000-0005-000000000002', 'Elternsprechtag Klassen 7 und 8',
+   CURRENT_DATE + 3, '15:00', '18:00', 15, 'demo-anmeldung-beendet',
+   'Neubau, 1. Obergeschoss', NULL,
+   'VEROEFFENTLICHT', E'Sekretariat, Frau Albers\nTel. 0123 456789\nMo–Fr 7:30–13:00 Uhr',
+   'KEINE', 7),
+  -- Abgeschlossen: vor vier Wochen.
+  ('00000000-0000-0000-0005-000000000003', 'Elternsprechtag Herbst',
+   CURRENT_DATE - 28, '14:00', '17:00', 15, 'demo-abgeschlossen',
+   'Hauptgebäude, Erdgeschoss', NULL,
+   'ABGESCHLOSSEN', E'Sekretariat, Frau Albers\nTel. 0123 456789\nMo–Fr 7:30–13:00 Uhr',
+   'KEINE', 1),
+  -- Entwurf: in acht Wochen, noch ohne Termine.
+  ('00000000-0000-0000-0005-000000000004', 'Elternsprechtag Sommer',
+   CURRENT_DATE + 56, '14:00', '18:00', 10, 'demo-entwurf',
+   'Hauptgebäude, Erdgeschoss', NULL,
+   'ENTWURF', E'Sekretariat, Frau Albers\nTel. 0123 456789\nMo–Fr 7:30–13:00 Uhr',
+   'KEINE', 7)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO sprechtage_klassen (sprechtag_id, klasse_id) VALUES
+  ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0002-000000000001'), -- 5a
+  ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0002-000000000002'), -- 5b
+  ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0002-000000000003'), -- 6a
+  ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0002-000000000004'), -- 7a
+  ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0002-000000000005'), -- 7b
+  ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0002-000000000006'), -- 8a
+  ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0002-000000000001'), -- 5a
+  ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0002-000000000004'), -- 7a
+  ('00000000-0000-0000-0005-000000000004', '00000000-0000-0000-0002-000000000001'), -- 5a
+  ('00000000-0000-0000-0005-000000000004', '00000000-0000-0000-0002-000000000002'), -- 5b
+  ('00000000-0000-0000-0005-000000000004', '00000000-0000-0000-0002-000000000003')  -- 6a
+ON CONFLICT (sprechtag_id, klasse_id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Termine: so, wie das Veröffentlichen sie materialisiert (MaterialisierenService) — je Lehrkraft
+-- mit einem Lehrauftrag in einer teilnehmenden Klasse ein Termin pro Slot; ein Rest-Slot, der
+-- nicht mehr voll ins Zeitfenster passt, entfällt. Der Entwurf bekommt keine. Die ids leiten sich
+-- deterministisch aus Sprechtag, Lehrkraft und Slot ab — die Buchungen unten rechnen genauso.
+-- ---------------------------------------------------------------------------
+INSERT INTO termin (id, startzeit, endzeit, verfuegbarkeit, version, lehrer_id, sprechtag_id)
+SELECT md5('demo-termin:' || s.id || ':' || l.lehrer_id || ':' || slot)::uuid,
+       s.start_date + s.start_time + make_interval(mins => slot * s.slot_in_minutes),
+       s.start_date + s.start_time + make_interval(mins => (slot + 1) * s.slot_in_minutes),
+       'VERFUEGBAR', 1, l.lehrer_id, s.id
+  FROM sprechtage s
+  CROSS JOIN LATERAL (
+    SELECT DISTINCT la.lehrer_id
+      FROM lehrauftrag la
+      JOIN sprechtage_klassen sk ON sk.klasse_id = la.klasse_id
+     WHERE sk.sprechtag_id = s.id AND NOT la.stillgelegt) l
+  CROSS JOIN LATERAL generate_series(
+    0, (extract(epoch FROM s.end_time - s.start_time) / 60)::int / s.slot_in_minutes - 1) AS slot
+ WHERE s.id IN ('00000000-0000-0000-0005-000000000001',
+                '00000000-0000-0000-0005-000000000002',
+                '00000000-0000-0000-0005-000000000003')
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Buchungen: ein paar Familien, damit Auswertung und Belegung etwas zeigen. Der Termin ergibt sich
+-- aus Sprechtag, der Lehrkraft des Lehrauftrags und dem Slot (0 = erster Slot des Tages); Lehrkraft,
+-- Klasse und Fach stehen denormalisiert an der Buchung wie beim echten Buchen.
+-- ---------------------------------------------------------------------------
+INSERT INTO buchungen (id, erstellt_am, status, schueler_name, eltern_name, eltern_email, notiz,
+                       lehrauftrag_id, termin_id, lehrkraft_id, lehrkraft_name, lehrkraft_kuerzel,
+                       klasse_name, fach_name)
+SELECT md5('demo-buchung:' || s.id || ':' || la.id || ':' || b.slot)::uuid,
+       b.erstellt_am, 'ZUGESAGT', b.kind, b.eltern, b.email, b.notiz,
+       la.id,
+       md5('demo-termin:' || s.id || ':' || la.lehrer_id || ':' || b.slot)::uuid,
+       l.id, l.vorname || ' ' || l.nachname, l.kuerzel, k.name, f.name
+  FROM (VALUES
+    -- Aktiv
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000001', 0, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 2 + time '19:12'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000002', 2, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 2 + time '19:12'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000006', 3, 'Lena Neumann',  'Sandra Neumann', 'neumann@example.org',  NULL,                             CURRENT_DATE - 1 + time '20:41'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000008', 5, 'Lena Neumann',  'Sandra Neumann', 'neumann@example.org',  'Leseförderung besprechen',       CURRENT_DATE - 1 + time '20:41'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000012', 4, 'Paul Becker',   'Thomas Becker',  'becker@example.org',   NULL,                             CURRENT_DATE - 1 + time '07:55'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000014', 1, 'Paul Becker',   'Thomas Becker',  'becker@example.org',   NULL,                             CURRENT_DATE - 1 + time '07:55'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000001', 1, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   NULL,                             CURRENT_DATE - 1 + time '06:30'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000005', 6, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   'Knieverletzung, Sportbefreiung', CURRENT_DATE - 1 + time '06:30'),
+    -- Anmeldung beendet
+    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000021', 0, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03'),
+    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000024', 2, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03'),
+    -- Abgeschlossen
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000001', 0, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 35 + time '19:40'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000003', 2, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 35 + time '19:40'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000016', 1, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000019', 3, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     'Nachprüfung im Frühjahr?',       CURRENT_DATE - 33 + time '12:15'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000017', 5, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000002', 4, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   NULL,                             CURRENT_DATE - 30 + time '21:02')
+  ) AS b(sprechtag_id, lehrauftrag_id, slot, kind, eltern, email, notiz, erstellt_am)
+  JOIN sprechtage s   ON s.id  = b.sprechtag_id::uuid
+  JOIN lehrauftrag la ON la.id = b.lehrauftrag_id::uuid
+  JOIN lehrer l       ON l.id  = la.lehrer_id
+  JOIN klassen k      ON k.id  = la.klasse_id
+  JOIN faecher f      ON f.id  = la.fach_id
 ON CONFLICT (id) DO NOTHING;

@@ -17,14 +17,22 @@ public interface Sprechtagszugang {
   Optional<OeffentlicherSprechtag> oeffne(String accessToken);
 
   /**
-   * Was die Eltern-Ansicht zeigt.
+   * Was der Elternlink heute zeigt.
    *
-   * <p>Der Status steht hier bewusst nicht als Enum, sondern als die zwei Fragen, die die Ansicht
-   * stellt: {@code buchbar} — darf gebucht werden, also veröffentlicht und der Anmeldeschluss nicht
-   * vorbei; {@code abgesagt} — gibt es den eigenen
-   * Absage-Hinweis. Entwurf und abgeschlossen sind für die Eltern schlicht nicht verfügbar und
-   * brauchen keinen eigenen Namen.
+   * <p>Ein Enum und nicht zwei Fragen als Booleans: Mit „Anmeldung beendet" (Issue #123) und später
+   * „vorbei" (#131) wären das sich ausschließende Flags, deren Reihenfolge der Presenter kennen
+   * müsste. Der Stand liegt bewusst im Port und nicht in der Domäne — er ist die Sicht der Eltern,
+   * kein Status des Sprechtags. Entwurf und abgeschlossen sind für sie schlicht {@link
+   * #NICHT_VERFUEGBAR}.
    */
+  enum Zugangsstand {
+    BUCHBAR,
+    ANMELDUNG_BEENDET,
+    ABGESAGT,
+    NICHT_VERFUEGBAR
+  }
+
+  /** Was die Eltern-Ansicht zeigt. {@code schulkontakt} ist der Weg zur Schule, als Text. */
   record OeffentlicherSprechtag(
       UUID id,
       String titel,
@@ -34,7 +42,7 @@ public interface Sprechtagszugang {
       String ort,
       String beschreibung,
       int slotInMinuten,
-      boolean buchbar,
-      boolean abgesagt,
+      Zugangsstand stand,
+      String schulkontakt,
       List<KlasseOption> klassen) {}
 }

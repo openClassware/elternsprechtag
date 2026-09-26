@@ -335,6 +335,46 @@ class SprechtagTest {
       assertThat(abgeschlossen().nimmtElternbuchungenAn(DATUM.minusDays(10))).isFalse();
     }
 
+    @Test
+    void amAnmeldeschlussSelbst_istDieAnmeldungNochNichtBeendet() {
+      Sprechtag sprechtag = veroeffentlicht();
+
+      assertThat(sprechtag.anmeldungBeendet(sprechtag.anmeldeschluss())).isFalse();
+    }
+
+    @Test
+    void amTagNachDemAnmeldeschluss_istDieAnmeldungBeendet() {
+      Sprechtag sprechtag = veroeffentlicht();
+
+      assertThat(sprechtag.anmeldungBeendet(sprechtag.anmeldeschluss().plusDays(1))).isTrue();
+    }
+
+    /** Auch nach der Endzeit — bis der Tagesjob abschließt, bleibt es „Anmeldung beendet". */
+    @Test
+    void nachDerEndzeit_istDieAnmeldungBeendetBisZumAbschluss() {
+      Sprechtag sprechtag = veroeffentlicht();
+
+      assertThat(sprechtag.anmeldungBeendet(DATUM.plusDays(1))).isTrue();
+    }
+
+    @Test
+    void imEntwurfIstDieAnmeldungNieBeendet() {
+      assertThat(entwurf().anmeldungBeendet(DATUM.plusDays(1))).isFalse();
+    }
+
+    @Test
+    void nachDerAbsageIstDieAnmeldungNieBeendet() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.sageAb();
+
+      assertThat(sprechtag.anmeldungBeendet(DATUM.plusDays(1))).isFalse();
+    }
+
+    @Test
+    void nachDemAbschlussIstDieAnmeldungNieBeendet() {
+      assertThat(abgeschlossen().anmeldungBeendet(DATUM.plusDays(1))).isFalse();
+    }
+
     /** Die Anmeldung verlängern, wenn sich zu wenige eingetragen haben. */
     @Test
     void eineAbgelaufeneFristLaesstSichNachDemVeroeffentlichenWiederOeffnen() {

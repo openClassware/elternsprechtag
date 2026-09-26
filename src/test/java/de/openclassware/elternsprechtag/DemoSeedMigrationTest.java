@@ -2,6 +2,8 @@ package de.openclassware.elternsprechtag;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.Zugangsstand;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,7 +13,8 @@ import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Hält fest, was eine frisch aufgesetzte Demo-Instanz vorfindet: dieselbe Migrationskette wie eine
- * Schulinstanz und dahinter die Demo-Stammdaten aus {@code db/demo/R__demo_stammdaten.sql}.
+ * Schulinstanz und dahinter die Demo-Daten aus {@code db/demo/R__demo_stammdaten.sql} —
+ * Stammdaten und je ein Sprechtag in jedem Zustand.
  *
  * <p>Der Seed hängt an einer einzigen Zeile — {@code spring.flyway.locations} in {@code
  * application-demo.properties}. Fällt {@code db/demo} dort heraus, startet die Anwendung weiterhin
@@ -30,6 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 class DemoSeedMigrationTest {
 
   @Autowired private JdbcTemplate jdbcTemplate;
+  @Autowired private Sprechtagszugang sprechtagszugang;
 
   @Test
   void migrationskettePlusSeedErgibtDieDemoStammdaten() {
@@ -41,12 +45,39 @@ class DemoSeedMigrationTest {
     assertThat(count("lehrauftrag")).isEqualTo(30);
   }
 
+  /**
+   * Issue #123 — je ein Sprechtag in jedem Zustand, den ein Besucher sehen will, ohne erst Daten
+   * anzulegen. Die Daten stehen relativ zu {@code CURRENT_DATE}; der tägliche Reset seedet neu.
+   */
   @Test
-  void seedBringtKeineSprechtageOderBuchungenMit() {
-    // Bewusst nur Stammdaten: Sprechtage legt der Besucher der Demo selbst an.
-    assertThat(count("sprechtage")).isZero();
-    assertThat(count("termin")).isZero();
-    assertThat(count("buchungen")).isZero();
+  void seedBringtJeEinenSprechtagInJedemZustandMit() {
+    assertThat(
+            jdbcTemplate.queryForList(
+                "select status from sprechtage order by status", String.class))
+        .containsExactly("ABGESCHLOSSEN", "ENTWURF", "VEROEFFENTLICHT", "VEROEFFENTLICHT");
+    assertThat(count("termin")).isPositive();
+    assertThat(count("buchungen")).isPositive();
+  }
+
+  @Test
+  void dieElternlinksDerDemoZeigenBuchbarUndAnmeldungBeendet() {
+    assertThat(sprechtagszugang.oeffne("demo-aktiv").orElseThrow().stand())
+        .isEqualTo(Zugangsstand.BUCHBAR);
+    assertThat(sprechtagszugang.oeffne("demo-anmeldung-beendet").orElseThrow().stand())
+        .isEqualTo(Zugangsstand.ANMELDUNG_BEENDET);
+  }
+
+  /** Ein Entwurf hat noch keine Termine — sie entstehen erst beim Veröffentlichen. */
+  @Test
+  void derEntwurfHatKeineTermine() {
+    assertThat(
+            jdbcTemplate.queryForObject(
+                """
+                select count(*) from termin t join sprechtage s on s.id = t.sprechtag_id
+                 where s.status = 'ENTWURF'
+                """,
+                Integer.class))
+        .isZero();
   }
 
   @Test

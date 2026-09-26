@@ -82,6 +82,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     ElternsprechtagPresenter.ZugangsErgebnis ergebnis = presenter.pruefeZugang(accessToken);
     switch (ergebnis.zugang()) {
       case BUCHBAR -> add(createHeader(), createBookingCard(ergebnis.sprechtag()));
+      case ANMELDUNG_BEENDET -> add(createHeader(), createAnmeldungBeendet(ergebnis.sprechtag()));
       case ABGESAGT ->
           add(
               createMessage(
@@ -124,12 +125,44 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return card;
   }
 
+  /**
+   * Nach dem Anmeldeschluss (Issue #123): wann und wo der Sprechtag ist und als Hauptaussage der
+   * Schulkontakt — der Weg, auf dem die Familie jetzt noch zu einem Termin kommt. Keine Klassen, keine
+   * Lehrkräfte, keine Buchungsauskunft: Das Token hängt am Sprechtag, nicht an der Familie.
+   */
+  private Component createAnmeldungBeendet(OeffentlicherSprechtag sprechtag) {
+    Div card = new Div();
+    card.addClassName("elternsprechtag-view__card");
+
+    H1 title = new H1(getTranslation("elternsprechtag.beendet.title"));
+    title.addClassName("elternsprechtag-view__beendet-title");
+
+    Div body = new Div();
+    body.addClassName("elternsprechtag-view__body");
+    body.addClassName("elternsprechtag-view__body--beendet");
+
+    Paragraph hinweis = new Paragraph(getTranslation("elternsprechtag.beendet.hinweis"));
+    hinweis.addClassName("elternsprechtag-view__beendet-text");
+    Paragraph kontaktIntro = new Paragraph(getTranslation("elternsprechtag.beendet.kontakt"));
+    kontaktIntro.addClassName("elternsprechtag-view__beendet-text");
+
+    // Zeilenumbrüche des gepflegten Kontakts bleiben erhalten — per CSS (pre-line), nicht per <br>.
+    Div kontakt = new Div();
+    kontakt.addClassName("elternsprechtag-view__schulkontakt");
+    kontakt.setText(sprechtag.schulkontakt());
+
+    body.add(hinweis, kontaktIntro, kontakt);
+    card.add(title, createKopf(sprechtag, false), body);
+    return card;
+  }
+
   private Component createInfo(OeffentlicherSprechtag sprechtag) {
     return createKopf(sprechtag, true);
   }
 
   /**
-   * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs- und Bestätigungsseite. Nur beim Buchen kommen
+   * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs-, Bestätigungs- und „Anmeldung beendet"-Seite.
+   * Nur beim Buchen kommen
    * die Intro-Zeile und die Beschreibung dazu.
    */
   private Div createKopf(OeffentlicherSprechtag sprechtag, boolean withBookingText) {

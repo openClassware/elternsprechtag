@@ -262,10 +262,12 @@ Eltern melden sich **nicht** an. Jeder Sprechtag trägt ein `accessToken`; darau
 **Zugangs-Link** (`/elternsprechtag/{token}`), den der Organizer verteilt. Wer den Link hat,
 darf buchen — das Token ist der gesamte Zugangsschutz, und das ist eine bewusste Entscheidung.
 
-Der Link führt je nach Sprechtag-Status zu einem von drei Ergebnissen: **buchbar** (nur bei
-`VEROEFFENTLICHT` und bis einschließlich zum **Anmeldeschluss**), **abgesagt** oder **nicht
-verfügbar** (unbekanntes Token, Entwurf, abgeschlossen, Anmeldeschluss vorbei — eine eigene Ansicht
-dafür folgt mit [#123](https://github.com/openClassware/elternsprechtag/issues/123)).
+Der Link führt je nach Sprechtag-Status zu einem von vier Ergebnissen (`Zugangsstand`): **buchbar**
+(nur bei `VEROEFFENTLICHT` und bis einschließlich zum **Anmeldeschluss**), **Anmeldung beendet**
+(`VEROEFFENTLICHT`, Anmeldeschluss vorbei — Datum, Ort und Schulkontakt, bis der Tagesjob den
+Sprechtag abschließt), **abgesagt** oder **nicht verfügbar** (unbekanntes Token, Entwurf,
+abgeschlossen — eine eigene Ansicht nach dem Sprechtag folgt mit
+[#131](https://github.com/openClassware/elternsprechtag/issues/131)).
 
 Sprachgebrauch: **Access-Token** (Feldname) bzw. **Zugangs-Link** (was die Eltern bekommen).
 Nicht „Einladungscode", nicht „Passwort".

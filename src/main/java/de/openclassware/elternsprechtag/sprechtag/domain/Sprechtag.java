@@ -206,6 +206,17 @@ public final class Sprechtag extends AggregateRoot {
   }
 
   /**
+   * Das Gegenstück zu {@link #nimmtElternbuchungenAn} für den veröffentlichten Sprechtag: Der
+   * {@link #anmeldeschluss()} liegt hinter {@code heute} (Issue #123). Eine Endzeit-Prüfung gibt es
+   * hier bewusst nicht — auch nach dem Sprechtag bleibt es dabei, bis {@link
+   * #schliesseAbWennVorbei} ihn abschließt. Entwurf, abgesagt und abgeschlossen sind nie „Anmeldung
+   * beendet".
+   */
+  public boolean anmeldungBeendet(LocalDate heute) {
+    return status == SprechtagStatus.VEROEFFENTLICHT && heute.isAfter(anmeldeschluss());
+  }
+
+  /**
    * Legt die Zeitstruktur fest: Datum, Zeitfenster, Slot-Dauer und teilnehmende Klassen.
    *
    * <p>Nur im Entwurf. Ein <em>unveränderter</em> Aufruf ist überall zulässig — die Oberfläche

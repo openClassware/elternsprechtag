@@ -33,7 +33,7 @@ Die Auswertung: der Terminplan je Lehrkraft — die Liste, die am Sprechtag tats
 
 ## Demo ausprobieren
 
-Eine laufende Instanz mit erfundenen Stammdaten steht unter **<https://demo.openclassware.de>**.
+Eine laufende Instanz mit erfundenen Stammdaten und Beispiel-Sprechtagen steht unter **<https://demo.openclassware.de>**.
 
 | Zugang    | Benutzername | Passwort     |
 |-----------|--------------|--------------|
@@ -44,9 +44,12 @@ Start neu auf und wird zusätzlich täglich zurückgesetzt, sie verschickt keine
 Mailversand ist dort durch eine Log-Attrappe ersetzt), und alle Daten sind erfunden. Es gibt dort
 nichts zu schützen — probieren Sie ruhig alles aus, auch das Absagen eines Sprechtags.
 
-Die Elternansicht erreichen Sie, indem Sie als Organizer einen Sprechtag anlegen, ihn
-veröffentlichen und den Zugangs-Link aufrufen, den die Anwendung Ihnen dabei anbietet. Eltern
-brauchen kein Konto — der Link ist der gesamte Zugang.
+Die Demo bringt je einen Sprechtag in jedem Zustand mit — aktiv, Anmeldung beendet,
+abgeschlossen und Entwurf. Die Elternansicht der ersten beiden erreichen Sie direkt über
+[`/elternsprechtag/demo-aktiv`](https://demo.openclassware.de/elternsprechtag/demo-aktiv) und
+[`/elternsprechtag/demo-anmeldung-beendet`](https://demo.openclassware.de/elternsprechtag/demo-anmeldung-beendet);
+für einen eigenen Sprechtag bietet Ihnen die Anwendung den Zugangs-Link beim Veröffentlichen an.
+Eltern brauchen kein Konto — der Link ist der gesamte Zugang.
 
 **Was Sie dort eingeben, ist für alle sichtbar** und verschwindet spätestens beim nächsten
 nächtlichen Reset. Bitte keine echten Namen oder Adressen.
@@ -97,7 +100,7 @@ erzeugt und prüft nichts. Ob Persistenzmodell und Migration zusammenpassen, zei
 Persistenz-Tests (`@DataJdbcTest` gegen dieselbe migrierte Datenbank).
 
 Das `demo`-Profil nimmt zusätzlich [`db/demo`](src/main/resources/db/demo) in die Suchpfade auf;
-dort liegen die Demo-Stammdaten als wiederholbare Migration. Eine Schulinstanz aktiviert dieses
+dort liegen die Demo-Daten (Stammdaten und Beispiel-Sprechtage) als wiederholbare Migration. Eine Schulinstanz aktiviert dieses
 Profil nicht und bekommt sie deshalb nie.
 
 Jede Schemaänderung ist damit ein neues, versioniertes Skript (`V2__…sql`, `V3__…sql`); bereits
