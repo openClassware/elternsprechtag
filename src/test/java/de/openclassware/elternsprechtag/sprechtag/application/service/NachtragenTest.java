@@ -36,7 +36,8 @@ import org.springframework.context.annotation.Import;
 @Import(SprechtagKontextTestConfig.class)
 class NachtragenTest extends AbstractServiceTest {
 
-  private static final LocalDate DATE = LocalDate.of(2026, 7, 20);
+  // In der Zukunft: Der Elternlink bucht nur bis zum Anmeldeschluss (Issue #122).
+  private static final LocalDate DATE = LocalDate.of(2099, 7, 20);
 
   private record Fixture(Sprechtag sprechtag, UUID klasse, UUID lehrauftrag, UUID lehrkraft) {}
 

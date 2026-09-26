@@ -59,6 +59,35 @@ vom Aufrufer:
 Sprachgebrauch: **Sprechtag** ist der Fachbegriff im Modell, **Elternsprechtag** der Produktname
 (und der Name der Eltern-Ansicht). Im Code und in Issues bitte **Sprechtag**.
 
+### Anmeldefrist und Anmeldeschluss
+
+Zwei Begriffe, einer gespeichert, einer errechnet:
+
+- **Anmeldefrist** — der Abstand „N Tage vor dem Sprechtag", den der Organizer einträgt und der am
+  Sprechtag steht (`Anmeldefrist`). Pflichtfeld, vorbelegt mit **1** (Vortag), erlaubt sind 0
+  (am Tag selbst) bis 28 — die Obergrenze fängt den Tippfehler 40 statt 4 ab.
+- **Anmeldeschluss** — das Datum, das daraus folgt: Datum des Sprechtags minus Anmeldefrist. Er
+  gilt **einschließlich**: „Anmeldung bis 19.03." heißt, Eltern buchen den ganzen 19.03. über.
+  Tagesgranularität, keine Uhrzeit.
+
+Der Anmeldeschluss schließt **nur den Elternlink** — beim Öffnen der Seite ebenso wie beim
+Abschicken. Die Organizer-Strecke (**Nachtragen**) bleibt bis zum Abschluss offen: Wer am Tag
+selbst anruft oder vor der Tür steht, bekommt über den Organizer noch einen Termin. Ob der Link
+bucht, entscheidet genau eine Stelle, `Sprechtag.nimmtElternbuchungenAn(heute)`: veröffentlicht
+**und** der Anmeldeschluss nicht vorbei.
+
+Die Anmeldefrist gehört **nicht** zur Zeitstruktur — sie erzeugt keinen Termin und macht keine
+Buchung ungültig. Deshalb bleibt sie wie der Erinnerungsvorlauf auch nach dem Veröffentlichen
+änderbar, ausdrücklich auch, um eine abgelaufene Frist wieder zu öffnen; erst die Endzustände
+`ABGESAGT` und `ABGESCHLOSSEN` frieren sie ein.
+
+**Relativ statt absolut**, und zwar wegen des Duplizierens: Eine Kopie für das nächste Halbjahr
+übernimmt den Abstand, und der passt zu jedem Datum, auf das der Organizer sie danach setzt. Ein
+gespeichertes Datum wäre in der Kopie längst verstrichen — „tot geboren".
+
+Sprachgebrauch: **Anmeldefrist** für den eingetragenen Abstand, **Anmeldeschluss** für das Datum.
+Nicht „Deadline".
+
 ### Schulkontakt
 
 Wie die Eltern die Schule erreichen: ein einzelnes, mehrzeiliges **Freitextfeld** am Sprechtag —
@@ -234,8 +263,9 @@ Eltern melden sich **nicht** an. Jeder Sprechtag trägt ein `accessToken`; darau
 darf buchen — das Token ist der gesamte Zugangsschutz, und das ist eine bewusste Entscheidung.
 
 Der Link führt je nach Sprechtag-Status zu einem von drei Ergebnissen: **buchbar** (nur bei
-`VEROEFFENTLICHT`), **abgesagt** oder **nicht verfügbar** (unbekanntes Token, Entwurf,
-abgeschlossen).
+`VEROEFFENTLICHT` und bis einschließlich zum **Anmeldeschluss**), **abgesagt** oder **nicht
+verfügbar** (unbekanntes Token, Entwurf, abgeschlossen, Anmeldeschluss vorbei — eine eigene Ansicht
+dafür folgt mit [#123](https://github.com/openClassware/elternsprechtag/issues/123)).
 
 Sprachgebrauch: **Access-Token** (Feldname) bzw. **Zugangs-Link** (was die Eltern bekommen).
 Nicht „Einladungscode", nicht „Passwort".
@@ -273,4 +303,5 @@ eine neue Entscheidung und braucht einen ADR.
 | Buchung absagen                  | Buchung **stornieren** (abgesagt wird der Sprechtag)           |
 | Belegt (als eigener Zustand)     | **vergeben** — ergibt sich aus den Buchungen, wird nicht geführt |
 | Buchung verschieben              | Buchung **umbuchen** — „verschieben" meint den ganzen Sprechtag |
+| Deadline                         | **Anmeldeschluss** (das Datum) bzw. **Anmeldefrist** (die Tage davor) |
 | Organizer-Buchung                | **Nachtragen** — gebucht wird für die Familie, nicht für den Organizer |

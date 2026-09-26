@@ -28,6 +28,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtags
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
+import de.openclassware.elternsprechtag.sprechtag.domain.ElternbuchungGeschlossenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AuswahlZeile;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.LehrkraftKarte;
@@ -47,6 +48,9 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   private final ElternsprechtagPresenter presenter;
 
   private OeffentlicherSprechtag sprechtag;
+
+  /** Das Token aus dem Link — um den Zugang nach einer Abweisung neu zu prüfen. */
+  private String accessToken;
 
   private TextField elternName;
   private TextField schuelerName;
@@ -69,8 +73,13 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   @Override
   public void setParameter(BeforeEvent event, @OptionalParameter String token) {
+    accessToken = token;
+    zeigeZugang();
+  }
+
+  private void zeigeZugang() {
     removeAll();
-    ElternsprechtagPresenter.ZugangsErgebnis ergebnis = presenter.pruefeZugang(token);
+    ElternsprechtagPresenter.ZugangsErgebnis ergebnis = presenter.pruefeZugang(accessToken);
     switch (ergebnis.zugang()) {
       case BUCHBAR -> add(createHeader(), createBookingCard(ergebnis.sprechtag()));
       case ABGESAGT ->
@@ -438,6 +447,13 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
           Notification.show(getTranslation("elternsprechtag.footer.conflict"));
       notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
       handleConflict();
+    } catch (ElternbuchungGeschlossenException geschlossen) {
+      // Zwischen Öffnen und Abschicken ist der Anmeldeschluss verstrichen oder der Sprechtag
+      // abgesagt worden. Die Seite zeigt danach, was der Link jetzt noch hergibt.
+      Notification notification =
+          Notification.show(getTranslation("elternsprechtag.footer.anmeldung-beendet"));
+      notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+      zeigeZugang();
     }
   }
 

@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.in;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -32,6 +33,9 @@ public class SprechtagFormular {
   private String accessToken = UUID.randomUUID().toString();
   private Set<UUID> klasseIds = new LinkedHashSet<>();
   private ErinnerungsVorlauf erinnerungsVorlauf = ErinnerungsVorlauf.KEINE;
+
+  /** Tage vor dem Sprechtag, bis zu denen Eltern buchen können; vorbelegt mit dem Vortag. */
+  private Integer anmeldefristTage = Anmeldefrist.STANDARD.tageVorher();
 
   /**
    * Ob Datum, Zeitfenster, Slot-Dauer und Klassen schon festliegen. Kein Eingabewert, sondern die
@@ -131,6 +135,14 @@ public class SprechtagFormular {
   public void setErinnerungsVorlauf(ErinnerungsVorlauf erinnerungsVorlauf) {
     this.erinnerungsVorlauf =
         erinnerungsVorlauf == null ? ErinnerungsVorlauf.KEINE : erinnerungsVorlauf;
+  }
+
+  public Integer getAnmeldefristTage() {
+    return anmeldefristTage;
+  }
+
+  public void setAnmeldefristTage(Integer anmeldefristTage) {
+    this.anmeldefristTage = anmeldefristTage;
   }
 
   public boolean isZeitstrukturEingefroren() {

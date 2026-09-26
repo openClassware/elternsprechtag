@@ -14,6 +14,7 @@ import com.vaadin.flow.component.formlayout.FormLayout.FormRow;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
@@ -27,11 +28,13 @@ import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
+import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.FormPanel;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,7 +70,8 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private TimePicker startTime;
   private TimePicker endTime;
   private CheckboxGroup<KlasseOption> klassen;
-  private ComboBox<ErinnerungsVorlauf> erinnerungsVorlauf;
+  private IntegerField erinnerungsVorlauf;
+  private IntegerField anmeldefrist;
   private TextField accessToken;
   private TextField shareLink;
   private String origin;
@@ -86,6 +90,8 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         createAccessTokenPanel(),
         createBottomButtonBar());
     configureBinder();
+    // Erst hier: Frist und Datum liegen in verschiedenen Panels, beide müssen schon stehen.
+    zeigeHilfetexte();
   }
 
   private void configureBinder() {
@@ -126,10 +132,28 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         .forField(accessToken)
         .bind(SprechtagFormular::getAccessToken, SprechtagFormular::setAccessToken);
 
+    // Als Zahl angeboten wie die Anmeldefrist, gespeichert bleibt eine der festen Optionen (#106).
     binder
         .forField(erinnerungsVorlauf)
+        .asRequired(getTranslation("edit-sprechtag.validation.erinnerung-required"))
+        .withValidator(
+            ErinnerungsVorlauf::istZulaessig,
+            getTranslation(
+                "edit-sprechtag.validation.erinnerung-bereich", ErinnerungsVorlauf.hoechstensTage()))
+        .withConverter(ErinnerungsVorlauf::vonTagen, ErinnerungsVorlauf::tageVorher)
         .bind(
             SprechtagFormular::getErinnerungsVorlauf, SprechtagFormular::setErinnerungsVorlauf);
+
+    // Pflichtfeld mit Bereich: Ein Tippfehler (40 statt 4) soll hier auffallen und nicht erst an der
+    // Weigerung der Domäne.
+    binder
+        .forField(anmeldefrist)
+        .asRequired(getTranslation("edit-sprechtag.validation.anmeldefrist-required"))
+        .withValidator(
+            Anmeldefrist::istZulaessig,
+            getTranslation(
+                "edit-sprechtag.validation.anmeldefrist-bereich", Anmeldefrist.HOECHSTENS_TAGE))
+        .bind(SprechtagFormular::getAnmeldefristTage, SprechtagFormular::setAnmeldefristTage);
 
     // Die Oberfläche wählt Klassen als Optionen, das Formular trägt ihre Ids: Die Namen gehören der
     // Schulorganisation und haben im Sprechtag nichts zu suchen.
@@ -249,9 +273,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     if (!binder.writeBeanIfValid(form)) {
       return;
     }
-    if (presenter.legeAnUndVeroeffentliche(form).ohneTermine()) {
-      SprechtagMeldungen.zeige(this, SprechtagMeldungen.ohneTermine());
-    }
+    presenter
+        .legeAnUndVeroeffentliche(form)
+        .forEach(meldung -> SprechtagMeldungen.zeige(this, meldung));
     navigateToOrganizerView();
   }
 
@@ -381,29 +405,57 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     schulkontakt.setMaxLength(1000);
     fourthRow.add(schulkontakt, 2);
 
-    FormRow fifthRow = new FormRow();
-    erinnerungsVorlauf = new ComboBox<>();
-    erinnerungsVorlauf.setLabel(getTranslation("edit-sprechtag.field.erinnerung.label"));
-    erinnerungsVorlauf.setItems(ErinnerungsVorlauf.values());
-    erinnerungsVorlauf.setValue(ErinnerungsVorlauf.KEINE);
-    erinnerungsVorlauf.setItemLabelGenerator(vorlauf -> getTranslation(erinnerungLabelKey(vorlauf)));
-    erinnerungsVorlauf.setRenderer(
-        new TextRenderer<>(vorlauf -> getTranslation(erinnerungLabelKey(vorlauf))));
-    fifthRow.add(erinnerungsVorlauf);
-
     FormLayout formLayout = panel.getFormLayout();
-    formLayout.add(firstRow, secondRow, thirdRow, fourthRow, fifthRow);
+    formLayout.add(firstRow, secondRow, thirdRow, fourthRow);
 
     return panel;
   }
 
-  private String erinnerungLabelKey(ErinnerungsVorlauf vorlauf) {
-    return switch (vorlauf) {
-      case KEINE -> "edit-sprechtag.erinnerung.item.keine";
-      case EIN_TAG -> "edit-sprechtag.erinnerung.item.ein-tag";
-      case ZWEI_TAGE -> "edit-sprechtag.erinnerung.item.zwei-tage";
-      case DREI_TAGE -> "edit-sprechtag.erinnerung.item.drei-tage";
-    };
+  /**
+   * Erinnerung und Anmeldefrist — beide in Tagen vor dem Sprechtag, deshalb im Zeiten-Panel nach
+   * dem Datum, aus dem sich ihre Hilfetexte errechnen.
+   */
+  private FormRow createFristenRow() {
+    erinnerungsVorlauf = new IntegerField();
+    erinnerungsVorlauf.setLabel(getTranslation("edit-sprechtag.field.erinnerung.label"));
+    erinnerungsVorlauf.setMin(0);
+    erinnerungsVorlauf.setMax(ErinnerungsVorlauf.hoechstensTage());
+    erinnerungsVorlauf.setStepButtonsVisible(true);
+    erinnerungsVorlauf.setRequiredIndicatorVisible(true);
+    erinnerungsVorlauf.setValue(ErinnerungsVorlauf.KEINE.tageVorher());
+    erinnerungsVorlauf.addValueChangeListener(_ -> zeigeHilfetexte());
+    anmeldefrist = new IntegerField();
+    anmeldefrist.setLabel(getTranslation("edit-sprechtag.field.anmeldefrist.label"));
+    anmeldefrist.setMin(0);
+    anmeldefrist.setMax(Anmeldefrist.HOECHSTENS_TAGE);
+    anmeldefrist.setStepButtonsVisible(true);
+    anmeldefrist.setRequiredIndicatorVisible(true);
+    anmeldefrist.setValue(Anmeldefrist.STANDARD.tageVorher());
+    anmeldefrist.addValueChangeListener(_ -> zeigeHilfetexte());
+    FormRow row = new FormRow();
+    row.add(erinnerungsVorlauf, anmeldefrist);
+    return row;
+  }
+
+  /**
+   * Schreibt unter Erinnerung und Anmeldefrist den errechneten Tag — sobald ein Datum gewählt ist,
+   * und bei jeder Änderung von Datum, Erinnerung oder Frist neu. Die Rechnung liefert der Presenter.
+   */
+  private void zeigeHilfetexte() {
+    if (erinnerungsVorlauf == null || anmeldefrist == null || datePicker == null) {
+      return; // noch im Aufbau
+    }
+    LocalDate datum = datePicker.getValue();
+    erinnerungsVorlauf.setHelperText(
+        uebersetze(presenter.erinnerungHilfetext(datum, erinnerungsVorlauf.getValue())));
+    anmeldefrist.setHelperText(
+        uebersetze(presenter.anmeldefristHilfetext(datum, anmeldefrist.getValue())));
+  }
+
+  private String uebersetze(Optional<EditSprechtagPresenter.Hilfetext> hilfetext) {
+    return hilfetext
+        .map(hilfe -> getTranslation(hilfe.schluessel(), hilfe.parameter()))
+        .orElse(null);
   }
 
   private Component createTimingPanel() {
@@ -416,6 +468,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     datePicker = new DatePicker();
     datePicker.setLabel(getTranslation("edit-sprechtag.field.datum.label"));
     datePicker.setRequiredIndicatorVisible(true);
+    datePicker.addValueChangeListener(_ -> zeigeHilfetexte());
 
     slotInMinutes = new ComboBox<>();
     slotInMinutes.setLabel(getTranslation("edit-sprechtag.field.slot.label"));
@@ -439,7 +492,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     FormRow secondRow = new FormRow();
     secondRow.add(startTime, endTime);
 
-    formLayout.add(firstRow, secondRow);
+    formLayout.add(firstRow, secondRow, createFristenRow());
     return panel;
   }
 

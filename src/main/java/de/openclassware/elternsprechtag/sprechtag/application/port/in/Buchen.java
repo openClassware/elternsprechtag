@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.in;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.ElternbuchungGeschlossenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +18,9 @@ public interface Buchen {
    * Schreibt den Vorgang als N Buchungen fest — <b>alles oder nichts</b>. Ist auch nur ein Slot
    * nicht mehr zu haben, rollt die gesamte Transaktion zurück, es wird kein Ereignis veröffentlicht
    * und {@link TerminBelegtException} geworfen. Gibt die Anzahl gebuchter Termine zurück.
+   *
+   * @throws ElternbuchungGeschlossenException wenn der Anmeldeschluss eines gewünschten Termins
+   *     vorbei oder sein Sprechtag nicht (mehr) veröffentlicht ist — dann wird nichts geschrieben
    */
   int buchen(BuchungsAnfrage anfrage);
 

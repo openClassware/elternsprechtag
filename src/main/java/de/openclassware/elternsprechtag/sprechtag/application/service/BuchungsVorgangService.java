@@ -3,6 +3,7 @@ package de.openclassware.elternsprechtag.sprechtag.application.service;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Ereignisse;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege.LehrauftragDaten;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
 import de.openclassware.elternsprechtag.sprechtag.domain.Anlass;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungAngelegt;
@@ -13,6 +14,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Ereignis;
 import de.openclassware.elternsprechtag.sprechtag.domain.Familie;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrauftragId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Notiz;
+import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
@@ -58,11 +60,34 @@ import org.springframework.stereotype.Service;
 class BuchungsVorgangService {
 
   private final Termine termine;
+  private final Sprechtage sprechtage;
   private final Lehrauftraege lehrauftraege;
   private final Ereignisse ereignisse;
 
   /** Ein einzelner gewünschter Termin, unabhängig davon, über welchen Port er hereinkam. */
   record Wunsch(UUID lehrauftragId, UUID terminId, String notiz) {}
+
+  /**
+   * Die Sprechtage der gewünschten Termine, je Wunsch einer — damit jeder Aufrufer seine eigene
+   * Vorbedingung am Aggregat fragen kann, bevor irgendetwas geschrieben wird. Mehrfaches Laden
+   * desselben Sprechtags ist hingenommen: Ein Vorgang trägt wenige Wünsche.
+   */
+  List<Sprechtag> sprechtageDer(List<Wunsch> wuensche) {
+    List<Sprechtag> geladen = new ArrayList<>();
+    for (Wunsch wunsch : wuensche) {
+      Termin termin =
+          termine
+              .lade(TerminId.von(wunsch.terminId()))
+              .orElseThrow(
+                  () -> new IllegalArgumentException("Termin nicht gefunden: " + wunsch.terminId()));
+      geladen.add(
+          sprechtage
+              .lade(termin.sprechtag())
+              .orElseThrow(
+                  () -> new IllegalStateException("Termin ohne Sprechtag: " + termin.id().wert())));
+    }
+    return geladen;
+  }
 
   /**
    * Lädt jeden gewünschten Termin genau einmal und weist den Vorgang ab, sobald zwei Wünsche auf

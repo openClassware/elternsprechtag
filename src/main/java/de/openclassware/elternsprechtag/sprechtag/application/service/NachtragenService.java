@@ -1,14 +1,11 @@
 package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen;
-import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
-import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
 import de.openclassware.elternsprechtag.sprechtag.domain.Familie;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
-import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,8 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 class NachtragenService implements Nachtragen {
 
   private final BuchungsVorgangService vorgang;
-  private final Termine termine;
-  private final Sprechtage sprechtage;
 
   @Override
   @Transactional
@@ -48,23 +43,8 @@ class NachtragenService implements Nachtragen {
     return vorgang.schreibeFest(familie, wuensche, geladen);
   }
 
-  /**
-   * Prüft für jeden Wunsch den Sprechtag seines Termins. Redundante Ladevorgänge — mehrere Wünsche
-   * desselben Sprechtags werden mehrfach geprüft — sind hier bewusst hingenommen: Ein Nachtrag
-   * trägt wenige Wünsche, und die einfache Schleife bleibt ohne ein Deduplizieren nachvollziehbar.
-   */
   private void pruefeVeroeffentlicht(List<BuchungsVorgangService.Wunsch> wuensche) {
-    for (BuchungsVorgangService.Wunsch wunsch : wuensche) {
-      Termin termin =
-          termine
-              .lade(TerminId.von(wunsch.terminId()))
-              .orElseThrow(
-                  () -> new IllegalArgumentException("Termin nicht gefunden: " + wunsch.terminId()));
-      Sprechtag sprechtag =
-          sprechtage
-              .lade(termin.sprechtag())
-              .orElseThrow(
-                  () -> new IllegalStateException("Termin ohne Sprechtag: " + termin.id().wert()));
+    for (Sprechtag sprechtag : vorgang.sprechtageDer(wuensche)) {
       if (sprechtag.status() != SprechtagStatus.VEROEFFENTLICHT) {
         throw new SprechtagNichtVeroeffentlichtException(
             "Nachtrag nur an einem veröffentlichten Sprechtag, nicht bei " + sprechtag.status());

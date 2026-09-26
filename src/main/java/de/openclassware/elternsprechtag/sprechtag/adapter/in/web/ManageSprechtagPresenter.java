@@ -10,7 +10,6 @@ import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -46,23 +45,27 @@ class ManageSprechtagPresenter {
    * jeder prüft am Aggregat, ob er gangbar ist. Dass die Oberfläche einen Eintrag anbietet, heißt
    * nichts: Das Menü entsteht aus einem Read-Modell und darf veraltet sein.
    *
-   * @return leer, wenn es nichts zu sagen gibt — sonst die Begründung der Weigerung oder der
-   *     Hinweis, dass ein veröffentlichter Sprechtag ohne einen einzigen Termin dasteht
+   * @return leer, wenn es nichts zu sagen gibt — sonst die Begründung der Weigerung oder die
+   *     Hinweise zum Veröffentlichen: ohne einen einzigen Termin, Anmeldeschluss schon vorbei
    */
-  Optional<Meldung> wechsleStatus(UUID id, SprechtagStatus ziel) {
+  List<Meldung> wechsleStatus(UUID id, SprechtagStatus ziel) {
     try {
-      switch (ziel) {
-        case VEROEFFENTLICHT -> {
-          if (veroeffentlichen.veroeffentliche(id).ohneTermine()) {
-            return Optional.of(SprechtagMeldungen.ohneTermine());
-          }
+      return switch (ziel) {
+        case VEROEFFENTLICHT ->
+            SprechtagMeldungen.hinweiseZu(veroeffentlichen.veroeffentliche(id));
+        case ABGESAGT -> {
+          absagen.sageAb(id);
+          yield List.of();
         }
-        case ABGESAGT -> absagen.sageAb(id);
-        case ENTWURF -> zurueckAufEntwurf.nimmZurueck(id);
-      }
-      return Optional.empty();
+        case ENTWURF -> {
+          zurueckAufEntwurf.nimmZurueck(id);
+          yield List.of();
+        }
+        // Kein Handgriff: Abgeschlossen wird allein durch den Tagesjob (#166).
+        case ABGESCHLOSSEN -> List.of();
+      };
     } catch (RuntimeException fehler) {
-      return Optional.of(SprechtagMeldungen.zu(fehler));
+      return List.of(SprechtagMeldungen.zu(fehler));
     }
   }
 

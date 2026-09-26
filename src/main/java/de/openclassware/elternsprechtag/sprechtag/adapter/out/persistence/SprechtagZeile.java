@@ -48,6 +48,7 @@ class SprechtagZeile {
   private String accessToken;
   private SprechtagStatus status;
   private ErinnerungsVorlauf erinnerungVorlauf;
+  private int anmeldefristTage;
   @Version private long version;
 
   /**

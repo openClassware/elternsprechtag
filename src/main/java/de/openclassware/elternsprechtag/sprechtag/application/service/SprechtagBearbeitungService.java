@@ -48,7 +48,8 @@ class SprechtagBearbeitungService implements Anlegen, Bearbeiten, Duplizieren {
             Formularwerte.zeitfenster(formular),
             Formularwerte.slotdauer(formular),
             Formularwerte.klassen(formular),
-            Formularwerte.erinnerungsVorlauf(formular));
+            Formularwerte.erinnerungsVorlauf(formular),
+            Formularwerte.anmeldefrist(formular));
     sprechtage.speichere(sprechtag);
     return sprechtag.id().wert();
   }
@@ -76,6 +77,7 @@ class SprechtagBearbeitungService implements Anlegen, Bearbeiten, Duplizieren {
         Formularwerte.schulkontakt(formular),
         Formularwerte.accessToken(formular));
     sprechtag.aendereErinnerungsVorlauf(Formularwerte.erinnerungsVorlauf(formular));
+    sprechtag.aendereAnmeldefrist(Formularwerte.anmeldefrist(formular));
     sprechtag.legeZeitstrukturFest(
         Formularwerte.datum(formular),
         Formularwerte.zeitfenster(formular),

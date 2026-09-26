@@ -45,7 +45,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 })
 class StornoOhneVersandTest extends AbstractServiceTest {
 
-  private static final LocalDate DATUM = LocalDate.of(2026, 7, 20);
+  // In der Zukunft: Der Elternlink bucht nur bis zum Anmeldeschluss (Issue #122).
+  private static final LocalDate DATUM = LocalDate.of(2099, 7, 20);
 
   @TestConfiguration
   @EnableAsync

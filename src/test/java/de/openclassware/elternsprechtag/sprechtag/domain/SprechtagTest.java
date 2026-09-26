@@ -37,7 +37,8 @@ class SprechtagTest {
         NACHMITTAG,
         VIERTELSTUNDE,
         List.of(KLASSE_5A),
-        ErinnerungsVorlauf.KEINE);
+        ErinnerungsVorlauf.KEINE,
+        Anmeldefrist.STANDARD);
   }
 
   private static Sprechtag veroeffentlicht() {
@@ -76,7 +77,8 @@ class SprechtagTest {
                       NACHMITTAG,
                       VIERTELSTUNDE,
                       List.of(KLASSE_5A),
-                      ErinnerungsVorlauf.KEINE))
+                      ErinnerungsVorlauf.KEINE,
+                      Anmeldefrist.STANDARD))
           .isInstanceOf(IllegalArgumentException.class);
     }
   }
@@ -287,6 +289,83 @@ class SprechtagTest {
     }
   }
 
+  /** Issue #122 — wie lange der Elternlink Buchungen annimmt. */
+  @Nested
+  class Anmeldung {
+
+    @Test
+    void anmeldeschlussIstDasDatumMinusDieFrist() {
+      Sprechtag sprechtag = entwurf();
+      sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(3));
+
+      assertThat(sprechtag.anmeldeschluss()).isEqualTo(DATUM.minusDays(3));
+    }
+
+    /** „Anmeldung bis 19.03." meint den ganzen 19.03. */
+    @Test
+    void amAnmeldeschlussSelbst_nimmtErElternbuchungenNochAn() {
+      Sprechtag sprechtag = veroeffentlicht();
+
+      assertThat(sprechtag.nimmtElternbuchungenAn(sprechtag.anmeldeschluss())).isTrue();
+    }
+
+    @Test
+    void amTagNachDemAnmeldeschluss_nimmtErKeineElternbuchungenMehrAn() {
+      Sprechtag sprechtag = veroeffentlicht();
+
+      assertThat(sprechtag.nimmtElternbuchungenAn(sprechtag.anmeldeschluss().plusDays(1)))
+          .isFalse();
+    }
+
+    @Test
+    void einEntwurfNimmtKeineElternbuchungenAn() {
+      assertThat(entwurf().nimmtElternbuchungenAn(DATUM.minusDays(10))).isFalse();
+    }
+
+    @Test
+    void einAbgesagterSprechtagNimmtKeineElternbuchungenAn() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.sageAb();
+
+      assertThat(sprechtag.nimmtElternbuchungenAn(DATUM.minusDays(10))).isFalse();
+    }
+
+    @Test
+    void einAbgeschlossenerSprechtagNimmtKeineElternbuchungenAn() {
+      assertThat(abgeschlossen().nimmtElternbuchungenAn(DATUM.minusDays(10))).isFalse();
+    }
+
+    /** Die Anmeldung verlängern, wenn sich zu wenige eingetragen haben. */
+    @Test
+    void eineAbgelaufeneFristLaesstSichNachDemVeroeffentlichenWiederOeffnen() {
+      Sprechtag sprechtag = veroeffentlicht();
+      LocalDate heute = DATUM.minusDays(1);
+      sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(5));
+      assertThat(sprechtag.nimmtElternbuchungenAn(heute)).isFalse();
+
+      sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(0));
+
+      assertThat(sprechtag.nimmtElternbuchungenAn(heute)).isTrue();
+    }
+
+    @Test
+    void abgesagterSprechtagAendertDieAnmeldefristNichtMehr() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.sageAb();
+
+      assertThatThrownBy(() -> sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(0)))
+          .isInstanceOf(StatusuebergangException.class);
+    }
+
+    @Test
+    void abgeschlossenerSprechtagAendertDieAnmeldefristNichtMehr() {
+      Sprechtag sprechtag = abgeschlossen();
+
+      assertThatThrownBy(() -> sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(0)))
+          .isInstanceOf(StatusuebergangException.class);
+    }
+  }
+
   @Nested
   class Statusuebergaenge {
 
@@ -453,6 +532,17 @@ class SprechtagTest {
       assertThat(kopie.titel()).isEqualTo(original.titel());
       assertThat(kopie.klassen()).isEqualTo(original.klassen());
       assertThat(kopie.schulkontakt()).isEqualTo(original.schulkontakt());
+    }
+
+    /** Relativ gespeichert, ist die Frist für jedes neue Datum richtig — keine tot geborene Kopie. */
+    @Test
+    void kopieUebernimmtDieAnmeldefrist() {
+      Sprechtag original = entwurf();
+      original.aendereAnmeldefrist(Anmeldefrist.vonTagen(4));
+
+      Sprechtag kopie = original.dupliziere(AccessToken.neu());
+
+      assertThat(kopie.anmeldefrist()).isEqualTo(Anmeldefrist.vonTagen(4));
     }
   }
 

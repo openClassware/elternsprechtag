@@ -111,7 +111,7 @@ public class ManageSprechtagView extends Div {
   private void applyStatusChange(SprechtagZeile sprechtag, SprechtagStatus newStatus) {
     presenter
         .wechsleStatus(sprechtag.id(), newStatus)
-        .ifPresent(meldung -> SprechtagMeldungen.zeige(this, meldung));
+        .forEach(meldung -> SprechtagMeldungen.zeige(this, meldung));
     reload();
   }
 
