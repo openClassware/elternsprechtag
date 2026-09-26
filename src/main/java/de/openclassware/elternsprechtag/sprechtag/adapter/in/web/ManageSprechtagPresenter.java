@@ -51,7 +51,8 @@ class ManageSprechtagPresenter {
   List<Meldung> wechsleStatus(UUID id, SprechtagStatus ziel) {
     try {
       return switch (ziel) {
-        case VEROEFFENTLICHT -> SprechtagMeldungen.zu(veroeffentlichen.veroeffentliche(id));
+        case VEROEFFENTLICHT ->
+            SprechtagMeldungen.hinweiseZu(veroeffentlichen.veroeffentliche(id));
         case ABGESAGT -> {
           absagen.sageAb(id);
           yield List.of();

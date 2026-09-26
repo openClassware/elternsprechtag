@@ -55,23 +55,28 @@ class EditSprechtagPresenter {
    * @return die Hinweise, die der View danach zeigt; leer, wenn es nichts zu sagen gibt
    */
   List<Meldung> legeAnUndVeroeffentliche(SprechtagFormular formular) {
-    return SprechtagMeldungen.zu(anlegen.legeUndVeroeffentliche(formular));
+    return SprechtagMeldungen.hinweiseZu(anlegen.legeUndVeroeffentliche(formular));
   }
 
+  /** Ein Hilfetext als i18n-Schlüssel samt Parametern — übersetzt wird am View. */
+  record Hilfetext(String schluessel, Object... parameter) {}
+
   /**
-   * Der Anmeldeschluss zu den gerade eingegebenen Werten, fertig formatiert für den Hilfetext —
-   * leer, solange Datum oder Frist fehlen oder die Frist außerhalb ihres Bereichs liegt. Gerechnet
-   * wird mit derselben {@link Anmeldefrist}, die das Aggregat hält: Hilfetext und Elternlink sollen
-   * nie verschiedene Tage nennen.
+   * Der Hilfetext unter der Anmeldefrist: der errechnete Anmeldeschluss, sobald ein Datum gewählt
+   * ist; ohne Datum eine Erklärung der Frist; bei einer Frist außerhalb ihres Bereichs nichts — dort
+   * spricht die Validierung. Gerechnet wird mit derselben {@link Anmeldefrist}, die das Aggregat
+   * hält: Hilfetext und Elternlink sollen nie verschiedene Tage nennen.
    */
-  Optional<String> anmeldeschluss(LocalDate datum, Integer anmeldefristTage) {
-    if (datum == null
-        || anmeldefristTage == null
-        || anmeldefristTage < 0
-        || anmeldefristTage > Anmeldefrist.HOECHSTENS_TAGE) {
+  Optional<Hilfetext> anmeldefristHilfetext(LocalDate datum, Integer anmeldefristTage) {
+    if (datum == null) {
+      return Optional.of(new Hilfetext("edit-sprechtag.field.anmeldefrist.helper-ohne-datum"));
+    }
+    if (anmeldefristTage == null || !Anmeldefrist.istZulaessig(anmeldefristTage)) {
       return Optional.empty();
     }
     LocalDate schluss = Anmeldefrist.vonTagen(anmeldefristTage).anmeldeschlussFuer(datum);
-    return Optional.of(Formats.weekdayDateShort(schluss));
+    return Optional.of(
+        new Hilfetext(
+            "edit-sprechtag.field.anmeldefrist.helper", Formats.weekdayDateShort(schluss)));
   }
 }

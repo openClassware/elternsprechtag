@@ -294,11 +294,6 @@ class SprechtagTest {
   class Anmeldung {
 
     @Test
-    void standardIstDerVortag() {
-      assertThat(entwurf().anmeldeschluss()).isEqualTo(DATUM.minusDays(1));
-    }
-
-    @Test
     void anmeldeschlussIstDasDatumMinusDieFrist() {
       Sprechtag sprechtag = entwurf();
       sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(3));

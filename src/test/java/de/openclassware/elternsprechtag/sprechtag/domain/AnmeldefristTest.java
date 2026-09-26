@@ -34,6 +34,15 @@ class AnmeldefristTest {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
+  /** Dieselbe Grenze, an der die Formularvalidierung fragt, bevor der Konstruktor wirft. */
+  @Test
+  void istZulaessig_folgtDemKonstruktor() {
+    assertThat(Anmeldefrist.istZulaessig(0)).isTrue();
+    assertThat(Anmeldefrist.istZulaessig(28)).isTrue();
+    assertThat(Anmeldefrist.istZulaessig(-1)).isFalse();
+    assertThat(Anmeldefrist.istZulaessig(29)).isFalse();
+  }
+
   @Test
   void standardIstDerVortag() {
     assertThat(Anmeldefrist.STANDARD.tageVorher()).isEqualTo(1);

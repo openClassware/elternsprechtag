@@ -142,7 +142,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         .forField(anmeldefrist)
         .asRequired(getTranslation("edit-sprechtag.validation.anmeldefrist-required"))
         .withValidator(
-            tage -> tage >= 0 && tage <= Anmeldefrist.HOECHSTENS_TAGE,
+            Anmeldefrist::istZulaessig,
             getTranslation(
                 "edit-sprechtag.validation.anmeldefrist-bereich", Anmeldefrist.HOECHSTENS_TAGE))
         .bind(SprechtagFormular::getAnmeldefristTage, SprechtagFormular::setAnmeldefristTage);
@@ -431,10 +431,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     }
     anmeldefrist.setHelperText(
         presenter
-            .anmeldeschluss(datePicker.getValue(), anmeldefrist.getValue())
-            .map(datum -> getTranslation("edit-sprechtag.field.anmeldefrist.helper", datum))
-            .orElseGet(
-                () -> getTranslation("edit-sprechtag.field.anmeldefrist.helper-ohne-datum")));
+            .anmeldefristHilfetext(datePicker.getValue(), anmeldefrist.getValue())
+            .map(hilfe -> getTranslation(hilfe.schluessel(), hilfe.parameter()))
+            .orElse(null));
   }
 
   private String erinnerungLabelKey(ErinnerungsVorlauf vorlauf) {

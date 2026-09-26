@@ -1,13 +1,10 @@
 package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen;
-import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
-import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
 import de.openclassware.elternsprechtag.sprechtag.domain.ElternbuchungGeschlossenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.Familie;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
-import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 class BuchenService implements Buchen {
 
   private final BuchungsVorgangService vorgang;
-  private final Termine termine;
-  private final Sprechtage sprechtage;
 
   @Override
   @Transactional
@@ -46,23 +41,9 @@ class BuchenService implements Buchen {
     return vorgang.schreibeFest(familie, wuensche, geladen);
   }
 
-  /**
-   * Fragt für jeden Wunsch den Sprechtag seines Termins. Mehrfaches Laden desselben Sprechtags ist
-   * wie im {@code NachtragenService} hingenommen: Ein Submit trägt wenige Wünsche.
-   */
   private void pruefeElternbuchungOffen(List<BuchungsVorgangService.Wunsch> wuensche) {
     LocalDate heute = LocalDate.now();
-    for (BuchungsVorgangService.Wunsch wunsch : wuensche) {
-      Termin termin =
-          termine
-              .lade(TerminId.von(wunsch.terminId()))
-              .orElseThrow(
-                  () -> new IllegalArgumentException("Termin nicht gefunden: " + wunsch.terminId()));
-      Sprechtag sprechtag =
-          sprechtage
-              .lade(termin.sprechtag())
-              .orElseThrow(
-                  () -> new IllegalStateException("Termin ohne Sprechtag: " + termin.id().wert()));
+    for (Sprechtag sprechtag : vorgang.sprechtageDer(wuensche)) {
       if (!sprechtag.nimmtElternbuchungenAn(heute)) {
         throw new ElternbuchungGeschlossenException(
             "Der Elternlink nimmt keine Buchung mehr an — Status "

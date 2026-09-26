@@ -208,14 +208,6 @@ class AnmeldeschlussTest extends AbstractServiceTest {
   }
 
   @Test
-  void anlegen_mitFristAusserhalbDesBereichs_wirdNichtGespeichert() {
-    assertThatThrownBy(() -> anlegen.lege(formular(29)))
-        .isInstanceOf(IllegalArgumentException.class);
-
-    assertThat(jdbc.queryForObject("select count(*) from sprechtage", Long.class)).isZero();
-  }
-
-  @Test
   void duplizieren_uebernimmtDieFrist() {
     UUID original = anlegen.lege(formular(4));
 

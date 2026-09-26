@@ -59,7 +59,7 @@ final class SprechtagMeldungen {
    * Die Hinweise, die ein gelungenes Veröffentlichen verdient — keine Weigerungen: veröffentlicht
    * ist in beiden Fällen, der Organizer soll nur sehen, was daraus folgt.
    */
-  static List<Meldung> zu(Veroeffentlichen.Ergebnis ergebnis) {
+  static List<Meldung> hinweiseZu(Veroeffentlichen.Ergebnis ergebnis) {
     List<Meldung> meldungen = new ArrayList<>();
     if (ergebnis.ohneTermine()) {
       meldungen.add(ohneTermine());

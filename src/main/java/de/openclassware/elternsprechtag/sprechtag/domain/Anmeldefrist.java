@@ -25,10 +25,15 @@ public record Anmeldefrist(int tageVorher) {
   public static final Anmeldefrist STANDARD = new Anmeldefrist(1);
 
   public Anmeldefrist {
-    if (tageVorher < 0 || tageVorher > HOECHSTENS_TAGE) {
+    if (!istZulaessig(tageVorher)) {
       throw new IllegalArgumentException(
           "Die Anmeldefrist liegt zwischen 0 und " + HOECHSTENS_TAGE + " Tagen: " + tageVorher);
     }
+  }
+
+  /** Ob sich aus diesem Wert eine Anmeldefrist bilden lässt — für die Formularvalidierung. */
+  public static boolean istZulaessig(int tageVorher) {
+    return tageVorher >= 0 && tageVorher <= HOECHSTENS_TAGE;
   }
 
   public static Anmeldefrist vonTagen(int tageVorher) {
