@@ -562,12 +562,13 @@
         padding: 1.25rem;
     }
 
-    .elternsprechtag-view__body--beendet > * + * {
-        margin-top: 1rem;
-    }
-
     .elternsprechtag-view__body > * + * {
         margin-top: 1.5rem;
+    }
+
+    /* Nach __body: gleiche Spezifität, der engere Abstand muss die Regel davor überstimmen. */
+    .elternsprechtag-view__body--beendet > * + * {
+        margin-top: 1rem;
     }
 
     .elternsprechtag-view__title {

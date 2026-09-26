@@ -127,8 +127,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   /**
    * Nach dem Anmeldeschluss (Issue #123): wann und wo der Sprechtag ist und als Hauptaussage der
-   * Schulkontakt — der Weg, auf dem die Familie jetzt noch zu einem Termin kommt. Keine Klassen, keine
-   * Lehrkräfte, keine Buchungsauskunft: Das Token hängt am Sprechtag, nicht an der Familie.
+   * Schulkontakt — der Weg, auf dem die Familie jetzt noch zu einem Termin kommt. Keine Klassen,
+   * keine Lehrkräfte, keine Buchungsauskunft: Das Token hängt am Sprechtag, nicht an der Familie.
    */
   private Component createAnmeldungBeendet(OeffentlicherSprechtag sprechtag) {
     Div card = new Div();
@@ -161,9 +161,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   /**
-   * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs-, Bestätigungs- und „Anmeldung beendet"-Seite.
-   * Nur beim Buchen kommen
-   * die Intro-Zeile und die Beschreibung dazu.
+   * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs-, Bestätigungs- und „Anmeldung
+   * beendet"-Seite. Nur beim Buchen kommen die Intro-Zeile und die Beschreibung dazu.
    */
   private Div createKopf(OeffentlicherSprechtag sprechtag, boolean withBookingText) {
     Div kopf = new Div();
