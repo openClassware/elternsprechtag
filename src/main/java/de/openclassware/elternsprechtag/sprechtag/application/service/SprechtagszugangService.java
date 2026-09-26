@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.Zugangsstand;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Klassen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Klassen.KlasseDaten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
@@ -63,8 +64,21 @@ class SprechtagszugangService implements Sprechtagszugang {
         sprechtag.ort(),
         sprechtag.beschreibung(),
         sprechtag.slotdauer().minuten(),
-        sprechtag.nimmtElternbuchungenAn(LocalDate.now()),
-        sprechtag.status() == SprechtagStatus.ABGESAGT,
+        stand(sprechtag, LocalDate.now()),
+        sprechtag.schulkontakt().text(),
         auswahl);
+  }
+
+  private static Zugangsstand stand(Sprechtag sprechtag, LocalDate heute) {
+    if (sprechtag.status() == SprechtagStatus.ABGESAGT) {
+      return Zugangsstand.ABGESAGT;
+    }
+    if (sprechtag.nimmtElternbuchungenAn(heute)) {
+      return Zugangsstand.BUCHBAR;
+    }
+    if (sprechtag.anmeldungBeendet(heute)) {
+      return Zugangsstand.ANMELDUNG_BEENDET;
+    }
+    return Zugangsstand.NICHT_VERFUEGBAR;
   }
 }

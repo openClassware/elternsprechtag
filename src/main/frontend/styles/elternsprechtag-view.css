@@ -494,6 +494,44 @@
     overflow-wrap: anywhere;
 }
 
+/* Anmeldung beendet (#123): Überschrift als erste Kartensektion wie das Erfolgs-Banner, dann der
+   Sprechtag-Kopf, dann Hinweis und Schulkontakt. */
+.elternsprechtag-view__beendet-title {
+    margin: 0;
+    padding: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.elternsprechtag-view__beendet-text {
+    margin: 0;
+    color: #374151;
+    line-height: 1.5;
+}
+
+/* Nach __beendet-text: gleiche Spezifität, der Abstand muss dessen margin: 0 überstimmen. */
+.elternsprechtag-view__body--beendet > * + * {
+    margin-top: 1rem;
+}
+
+/* Die Hauptaussage der Seite: Zeilen des gepflegten Kontakts bleiben erhalten (pre-line), lange
+   Adressen brechen um, statt die Karte zu sprengen. */
+.elternsprechtag-view__schulkontakt {
+    padding: 1rem 1.25rem;
+    border-left: 4px solid var(--aura-accent-color);
+    border-radius: 8px;
+    background-color: #f3f4f6;
+    color: #111827;
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.6;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
 /* Cancelled / unavailable states: no header, centered message. */
 .elternsprechtag-view__message {
     max-width: 480px;
@@ -519,12 +557,18 @@
     }
 
     .elternsprechtag-view__kopf,
-    .elternsprechtag-view__body {
+    .elternsprechtag-view__body,
+    .elternsprechtag-view__beendet-title {
         padding: 1.25rem;
     }
 
     .elternsprechtag-view__body > * + * {
         margin-top: 1.5rem;
+    }
+
+    /* Nach __body: gleiche Spezifität, der engere Abstand muss die Regel davor überstimmen. */
+    .elternsprechtag-view__body--beendet > * + * {
+        margin-top: 1rem;
     }
 
     .elternsprechtag-view__title {

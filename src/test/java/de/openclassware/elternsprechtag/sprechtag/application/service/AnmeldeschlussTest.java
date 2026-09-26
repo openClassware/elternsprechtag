@@ -11,6 +11,8 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.Buc
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsWunsch;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.OeffentlicherSprechtag;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.Zugangsstand;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
 import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungenBestaetigt;
@@ -110,20 +112,53 @@ class AnmeldeschlussTest extends AbstractServiceTest {
     assertThat(alleBuchungen()).isEmpty();
   }
 
-  @Test
-  void zugang_nachDemAnmeldeschluss_istNichtBuchbar() {
-    Fixture f = veroeffentlicht(2);
+  private OeffentlicherSprechtag oeffne(Fixture f) {
+    return sprechtagszugang.oeffne(f.sprechtag().accessToken().wert()).orElseThrow();
+  }
 
-    assertThat(sprechtagszugang.oeffne(f.sprechtag().accessToken().wert()).orElseThrow().buchbar())
-        .isFalse();
+  private Zugangsstand stand(Fixture f) {
+    return oeffne(f).stand();
   }
 
   @Test
   void zugang_vorDemAnmeldeschluss_istBuchbar() {
-    Fixture f = veroeffentlicht(1);
+    assertThat(stand(veroeffentlicht(1))).isEqualTo(Zugangsstand.BUCHBAR);
+  }
 
-    assertThat(sprechtagszugang.oeffne(f.sprechtag().accessToken().wert()).orElseThrow().buchbar())
-        .isTrue();
+  /** Issue #123 — die Seite „Anmeldung beendet" nennt den Kontakt, den der Organizer gepflegt hat. */
+  @Test
+  void zugang_nachDemAnmeldeschluss_istBeendetMitDemGepflegtenSchulkontakt() {
+    Fixture f = veroeffentlicht(2);
+    UUID id = f.sprechtag().id().wert();
+    SprechtagFormular geladen = bearbeiten.ladeFormular(id).orElseThrow();
+    geladen.setSchulkontakt("Frau Weber\nTel. 0123 456789");
+    bearbeiten.bearbeite(id, geladen);
+
+    OeffentlicherSprechtag geoeffnet = oeffne(f);
+
+    assertThat(geoeffnet.stand()).isEqualTo(Zugangsstand.ANMELDUNG_BEENDET);
+    assertThat(geoeffnet.schulkontakt()).isEqualTo("Frau Weber\nTel. 0123 456789");
+  }
+
+  @Test
+  void zugang_einesAbgesagten_istAbgesagtAuchNachDemAnmeldeschluss() {
+    Fixture f = veroeffentlicht(2);
+    absagen.sageAb(f.sprechtag().id().wert());
+
+    assertThat(stand(f)).isEqualTo(Zugangsstand.ABGESAGT);
+  }
+
+  @Test
+  void zugang_einesEntwurfs_istNichtVerfuegbar() {
+    assertThat(stand(entwurf(2))).isEqualTo(Zugangsstand.NICHT_VERFUEGBAR);
+  }
+
+  @Test
+  void zugang_einesAbgeschlossenen_istNichtVerfuegbar() {
+    Fixture f = veroeffentlicht(2);
+    schliesseAb(f.sprechtag().id().wert());
+
+    assertThat(stand(f)).isEqualTo(Zugangsstand.NICHT_VERFUEGBAR);
   }
 
   // --- Organizer-Strecke -------------------------------------------------------------------
@@ -202,9 +237,7 @@ class AnmeldeschlussTest extends AbstractServiceTest {
     bearbeiten.bearbeite(id, geladen);
 
     assertThat(ladeSprechtag(id).anmeldefrist()).isEqualTo(Anmeldefrist.vonTagen(0));
-    assertThat(sprechtagszugang.oeffne(f.sprechtag().accessToken().wert()).orElseThrow().buchbar())
-        .as("die abgelaufene Frist ist wieder offen")
-        .isTrue();
+    assertThat(stand(f)).as("die abgelaufene Frist ist wieder offen").isEqualTo(Zugangsstand.BUCHBAR);
   }
 
   @Test

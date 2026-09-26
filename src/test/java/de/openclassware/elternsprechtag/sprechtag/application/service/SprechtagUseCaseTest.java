@@ -12,6 +12,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenaus
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.OeffentlicherSprechtag;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.Zugangsstand;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagAbgesagt;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagHatBuchungenException;
@@ -401,8 +402,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
     OeffentlicherSprechtag geoeffnet =
         sprechtagszugang.oeffne(sprechtag.accessToken().wert()).orElseThrow();
 
-    assertThat(geoeffnet.buchbar()).isTrue();
-    assertThat(geoeffnet.abgesagt()).isFalse();
+    assertThat(geoeffnet.stand()).isEqualTo(Zugangsstand.BUCHBAR);
     assertThat(geoeffnet.klassen()).extracting("name").containsExactly("5a", "7a");
   }
 
@@ -416,8 +416,7 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
     OeffentlicherSprechtag geoeffnet =
         sprechtagszugang.oeffne(sprechtag.accessToken().wert()).orElseThrow();
 
-    assertThat(geoeffnet.buchbar()).isFalse();
-    assertThat(geoeffnet.abgesagt()).isTrue();
+    assertThat(geoeffnet.stand()).isEqualTo(Zugangsstand.ABGESAGT);
   }
 
   @Test
