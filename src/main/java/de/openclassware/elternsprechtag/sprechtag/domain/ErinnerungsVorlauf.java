@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.domain;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 
 /**
  * Der Vorlauf, mit dem Eltern vor ihrem gebuchten Termin erinnert werden — feste Optionen statt
@@ -23,6 +24,32 @@ public enum ErinnerungsVorlauf {
 
   ErinnerungsVorlauf(int tageVorher) {
     this.tageVorher = tageVorher;
+  }
+
+  /** Ob es zu diesem Abstand eine Option gibt — für die Formularvalidierung. */
+  public static boolean istZulaessig(int tageVorher) {
+    return Arrays.stream(values()).anyMatch(vorlauf -> vorlauf.tageVorher == tageVorher);
+  }
+
+  /**
+   * Die Option zu einem Abstand in Tagen — das Formular bietet sie als Zahl an, die Auswahl bleibt
+   * trotzdem fest.
+   *
+   * @throws IllegalArgumentException wenn es zu diesem Abstand keine Option gibt
+   */
+  public static ErinnerungsVorlauf vonTagen(int tageVorher) {
+    return Arrays.stream(values())
+        .filter(vorlauf -> vorlauf.tageVorher == tageVorher)
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Keine Erinnerungsoption für " + tageVorher + " Tage vorher"));
+  }
+
+  /** Der größte wählbare Abstand. */
+  public static int hoechstensTage() {
+    return Arrays.stream(values()).mapToInt(ErinnerungsVorlauf::tageVorher).max().orElseThrow();
   }
 
   /** Wie viele Tage vor dem Termin die Erinnerung läuft; {@code 0} heißt: keine Erinnerung. */

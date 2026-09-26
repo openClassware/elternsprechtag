@@ -8,6 +8,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenaus
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
 import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
+import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -78,5 +79,26 @@ class EditSprechtagPresenter {
     return Optional.of(
         new Hilfetext(
             "edit-sprechtag.field.anmeldefrist.helper", Formats.weekdayDateShort(schluss)));
+  }
+
+  /**
+   * Der Hilfetext unter der Erinnerung — nach demselben Muster wie bei der Anmeldefrist: der Tag
+   * des Versands, sobald ein Datum gewählt ist; bei 0 der Hinweis, dass keine Erinnerung läuft;
+   * außerhalb der festen Optionen nichts, dort spricht die Validierung.
+   */
+  Optional<Hilfetext> erinnerungHilfetext(LocalDate datum, Integer erinnerungTage) {
+    if (erinnerungTage == null || !ErinnerungsVorlauf.istZulaessig(erinnerungTage)) {
+      return Optional.empty();
+    }
+    if (ErinnerungsVorlauf.vonTagen(erinnerungTage) == ErinnerungsVorlauf.KEINE) {
+      return Optional.of(new Hilfetext("edit-sprechtag.field.erinnerung.helper-keine"));
+    }
+    if (datum == null) {
+      return Optional.of(new Hilfetext("edit-sprechtag.field.erinnerung.helper-ohne-datum"));
+    }
+    return Optional.of(
+        new Hilfetext(
+            "edit-sprechtag.field.erinnerung.helper",
+            Formats.weekdayDateShort(datum.minusDays(erinnerungTage))));
   }
 }

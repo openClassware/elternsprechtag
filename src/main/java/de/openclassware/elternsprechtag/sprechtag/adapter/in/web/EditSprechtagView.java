@@ -34,6 +34,7 @@ import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Brea
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.FormPanel;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -69,7 +70,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private TimePicker startTime;
   private TimePicker endTime;
   private CheckboxGroup<KlasseOption> klassen;
-  private ComboBox<ErinnerungsVorlauf> erinnerungsVorlauf;
+  private IntegerField erinnerungsVorlauf;
   private IntegerField anmeldefrist;
   private TextField accessToken;
   private TextField shareLink;
@@ -90,7 +91,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         createBottomButtonBar());
     configureBinder();
     // Erst hier: Frist und Datum liegen in verschiedenen Panels, beide müssen schon stehen.
-    zeigeAnmeldeschluss();
+    zeigeHilfetexte();
   }
 
   private void configureBinder() {
@@ -131,8 +132,15 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         .forField(accessToken)
         .bind(SprechtagFormular::getAccessToken, SprechtagFormular::setAccessToken);
 
+    // Als Zahl angeboten wie die Anmeldefrist, gespeichert bleibt eine der festen Optionen (#106).
     binder
         .forField(erinnerungsVorlauf)
+        .asRequired(getTranslation("edit-sprechtag.validation.erinnerung-required"))
+        .withValidator(
+            ErinnerungsVorlauf::istZulaessig,
+            getTranslation(
+                "edit-sprechtag.validation.erinnerung-bereich", ErinnerungsVorlauf.hoechstensTage()))
+        .withConverter(ErinnerungsVorlauf::vonTagen, ErinnerungsVorlauf::tageVorher)
         .bind(
             SprechtagFormular::getErinnerungsVorlauf, SprechtagFormular::setErinnerungsVorlauf);
 
@@ -398,13 +406,14 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     fourthRow.add(schulkontakt, 2);
 
     FormRow fifthRow = new FormRow();
-    erinnerungsVorlauf = new ComboBox<>();
+    erinnerungsVorlauf = new IntegerField();
     erinnerungsVorlauf.setLabel(getTranslation("edit-sprechtag.field.erinnerung.label"));
-    erinnerungsVorlauf.setItems(ErinnerungsVorlauf.values());
-    erinnerungsVorlauf.setValue(ErinnerungsVorlauf.KEINE);
-    erinnerungsVorlauf.setItemLabelGenerator(vorlauf -> getTranslation(erinnerungLabelKey(vorlauf)));
-    erinnerungsVorlauf.setRenderer(
-        new TextRenderer<>(vorlauf -> getTranslation(erinnerungLabelKey(vorlauf))));
+    erinnerungsVorlauf.setMin(0);
+    erinnerungsVorlauf.setMax(ErinnerungsVorlauf.hoechstensTage());
+    erinnerungsVorlauf.setStepButtonsVisible(true);
+    erinnerungsVorlauf.setRequiredIndicatorVisible(true);
+    erinnerungsVorlauf.setValue(ErinnerungsVorlauf.KEINE.tageVorher());
+    erinnerungsVorlauf.addValueChangeListener(_ -> zeigeHilfetexte());
     anmeldefrist = new IntegerField();
     anmeldefrist.setLabel(getTranslation("edit-sprechtag.field.anmeldefrist.label"));
     anmeldefrist.setMin(0);
@@ -412,7 +421,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     anmeldefrist.setStepButtonsVisible(true);
     anmeldefrist.setRequiredIndicatorVisible(true);
     anmeldefrist.setValue(Anmeldefrist.STANDARD.tageVorher());
-    anmeldefrist.addValueChangeListener(_ -> zeigeAnmeldeschluss());
+    anmeldefrist.addValueChangeListener(_ -> zeigeHilfetexte());
     fifthRow.add(erinnerungsVorlauf, anmeldefrist);
 
     FormLayout formLayout = panel.getFormLayout();
@@ -422,27 +431,24 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   }
 
   /**
-   * Schreibt den errechneten Anmeldeschluss unter die Frist — sobald ein Datum gewählt ist, und bei
-   * jeder Änderung von Datum oder Frist neu. Die Rechnung liefert der Presenter.
+   * Schreibt unter Erinnerung und Anmeldefrist den errechneten Tag — sobald ein Datum gewählt ist,
+   * und bei jeder Änderung von Datum, Erinnerung oder Frist neu. Die Rechnung liefert der Presenter.
    */
-  private void zeigeAnmeldeschluss() {
-    if (anmeldefrist == null || datePicker == null) {
+  private void zeigeHilfetexte() {
+    if (erinnerungsVorlauf == null || anmeldefrist == null || datePicker == null) {
       return; // noch im Aufbau
     }
+    LocalDate datum = datePicker.getValue();
+    erinnerungsVorlauf.setHelperText(
+        uebersetze(presenter.erinnerungHilfetext(datum, erinnerungsVorlauf.getValue())));
     anmeldefrist.setHelperText(
-        presenter
-            .anmeldefristHilfetext(datePicker.getValue(), anmeldefrist.getValue())
-            .map(hilfe -> getTranslation(hilfe.schluessel(), hilfe.parameter()))
-            .orElse(null));
+        uebersetze(presenter.anmeldefristHilfetext(datum, anmeldefrist.getValue())));
   }
 
-  private String erinnerungLabelKey(ErinnerungsVorlauf vorlauf) {
-    return switch (vorlauf) {
-      case KEINE -> "edit-sprechtag.erinnerung.item.keine";
-      case EIN_TAG -> "edit-sprechtag.erinnerung.item.ein-tag";
-      case ZWEI_TAGE -> "edit-sprechtag.erinnerung.item.zwei-tage";
-      case DREI_TAGE -> "edit-sprechtag.erinnerung.item.drei-tage";
-    };
+  private String uebersetze(Optional<EditSprechtagPresenter.Hilfetext> hilfetext) {
+    return hilfetext
+        .map(hilfe -> getTranslation(hilfe.schluessel(), hilfe.parameter()))
+        .orElse(null);
   }
 
   private Component createTimingPanel() {
@@ -455,7 +461,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     datePicker = new DatePicker();
     datePicker.setLabel(getTranslation("edit-sprechtag.field.datum.label"));
     datePicker.setRequiredIndicatorVisible(true);
-    datePicker.addValueChangeListener(_ -> zeigeAnmeldeschluss());
+    datePicker.addValueChangeListener(_ -> zeigeHilfetexte());
 
     slotInMinutes = new ComboBox<>();
     slotInMinutes.setLabel(getTranslation("edit-sprechtag.field.slot.label"));
