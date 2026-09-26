@@ -57,6 +57,7 @@ import org.springframework.test.context.ActiveProfiles;
 class TerminePersistenceAdapterTest {
 
   private static final LocalDateTime BEGINN = LocalDateTime.of(2026, 7, 20, 14, 0);
+  private static final String EMAIL = "anonym@schule.example";
 
   @Autowired private TerminePersistenceAdapter termine;
   @Autowired private JdbcTemplate jdbc;
@@ -164,13 +165,13 @@ class TerminePersistenceAdapterTest {
     termine.speichere(termin);
 
     Termin geladen = termine.lade(termin.id()).orElseThrow();
-    geladen.anonymisiere(Pseudonymisierung.mitSeed("ab12"));
+    geladen.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL));
     termine.speichere(geladen);
 
     Buchung anonymisiert = termine.lade(termin.id()).orElseThrow().aktiveBuchung().orElseThrow();
     assertThat(anonymisiert.id()).isEqualTo(buchung);
     assertThat(anonymisiert.familie())
-        .isEqualTo(new Familie("Eltern-ab12-001", "Schueler-ab12-001", Pseudonymisierung.EMAIL));
+        .isEqualTo(new Familie("Eltern-ab12-001", "Schueler-ab12-001", EMAIL));
     assertThat(anonymisiert.notiz()).isEmpty();
     assertThat(
             jdbc.queryForObject(

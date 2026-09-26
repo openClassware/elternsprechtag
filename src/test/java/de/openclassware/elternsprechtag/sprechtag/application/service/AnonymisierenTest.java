@@ -10,7 +10,6 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsWunsch;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchungsstatus;
-import de.openclassware.elternsprechtag.sprechtag.domain.Pseudonymisierung;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
@@ -21,6 +20,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Der tägliche Anonymisierungs-Lauf (Issue #126) gegen eine echte Datenbank, mit der Standardfrist
@@ -30,7 +30,11 @@ import org.springframework.context.annotation.Import;
  */
 @ServiceTest
 @Import(SprechtagKontextTestConfig.class)
+// Eine Adresse abseits des Defaults: So ist belegt, dass sie aus der Konfiguration kommt.
+@TestPropertySource(properties = "elternsprechtag.anonymisierung-email=" + AnonymisierenTest.EMAIL)
 class AnonymisierenTest extends AbstractServiceTest {
+
+  static final String EMAIL = "anonym@schule.example";
 
   @Autowired private Anonymisieren anonymisieren;
 
@@ -82,7 +86,7 @@ class AnonymisierenTest extends AbstractServiceTest {
             buchung -> {
               assertThat(buchung.familie().elternName()).matches("Eltern-[0-9a-f]{8}-00[12]");
               assertThat(buchung.familie().schuelerName()).matches("Schueler-[0-9a-f]{8}-00[12]");
-              assertThat(buchung.familie().email()).isEqualTo(Pseudonymisierung.EMAIL);
+              assertThat(buchung.familie().email()).isEqualTo(EMAIL);
               assertThat(buchung.notiz()).isEmpty();
             });
     assertThat(buchungen)
@@ -105,7 +109,7 @@ class AnonymisierenTest extends AbstractServiceTest {
     assertThat(anzahl).isEqualTo(1);
     assertThat(alleBuchungen())
         .singleElement()
-        .satisfies(b -> assertThat(b.familie().email()).isEqualTo(Pseudonymisierung.EMAIL));
+        .satisfies(b -> assertThat(b.familie().email()).isEqualTo(EMAIL));
     assertThat(ladeSprechtag(f.sprechtag().id().wert()).anonymisiertAm()).isPresent();
   }
 

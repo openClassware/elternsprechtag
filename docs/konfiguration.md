@@ -178,6 +178,7 @@ abgesagte Sprechtage. Danach anonymisiert ein nächtlicher Lauf die Buchungen (s
 |--------------------------------------------|---------------|--------------------------------------------------------------------------------------|
 | `ELTERNSPRECHTAG_AUFBEWAHRUNGSFRIST_TAGE`  | `30`          | Frist in Tagen, mindestens 1.                                                        |
 | `ELTERNSPRECHTAG_ANONYMISIERUNG_CRON`      | `0 0 1 * * *` | Wann der Anonymisierungs-Lauf startet (Spring-Cron: Sekunde Minute Stunde Tag Monat Wochentag). |
+| `ELTERNSPRECHTAG_ANONYMISIERUNG_EMAIL`     | `noreply@openclassware.de` | Die E-Mail, die jede anonymisierte Buchung statt der Elternadresse trägt. Sollte keine Post annehmen; darf nicht leer sein. |
 
 Die Anonymisierung ist endgültig: Eine nachträglich verlängerte Frist holt bereits ersetzte Namen
 nicht zurück.

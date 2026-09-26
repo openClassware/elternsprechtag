@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 class TerminTest {
 
   private static final LocalDateTime JETZT = LocalDateTime.of(2026, 7, 20, 14, 0);
+  private static final String EMAIL = "anonym@schule.example";
 
   private final LehrkraftId lehrkraft = LehrkraftId.neu();
   private final SprechtagId sprechtag = SprechtagId.neu();
@@ -293,14 +294,14 @@ class TerminTest {
     termin.buche(familie("schmidt"), ziel(), new Notiz("Frage"), JETZT);
     termin.ereignisseAbholen();
 
-    boolean geaendert = termin.anonymisiere(Pseudonymisierung.mitSeed("ab12"));
+    boolean geaendert = termin.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL));
 
     assertThat(geaendert).isTrue();
     assertThat(termin.buchungen())
         .extracting(Buchung::familie)
         .containsExactly(
-            new Familie("Eltern-ab12-001", "Schueler-ab12-001", Pseudonymisierung.EMAIL),
-            new Familie("Eltern-ab12-002", "Schueler-ab12-002", Pseudonymisierung.EMAIL));
+            new Familie("Eltern-ab12-001", "Schueler-ab12-001", EMAIL),
+            new Familie("Eltern-ab12-002", "Schueler-ab12-002", EMAIL));
     assertThat(termin.buchungen()).allSatisfy(b -> assertThat(b.notiz()).isEmpty());
     assertThat(termin.ereignisseAbholen()).isEmpty();
   }
@@ -313,7 +314,7 @@ class TerminTest {
     BuchungId aktiv = termin.buche(familie("mueller"), ziel, null, JETZT);
     termin.erinnereBuchung(aktiv, JETZT.plusDays(1));
 
-    termin.anonymisiere(Pseudonymisierung.mitSeed("ab12"));
+    termin.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL));
 
     Buchung buchung = termin.aktiveBuchung().orElseThrow();
     assertThat(buchung.id()).isEqualTo(aktiv);
@@ -326,6 +327,6 @@ class TerminTest {
 
   @Test
   void anonymisiere_ohneBuchung_aendertNichts() {
-    assertThat(freierTermin().anonymisiere(Pseudonymisierung.mitSeed("ab12"))).isFalse();
+    assertThat(freierTermin().anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL))).isFalse();
   }
 }

@@ -96,8 +96,9 @@ Nicht „Deadline".
   dem Abschluss, und gilt deshalb genauso für einen **abgesagten** Sprechtag.
 - **Anonymisierung** — was nach Ablauf der Frist geschieht: Elternname, Schülername und E-Mail
   jeder Buchung, auch einer stornierten, weichen einem **Pseudonym** des Laufs (`Eltern-<seed>-001`,
-  `Schueler-<seed>-001`, `noreply@openclassware.de`), die Notiz wird geleert. Die Buchung bleibt,
-  ihr Status und die Belegung des Termins auch — übrig bleibt die Auslastung.
+  `Schueler-<seed>-001`, eine eingestellte Ersatz-E-Mail, Default `noreply@openclassware.de`), die
+  Notiz wird geleert. Die Buchung bleibt, ihr Status und die Belegung des Termins auch — übrig
+  bleibt die Auslastung.
 - **`anonymisiertAm`** — der Zeitpunkt am Sprechtag, an dem der Lauf fertig war. Gesetzt erst,
   nachdem alle Termine anonymisiert sind; fehlt er, ist der Sprechtag noch nicht (vollständig)
   anonymisiert.

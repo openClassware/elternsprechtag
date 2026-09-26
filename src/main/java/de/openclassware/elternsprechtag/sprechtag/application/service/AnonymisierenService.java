@@ -26,8 +26,9 @@ import org.springframework.stereotype.Service;
  * werden dabei nur noch einmal überschrieben. Der Lauf ist damit idempotent, ohne dass eine
  * Transaktion mehr als ein Aggregat umfasst ({@link AnonymisierungsSchrittService}).
  *
- * <p>Die Frist ist Betriebseinstellung ({@code elternsprechtag.aufbewahrungsfrist-tage}), gezählt
- * ab der Endzeit des Sprechtags, nicht ab dem Abschluss (#124).
+ * <p>Frist und Ersatz-E-Mail sind Betriebseinstellung ({@code elternsprechtag.aufbewahrungsfrist-tage},
+ * {@code elternsprechtag.anonymisierung-email}). Die Frist zählt ab der Endzeit des Sprechtags,
+ * nicht ab dem Abschluss (#124).
  */
 @Service
 @Slf4j
@@ -38,24 +39,30 @@ class AnonymisierenService implements Anonymisieren {
   private final Sprechtage sprechtage;
   private final AnonymisierungsSchrittService schritte;
   private final Aufbewahrungsfrist frist;
+  private final String ersatzEmail;
 
   AnonymisierenService(
       SprechtagAnsichten sprechtagAnsichten,
       TerminAnsichten terminAnsichten,
       Sprechtage sprechtage,
       AnonymisierungsSchrittService schritte,
-      @Value("${elternsprechtag.aufbewahrungsfrist-tage}") int fristTage) {
+      @Value("${elternsprechtag.aufbewahrungsfrist-tage}") int fristTage,
+      @Value("${elternsprechtag.anonymisierung-email}") String ersatzEmail) {
     this.sprechtagAnsichten = sprechtagAnsichten;
     this.terminAnsichten = terminAnsichten;
     this.sprechtage = sprechtage;
     this.schritte = schritte;
     this.frist = Aufbewahrungsfrist.vonTagen(fristTage);
+    // Einmal zur Probe: Eine leer eingestellte Adresse soll den Start scheitern lassen, nicht erst
+    // den nächtlichen Lauf.
+    Pseudonymisierung.neu(ersatzEmail);
+    this.ersatzEmail = ersatzEmail;
   }
 
   @Override
   public int anonymisiere() {
     LocalDateTime jetzt = LocalDateTime.now();
-    Pseudonymisierung pseudonyme = Pseudonymisierung.neu();
+    Pseudonymisierung pseudonyme = Pseudonymisierung.neu(ersatzEmail);
     int anonymisiert = 0;
     LocalDate spaetestensAm = frist.spaetestesDatumAbgelaufenBis(jetzt.toLocalDate());
     for (SprechtagId id : sprechtagAnsichten.anonymisierungsKandidaten(spaetestensAm)) {
