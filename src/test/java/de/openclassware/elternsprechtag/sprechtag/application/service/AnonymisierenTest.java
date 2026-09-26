@@ -1,11 +1,15 @@
 package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import de.openclassware.elternsprechtag.sprechtag.AbstractServiceTest;
 import de.openclassware.elternsprechtag.sprechtag.ServiceTest;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Anonymisieren;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsWunsch;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
@@ -134,6 +138,66 @@ class AnonymisierenTest extends AbstractServiceTest {
         .singleElement()
         .satisfies(b -> assertThat(b.familie().elternName()).matches("Eltern-[0-9a-f]{8}-001"));
     assertThat(ladeSprechtag(f.sprechtag().id().wert()).anonymisiertAm()).isPresent();
+  }
+
+  /** Solange die Frist läuft, trägt die Auswertung keinen Vermerk — sie soll keinen Hinweis zeigen. */
+  @Test
+  void werteAus_vorAblaufDerFrist_ohneAnonymisierungsdatum() {
+    Fixture f = veroeffentlichterSprechtag(LocalDate.now().minusDays(29));
+    buche(f.lehrauftrag(), alleTermine().get(0), "mueller");
+    schliesseAb(f.sprechtag().id().wert());
+    anonymisieren.anonymisiere();
+
+    SprechtagAuswertung auswertung = auswerten.werteAus(f.sprechtag().id().wert()).orElseThrow();
+
+    assertThat(auswertung.anonymisiertAm()).isNull();
+    assertThat(auswertung.plaene().get(0).zeilen())
+        .singleElement()
+        .satisfies(zeile -> assertThat(zeile.elternName()).isEqualTo("Eltern mueller"));
+  }
+
+  /**
+   * Nach dem Lauf erklärt das Datum, was die Auswertung zeigt (Issue #127): Pseudonyme statt Namen,
+   * leere Notizen — Zähler und Zeilen je Lehrkraft bleiben, denn aus ihnen wird der nächste
+   * Sprechtag geplant.
+   */
+  @Test
+  void werteAus_nachDemLauf_traegtDasDatumDesLaufsUndDieUnveraenderteAuslastung() {
+    Fixture f = veroeffentlichterSprechtag(LocalDate.now().minusDays(31));
+    buche(f.lehrauftrag(), alleTermine().get(0), "mueller");
+    buche(f.lehrauftrag(), alleTermine().get(2), "schmidt");
+    entfallenLassen.entfallenLassen(List.of(alleTermine().get(3).id().wert()));
+    schliesseAb(f.sprechtag().id().wert());
+    UUID sprechtagId = f.sprechtag().id().wert();
+    SprechtagAuswertung vorher = auswerten.werteAus(sprechtagId).orElseThrow();
+    assertThat(vorher.plaene().get(0).entfalleneAnzahl()).isEqualTo(1);
+
+    anonymisieren.anonymisiere();
+
+    SprechtagAuswertung nachher = auswerten.werteAus(sprechtagId).orElseThrow();
+    LocalDate tagDesLaufs = ladeSprechtag(sprechtagId).anonymisiertAm().orElseThrow().toLocalDate();
+    assertThat(nachher.anonymisiertAm()).isEqualTo(tagDesLaufs);
+    assertThat(nachher.plaene())
+        .extracting(
+            LehrkraftPlan::lehrerId,
+            LehrkraftPlan::anzahl,
+            LehrkraftPlan::entfalleneAnzahl,
+            p -> p.zeilen().size())
+        .containsExactlyElementsOf(
+            vorher.plaene().stream()
+                .map(p -> tuple(p.lehrerId(), p.anzahl(), p.entfalleneAnzahl(), p.zeilen().size()))
+                .toList());
+    assertThat(nachher.plaene().get(0).zeilen())
+        .extracting(BuchungsZeile::startzeit, BuchungsZeile::klasse, BuchungsZeile::fach)
+        .containsExactly(
+            tuple(LocalTime.of(14, 0), "5a", "Deutsch"), tuple(LocalTime.of(14, 30), "5a", "Deutsch"));
+    assertThat(nachher.plaene().get(0).zeilen())
+        .allSatisfy(
+            zeile -> {
+              assertThat(zeile.elternName()).matches("Eltern-[0-9a-f]{8}-00[12]");
+              assertThat(zeile.schuelerName()).matches("Schueler-[0-9a-f]{8}-00[12]");
+              assertThat(zeile.notiz()).isNullOrEmpty();
+            });
   }
 
   @Test

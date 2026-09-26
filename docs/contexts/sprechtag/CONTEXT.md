@@ -101,7 +101,7 @@ Nicht „Deadline".
   bleibt die Auslastung.
 - **`anonymisiertAm`** — der Zeitpunkt am Sprechtag, an dem der Lauf fertig war. Gesetzt erst,
   nachdem alle Termine anonymisiert sind; fehlt er, ist der Sprechtag noch nicht (vollständig)
-  anonymisiert.
+  anonymisiert. Die Auswertung zeigt seinen Tag im Hinweis, der die Pseudonyme erklärt.
 
 Sprachgebrauch: **anonymisieren**, nicht „löschen" — es verschwindet kein Datensatz.
 

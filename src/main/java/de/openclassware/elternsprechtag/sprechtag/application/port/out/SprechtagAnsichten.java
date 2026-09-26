@@ -4,6 +4,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -69,6 +70,9 @@ public interface SprechtagAnsichten {
    * <p>Der {@code status} steht mit dabei, weil die Auswertung daran hängt, ob sie überhaupt eine
    * Storno-Aktion anbietet. Er darf veraltet sein wie jedes Read-Modell — verbindlich geprüft wird
    * beim Schreiben am Aggregat.
+   *
+   * <p>{@code anonymisiertAm} ist {@code null}, solange der Anonymisierungs-Lauf den Sprechtag nicht
+   * vollständig erledigt hat (Issue #126); die Auswertung erklärt damit die Pseudonyme (#127).
    */
   record Kopf(
       SprechtagId id,
@@ -77,7 +81,8 @@ public interface SprechtagAnsichten {
       String ort,
       String schulkontakt,
       SprechtagStatus status,
-      List<UUID> klasseIds) {}
+      List<UUID> klasseIds,
+      LocalDateTime anonymisiertAm) {}
 
   /** Ein Kandidat für {@link #mitErinnerung()} — Datum und Vorlauf, mehr braucht der Scheduler nicht. */
   record ErinnerungsKandidat(SprechtagId id, LocalDate datum, ErinnerungsVorlauf erinnerungsVorlauf) {}
