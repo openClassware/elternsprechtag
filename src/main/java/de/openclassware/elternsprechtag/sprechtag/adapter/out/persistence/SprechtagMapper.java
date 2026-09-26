@@ -39,7 +39,8 @@ final class SprechtagMapper {
         klassen,
         zeile.getStatus(),
         zeile.getErinnerungVorlauf(),
-        Anmeldefrist.vonTagen(zeile.getAnmeldefristTage()));
+        Anmeldefrist.vonTagen(zeile.getAnmeldefristTage()),
+        zeile.getAnonymisiertAm());
   }
 
   static SprechtagZeile zuZeile(Sprechtag sprechtag) {
@@ -61,6 +62,7 @@ final class SprechtagMapper {
         sprechtag.status(),
         sprechtag.erinnerungsVorlauf(),
         sprechtag.anmeldefrist().tageVorher(),
+        sprechtag.anonymisiertAm().orElse(null),
         sprechtag.version(),
         klassen);
   }

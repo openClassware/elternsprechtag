@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.application.port.out;
 
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -65,4 +66,10 @@ public interface TerminAnsichten {
 
   /** {@code anzahl} ist stets größer null — wer keinen entfallenen Termin hat, fehlt in der Liste. */
   record EntfalleneZeile(UUID lehrkraftId, int anzahl) {}
+
+  /**
+   * Die Termine eines Sprechtags, an denen mindestens eine Buchung hängt — aktiv oder storniert. Die
+   * Kandidaten des Anonymisierungs-Laufs (Issue #126); ersetzt wird am {@code Termin}-Aggregat.
+   */
+  List<TerminId> mitBuchungen(SprechtagId sprechtag);
 }

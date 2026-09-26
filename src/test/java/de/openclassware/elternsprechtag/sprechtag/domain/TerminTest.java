@@ -283,4 +283,49 @@ class TerminTest {
     assertThatThrownBy(() -> termin.erinnereBuchung(BuchungId.neu(), JETZT))
         .isInstanceOf(BuchungNichtGefundenException.class);
   }
+
+  /** Issue #126: alle Buchungen, auch stornierte — die Familie weicht einem Pseudonym. */
+  @Test
+  void anonymisiere_ersetztFamilieUndLeertNotiz_auchBeiStornierten() {
+    Termin termin = freierTermin();
+    BuchungId storniert = termin.buche(familie("mueller"), ziel(), new Notiz("Anliegen"), JETZT);
+    termin.storniere(storniert);
+    termin.buche(familie("schmidt"), ziel(), new Notiz("Frage"), JETZT);
+    termin.ereignisseAbholen();
+
+    boolean geaendert = termin.anonymisiere(Pseudonymisierung.mitSeed("ab12"));
+
+    assertThat(geaendert).isTrue();
+    assertThat(termin.buchungen())
+        .extracting(Buchung::familie)
+        .containsExactly(
+            new Familie("Eltern-ab12-001", "Schueler-ab12-001", Pseudonymisierung.EMAIL),
+            new Familie("Eltern-ab12-002", "Schueler-ab12-002", Pseudonymisierung.EMAIL));
+    assertThat(termin.buchungen()).allSatisfy(b -> assertThat(b.notiz()).isEmpty());
+    assertThat(termin.ereignisseAbholen()).isEmpty();
+  }
+
+  /** Die Auslastung ist das Wissen, das bleiben soll: Status, Ziel und Belegung bleiben stehen. */
+  @Test
+  void anonymisiere_laesstStatusZielUndBelegungStehen() {
+    Termin termin = freierTermin();
+    Buchungsziel ziel = ziel();
+    BuchungId aktiv = termin.buche(familie("mueller"), ziel, null, JETZT);
+    termin.erinnereBuchung(aktiv, JETZT.plusDays(1));
+
+    termin.anonymisiere(Pseudonymisierung.mitSeed("ab12"));
+
+    Buchung buchung = termin.aktiveBuchung().orElseThrow();
+    assertThat(buchung.id()).isEqualTo(aktiv);
+    assertThat(buchung.status()).isEqualTo(Buchungsstatus.ZUGESAGT);
+    assertThat(buchung.ziel()).isEqualTo(ziel);
+    assertThat(buchung.erstelltAm()).isEqualTo(JETZT);
+    assertThat(buchung.erinnerungVersendetAm()).contains(JETZT.plusDays(1));
+    assertThat(termin.istBuchbar()).isFalse();
+  }
+
+  @Test
+  void anonymisiere_ohneBuchung_aendertNichts() {
+    assertThat(freierTermin().anonymisiere(Pseudonymisierung.mitSeed("ab12"))).isFalse();
+  }
 }

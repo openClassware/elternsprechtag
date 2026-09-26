@@ -167,6 +167,21 @@ erfundene Adresse.
 Ist die Variable nicht gesetzt, bietet die Nachtrag-Ansicht den Schalter deshalb **gar nicht erst
 an** — der Organizer muss dann für jede nachgetragene Familie eine echte E-Mail-Adresse erfassen.
 
+## Aufbewahrungsfrist
+
+Wie lange die personenbezogenen Angaben der Buchungen nach einem Sprechtag stehen bleiben. Gezählt
+wird ab dem **Ende des Sprechtags** (Datum und Endzeit), nicht ab seinem Abschluss — auch für
+abgesagte Sprechtage. Danach anonymisiert ein nächtlicher Lauf die Buchungen (siehe
+[Welche Daten die Anwendung speichert](#welche-daten-die-anwendung-speichert)).
+
+| Umgebungsvariable                         | Default       | Bedeutung                                                                          |
+|--------------------------------------------|---------------|--------------------------------------------------------------------------------------|
+| `ELTERNSPRECHTAG_AUFBEWAHRUNGSFRIST_TAGE`  | `30`          | Frist in Tagen, mindestens 1.                                                        |
+| `ELTERNSPRECHTAG_ANONYMISIERUNG_CRON`      | `0 0 1 * * *` | Wann der Anonymisierungs-Lauf startet (Spring-Cron: Sekunde Minute Stunde Tag Monat Wochentag). |
+
+Die Anonymisierung ist endgültig: Eine nachträglich verlängerte Frist holt bereits ersetzte Namen
+nicht zurück.
+
 ## Weitere Werte
 
 | Umgebungsvariable                  | Default | Bedeutung                                                                                                                  |
@@ -235,8 +250,13 @@ Daten einzutragen, ist zu empfehlen.
 - **Kein Tracking.** Die Anwendung bindet keine externen Dienste, keine Analyse-Werkzeuge und
   keine Ressourcen von Drittservern ein. Sitzungsdaten hält Vaadin serverseitig; ein
   Sitzungs-Cookie wird gesetzt.
-- **Keine automatische Löschung.** Buchungen bleiben in der Datenbank stehen, bis sie jemand
-  entfernt. Eine Aufbewahrungsfrist umzusetzen ist Sache der betreibenden Schule.
+- **Anonymisierung nach der Aufbewahrungsfrist.** Nach Ablauf der Frist (Default 30 Tage ab dem
+  Ende des Sprechtags, siehe [Aufbewahrungsfrist](#aufbewahrungsfrist)) ersetzt ein nächtlicher
+  Lauf Name des Kindes, Name der Eltern und E-Mail-Adresse jeder Buchung durch Pseudonyme und
+  leert die Notiz — auch bei stornierten Buchungen und abgesagten Sprechtagen. Die Buchung selbst
+  bleibt als Zahl stehen (wann, bei welcher Lehrkraft), damit die Auslastung für die Planung des
+  nächsten Sprechtags erhalten bleibt. Datenbank-Backups erfasst das nicht — deren
+  Aufbewahrung regelt die betreibende Schule.
 
 ### Verantwortlichkeit
 

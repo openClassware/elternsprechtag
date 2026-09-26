@@ -3,6 +3,7 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -61,6 +62,14 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
        group by t.lehrer_id
       """;
 
+  private static final String MIT_BUCHUNGEN =
+      """
+      select t.id
+        from termin t
+       where t.sprechtag_id = :sprechtagId
+         and exists (select 1 from buchungen b where b.termin_id = t.id)
+      """;
+
   private final NamedParameterJdbcTemplate jdbc;
 
   @Override
@@ -106,5 +115,13 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
         (rs, zeile) ->
             new EntfalleneZeile(
                 rs.getObject("lehrer_id", java.util.UUID.class), rs.getInt("anzahl")));
+  }
+
+  @Override
+  public List<TerminId> mitBuchungen(SprechtagId sprechtag) {
+    return jdbc.query(
+        MIT_BUCHUNGEN,
+        Map.of("sprechtagId", sprechtag.wert()),
+        (rs, zeile) -> TerminId.von(rs.getObject("id", java.util.UUID.class)));
   }
 }

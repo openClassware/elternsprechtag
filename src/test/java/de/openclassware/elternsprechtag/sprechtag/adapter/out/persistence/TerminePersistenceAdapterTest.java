@@ -12,6 +12,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Familie;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrauftragId;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Notiz;
+import de.openclassware.elternsprechtag.sprechtag.domain.Pseudonymisierung;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
@@ -153,6 +154,28 @@ class TerminePersistenceAdapterTest {
     Termin erneutGeladen = termine.lade(termin.id()).orElseThrow();
     assertThat(erneutGeladen.aktiveBuchung().orElseThrow().erinnerungVersendetAm())
         .contains(BEGINN.plusDays(2));
+  }
+
+  /** Issue #126: Das Pseudonym landet in der Zeile, die Notiz-Spalte wird leer. */
+  @Test
+  void anonymisierteBuchung_uebersteht_speichernUndLaden() {
+    Termin termin = neuerTermin();
+    BuchungId buchung = termin.buche(familie("mueller"), ziel(), new Notiz("Anliegen"), BEGINN);
+    termine.speichere(termin);
+
+    Termin geladen = termine.lade(termin.id()).orElseThrow();
+    geladen.anonymisiere(Pseudonymisierung.mitSeed("ab12"));
+    termine.speichere(geladen);
+
+    Buchung anonymisiert = termine.lade(termin.id()).orElseThrow().aktiveBuchung().orElseThrow();
+    assertThat(anonymisiert.id()).isEqualTo(buchung);
+    assertThat(anonymisiert.familie())
+        .isEqualTo(new Familie("Eltern-ab12-001", "Schueler-ab12-001", Pseudonymisierung.EMAIL));
+    assertThat(anonymisiert.notiz()).isEmpty();
+    assertThat(
+            jdbc.queryForObject(
+                "select notiz from buchungen where id = ?", String.class, buchung.wert()))
+        .isNull();
   }
 
   @Test

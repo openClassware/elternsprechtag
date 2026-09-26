@@ -15,9 +15,9 @@ public final class Buchung {
 
   private final BuchungId id;
   private final LocalDateTime erstelltAm;
-  private final Familie familie;
+  private Familie familie;
   private final Buchungsziel ziel;
-  private final Notiz notiz;
+  private Notiz notiz;
   private Buchungsstatus status;
   private LocalDateTime erinnerungVersendetAm;
 
@@ -90,6 +90,16 @@ public final class Buchung {
     }
     erinnerungVersendetAm = Objects.requireNonNull(jetzt, "jetzt");
     return true;
+  }
+
+  /**
+   * Ersetzt die Familie durch ein Pseudonym und leert die Notiz (Issue #126). Nur für
+   * {@link Termin}. Status, Ziel und Zeitstempel bleiben — sie sind die Auslastung, nicht die
+   * Person. Ein zweiter Aufruf überschreibt das Pseudonym nur ein weiteres Mal.
+   */
+  void anonymisiere(Familie ersatz) {
+    familie = Objects.requireNonNull(ersatz, "ersatz");
+    notiz = null;
   }
 
   public boolean istAktiv() {

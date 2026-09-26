@@ -3,6 +3,7 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -49,6 +50,10 @@ class SprechtagZeile {
   private SprechtagStatus status;
   private ErinnerungsVorlauf erinnerungVorlauf;
   private int anmeldefristTage;
+
+  /** {@code null} heißt: noch nicht anonymisiert (Issue #126). */
+  private LocalDateTime anonymisiertAm;
+
   @Version private long version;
 
   /**

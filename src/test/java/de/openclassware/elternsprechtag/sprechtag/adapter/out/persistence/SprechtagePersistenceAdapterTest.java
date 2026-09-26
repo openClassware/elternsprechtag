@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
 import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
+import de.openclassware.elternsprechtag.sprechtag.domain.Aufbewahrungsfrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.KlasseId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Schulkontakt;
@@ -14,6 +15,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Zeitfenster;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -115,6 +117,21 @@ class SprechtagePersistenceAdapterTest {
     assertThat(geladen.slotdauer()).isEqualTo(Slotdauer.vonMinuten(15));
     assertThat(geladen.status()).isEqualTo(SprechtagStatus.ENTWURF);
     assertThat(geladen.klassen()).containsExactlyInAnyOrder(klasse5a, klasse7b);
+    assertThat(geladen.anonymisiertAm()).isEmpty();
+  }
+
+  /** Issue #126: Der Vermerk der Anonymisierung übersteht Speichern und Laden. */
+  @Test
+  void anonymisiertAm_uebersteht_speichernUndLaden() {
+    Sprechtag sprechtag = entwurf(klasse5a);
+    sprechtag.veroeffentliche();
+    sprechtag.sageAb();
+    LocalDateTime jetzt = DATUM.plusDays(31).atTime(3, 0);
+    sprechtag.vermerkeAnonymisierung(Aufbewahrungsfrist.vonTagen(30), jetzt);
+
+    sprechtage.speichere(sprechtag);
+
+    assertThat(sprechtage.lade(sprechtag.id()).orElseThrow().anonymisiertAm()).contains(jetzt);
   }
 
   /**

@@ -180,6 +180,24 @@ public final class Termin extends AggregateRoot {
     return true;
   }
 
+  /**
+   * Ersetzt die Familie jeder Buchung dieses Slots durch ein Pseudonym des Laufs und leert ihre
+   * Notiz — für den Anonymisierungs-Lauf nach Ablauf der {@link Aufbewahrungsfrist} (Issue #126).
+   *
+   * <p>Alle Buchungen, auch stornierte: Personenbezogen sind sie genauso. Status, Verfügbarkeit und
+   * Belegung bleiben unverändert — die Auslastung ist das Wissen, aus dem der nächste Sprechtag
+   * geplant wird. Kein Ereignis: Es gibt niemanden mehr, dem etwas mitzuteilen wäre.
+   *
+   * @return ob der Slot überhaupt Buchungen trug
+   */
+  public boolean anonymisiere(Pseudonymisierung pseudonyme) {
+    Objects.requireNonNull(pseudonyme, "pseudonyme");
+    for (Buchung buchung : buchungen) {
+      buchung.anonymisiere(pseudonyme.naechsteFamilie());
+    }
+    return !buchungen.isEmpty();
+  }
+
   /** Angeboten und frei. Abgeleitet, nicht gespeichert. */
   public boolean istBuchbar() {
     return verfuegbarkeit == Verfuegbarkeit.VERFUEGBAR && aktiveBuchung().isEmpty();

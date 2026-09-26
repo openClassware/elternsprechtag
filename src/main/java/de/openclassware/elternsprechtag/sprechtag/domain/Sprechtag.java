@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Ein Sprechtag — Aggregat-Wurzel über seinen Lebenszyklus und seine Zeitstruktur.
@@ -48,6 +49,9 @@ public final class Sprechtag extends AggregateRoot {
   private ErinnerungsVorlauf erinnerungsVorlauf;
   private Anmeldefrist anmeldefrist;
 
+  /** Wann die Buchungen dieses Sprechtags anonymisiert wurden; {@code null} heißt: noch nicht. */
+  private LocalDateTime anonymisiertAm;
+
   private Sprechtag(
       SprechtagId id,
       long version,
@@ -62,7 +66,8 @@ public final class Sprechtag extends AggregateRoot {
       List<KlasseId> klassen,
       SprechtagStatus status,
       ErinnerungsVorlauf erinnerungsVorlauf,
-      Anmeldefrist anmeldefrist) {
+      Anmeldefrist anmeldefrist,
+      LocalDateTime anonymisiertAm) {
     this.id = Objects.requireNonNull(id, "id");
     this.version = version;
     this.titel = pflichtTitel(titel);
@@ -77,6 +82,7 @@ public final class Sprechtag extends AggregateRoot {
     this.status = Objects.requireNonNull(status, "status");
     this.erinnerungsVorlauf = Objects.requireNonNull(erinnerungsVorlauf, "erinnerungsVorlauf");
     this.anmeldefrist = Objects.requireNonNull(anmeldefrist, "anmeldefrist");
+    this.anonymisiertAm = anonymisiertAm;
   }
 
   /** Ein frischer Entwurf. Nur so entsteht ein Sprechtag — jeder beginnt als Entwurf. */
@@ -106,12 +112,15 @@ public final class Sprechtag extends AggregateRoot {
         klassen,
         SprechtagStatus.ENTWURF,
         erinnerungsVorlauf,
-        anmeldefrist);
+        anmeldefrist,
+        null);
   }
 
   /**
    * Setzt einen gespeicherten Sprechtag unverändert wieder zusammen — für den Persistenz-Adapter.
    * Prüft keine Übergänge und meldet kein Ereignis.
+   *
+   * @param anonymisiertAm darf {@code null} sein — dann ist noch nicht anonymisiert worden
    */
   public static Sprechtag rekonstruiere(
       SprechtagId id,
@@ -127,7 +136,8 @@ public final class Sprechtag extends AggregateRoot {
       List<KlasseId> klassen,
       SprechtagStatus status,
       ErinnerungsVorlauf erinnerungsVorlauf,
-      Anmeldefrist anmeldefrist) {
+      Anmeldefrist anmeldefrist,
+      LocalDateTime anonymisiertAm) {
     return new Sprechtag(
         id,
         version,
@@ -142,7 +152,8 @@ public final class Sprechtag extends AggregateRoot {
         klassen,
         status,
         erinnerungsVorlauf,
-        anmeldefrist);
+        anmeldefrist,
+        anonymisiertAm);
   }
 
   /**
@@ -283,6 +294,37 @@ public final class Sprechtag extends AggregateRoot {
       return false;
     }
     wechsleNach(SprechtagStatus.ABGESCHLOSSEN);
+    return true;
+  }
+
+  /**
+   * Ob die Buchungen dieses Sprechtags jetzt zu anonymisieren sind (Issue #126): Die {@link
+   * Aufbewahrungsfrist} ist ab der {@link #endzeit()} verstrichen, und anonymisiert wurde noch
+   * nicht. Der Status zählt nicht — auch ein abgesagter Sprechtag hat Buchungen getragen, und ob der
+   * Abschluss-Lauf einmal ausgefallen ist, ändert an der Frist nichts.
+   *
+   * <p>Einzige Ausnahme ist der Entwurf: Er hat nie Buchungen getragen und bleibt änderbar. Ein
+   * Vermerk an ihm überlebte ein neues Datum und hielte den Lauf später von echten Buchungen fern.
+   */
+  public boolean istAnonymisierungFaellig(Aufbewahrungsfrist frist, LocalDateTime jetzt) {
+    return status != SprechtagStatus.ENTWURF
+        && anonymisiertAm == null
+        && frist.istAbgelaufen(endzeit(), jetzt);
+  }
+
+  /**
+   * Vermerkt, dass die Buchungen dieses Sprechtags anonymisiert sind. Der Use Case ruft das erst,
+   * <em>nachdem</em> er jeden Termin anonymisiert und gespeichert hat — bricht er vorher ab, bleibt
+   * der Sprechtag fällig und der nächste Lauf wiederholt ihn.
+   *
+   * @return ob der Vermerk gesetzt wurde; {@code false}, wenn {@link #istAnonymisierungFaellig}
+   *     nicht zutrifft — ein schon gesetzter Zeitpunkt bleibt stehen
+   */
+  public boolean vermerkeAnonymisierung(Aufbewahrungsfrist frist, LocalDateTime jetzt) {
+    if (!istAnonymisierungFaellig(frist, jetzt)) {
+      return false;
+    }
+    anonymisiertAm = jetzt;
     return true;
   }
 
@@ -436,6 +478,11 @@ public final class Sprechtag extends AggregateRoot {
 
   public Anmeldefrist anmeldefrist() {
     return anmeldefrist;
+  }
+
+  /** Wann die Buchungen anonymisiert wurden; leer, solange die Aufbewahrungsfrist läuft. */
+  public Optional<LocalDateTime> anonymisiertAm() {
+    return Optional.ofNullable(anonymisiertAm);
   }
 
   /** Der letzte Tag, an dem Eltern über den Link buchen können — einschließlich. */
