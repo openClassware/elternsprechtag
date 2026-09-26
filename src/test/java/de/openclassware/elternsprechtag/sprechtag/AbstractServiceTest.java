@@ -241,7 +241,7 @@ public abstract class AbstractServiceTest {
       }
       case ABGESCHLOSSEN -> {
         sprechtag.veroeffentliche();
-        sprechtag.schliesseAb();
+        sprechtag.schliesseAbWennVorbei(sprechtag.endzeit().plusMinutes(1));
       }
     }
     // Die Ereignisse der Fixture gehören niemandem: Sie sind nicht der Vorgang, den der Test prüft.
@@ -255,5 +255,17 @@ public abstract class AbstractServiceTest {
     return sprechtage
         .lade(SprechtagId.von(id))
         .orElseThrow();
+  }
+
+  /**
+   * Schließt einen gespeicherten, veröffentlichten Sprechtag ab, als wäre seine Endzeit verstrichen —
+   * der einzige Weg dorthin ist der des Tagesjobs (#166).
+   */
+  protected void schliesseAb(UUID id) {
+    Sprechtag sprechtag = ladeSprechtag(id);
+    if (!sprechtag.schliesseAbWennVorbei(sprechtag.endzeit().plusMinutes(1))) {
+      throw new IllegalStateException("Nicht abschließbar im Status " + sprechtag.status());
+    }
+    sprechtage.speichere(sprechtag);
   }
 }

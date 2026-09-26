@@ -230,13 +230,10 @@ public final class Sprechtag extends AggregateRoot {
     melde(new SprechtagAbgesagt(id));
   }
 
-  /** Schließt den Sprechtag ab — er hat stattgefunden, die Auswertung bleibt lesbar. */
-  public void schliesseAb() {
-    wechsleNach(SprechtagStatus.ABGESCHLOSSEN);
-  }
-
   /**
    * Schließt den Sprechtag ab, sobald seine Endzeit verstrichen ist — der Tagesjob (Issue #124).
+   * Das ist der einzige Weg nach {@link SprechtagStatus#ABGESCHLOSSEN}: Der Abschluss ist eine
+   * Tatsache, kein Handgriff — und braucht deshalb auch keinen Rückweg (#166).
    *
    * @param jetzt der Zeitpunkt, gegen den die Endzeit geprüft wird
    * @return ob der Sprechtag dabei abgeschlossen wurde
@@ -245,7 +242,7 @@ public final class Sprechtag extends AggregateRoot {
     if (status != SprechtagStatus.VEROEFFENTLICHT || !endzeit().isBefore(jetzt)) {
       return false;
     }
-    schliesseAb();
+    wechsleNach(SprechtagStatus.ABGESCHLOSSEN);
     return true;
   }
 

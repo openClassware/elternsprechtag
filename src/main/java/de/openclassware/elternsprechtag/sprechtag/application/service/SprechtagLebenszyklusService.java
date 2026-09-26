@@ -74,15 +74,6 @@ class SprechtagLebenszyklusService
     return buchungsAnsichten.zaehleAktiveElternAdressen(SprechtagId.von(id));
   }
 
-  @Override
-  @Transactional
-  public void schliesseAb(UUID id) {
-    Sprechtag sprechtag = lade(id);
-    sprechtag.schliesseAb();
-    sprechtage.speichere(sprechtag);
-    veroeffentliche(sprechtag.ereignisseAbholen());
-  }
-
   /**
    * Bewusst ohne umschließende Transaktion: Jeder Sprechtag wird in {@link SprechtagAbschlussService}
    * für sich abgeschlossen, ein Fehler bei einem lässt die übrigen stehen — der nächste Lauf holt

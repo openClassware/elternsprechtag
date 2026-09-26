@@ -21,13 +21,13 @@ public class SprechtagTable extends Div {
 
   /**
    * Display order of the status actions offered in the row menu. Angeboten wird nur, was
-   * {@link SprechtagStatus#erlaubteUebergaenge()} hergibt — und selbst das nur als Vorschlag: Ob der
-   * Weg wirklich gangbar ist, entscheidet das Aggregat beim Klick.
+   * {@link SprechtagStatus#waehlbareUebergaenge()} hergibt — und selbst das nur als Vorschlag: Ob
+   * der Weg wirklich gangbar ist, entscheidet das Aggregat beim Klick. Den Abschluss gibt es hier
+   * nicht; ihn stellt der Tagesjob fest (#166).
    */
   private static final List<SprechtagStatus> TRANSITION_ORDER =
       List.of(
           SprechtagStatus.VEROEFFENTLICHT,
-          SprechtagStatus.ABGESCHLOSSEN,
           SprechtagStatus.ENTWURF,
           SprechtagStatus.ABGESAGT);
 
@@ -167,7 +167,7 @@ public class SprechtagTable extends Div {
     }
 
     for (SprechtagStatus target : TRANSITION_ORDER) {
-      if (sprechtag.status().erlaubteUebergaenge().contains(target)) {
+      if (sprechtag.status().waehlbareUebergaenge().contains(target)) {
         contextMenu.addItem(
             createMenuItemContent(iconFor(target), labelKeyFor(target)),
             event -> onStatusChange.accept(sprechtag, target));
@@ -180,18 +180,18 @@ public class SprechtagTable extends Div {
   private VaadinIcon iconFor(SprechtagStatus target) {
     return switch (target) {
       case VEROEFFENTLICHT -> VaadinIcon.PLAY;
-      case ABGESCHLOSSEN -> VaadinIcon.CHECK;
       case ABGESAGT -> VaadinIcon.BAN;
       case ENTWURF -> VaadinIcon.PENCIL;
+      case ABGESCHLOSSEN -> throw new IllegalArgumentException("Kein Menüziel: " + target);
     };
   }
 
   private String labelKeyFor(SprechtagStatus target) {
     return switch (target) {
       case VEROEFFENTLICHT -> "manage-sprechtag.menu.activate";
-      case ABGESCHLOSSEN -> "manage-sprechtag.menu.complete";
       case ABGESAGT -> "manage-sprechtag.menu.cancel";
       case ENTWURF -> "manage-sprechtag.menu.draft";
+      case ABGESCHLOSSEN -> throw new IllegalArgumentException("Kein Menüziel: " + target);
     };
   }
 

@@ -282,31 +282,6 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
         .containsExactly(sprechtag.id());
   }
 
-  @Test
-  void abschliessen_meldetKeineAbsage() {
-    Sprechtag sprechtag =
-        persistSprechtag(
-            "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
-            SprechtagStatus.VEROEFFENTLICHT, persistKlasse("5a"));
-
-    abschliessen.schliesseAb(sprechtag.id().wert());
-
-    assertThat(events.stream(SprechtagAbgesagt.class)).isEmpty();
-    assertThat(ladeSprechtag(sprechtag.id().wert()).status())
-        .isEqualTo(SprechtagStatus.ABGESCHLOSSEN);
-  }
-
-  @Test
-  void abschliessen_einesEntwurfs_wirdAbgelehnt() {
-    Sprechtag sprechtag =
-        persistSprechtag(
-            "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
-            SprechtagStatus.ENTWURF, persistKlasse("5a"));
-
-    assertThatThrownBy(() -> abschliessen.schliesseAb(sprechtag.id().wert()))
-        .isInstanceOf(StatusuebergangException.class);
-  }
-
   // --- Zurück auf Entwurf ---------------------------------------------------------------------
 
   /** `ABDECKUNG.md` Z. 91 — zu früh veröffentlicht, noch keine Buchung: erlaubt. */

@@ -122,7 +122,7 @@ class StornierenTest extends AbstractServiceTest {
     Fixture f = veroeffentlichterSprechtag();
     UUID buchung =
         buche(f.lehrauftrag(), alleTermine().get(0), "Eltern Müller", "Lukas Müller");
-    abschliessen.schliesseAb(f.sprechtag().id().wert());
+    schliesseAb(f.sprechtag().id().wert());
 
     // Am Service vorbei an der Oberfläche: Die Auswertungs-Route ist per URL erreichbar.
     assertThatThrownBy(() -> stornieren.storniere(buchung))

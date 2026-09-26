@@ -47,6 +47,13 @@ class SprechtagTest {
     return sprechtag;
   }
 
+  /** Abgeschlossen auf dem einzigen Weg, den es gibt: nach der Endzeit (#166). */
+  private static Sprechtag abgeschlossen() {
+    Sprechtag sprechtag = veroeffentlicht();
+    sprechtag.schliesseAbWennVorbei(DATUM.plusDays(1).atStartOfDay());
+    return sprechtag;
+  }
+
   @Nested
   class Anlegen {
 
@@ -232,8 +239,7 @@ class SprechtagTest {
 
     @Test
     void abgeschlossenerSprechtagWirdNichtMehrBearbeitet() {
-      Sprechtag sprechtag = veroeffentlicht();
-      sprechtag.schliesseAb();
+      Sprechtag sprechtag = abgeschlossen();
 
       assertThatThrownBy(
               () ->
@@ -273,8 +279,7 @@ class SprechtagTest {
 
     @Test
     void abgeschlossenerSprechtagAendertDenErinnerungsVorlaufNichtMehr() {
-      Sprechtag sprechtag = veroeffentlicht();
-      sprechtag.schliesseAb();
+      Sprechtag sprechtag = abgeschlossen();
 
       assertThatThrownBy(
               () -> sprechtag.aendereErinnerungsVorlauf(ErinnerungsVorlauf.EIN_TAG))
@@ -305,23 +310,6 @@ class SprechtagTest {
       assertThat(sprechtag.status()).isEqualTo(SprechtagStatus.ABGESAGT);
       assertThat(sprechtag.ereignisseAbholen())
           .containsExactly(new SprechtagAbgesagt(sprechtag.id()));
-    }
-
-    @Test
-    void abschliessenMeldetNichts() {
-      Sprechtag sprechtag = veroeffentlicht();
-
-      sprechtag.schliesseAb();
-
-      assertThat(sprechtag.status()).isEqualTo(SprechtagStatus.ABGESCHLOSSEN);
-      assertThat(sprechtag.ereignisseAbholen()).isEmpty();
-    }
-
-    @Test
-    void entwurfLaesstSichNichtDirektAbschliessen() {
-      Sprechtag sprechtag = entwurf();
-
-      assertThatThrownBy(sprechtag::schliesseAb).isInstanceOf(StatusuebergangException.class);
     }
 
     @Test
@@ -368,16 +356,20 @@ class SprechtagTest {
   class AutomatischerAbschluss {
 
     @Test
-    void nachDerEndzeit_wirdAbgeschlossen() {
+    void nachDerEndzeit_wirdAbgeschlossenOhneEreignis() {
       Sprechtag sprechtag = veroeffentlicht();
 
       boolean abgeschlossen = sprechtag.schliesseAbWennVorbei(DATUM.atTime(15, 1));
 
       assertThat(abgeschlossen).isTrue();
       assertThat(sprechtag.status()).isEqualTo(SprechtagStatus.ABGESCHLOSSEN);
+      assertThat(sprechtag.ereignisseAbholen()).isEmpty();
     }
 
-    /** Hält den Job vom Rückweg aus #125 fern: Solange die Endzeit aussteht, bleibt er offen. */
+    /**
+     * Vor der Endzeit gibt es keinen Abschluss — und weil es keinen Handabschluss gibt, auch sonst
+     * keinen Weg dorthin (#166).
+     */
     @Test
     void amTagSelbstVorDerEndzeit_bleibtVeroeffentlicht() {
       Sprechtag sprechtag = veroeffentlicht();
@@ -394,8 +386,7 @@ class SprechtagTest {
       Sprechtag entwurf = entwurf();
       Sprechtag abgesagt = veroeffentlicht();
       abgesagt.sageAb();
-      Sprechtag abgeschlossen = veroeffentlicht();
-      abgeschlossen.schliesseAb();
+      Sprechtag abgeschlossen = abgeschlossen();
       var danach = DATUM.plusDays(1).atStartOfDay();
 
       assertThat(entwurf.schliesseAbWennVorbei(danach)).isFalse();
