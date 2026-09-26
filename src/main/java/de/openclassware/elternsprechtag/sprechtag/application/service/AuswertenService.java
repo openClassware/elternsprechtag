@@ -8,6 +8,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftr
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -108,8 +109,11 @@ class AuswertenService implements Auswerten {
               entfalleneJeLehrkraft.getOrDefault(uebrig.getKey(), 0),
               uebrig.getValue()));
     }
+    LocalDate anonymisiertAm =
+        kopf.anonymisiertAm() == null ? null : kopf.anonymisiertAm().toLocalDate();
     return Optional.of(
-        new SprechtagAuswertung(kopf.titel(), kopf.datum(), kopf.status(), plaene));
+        new SprechtagAuswertung(
+            kopf.titel(), kopf.datum(), kopf.status(), anonymisiertAm, plaene));
   }
 
 }

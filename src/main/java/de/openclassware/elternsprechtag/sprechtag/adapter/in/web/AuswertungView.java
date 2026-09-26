@@ -8,6 +8,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -50,6 +51,8 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private final H2 headerTitle = new H2();
   private final Div headerMeta = new Div();
   private final Button headerNachtragenButton = new Button();
+  private final Div anonymisiertHinweis = new Div();
+  private final Paragraph anonymisiertText = new Paragraph();
   private final ComboBox<LehrkraftPlan> lehrkraftFilter = new ComboBox<>();
   private final Div sections = new Div();
 
@@ -66,7 +69,12 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     headerTitle.addClassName("auswertung__title");
     headerMeta.addClassName("auswertung__meta");
     sections.addClassName("auswertung__sections");
-    add(createBreadcrumb(), createHeader(), createFilter(), sections);
+    add(
+        createBreadcrumb(),
+        createHeader(),
+        createAnonymisiertHinweis(),
+        createFilter(),
+        sections);
   }
 
   @Override
@@ -97,6 +105,15 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     nachtragenMoeglich = presenter.darfNachtragen(auswertung);
     ausfallMoeglich = presenter.darfAusfallErfassen(auswertung);
     headerNachtragenButton.setVisible(nachtragenMoeglich);
+    presenter
+        .anonymisierungsHinweis(auswertung)
+        .ifPresentOrElse(
+            datum -> {
+              anonymisiertText.setText(
+                  getTranslation("auswertung.anonymisiert.text", Formats.dateLong(datum)));
+              anonymisiertHinweis.setVisible(true);
+            },
+            () -> anonymisiertHinweis.setVisible(false));
     // Die Filterauswahl ist Per-View-Zustand und soll ein Storno überleben: gemerkt, die Items
     // getauscht, dieselbe Lehrkraft wieder gesetzt. Steht sie nicht mehr im Plan, bleibt „alle".
     UUID gewaehlt = filterLehrkraft;
@@ -165,6 +182,30 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
         event ->
             getUI().ifPresent(ui -> ui.navigate(NachtragenView.ROUTE + "/" + sprechtagId)));
     return headerNachtragenButton;
+  }
+
+  /**
+   * Erklärt die Pseudonyme nach Ablauf der Aufbewahrungsfrist (Issue #127). Bewusst als Information
+   * gestaltet, nicht als Warnung — es ist der geplante Normalfall. Sichtbar nur, wenn der Presenter
+   * ein Datum liefert.
+   */
+  private Component createAnonymisiertHinweis() {
+    anonymisiertHinweis.addClassName("auswertung__anonymisiert");
+    anonymisiertHinweis.getElement().setAttribute("role", "note");
+    anonymisiertHinweis.setVisible(false);
+
+    Span icon = new Span(VaadinIcon.INFO_CIRCLE_O.create());
+    icon.addClassName("auswertung__anonymisiert-icon");
+
+    Div texte = new Div();
+    texte.addClassName("auswertung__anonymisiert-texte");
+    Span titel = new Span(getTranslation("auswertung.anonymisiert.titel"));
+    titel.addClassName("auswertung__anonymisiert-titel");
+    anonymisiertText.addClassName("auswertung__anonymisiert-text");
+    texte.add(titel, anonymisiertText);
+
+    anonymisiertHinweis.add(icon, texte);
+    return anonymisiertHinweis;
   }
 
   private Component createFilter() {

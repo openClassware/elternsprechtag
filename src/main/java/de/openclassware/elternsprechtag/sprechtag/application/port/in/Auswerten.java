@@ -23,9 +23,17 @@ public interface Auswerten {
    * <p>Der {@code status} steht mit dabei, damit sich daraus ableiten lässt, ob die Ansicht eine
    * Storno-Aktion anbietet. Die <em>Entscheidung</em> trifft der Presenter, nicht der View — und
    * verbindlich ist sie ohnehin erst im {@link Stornieren}-Use-Case.
+   *
+   * <p>{@code anonymisiertAm} ist der Tag, an dem der Anonymisierungs-Lauf die personenbezogenen
+   * Angaben ersetzt hat, oder {@code null}, solange das nicht geschehen ist (Issue #127). Nur der
+   * Tag: Die nächtliche Uhrzeit des Laufs sagt dem Organizer nichts.
    */
   record SprechtagAuswertung(
-      String titel, LocalDate datum, SprechtagStatus status, List<LehrkraftPlan> plaene) {}
+      String titel,
+      LocalDate datum,
+      SprechtagStatus status,
+      LocalDate anonymisiertAm,
+      List<LehrkraftPlan> plaene) {}
 
   /**
    * Terminplan einer Lehrkraft: Anzeigename/Kürzel, Anzahl aktiver Buchungen und die Zeilen in

@@ -5,6 +5,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,7 +36,7 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
 
   private static final String KOPF =
       """
-      select id, titel, start_date, location, schulkontakt, status
+      select id, titel, start_date, location, schulkontakt, status, anonymisiert_am
         from sprechtage
        where id = :id
       """;
@@ -128,7 +129,8 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
                     rs.getString("location"),
                     rs.getString("schulkontakt"),
                     SprechtagStatus.valueOf(rs.getString("status")),
-                    klasseIds))
+                    klasseIds,
+                    rs.getObject("anonymisiert_am", LocalDateTime.class)))
         .stream()
         .findFirst();
   }

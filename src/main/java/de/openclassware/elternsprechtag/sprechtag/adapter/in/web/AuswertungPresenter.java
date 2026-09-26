@@ -12,6 +12,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.S
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.UmbuchAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,6 +62,18 @@ class AuswertungPresenter {
    */
   boolean darfAusfallErfassen(SprechtagAuswertung auswertung) {
     return auswertung.status() == SprechtagStatus.VEROEFFENTLICHT;
+  }
+
+  /**
+   * Ob die Ansicht den Hinweis auf die abgelaufene Aufbewahrungsfrist zeigt, und mit welchem Datum
+   * (Issue #127). Ohne ihn hielte der Organizer die Pseudonyme und leeren Notizen für einen Fehler.
+   *
+   * <p>Unabhängig vom Status: Auch die Buchungen eines abgesagten Sprechtags werden anonymisiert.
+   * Solange die Frist läuft — oder ein abgebrochener Lauf den Sprechtag noch nicht vermerkt hat —
+   * bleibt das Optional leer.
+   */
+  Optional<LocalDate> anonymisierungsHinweis(SprechtagAuswertung auswertung) {
+    return Optional.ofNullable(auswertung.anonymisiertAm());
   }
 
   /**
