@@ -107,7 +107,7 @@ package "sprechtag" <<Rectangle>> {
     + beschreibeNeu(...)
     + veroeffentliche()
     + sageAb()
-    + schliesseAb()
+    + schliesseAbWennVorbei(LocalDateTime) : boolean
     + nimmVeroeffentlichungZurueck(boolean)
     + slots() : List<Zeitraum>
   }

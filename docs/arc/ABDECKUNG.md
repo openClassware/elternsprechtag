@@ -145,8 +145,8 @@ verlieren. Sie ist ohne konkreten Anlassfall entstanden, und ihre Nebenwirkung i
 dem Neuwürfeln laufen alle bereits verteilten Links ins Leere, ohne dass die betroffenen Eltern
 erfahren, warum. Sie über eine E-Mail an die gebuchten Eltern zu heilen, wäre eine dritte
 Verwendung der Eltern-Adresse und damit laut ADR 0002 ein eigener ADR. Deshalb: **entfernen** und
-bei einem realen Missbrauchsfall neu bewerten. Das ist der einzige Eintrag dieses Dokuments, der
-Abbau statt Aufbau verlangt.
+bei einem realen Missbrauchsfall neu bewerten. Das ist einer von zwei Einträgen dieses Dokuments,
+die Abbau statt Aufbau verlangen; der andere ist der Handabschluss in Phase 6.
 
 **Missbrauch des Links — bewusst nein.** Wer den Link hat, darf buchen; das Token ist der gesamte
 Zugangsschutz und laut `docs/contexts/sprechtag/CONTEXT.md` eine bewusste Entscheidung. Personenbezogene Daten gibt die
@@ -428,9 +428,8 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Sprechtag schließt sich nach Ablauf der Endzeit selbst ab | Organizer | Statuswechsel durch den Tagesjob; der Menüpunkt bleibt zum Vorziehen | muss | **erfüllt** — `AbschlussScheduler` ruft nachts `Abschliessen.schliesseVorbeiAb`; `Sprechtag.schliesseAbWennVorbei` schließt nur Veröffentlichte ab, deren Endzeit verstrichen ist, jeder in eigener Transaktion; der Menüpunkt bleibt |
+| Sprechtag schließt sich nach Ablauf der Endzeit selbst ab | Organizer | Statuswechsel durch den Tagesjob — der einzige Weg in den Abschluss | muss | **erfüllt** — `AbschlussScheduler` ruft nachts `Abschliessen.schliesseVorbeiAb`; `Sprechtag.schliesseAbWennVorbei` schließt nur Veröffentlichte ab, deren Endzeit verstrichen ist, jeder in eigener Transaktion; das Menü bietet den Abschluss nicht an (`SprechtagStatus.waehlbareUebergaenge`) |
 | Elternlink nach dem Sprechtag | Eltern | Ansicht „Der Sprechtag ist vorbei" plus Schulkontakt, keine Buchungsauskunft | muss | `NICHT_VERFUEGBAR` — dieselbe Seite wie bei unbekanntem Token oder Entwurf |
-| Verfrüht von Hand abgeschlossen | Organizer | Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT`, solange die Endzeit nicht verstrichen ist | muss | kein Rückweg — aus `ABGESCHLOSSEN` kennt das Aggregat keinen Übergang mehr |
 | Aufbewahrungsfrist | — | ab Ende des Sprechtags, Default 30 Tage, als Property verstellbar | muss | fehlt |
 | Ablauf der Frist | — | Elternname, Schülername, E-Mail und Notiz werden geleert, die Buchung bleibt; gilt auch für `ABGESAGT` | muss | fehlt — kein Löschen im ganzen Projekt |
 | Auswertung nach Fristablauf | Organizer | `anonymisiertAm` am Sprechtag, Hinweis mit Datum statt scheinbarem Datenverlust | muss | fehlt |
@@ -446,15 +445,24 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 | Getrennte, frühere Frist für die Notiz | — | — | bewusst nein | — |
 | Protokoll, wer wann welche Buchung entfernt hat | Organizer | — | bewusst nein | — |
 | Vorwarnung oder Löschmitteilung per E-Mail | Organizer / Eltern | — | bewusst nein | — |
+| Von Hand abschließen — und der Rückweg für den verfrühten Klick | Organizer | — | bewusst nein | gegenstandslos: Den Abschluss stellt allein der Tagesjob fest; der Menüpunkt ist entfernt (#166) |
 
 ### Anmerkungen
 
 **Abschluss ist eine Tatsache, keine Absicht.** „Der Nachmittag ist vorbei" stellt die Maschine fest,
 nicht der Organizer — und eine Löschfrist, die an einem Handgriff hängt, den man vergessen kann, ist
-keine Frist. Der Rückweg trennt sauber: „aus Versehen zu früh geklickt" ist reparierbar, „der Tag ist
-vorbei" nicht. Ohne ihn stünde der Organizer für den Rest des Nachmittags ohne die Buchungsstrecke
-aus Phase 3 da — dem einzigen Weg, eine Familie ohne E-Mail oder Laufkundschaft noch in einen freien
-Slot zu setzen.
+keine Frist.
+
+**Deshalb kein Handabschluss — Abbau statt Aufbau.** Ursprünglich blieb der Menüpunkt zum Vorziehen,
+und ein Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT` sollte den verfrühten Klick reparieren (#125). Mit
+dem Tagesjob hat der Handgriff aber keine Wirkung mehr, die jemand will: Die Frist läuft ab der
+Endzeit, nicht ab dem Statuswechsel; die Auswertung ist in beiden Status lesbar; den Elternlink
+schließt der Anmeldeschluss. Übrig bliebe allein, dass ein zu früher Klick die Buchungsstrecke aus
+Phase 3 schließt — den einzigen Weg, eine Familie ohne E-Mail oder Laufkundschaft noch in einen
+freien Slot zu setzen. Ein Knopf, dessen einzige Folge ein Schaden ist, bekommt keinen Rückweg,
+sondern wird entfernt (#166). Die Stunden zwischen Endzeit und nächtlichem Lauf, in denen der
+Sprechtag noch als veröffentlicht dasteht, sind harmlos; wer es anders will, stellt
+`elternsprechtag.scheduler.abschluss-cron` um.
 
 **Anonymisieren statt Löschen.** Die Buchung bleibt als Datensatz stehen, der Termin bleibt `BELEGT`.
 Damit verschwindet alles Personenbezogene, aber die Auslastung bleibt — genau das Wissen, aus dem der
@@ -581,7 +589,7 @@ doppelt geführt.
 | Issue | Fall |
 |---|---|
 | [#124](https://github.com/openClassware/elternsprechtag/issues/124) | Sprechtag automatisch abschließen, wenn die Endzeit verstrichen ist |
-| [#125](https://github.com/openClassware/elternsprechtag/issues/125) | Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT` vor Ablauf der Endzeit |
+| [#166](https://github.com/openClassware/elternsprechtag/issues/166) | Handabschluss entfernen (ersetzt #125, den Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT`) |
 | [#126](https://github.com/openClassware/elternsprechtag/issues/126) | Aufbewahrungsfrist und Anonymisierung der Buchungsdaten |
 | [#127](https://github.com/openClassware/elternsprechtag/issues/127) | Auswertung nach Fristablauf: `anonymisiertAm` und Hinweis |
 | [#128](https://github.com/openClassware/elternsprechtag/issues/128) | Vorwarnung in der Sprechtag-Liste, wann die Daten fallen |

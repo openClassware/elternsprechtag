@@ -138,7 +138,7 @@ class UmbuchenTest extends AbstractServiceTest {
     Fixture f = veroeffentlichterSprechtag();
     List<Termin> slots = alleTermine();
     UUID alte = buche(f.lehrauftrag(), slots.get(0), "Eltern Müller", "Lukas Müller", null);
-    abschliessen.schliesseAb(f.sprechtag().id().wert());
+    schliesseAb(f.sprechtag().id().wert());
 
     assertThatThrownBy(() -> umbuchen.umbuche(new UmbuchAnfrage(alte, slots.get(1).id().wert())))
         .isInstanceOf(SprechtagNichtVeroeffentlichtException.class);

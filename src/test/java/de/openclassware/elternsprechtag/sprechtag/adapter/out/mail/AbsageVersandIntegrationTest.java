@@ -139,11 +139,11 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
   }
 
   @Test
-  void statusChangeOtherThanCancel_triggersNoSend() {
+  void abschlussDurchDenTageslauf_triggersNoSend() {
     Fixture f = publishedSprechtag();
     book(f.lehrauftrag(), alleTermine().get(0), "eltern@example.com");
 
-    abschliessen.schliesseAb(f.sprechtag().id().wert());
+    abschliessen.schliesseVorbeiAb();
 
     assertThat(sender.empfangen).isEmpty();
   }

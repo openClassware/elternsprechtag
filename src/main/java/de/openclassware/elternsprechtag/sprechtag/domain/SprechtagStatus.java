@@ -10,6 +10,10 @@ import java.util.Set;
  *
  * <p>Der Rückweg {@code VEROEFFENTLICHT -> ENTWURF} ist erlaubt, aber nur solange niemand gebucht
  * hat; darüber entscheidet das Aggregat, nicht diese Tabelle (`ABDECKUNG.md` Z. 91 f.).
+ *
+ * <p>Die Tabelle ist der ganze Lebenszyklus, nicht das Menü des Organizers: {@code ABGESCHLOSSEN}
+ * erreicht nur der Tagesjob. Was der Organizer selbst wählen kann, sagt {@link
+ * #waehlbareUebergaenge()}.
  */
 public enum SprechtagStatus {
   ENTWURF,
@@ -24,6 +28,18 @@ public enum SprechtagStatus {
       case VEROEFFENTLICHT -> EnumSet.of(ABGESCHLOSSEN, ABGESAGT, ENTWURF);
       case ABGESAGT, ABGESCHLOSSEN -> EnumSet.noneOf(SprechtagStatus.class);
     };
+  }
+
+  /**
+   * Die erlaubten Folgestatus, die der Organizer von Hand wählen kann — alle außer {@link
+   * #ABGESCHLOSSEN}. Den Abschluss stellt der Tagesjob fest, sobald die Endzeit verstrichen ist
+   * (#166).
+   */
+  public Set<SprechtagStatus> waehlbareUebergaenge() {
+    Set<SprechtagStatus> ziele = EnumSet.noneOf(SprechtagStatus.class);
+    ziele.addAll(erlaubteUebergaenge());
+    ziele.remove(ABGESCHLOSSEN);
+    return ziele;
   }
 
   /** Abgesagt und abgeschlossen sind endgültig: Von hier aus ändert sich nichts mehr. */

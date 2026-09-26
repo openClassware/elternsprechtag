@@ -52,8 +52,8 @@ vom Aufrufer:
 | Status           | Bedeutung                                                                 |
 |------------------|---------------------------------------------------------------------------|
 | `ENTWURF`        | In Vorbereitung, für Eltern nicht erreichbar. → `VEROEFFENTLICHT`          |
-| `VEROEFFENTLICHT`| Freigegeben, Eltern können buchen. → `ABGESCHLOSSEN`, `ABGESAGT`           |
-| `ABGESCHLOSSEN`  | Vorbei bzw. beendet; Endzustand                                           |
+| `VEROEFFENTLICHT`| Freigegeben, Eltern können buchen. → `ABGESAGT`, `ENTWURF` (nur ungebucht), `ABGESCHLOSSEN` (nur der Tagesjob) |
+| `ABGESCHLOSSEN`  | Vorbei — festgestellt vom Tagesjob nach der Endzeit, nie von Hand; Endzustand |
 | `ABGESAGT`       | Findet nicht statt; Endzustand, löst die Absage-Benachrichtigung aus       |
 
 Sprachgebrauch: **Sprechtag** ist der Fachbegriff im Modell, **Elternsprechtag** der Produktname

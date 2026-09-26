@@ -159,7 +159,7 @@ class NachtragenTest extends AbstractServiceTest {
   void trageNach_amAbgeschlossenenSprechtag_wirdAbgewiesen() {
     Fixture f = publishedSprechtag();
     Termin termin = alleTermine().get(0);
-    abschliessen.schliesseAb(f.sprechtag().id().wert());
+    schliesseAb(f.sprechtag().id().wert());
 
     // Am Service vorbei an der Oberfläche: Die Route ist per URL für jeden Status erreichbar.
     assertThatThrownBy(() -> nachtragen.trageNach(anfrage(f.lehrauftrag(), termin)))
@@ -194,7 +194,7 @@ class NachtragenTest extends AbstractServiceTest {
     veroeffentlichen.veroeffentliche(sprechtag.id().wert());
     Termin bergUmVierzehnUhr = termineVon(berg).get(0);
     Termin adlerUmVierzehnUhr = termineVon(adler).get(0);
-    abschliessen.schliesseAb(sprechtag.id().wert());
+    schliesseAb(sprechtag.id().wert());
 
     // Beides trifft zu — Zeitkonflikt und nicht veröffentlicht. Der grundsätzlichere Fehler muss
     // gewinnen, sonst würde das Beheben des Zeitkonflikts den Nachtrag nicht durchlassen.

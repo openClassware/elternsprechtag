@@ -1,7 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Absagen;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Abschliessen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Duplizieren;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
@@ -23,7 +22,6 @@ class ManageSprechtagPresenter {
   private final Sprechtagsuebersicht uebersicht;
   private final Veroeffentlichen veroeffentlichen;
   private final Absagen absagen;
-  private final Abschliessen abschliessen;
   private final ZurueckAufEntwurf zurueckAufEntwurf;
   private final Duplizieren duplizieren;
 
@@ -60,7 +58,6 @@ class ManageSprechtagPresenter {
           }
         }
         case ABGESAGT -> absagen.sageAb(id);
-        case ABGESCHLOSSEN -> abschliessen.schliesseAb(id);
         case ENTWURF -> zurueckAufEntwurf.nimmZurueck(id);
       }
       return Optional.empty();
