@@ -405,7 +405,17 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     schulkontakt.setMaxLength(1000);
     fourthRow.add(schulkontakt, 2);
 
-    FormRow fifthRow = new FormRow();
+    FormLayout formLayout = panel.getFormLayout();
+    formLayout.add(firstRow, secondRow, thirdRow, fourthRow);
+
+    return panel;
+  }
+
+  /**
+   * Erinnerung und Anmeldefrist — beide in Tagen vor dem Sprechtag, deshalb im Zeiten-Panel nach
+   * dem Datum, aus dem sich ihre Hilfetexte errechnen.
+   */
+  private FormRow createFristenRow() {
     erinnerungsVorlauf = new IntegerField();
     erinnerungsVorlauf.setLabel(getTranslation("edit-sprechtag.field.erinnerung.label"));
     erinnerungsVorlauf.setMin(0);
@@ -422,12 +432,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     anmeldefrist.setRequiredIndicatorVisible(true);
     anmeldefrist.setValue(Anmeldefrist.STANDARD.tageVorher());
     anmeldefrist.addValueChangeListener(_ -> zeigeHilfetexte());
-    fifthRow.add(erinnerungsVorlauf, anmeldefrist);
-
-    FormLayout formLayout = panel.getFormLayout();
-    formLayout.add(firstRow, secondRow, thirdRow, fourthRow, fifthRow);
-
-    return panel;
+    FormRow row = new FormRow();
+    row.add(erinnerungsVorlauf, anmeldefrist);
+    return row;
   }
 
   /**
@@ -485,7 +492,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     FormRow secondRow = new FormRow();
     secondRow.add(startTime, endTime);
 
-    formLayout.add(firstRow, secondRow);
+    formLayout.add(firstRow, secondRow, createFristenRow());
     return panel;
   }
 
