@@ -49,7 +49,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 })
 class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
 
-  private static final LocalDate DATE = LocalDate.of(2026, 7, 20);
+  // In der Zukunft: Der Elternlink bucht nur bis zum Anmeldeschluss (Issue #122).
+  private static final LocalDate DATE = LocalDate.of(2099, 7, 20);
 
   @TestConfiguration
   @EnableAsync
@@ -101,7 +102,7 @@ class BuchungBestaetigungVersandIntegrationTest extends AbstractServiceTest {
     assertThat(sender.empfangen).hasSize(1);
     Nachricht nachricht = sender.empfangen.get(0);
     assertThat(nachricht.empfaenger()).isEqualTo("eltern@example.com");
-    assertThat(nachricht.betreff()).contains("Frühling", "20. Juli 2026");
+    assertThat(nachricht.betreff()).contains("Frühling", "20. Juli 2099");
     assertThat(nachricht.text())
         .contains(
             "14:00", "Anna Berg", "Deutsch", "Karl Kind", "5a", "Aula", "Bitte pünktlich",

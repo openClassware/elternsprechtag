@@ -7,6 +7,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsop
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.OeffentlicherSprechtag;
+import de.openclassware.elternsprechtag.sprechtag.domain.ElternbuchungGeschlossenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +35,10 @@ class ElternsprechtagPresenter {
   record ZugangsErgebnis(Zugang zugang, OeffentlicherSprechtag sprechtag) {}
 
   /**
-   * Entscheidet aus Token + Status, welcher Screen erscheint: veröffentlicht → buchbar,
-   * abgesagt → Absage-Hinweis, sonst (unbekannt/Entwurf/abgeschlossen) → nicht verfügbar.
+   * Entscheidet aus Token + Status, welcher Screen erscheint: veröffentlicht und vor dem
+   * Anmeldeschluss → buchbar, abgesagt → Absage-Hinweis, sonst (unbekannt/Entwurf/abgeschlossen/
+   * Anmeldeschluss vorbei) → nicht verfügbar. Eine eigene Ansicht „Anmeldung beendet" folgt mit
+   * Issue #123.
    */
   ZugangsErgebnis pruefeZugang(String accessToken) {
     Optional<OeffentlicherSprechtag> gefunden = sprechtagszugang.oeffne(accessToken);
@@ -56,7 +59,7 @@ class ElternsprechtagPresenter {
 
   /**
    * Schreibt den Eltern-Submit atomar fest und gibt die Anzahl gebuchter Termine zurück. Wirft
-   * {@link TerminBelegtException}.
+   * {@link TerminBelegtException} und {@link ElternbuchungGeschlossenException}.
    */
   int buchen(BuchungsAnfrage anfrage) {
     return buchenUseCase.buchen(anfrage);

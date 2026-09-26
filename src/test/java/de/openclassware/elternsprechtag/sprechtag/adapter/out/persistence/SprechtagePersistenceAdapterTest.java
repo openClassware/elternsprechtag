@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
+import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.KlasseId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Schulkontakt;
@@ -24,6 +25,7 @@ import org.springframework.boot.data.jdbc.test.autoconfigure.DataJdbcTest;
 import org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -92,7 +94,8 @@ class SprechtagePersistenceAdapterTest {
         NACHMITTAG,
         Slotdauer.vonMinuten(15),
         List.of(klassen),
-        ErinnerungsVorlauf.KEINE);
+        ErinnerungsVorlauf.KEINE,
+        Anmeldefrist.STANDARD);
   }
 
   @Test
@@ -130,6 +133,33 @@ class SprechtagePersistenceAdapterTest {
     assertThat(geladen.erinnerungsVorlauf()).isEqualTo(ErinnerungsVorlauf.ZWEI_TAGE);
   }
 
+  /** Eigener Test aus demselben Grund: Der Standardwert 1 deckte einen Mapping-Fehler nicht auf. */
+  @Test
+  void anmeldefristWirdMitgespeichert() {
+    Sprechtag sprechtag = entwurf(klasse5a);
+    sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(28));
+
+    sprechtage.speichere(sprechtag);
+
+    Sprechtag geladen = sprechtage.lade(sprechtag.id()).orElseThrow();
+    assertThat(geladen.anmeldefrist()).isEqualTo(Anmeldefrist.vonTagen(28));
+  }
+
+  /** Der Bereich 0–28 gilt auch am Aggregat vorbei — für ein Skript oder einen Datenbank-Client. */
+  @Test
+  void eineFristAusserhalbDesBereichsWeistDieDatenbankAb() {
+    Sprechtag sprechtag = entwurf(klasse5a);
+    sprechtage.speichere(sprechtag);
+
+    assertThatThrownBy(
+            () ->
+                jdbc.update(
+                    "update sprechtage set anmeldefrist_tage = 29 where id = ?",
+                    sprechtag.id().wert()))
+        .isInstanceOf(DataIntegrityViolationException.class)
+        .hasMessageContaining("sprechtage_anmeldefrist_tage_check");
+  }
+
   @Test
   void ortUndBeschreibungDuerfenFehlen() {
     Sprechtag sprechtag =
@@ -143,7 +173,8 @@ class SprechtagePersistenceAdapterTest {
             NACHMITTAG,
             Slotdauer.vonMinuten(15),
             List.of(klasse5a),
-            ErinnerungsVorlauf.KEINE);
+            ErinnerungsVorlauf.KEINE,
+            Anmeldefrist.STANDARD);
 
     sprechtage.speichere(sprechtag);
 

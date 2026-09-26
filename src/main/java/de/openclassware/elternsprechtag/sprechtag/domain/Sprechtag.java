@@ -46,6 +46,7 @@ public final class Sprechtag extends AggregateRoot {
 
   private SprechtagStatus status;
   private ErinnerungsVorlauf erinnerungsVorlauf;
+  private Anmeldefrist anmeldefrist;
 
   private Sprechtag(
       SprechtagId id,
@@ -60,7 +61,8 @@ public final class Sprechtag extends AggregateRoot {
       Slotdauer slotdauer,
       List<KlasseId> klassen,
       SprechtagStatus status,
-      ErinnerungsVorlauf erinnerungsVorlauf) {
+      ErinnerungsVorlauf erinnerungsVorlauf,
+      Anmeldefrist anmeldefrist) {
     this.id = Objects.requireNonNull(id, "id");
     this.version = version;
     this.titel = pflichtTitel(titel);
@@ -74,6 +76,7 @@ public final class Sprechtag extends AggregateRoot {
     this.klassen = new ArrayList<>(Objects.requireNonNull(klassen, "klassen"));
     this.status = Objects.requireNonNull(status, "status");
     this.erinnerungsVorlauf = Objects.requireNonNull(erinnerungsVorlauf, "erinnerungsVorlauf");
+    this.anmeldefrist = Objects.requireNonNull(anmeldefrist, "anmeldefrist");
   }
 
   /** Ein frischer Entwurf. Nur so entsteht ein Sprechtag — jeder beginnt als Entwurf. */
@@ -87,7 +90,8 @@ public final class Sprechtag extends AggregateRoot {
       Zeitfenster zeitfenster,
       Slotdauer slotdauer,
       List<KlasseId> klassen,
-      ErinnerungsVorlauf erinnerungsVorlauf) {
+      ErinnerungsVorlauf erinnerungsVorlauf,
+      Anmeldefrist anmeldefrist) {
     return new Sprechtag(
         SprechtagId.neu(),
         0L,
@@ -101,7 +105,8 @@ public final class Sprechtag extends AggregateRoot {
         slotdauer,
         klassen,
         SprechtagStatus.ENTWURF,
-        erinnerungsVorlauf);
+        erinnerungsVorlauf,
+        anmeldefrist);
   }
 
   /**
@@ -121,7 +126,8 @@ public final class Sprechtag extends AggregateRoot {
       Slotdauer slotdauer,
       List<KlasseId> klassen,
       SprechtagStatus status,
-      ErinnerungsVorlauf erinnerungsVorlauf) {
+      ErinnerungsVorlauf erinnerungsVorlauf,
+      Anmeldefrist anmeldefrist) {
     return new Sprechtag(
         id,
         version,
@@ -135,7 +141,8 @@ public final class Sprechtag extends AggregateRoot {
         slotdauer,
         klassen,
         status,
-        erinnerungsVorlauf);
+        erinnerungsVorlauf,
+        anmeldefrist);
   }
 
   /**
@@ -174,6 +181,28 @@ public final class Sprechtag extends AggregateRoot {
   public void aendereErinnerungsVorlauf(ErinnerungsVorlauf erinnerungsVorlauf) {
     verlangeOffen("in seinem Erinnerungsvorlauf geändert");
     this.erinnerungsVorlauf = Objects.requireNonNull(erinnerungsVorlauf, "erinnerungsVorlauf");
+  }
+
+  /**
+   * Ändert die Anmeldefrist. Nicht Teil der Zeitstruktur — sie erzeugt keinen Termin und macht
+   * keine Buchung ungültig — und bleibt deshalb wie der Erinnerungsvorlauf auch nach dem
+   * Veröffentlichen änderbar, ausdrücklich auch, um eine abgelaufene Frist wieder zu öffnen
+   * (Issue #122).
+   *
+   * @throws StatusuebergangException an einem abgesagten oder abgeschlossenen Sprechtag
+   */
+  public void aendereAnmeldefrist(Anmeldefrist anmeldefrist) {
+    verlangeOffen("in seiner Anmeldefrist geändert");
+    this.anmeldefrist = Objects.requireNonNull(anmeldefrist, "anmeldefrist");
+  }
+
+  /**
+   * Ob der Elternlink heute eine Buchung annimmt: veröffentlicht und der {@link #anmeldeschluss()}
+   * noch nicht vorbei — er zählt einschließlich. Die eine Stelle, an der das entschieden wird; der
+   * Organizer-Nachtrag fragt hier bewusst nicht, er bleibt bis zum Abschluss offen.
+   */
+  public boolean nimmtElternbuchungenAn(LocalDate heute) {
+    return status == SprechtagStatus.VEROEFFENTLICHT && !heute.isAfter(anmeldeschluss());
   }
 
   /**
@@ -291,7 +320,8 @@ public final class Sprechtag extends AggregateRoot {
 
   /**
    * Eine Kopie als frischer Entwurf — gleiche Zeitstruktur und Beschreibung, eigenes Zugangs-Token.
-   * Das Token muss neu sein: Zwei Sprechtage am selben Link wären für die Eltern einer.
+   * Das Token muss neu sein: Zwei Sprechtage am selben Link wären für die Eltern einer. Die
+   * Anmeldefrist geht unverändert mit — relativ zum Datum gespeichert, passt sie zu jedem neuen.
    */
   public Sprechtag dupliziere(AccessToken neuesToken) {
     return entwirf(
@@ -304,7 +334,8 @@ public final class Sprechtag extends AggregateRoot {
         zeitfenster,
         slotdauer,
         List.copyOf(klassen),
-        erinnerungsVorlauf);
+        erinnerungsVorlauf,
+        anmeldefrist);
   }
 
   private void wechsleNach(SprechtagStatus ziel) {
@@ -390,5 +421,14 @@ public final class Sprechtag extends AggregateRoot {
 
   public ErinnerungsVorlauf erinnerungsVorlauf() {
     return erinnerungsVorlauf;
+  }
+
+  public Anmeldefrist anmeldefrist() {
+    return anmeldefrist;
+  }
+
+  /** Der letzte Tag, an dem Eltern über den Link buchen können — einschließlich. */
+  public LocalDate anmeldeschluss() {
+    return anmeldefrist.anmeldeschlussFuer(datum);
   }
 }

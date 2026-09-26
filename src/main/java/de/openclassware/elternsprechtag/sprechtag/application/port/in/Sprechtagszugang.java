@@ -20,7 +20,8 @@ public interface Sprechtagszugang {
    * Was die Eltern-Ansicht zeigt.
    *
    * <p>Der Status steht hier bewusst nicht als Enum, sondern als die zwei Fragen, die die Ansicht
-   * stellt: {@code buchbar} — darf gebucht werden; {@code abgesagt} — gibt es den eigenen
+   * stellt: {@code buchbar} — darf gebucht werden, also veröffentlicht und der Anmeldeschluss nicht
+   * vorbei; {@code abgesagt} — gibt es den eigenen
    * Absage-Hinweis. Entwurf und abgeschlossen sind für die Eltern schlicht nicht verfügbar und
    * brauchen keinen eigenen Namen.
    */

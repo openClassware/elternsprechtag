@@ -169,7 +169,7 @@ Organizer selbst korrigierbar, bevor Schaden entsteht.
 | Gewählter Slot wird während des Absendens vergeben | Eltern | Meldung, übrige Auswahl bleibt, nur der verlorene Slot neu | muss | **erfüllt** — `TerminBelegtException` wird gefangen, Optionen neu geladen, ungültige Slots verworfen (`ElternsprechtagView:530`, `BookingSession.reload`) |
 | Vergangene Slots sind noch buchbar | Eltern | vergangene Slots nicht mehr wählbar | muss | keine Zeitprüfung — um 15:30 lässt sich ein Slot für 15:00 buchen |
 | Alle Slots einer Lehrkraft belegt | Eltern | sichtbar, dass nichts frei ist | muss | teilweise — belegte Slots werden als `BELEGT` gerendert (`BookingSession.slotState`), ein eigener Hinweistext fehlt |
-| Buchungsschluss vor dem Sprechtag | Organizer | Anmeldeschluss am Sprechtag | muss | fehlt — in Phase 5 erhoben und eingestuft |
+| Buchungsschluss vor dem Sprechtag | Organizer | Anmeldeschluss am Sprechtag | muss | **erfüllt** — Anmeldefrist am `Sprechtag`, in Phase 5 erhoben und eingestuft |
 | Eltern stornieren ihre Buchung selbst | Eltern | — | darf fehlen | fehlt; bräuchte ein Token je Buchung. Weg drumherum: Anruf, der Organizer storniert — der Weg drumherum ist gebaut |
 | Dieselbe Familie bucht zweimal | Eltern | — | darf fehlen | keine Dublettenprüfung in `buchen()`; heilbar, weil der Organizer eine der beiden Zeilen storniert |
 | Geschwisterkinder in zwei Klassen | Eltern | — | darf fehlen | ein Kind je Buchungsvorgang; die Zeitkonfliktprüfung greift nur innerhalb eines Vorgangs |
@@ -373,9 +373,9 @@ Lehrkraft bekommt ihren Plan als Datei, nicht als Login.
 |---|---|---|---|---|
 | Lehrkraft braucht ihren Tagesplan | Lehrkraft | PDF-Export aus der Auswertung: ohne Filter ein ZIP mit einem PDF je Lehrkraft, mit gesetztem Lehrkraft-Filter genau dieses eine PDF | muss | `AuswertungView` hat den Filter je Lehrkraft, aber **keinen** Export |
 | Inhalt des Blatts | Lehrkraft | Kopf mit Lehrkraft, Sprechtag, Datum, Ort und „Stand: \<Zeitstempel\>"; alle Slots chronologisch — **auch die freien** — mit Zeit, Schüler, Klasse, Fach, Elternname, Notiz; rechts eine leere Spalte für Handschrift | muss | `Auswerten.BuchungsZeile` liefert nur aktive Buchungen, freie Slots erscheinen nicht |
-| Anmeldeschluss | Organizer | Pflichtfeld am `Sprechtag`, beim Anlegen mit dem Vortag vorbelegt, änderbar | muss | kein Feld; `ElternsprechtagPresenter` gibt bei `VEROEFFENTLICHT` unbegrenzt `BUCHBAR` zurück |
-| Elternlink nach Fristablauf | Eltern | nicht mehr buchbar; Hinweis „Anmeldung beendet" plus Datum, Ort und Schulkontakt | muss | unbegrenzt buchbar, auch am Tag selbst und danach |
-| Familie ruft am Tag selbst an, jemand steht spontan vor der Tür | Organizer | die Frist schließt nur den Elternlink; die Organizer-Buchungsstrecke bleibt bis zum Abschluss offen | muss | fehlt mit der Strecke aus Phase 3 |
+| Anmeldeschluss | Organizer | Pflichtfeld am `Sprechtag`, beim Anlegen mit dem Vortag vorbelegt, änderbar | muss | **erfüllt** — `Anmeldefrist` (0–28 Tage vor dem Sprechtag, vorbelegt mit 1), bis zum Endzustand änderbar, auch zum Wiederöffnen; das Formular zeigt den errechneten Anmeldeschluss, das Veröffentlichen meldet einen schon verstrichenen |
+| Elternlink nach Fristablauf | Eltern | nicht mehr buchbar; Hinweis „Anmeldung beendet" plus Datum, Ort und Schulkontakt | muss | teilweise — nicht mehr buchbar, beim Öffnen wie beim Abschicken (`Sprechtag.nimmtElternbuchungenAn`, `ElternbuchungGeschlossenException`); die eigene Ansicht fehlt, der Link landet auf „nicht verfügbar" (#123) |
+| Familie ruft am Tag selbst an, jemand steht spontan vor der Tür | Organizer | die Frist schließt nur den Elternlink; die Organizer-Buchungsstrecke bleibt bis zum Abschluss offen | muss | **erfüllt** — die Frist prüft allein `Buchen`; `Nachtragen` fragt sie nicht und bleibt bis zum Abschluss offen |
 | Telefonauskunft „wann habe ich meinen Termin?" | Organizer | Suche nach Schüler- oder Elternname in der Auswertung | muss | nur Lehrkraft-Filter, **keine** Namenssuche |
 | Eltern sehen ihre eigene Buchung wieder | Eltern | — | darf fehlen | Token hängt am Sprechtag, nicht an der Familie; Beleg bleibt die Bestätigungsmail, Weg drumherum der Anruf |
 | Änderungen nach dem Druck erreichen die Lehrkraft | Lehrkraft | — | darf fehlen | der Zeitstempel im PDF-Kopf macht das Alter des Blattes sichtbar; der Rest ist mündliche Organisation |
@@ -476,11 +476,13 @@ ist unabhängig davon, ob jemand rechtzeitig geklickt hat, und ist auch für ein
 definiert — dessen Buchungen sind genauso personenbezogen und liegen heute genauso ewig.
 
 **Hausregel zum Duplizieren.** `duplicate` kopiert, was Vorlage ist, und leitet neu ab, was am Datum
-hängt. Konkret fehlen ihm die drei Felder, die dieser Maßstab beschlossen hat: Schulkontakt
-(Phase 2) und Erinnerungszeitpunkt (Phase 4) werden **mitkopiert**, der **Anmeldeschluss**
-(Phase 5) dagegen aus dem kopierten Datum **neu vorbelegt** — 1:1 übernommen läge er ein Jahr vor dem
-neuen Sprechtag und machte ihn tot geboren. Wer künftig ein Feld an den `Sprechtag` hängt, muss sich
-in diese eine Frage einsortieren.
+hängt. Die drei Felder, die dieser Maßstab beschlossen hat, werden alle **mitkopiert**: Schulkontakt
+(Phase 2), Erinnerungszeitpunkt (Phase 4) und die **Anmeldefrist** (Phase 5). Bei der Frist geht das
+nur, weil sie **relativ** gespeichert ist — als Tage vor dem Sprechtag, nicht als Datum. Ein
+absoluter Anmeldeschluss läge in der Kopie ein Halbjahr vor dem neuen Sprechtag und machte ihn tot
+geboren; der Abstand dagegen passt zu jedem Datum, auf das der Organizer die Kopie setzt (#122). Wer
+künftig ein Feld an den `Sprechtag` hängt, muss sich in diese eine Frage einsortieren — und ein Feld,
+das am Datum hängt, am besten relativ dazu speichern.
 
 **Löschen nur für buchungsfreie Entwürfe.** Dieselbe Grenze wie in Phase 2: „es gibt eine Buchung"
 ist der Punkt, ab dem nichts mehr zurückgeht. Ein veröffentlichter, abgesagter oder abgeschlossener

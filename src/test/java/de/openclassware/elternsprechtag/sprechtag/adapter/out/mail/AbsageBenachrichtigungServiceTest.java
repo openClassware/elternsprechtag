@@ -32,7 +32,8 @@ import org.springframework.context.annotation.Import;
 })
 class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
 
-  private static final LocalDate DATE = LocalDate.of(2026, 7, 20);
+  // In der Zukunft: Der Elternlink bucht nur bis zum Anmeldeschluss (Issue #122).
+  private static final LocalDate DATE = LocalDate.of(2099, 7, 20);
 
   @Autowired private AbsageBenachrichtigungService absageBenachrichtigungService;
   @Autowired private FakeBenachrichtigungSender sender;
@@ -129,13 +130,13 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     Nachricht nachricht = sender.empfangen.get(0);
     assertThat(nachricht.empfaenger()).isEqualTo("eltern@example.com");
     // Titel und Datum (zentral formatiert) im Betreff, Schulname als Absenderzeile im Text.
-    assertThat(nachricht.betreff()).isEqualTo("Sprechtag „Frühling“ am 20. Juli 2026 abgesagt");
+    assertThat(nachricht.betreff()).isEqualTo("Sprechtag „Frühling“ am 20. Juli 2099 abgesagt");
     assertThat(nachricht.text())
         .isEqualTo(
             """
             Guten Tag,
 
-            der Sprechtag „Frühling“ am 20. Juli 2026 muss leider abgesagt werden.
+            der Sprechtag „Frühling“ am 20. Juli 2099 muss leider abgesagt werden.
 
             Ihr bereits gebuchter Termin entfällt damit. Bei Fragen wenden Sie sich bitte an die \
             Schule.

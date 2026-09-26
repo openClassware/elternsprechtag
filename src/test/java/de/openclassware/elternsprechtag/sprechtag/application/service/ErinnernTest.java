@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import de.openclassware.elternsprechtag.sprechtag.AbstractServiceTest;
 import de.openclassware.elternsprechtag.sprechtag.ServiceTest;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsAnfrage;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen.NachtragsWunsch;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
@@ -51,13 +51,17 @@ class ErinnernTest extends AbstractServiceTest {
     return new Fixture(sprechtag, lehrauftrag);
   }
 
+  /**
+   * Über den Organizer-Nachtrag statt den Elternlink: Für die Erinnerung ist der Weg der Buchung
+   * gleichgültig, und nur der Nachtrag bleibt auch am Sprechtag selbst offen (Issue #122).
+   */
   private UUID buche(UUID lehrauftrag, Termin termin) {
-    buchen.buchen(
-        new BuchungsAnfrage(
+    nachtragen.trageNach(
+        new NachtragsAnfrage(
             "Eltern Müller",
             "Lukas Müller",
             "mueller@example.com",
-            List.of(new BuchungsWunsch(lehrauftrag, termin.id().wert(), null))));
+            List.of(new NachtragsWunsch(lehrauftrag, termin.id().wert(), null))));
     return termine.lade(termin.id()).orElseThrow().aktiveBuchung().orElseThrow().id().wert();
   }
 

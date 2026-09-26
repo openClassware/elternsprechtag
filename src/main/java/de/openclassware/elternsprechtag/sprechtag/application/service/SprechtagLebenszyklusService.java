@@ -14,6 +14,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Ereignis;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagHatBuchungenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -56,7 +57,9 @@ class SprechtagLebenszyklusService
     // veröffentlicht vorfinden — ein Aggregat ist nach dem Speichern verbraucht.
     int erzeugte = materialisieren.materialisiere(id);
     veroeffentliche(sprechtag.ereignisseAbholen());
-    return new Ergebnis(erzeugte);
+    // Nicht verweigern, melden: Der Organizer soll sehen, dass der Link nicht bucht, und die Frist
+    // im Formular anpassen können — oder bewusst nur nachtragen.
+    return new Ergebnis(erzeugte, !sprechtag.nimmtElternbuchungenAn(LocalDate.now()));
   }
 
   @Override

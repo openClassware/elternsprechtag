@@ -1,11 +1,14 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
+import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Anlegen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Bearbeiten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
+import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -46,8 +49,29 @@ class EditSprechtagPresenter {
     return id;
   }
 
-  /** Legt einen neuen Sprechtag an und veröffentlicht ihn in einem Zug — der Anlege-Knopf. */
-  Veroeffentlichen.Ergebnis legeAnUndVeroeffentliche(SprechtagFormular formular) {
-    return anlegen.legeUndVeroeffentliche(formular);
+  /**
+   * Legt einen neuen Sprechtag an und veröffentlicht ihn in einem Zug — der Anlege-Knopf.
+   *
+   * @return die Hinweise, die der View danach zeigt; leer, wenn es nichts zu sagen gibt
+   */
+  List<Meldung> legeAnUndVeroeffentliche(SprechtagFormular formular) {
+    return SprechtagMeldungen.zu(anlegen.legeUndVeroeffentliche(formular));
+  }
+
+  /**
+   * Der Anmeldeschluss zu den gerade eingegebenen Werten, fertig formatiert für den Hilfetext —
+   * leer, solange Datum oder Frist fehlen oder die Frist außerhalb ihres Bereichs liegt. Gerechnet
+   * wird mit derselben {@link Anmeldefrist}, die das Aggregat hält: Hilfetext und Elternlink sollen
+   * nie verschiedene Tage nennen.
+   */
+  Optional<String> anmeldeschluss(LocalDate datum, Integer anmeldefristTage) {
+    if (datum == null
+        || anmeldefristTage == null
+        || anmeldefristTage < 0
+        || anmeldefristTage > Anmeldefrist.HOECHSTENS_TAGE) {
+      return Optional.empty();
+    }
+    LocalDate schluss = Anmeldefrist.vonTagen(anmeldefristTage).anmeldeschlussFuer(datum);
+    return Optional.of(Formats.weekdayDateShort(schluss));
   }
 }
