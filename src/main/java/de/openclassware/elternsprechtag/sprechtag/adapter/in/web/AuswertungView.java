@@ -393,11 +393,14 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     cell.addClassName("auswertung__cell");
     cell.addClassName("auswertung__cell--zeit");
     cell.add(new Span(Formats.time(zeile.startzeit())));
-    if (zeile.storniert()) {
-      Span storniert = new Span(getTranslation("auswertung.zeile.storniert"));
-      storniert.addClassName("auswertung__zeile-storniert");
-      cell.add(storniert);
-    }
+    presenter
+        .zustandsEtikett(zeile)
+        .ifPresent(
+            schluessel -> {
+              Span etikett = new Span(getTranslation(schluessel));
+              etikett.addClassName("auswertung__zeile-zustand");
+              cell.add(etikett);
+            });
     return cell;
   }
 

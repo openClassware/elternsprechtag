@@ -117,6 +117,18 @@ class AuswertungPresenter {
     return Optional.ofNullable(zeile.anonymisiertAm());
   }
 
+  /**
+   * Das Etikett unter der Uhrzeit einer stornierten Zeile: „entfallen", wenn der Ausfall der
+   * Lehrkraft sie zurückgenommen hat, sonst „storniert". Eine geltende Zusage trägt keins.
+   */
+  Optional<String> zustandsEtikett(BuchungsZeile zeile) {
+    if (!zeile.storniert()) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        zeile.entfallen() ? "auswertung.zeile.entfallen" : "auswertung.zeile.storniert");
+  }
+
   /** Ob es den Schalter „Stornierte anzeigen" braucht — nur, wenn es Stornierte gibt. */
   boolean hatStornierte(SprechtagAuswertung auswertung) {
     return auswertung.plaene().stream().anyMatch(plan -> !plan.stornierte().isEmpty());

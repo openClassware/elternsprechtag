@@ -71,6 +71,9 @@ public interface Auswerten {
    *
    * <p>{@code anonymisiertAm} ist der Tag, an dem die Angaben der Familie gefallen sind, oder
    * {@code null}, solange sie noch dastehen (Issue #129). Nur der Tag, wie am Sprechtag.
+   *
+   * <p>{@code entfallen} heißt: Der Termin der Zeile entfällt — eine stornierte Buchung darauf hat
+   * der Ausfall der Lehrkraft zurückgenommen, nicht die Familie.
    */
   record BuchungsZeile(
       UUID buchungId,
@@ -81,5 +84,6 @@ public interface Auswerten {
       String elternName,
       String notiz,
       boolean storniert,
+      boolean entfallen,
       LocalDate anonymisiertAm) {}
 }

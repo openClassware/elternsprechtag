@@ -75,6 +75,7 @@ class AuswertenService implements Auswerten {
                   roh.elternName(),
                   roh.notiz(),
                   roh.storniert(),
+                  roh.entfallen(),
                   roh.anonymisiertAm() == null ? null : roh.anonymisiertAm().toLocalDate()));
     }
 

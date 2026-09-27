@@ -4,6 +4,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsA
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchungsstatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Verfuegbarkeit;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,7 +49,8 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
              b.eltern_name       as eltern_name,
              b.notiz             as notiz,
              b.status            as status,
-             b.anonymisiert_am   as anonymisiert_am
+             b.anonymisiert_am   as anonymisiert_am,
+             t.verfuegbarkeit    as verfuegbarkeit
         from buchungen b
         join termin t on t.id = b.termin_id
        where t.sprechtag_id = :sprechtagId
@@ -103,6 +105,7 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
                 rs.getString("eltern_name"),
                 rs.getString("notiz"),
                 Buchungsstatus.STORNIERT.name().equals(rs.getString("status")),
+                Verfuegbarkeit.ENTFAELLT.name().equals(rs.getString("verfuegbarkeit")),
                 zeitpunkt(rs.getTimestamp("anonymisiert_am"))));
   }
 

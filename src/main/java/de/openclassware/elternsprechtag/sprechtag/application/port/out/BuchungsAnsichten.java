@@ -67,6 +67,7 @@ public interface BuchungsAnsichten {
       String elternName,
       String notiz,
       boolean storniert,
+      boolean entfallen,
       LocalDateTime anonymisiertAm) {}
 
   /**

@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import de.openclassware.elternsprechtag.sprechtag.AbstractServiceTest;
@@ -172,5 +173,25 @@ class EntfallenLassenTest extends AbstractServiceTest {
     Ergebnis ergebnis = entfallenLassen.entfallenLassen(List.of(termin.id().wert()));
 
     assertThat(ergebnis).isEqualTo(new Ergebnis(1, 1));
+  }
+
+  /**
+   * Issue #129: Die mit-stornierte Buchung bleibt unter „Stornierte anzeigen" erreichbar — als
+   * entfallen erkennbar, nicht als gewöhnliches Storno.
+   */
+  @Test
+  void auswertung_fuehrtDieMitStornierteBuchungAlsEntfallen() {
+    Fixture f = veroeffentlichterSprechtag(SprechtagStatus.VEROEFFENTLICHT);
+    List<Termin> slots = alleTermine();
+    buche(f.lehrauftrag(), slots.get(0));
+    UUID storniert = buche(f.lehrauftrag(), slots.get(1));
+    stornieren.storniere(storniert, false);
+    entfallenLassen.entfallenLassen(List.of(slots.get(0).id().wert()));
+
+    var plan = auswerten.werteAus(f.sprechtag()).orElseThrow().plaene().get(0);
+
+    assertThat(plan.stornierte())
+        .extracting(zeile -> zeile.storniert(), zeile -> zeile.entfallen())
+        .containsExactly(tuple(true, true), tuple(true, false));
   }
 }
