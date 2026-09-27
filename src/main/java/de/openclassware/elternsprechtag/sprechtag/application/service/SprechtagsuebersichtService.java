@@ -4,6 +4,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtags
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Klassen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Klassen.KlasseDaten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
+import de.openclassware.elternsprechtag.sprechtag.domain.Aufbewahrungsfrist;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>Eine Klasse, die es nicht mehr gibt, erscheint schlicht nicht im Namen-Register und fällt aus
  * der Liste: Der Sprechtag zeigt, was heute noch da ist.
+ *
+ * <p>Die {@link Datenfrist} rechnet mit derselben {@link Aufbewahrungsfrist} wie der
+ * Anonymisierungs-Lauf und nach derselben Regel wie seine Kandidatensuche: kein Entwurf, und
+ * Buchungen werden nicht gezählt. So behauptet die Liste nie etwas anderes, als der Lauf tut.
  */
 @RequiredArgsConstructor
 @Service
@@ -30,6 +35,7 @@ class SprechtagsuebersichtService implements Sprechtagsuebersicht {
 
   private final SprechtagAnsichten ansichten;
   private final Klassen klassen;
+  private final Aufbewahrungsfrist frist;
 
   @Override
   @Transactional(readOnly = true)
@@ -56,8 +62,26 @@ class SprechtagsuebersichtService implements Sprechtagsuebersicht {
               namen.entrySet().stream()
                   .filter(eintrag -> roh.klasseIds().contains(eintrag.getKey()))
                   .map(Map.Entry::getValue)
-                  .toList()));
+                  .toList(),
+              datenfrist(roh)));
     }
     return zeilen;
+  }
+
+  /**
+   * Veröffentlichte haben noch keine laufende Frist — der Tagesjob schließt sie ab, bevor sie
+   * beginnt. Umgesprungen wird erst mit dem Vermerk des Laufs; ein abgebrochener Lauf hat keinen
+   * gesetzt und warnt deshalb weiter.
+   */
+  private Datenfrist datenfrist(SprechtagAnsichten.SprechtagZeile roh) {
+    return switch (roh.status()) {
+      case ENTWURF, VEROEFFENTLICHT -> null;
+      case ABGESCHLOSSEN, ABGESAGT ->
+          roh.anonymisiertAm() != null
+              ? new Datenfrist(Datenfrist.Art.ENTFERNT_AM, roh.anonymisiertAm().toLocalDate())
+              : new Datenfrist(
+                  Datenfrist.Art.VERFUEGBAR_BIS,
+                  frist.verfuegbarBis(roh.datum().atTime(roh.ende())));
+    };
   }
 }

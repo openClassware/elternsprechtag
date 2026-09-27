@@ -31,6 +31,19 @@ public record Aufbewahrungsfrist(int tage) {
   }
 
   /**
+   * Der letzte Tag, an dem die Angaben eines Sprechtags mit dieser Endzeit noch vorhanden sind — die
+   * Vorwarnung der Sprechtag-Liste (Issue #128).
+   *
+   * <p>Zu Beginn dieses Tages ist die Frist noch nicht abgelaufen, zu Beginn des Folgetags schon.
+   * Den ganzen Tag über stimmt das Datum, weil der Anonymisierungs-Lauf <b>nachts</b> läuft, vor der
+   * Uhrzeit, zu der ein Sprechtag endet: {@link #istAbgelaufen} wird an diesem Tag erst zur
+   * Endzeit-Uhrzeit wahr. Ein Lauf am Abend fände die Daten schon am genannten Tag fällig.
+   */
+  public LocalDate verfuegbarBis(LocalDateTime endzeit) {
+    return endzeit.plusDays(tage).toLocalDate();
+  }
+
+  /**
    * Das späteste Sprechtagsdatum, dessen Frist bis {@code heute} abgelaufen sein kann — der grobe
    * Vorfilter für die Kandidatensuche. Entschieden wird mit {@link #istAbgelaufen}.
    */

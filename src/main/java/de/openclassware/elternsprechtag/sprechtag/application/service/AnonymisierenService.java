@@ -26,7 +26,8 @@ import org.springframework.stereotype.Service;
  * werden dabei nur noch einmal überschrieben. Der Lauf ist damit idempotent, ohne dass eine
  * Transaktion mehr als ein Aggregat umfasst ({@link AnonymisierungsSchrittService}).
  *
- * <p>Frist und Ersatz-E-Mail sind Betriebseinstellung ({@code elternsprechtag.aufbewahrungsfrist-tage},
+ * <p>Frist und Ersatz-E-Mail sind Betriebseinstellung ({@code elternsprechtag.aufbewahrungsfrist-tage}
+ * über {@link AufbewahrungsfristConfig}, die auch die Sprechtag-Liste nutzt;
  * {@code elternsprechtag.anonymisierung-email}). Die Frist zählt ab der Endzeit des Sprechtags,
  * nicht ab dem Abschluss (#124).
  */
@@ -46,13 +47,13 @@ class AnonymisierenService implements Anonymisieren {
       TerminAnsichten terminAnsichten,
       Sprechtage sprechtage,
       AnonymisierungsSchrittService schritte,
-      @Value("${elternsprechtag.aufbewahrungsfrist-tage}") int fristTage,
+      Aufbewahrungsfrist frist,
       @Value("${elternsprechtag.anonymisierung-email}") String ersatzEmail) {
     this.sprechtagAnsichten = sprechtagAnsichten;
     this.terminAnsichten = terminAnsichten;
     this.sprechtage = sprechtage;
     this.schritte = schritte;
-    this.frist = Aufbewahrungsfrist.vonTagen(fristTage);
+    this.frist = frist;
     // Einmal zur Probe: Eine leer eingestellte Adresse soll den Start scheitern lassen, nicht erst
     // den nächtlichen Lauf.
     Pseudonymisierung.neu(ersatzEmail);

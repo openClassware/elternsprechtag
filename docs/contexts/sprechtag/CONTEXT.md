@@ -102,6 +102,11 @@ Nicht „Deadline".
 - **`anonymisiertAm`** — der Zeitpunkt am Sprechtag, an dem der Lauf fertig war. Gesetzt erst,
   nachdem alle Termine anonymisiert sind; fehlt er, ist der Sprechtag noch nicht (vollständig)
   anonymisiert. Die Auswertung zeigt seinen Tag im Hinweis, der die Pseudonyme erklärt.
+- **Datenfrist** — die Vorwarnung in der Sprechtag-Liste (`Sprechtagsuebersicht.Datenfrist`). An
+  jedem abgeschlossenen oder abgesagten Sprechtag steht entweder der letzte Tag, an dem die Angaben
+  noch vorhanden sind (`Aufbewahrungsfrist.verfuegbarBis`: der Kalendertag von Endzeit plus Frist),
+  oder, nach dem Lauf, der Tag von `anonymisiertAm`. Das Datum stimmt, weil der Lauf **nachts**
+  läuft, vor der Uhrzeit, zu der ein Sprechtag endet.
 
 Sprachgebrauch: **anonymisieren**, nicht „löschen" — es verschwindet kein Datensatz.
 

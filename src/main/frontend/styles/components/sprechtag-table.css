@@ -55,6 +55,27 @@
     height: 14px;
 }
 
+/* Vorwarnung vor der Anonymisierung (#128): ruhig wie der Ort, keine Warnfarbe —
+   sie steht einen Monat lang an jeder abgeschlossenen Zeile. */
+.sprechtag-table__datenfrist {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #5a6069;
+}
+
+.sprechtag-table__datenfrist vaadin-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    color: #8a909a;
+}
+
+.sprechtag-table__datenfrist--entfernt {
+    color: #8a909a;
+}
+
 .sprechtag-table__time {
     display: flex;
     align-items: center;

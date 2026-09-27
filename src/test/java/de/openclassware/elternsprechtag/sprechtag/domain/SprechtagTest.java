@@ -596,6 +596,29 @@ class SprechtagTest {
       assertThat(sprechtag.dupliziere(AccessToken.neu()).anonymisiertAm()).isEmpty();
     }
 
+    /**
+     * Der Tag, den die Sprechtag-Liste als letzten nennt (Issue #128): Zu seinem Beginn läuft die
+     * Frist noch — ein nächtlicher Lauf in dieser Nacht lässt die Daten stehen —, zu Beginn des
+     * Folgetags ist sie verstrichen.
+     */
+    @Test
+    void verfuegbarBis_istDerTagAnDemDieFristEndet() {
+      LocalDateTime endzeit = DATUM.atTime(15, 0);
+
+      assertThat(frist.verfuegbarBis(endzeit)).isEqualTo(LocalDate.of(2026, 8, 19));
+    }
+
+    @Test
+    void verfuegbarBis_zuBeginnDesTagesLaeuftDieFristNoch_zuBeginnDesFolgetagsNichtMehr() {
+      LocalDateTime spaetAbends = DATUM.atTime(23, 30);
+
+      LocalDate letzterTag = frist.verfuegbarBis(spaetAbends);
+
+      assertThat(letzterTag).isEqualTo(LocalDate.of(2026, 8, 19));
+      assertThat(frist.istAbgelaufen(spaetAbends, letzterTag.atStartOfDay())).isFalse();
+      assertThat(frist.istAbgelaufen(spaetAbends, letzterTag.plusDays(1).atStartOfDay())).isTrue();
+    }
+
     @Test
     void eineFristOhneTageGibtEsNicht() {
       assertThatThrownBy(() -> Aufbewahrungsfrist.vonTagen(0))

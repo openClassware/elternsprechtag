@@ -29,7 +29,8 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
 
   private static final String ZEILEN =
       """
-      select id, titel, start_date, start_time, end_time, location, status, access_token
+      select id, titel, start_date, start_time, end_time, location, status, access_token,
+             anonymisiert_am
         from sprechtage
        order by start_date
       """;
@@ -108,7 +109,8 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
               rs.getString("location"),
               SprechtagStatus.valueOf(rs.getString("status")),
               rs.getString("access_token"),
-              klassenJeSprechtag.getOrDefault(id, List.of()));
+              klassenJeSprechtag.getOrDefault(id, List.of()),
+              rs.getObject("anonymisiert_am", LocalDateTime.class));
         });
   }
 
