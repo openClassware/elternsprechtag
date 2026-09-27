@@ -10,8 +10,9 @@
   color: #1f2933;
 }
 
+/* Kein eigenes display: vaadin-checkbox legt Kästchen, Label und Hilfetext per internem Grid an —
+   ein display: block risse sie auseinander. */
 .storno-buchung-dialog__entfernen {
-  display: block;
   margin-top: 1.25rem;
   max-width: 28rem;
 }

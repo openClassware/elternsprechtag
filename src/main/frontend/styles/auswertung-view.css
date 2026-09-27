@@ -236,11 +236,11 @@
     color: #8a909a;
 }
 
+/* Klein geschrieben statt in Versalien: „STORNIERT" bräche in der 64 px schmalen Zeitspalte der
+   Telefon-Karte um. */
 .auswertung__zeile-storniert {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
     color: #8a909a;
 }
 
