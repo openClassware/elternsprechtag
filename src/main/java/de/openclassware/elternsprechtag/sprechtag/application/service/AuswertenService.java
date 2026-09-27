@@ -56,12 +56,14 @@ class AuswertenService implements Auswerten {
     }
 
     // Die Query liefert bereits chronologisch; die Gruppierung erhält die Reihenfolge, sodass jede
-    // Zeilenliste sortiert bleibt.
+    // Zeilenliste sortiert bleibt. Geltende und stornierte Buchungen landen in getrennten Listen —
+    // gezählt wird nur, was gilt (Issue #129).
     Map<UUID, List<BuchungsZeile>> zeilenJeLehrkraft = new LinkedHashMap<>();
+    Map<UUID, List<BuchungsZeile>> stornierteJeLehrkraft = new LinkedHashMap<>();
     Map<UUID, AuswertungsZeile> ersteZeileJeLehrkraft = new LinkedHashMap<>();
-    for (AuswertungsZeile roh : buchungsAnsichten.aktiveBuchungen(id)) {
+    for (AuswertungsZeile roh : buchungsAnsichten.buchungenFuerAuswertung(id)) {
       ersteZeileJeLehrkraft.putIfAbsent(roh.lehrkraftId(), roh);
-      zeilenJeLehrkraft
+      (roh.storniert() ? stornierteJeLehrkraft : zeilenJeLehrkraft)
           .computeIfAbsent(roh.lehrkraftId(), k -> new ArrayList<>())
           .add(
               new BuchungsZeile(
@@ -71,7 +73,9 @@ class AuswertenService implements Auswerten {
                   roh.klasse(),
                   roh.fach(),
                   roh.elternName(),
-                  roh.notiz()));
+                  roh.notiz(),
+                  roh.storniert(),
+                  roh.anonymisiertAm() == null ? null : roh.anonymisiertAm().toLocalDate()));
     }
 
     List<LehrkraftPlan> plaene = new ArrayList<>();
@@ -80,10 +84,7 @@ class AuswertenService implements Auswerten {
     for (LehrauftragDaten lehrkraft :
         Lehrkraftauswahl.jeLehrkraft(lehrauftraege, kopf.klasseIds())) {
       UUID lehrerId = lehrkraft.lehrkraft().wert();
-      List<BuchungsZeile> zeilen = zeilenJeLehrkraft.remove(lehrerId);
-      if (zeilen == null) {
-        zeilen = List.of();
-      }
+      List<BuchungsZeile> zeilen = zeilenJeLehrkraft.getOrDefault(lehrerId, List.of());
       plaene.add(
           new LehrkraftPlan(
               lehrerId,
@@ -91,23 +92,28 @@ class AuswertenService implements Auswerten {
               lehrkraft.anzeigeName(),
               zeilen.size(),
               entfalleneJeLehrkraft.getOrDefault(lehrerId, 0),
-              zeilen));
+              zeilen,
+              stornierteJeLehrkraft.getOrDefault(lehrerId, List.of())));
+      ersteZeileJeLehrkraft.remove(lehrerId);
     }
     // Was jetzt noch übrig ist, gehört Lehrkräften ohne aktuellen Lehrauftrag — ein Import hat ihn
     // entfernt, nachdem gebucht wurde. Ihre Buchungen bleiben trotzdem sichtbar: Der Terminplan
     // eines Sprechtags soll nicht davon abhängen, was die Stammdaten heute sagen. Name und Kürzel
     // stammen aus der Buchung selbst, und diese Pläne stehen am Ende — einen Nachnamen, nach dem
     // sich einsortieren ließe, gibt der eingefrorene Anzeigename nicht her.
-    for (Map.Entry<UUID, List<BuchungsZeile>> uebrig : zeilenJeLehrkraft.entrySet()) {
-      AuswertungsZeile eingefroren = ersteZeileJeLehrkraft.get(uebrig.getKey());
+    for (Map.Entry<UUID, AuswertungsZeile> uebrig : ersteZeileJeLehrkraft.entrySet()) {
+      UUID lehrerId = uebrig.getKey();
+      AuswertungsZeile eingefroren = uebrig.getValue();
+      List<BuchungsZeile> zeilen = zeilenJeLehrkraft.getOrDefault(lehrerId, List.of());
       plaene.add(
           new LehrkraftPlan(
-              uebrig.getKey(),
+              lehrerId,
               eingefroren.lehrkraftKuerzel(),
               eingefroren.lehrkraftName(),
-              uebrig.getValue().size(),
-              entfalleneJeLehrkraft.getOrDefault(uebrig.getKey(), 0),
-              uebrig.getValue()));
+              zeilen.size(),
+              entfalleneJeLehrkraft.getOrDefault(lehrerId, 0),
+              zeilen,
+              stornierteJeLehrkraft.getOrDefault(lehrerId, List.of())));
     }
     LocalDate anonymisiertAm =
         kopf.anonymisiertAm() == null ? null : kopf.anonymisiertAm().toLocalDate();

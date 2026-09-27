@@ -102,6 +102,16 @@ Nicht „Deadline".
 - **`anonymisiertAm`** — der Zeitpunkt am Sprechtag, an dem der Lauf fertig war. Gesetzt erst,
   nachdem alle Termine anonymisiert sind; fehlt er, ist der Sprechtag noch nicht (vollständig)
   anonymisiert. Die Auswertung zeigt seinen Tag im Hinweis, der die Pseudonyme erklärt.
+- **Angaben entfernen** — die Anonymisierung, vorgezogen auf **eine** Buchung, weil die Familie die
+  Löschung verlangt (`AngabenEntfernen`, `Termin.entferneAngaben`). Dieselbe Wirkung wie der Lauf,
+  nur für eine Zeile; Lehrkraft, Klasse, Fach und Uhrzeit bleiben. Vor dem Sprechtag geht das über
+  das **Storno mit entfernten Angaben** — eine geltende Zusage am veröffentlichten Sprechtag bloß
+  zu anonymisieren, hinterließe einen Geistertermin (`BuchungNochAktivException`). Nach dem
+  Sprechtag und an stornierten Buchungen direkt. Beim **Umbuchen** fallen die Angaben der alten
+  Buchung immer; sie stehen in der neuen.
+- **`Buchung.anonymisiertAm`** — wann die Angaben einer einzelnen Buchung gefallen sind, ob per
+  Einzelaktion oder im Lauf; ein zweites Entfernen ändert ihn nicht. Nur **wann**, nicht **wer** —
+  ein Protokoll gibt es bewusst nicht.
 - **Datenfrist** — die Vorwarnung in der Sprechtag-Liste (`Sprechtagsuebersicht.Datenfrist`). An
   jedem abgeschlossenen oder abgesagten Sprechtag steht entweder der letzte Tag, an dem die Angaben
   noch vorhanden sind (`Aufbewahrungsfrist.verfuegbarBis`: der Kalendertag von Endzeit plus Frist),
@@ -190,7 +200,10 @@ verschiedene Vorgänge und heißen deshalb verschieden — auch in Statuswerten 
 **Wer storniert:** ausschließlich der Organizer, aus der Auswertung heraus. Eltern rufen an; ein
 Eltern-Storno bräuchte ein Token je Buchung und ist bewusst nicht vorgesehen (ADR 0002). Das Storno
 gibt den Termin auf `FREI` zurück und ist der Endzustand der Buchung — ein zweites Storno derselben
-Buchung scheitert. Der Datensatz bleibt erhalten, die Zeile verschwindet nur aus dem Plan.
+Buchung scheitert. Der Datensatz bleibt erhalten, die Zeile verschwindet nur aus dem Plan — der
+Schalter „Stornierte anzeigen" holt sie in die Auswertung zurück, damit ihre Angaben auf Verlangen
+der Familie entfernt werden können. Verlangt die Familie die Löschung schon beim Anruf, hakt der
+Organizer im Storno-Dialog „Angaben der Familie entfernen" an; vorab angehakt ist das nicht.
 
 **Das Storno benachrichtigt niemanden.** Keine Mail, kein Ereignis über die Kontextgrenze hinaus:
 Der Anlass ist praktisch immer der Anruf der Familie; beim Tippfehler in der Adresse ginge eine Mail

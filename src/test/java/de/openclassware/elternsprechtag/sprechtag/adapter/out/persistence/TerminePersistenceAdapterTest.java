@@ -165,7 +165,7 @@ class TerminePersistenceAdapterTest {
     termine.speichere(termin);
 
     Termin geladen = termine.lade(termin.id()).orElseThrow();
-    geladen.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL));
+    geladen.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL), BEGINN.plusDays(31));
     termine.speichere(geladen);
 
     Buchung anonymisiert = termine.lade(termin.id()).orElseThrow().aktiveBuchung().orElseThrow();
@@ -173,6 +173,8 @@ class TerminePersistenceAdapterTest {
     assertThat(anonymisiert.familie())
         .isEqualTo(new Familie("Eltern-ab12-001", "Schueler-ab12-001", EMAIL));
     assertThat(anonymisiert.notiz()).isEmpty();
+    // Issue #129: Der Vermerk an der Buchung übersteht den Weg durch die Datenbank.
+    assertThat(anonymisiert.anonymisiertAm()).contains(BEGINN.plusDays(31));
     assertThat(
             jdbc.queryForObject(
                 "select notiz from buchungen where id = ?", String.class, buchung.wert()))

@@ -79,7 +79,7 @@ class StornierenTest extends AbstractServiceTest {
     Termin termin = alleTermine().get(0);
     UUID buchung = buche(f.lehrauftrag(), termin, "Eltern Müller", "Lukas Müller");
 
-    stornieren.storniere(buchung);
+    stornieren.storniere(buchung, false);
 
     Termin neu = termine.lade(termin.id()).orElseThrow();
     assertThat(neu.istBuchbar()).isTrue();
@@ -91,11 +91,42 @@ class StornierenTest extends AbstractServiceTest {
         .isEqualTo(Buchungsstatus.STORNIERT);
   }
 
+  /** Issue #129: das Löschverlangen vor dem Sprechtag — Storno und entfernte Angaben in einem Zug. */
+  @Test
+  void storniere_mitEntferntenAngaben_gibtDenTerminFreiUndErsetztDieFamilie() {
+    Fixture f = veroeffentlichterSprechtag();
+    Termin termin = alleTermine().get(0);
+    UUID buchung = buche(f.lehrauftrag(), termin, "Eltern Müller", "Lukas Müller");
+
+    stornieren.storniere(buchung, true);
+
+    Termin neu = termine.lade(termin.id()).orElseThrow();
+    assertThat(neu.istBuchbar()).isTrue();
+    Buchung storniert = neu.buchungen().getFirst();
+    assertThat(storniert.status()).isEqualTo(Buchungsstatus.STORNIERT);
+    assertThat(storniert.familie().elternName()).startsWith("Eltern-").isNotEqualTo("Eltern Müller");
+    assertThat(storniert.familie().email()).isNotEqualTo("eltern@example.com");
+    assertThat(storniert.anonymisiertAm()).isPresent();
+  }
+
+  @Test
+  void storniere_ohneEntfernteAngaben_behaeltDieFamilie() {
+    Fixture f = veroeffentlichterSprechtag();
+    Termin termin = alleTermine().get(0);
+    UUID buchung = buche(f.lehrauftrag(), termin, "Eltern Müller", "Lukas Müller");
+
+    stornieren.storniere(buchung, false);
+
+    Buchung storniert = termine.lade(termin.id()).orElseThrow().buchungen().getFirst();
+    assertThat(storniert.familie().elternName()).isEqualTo("Eltern Müller");
+    assertThat(storniert.anonymisiertAm()).isEmpty();
+  }
+
   @Test
   void storniere_unbekannteBuchung_wirdAbgewiesen() {
     veroeffentlichterSprechtag();
 
-    assertThatThrownBy(() -> stornieren.storniere(UUID.randomUUID()))
+    assertThatThrownBy(() -> stornieren.storniere(UUID.randomUUID(), false))
         .isInstanceOf(BuchungNichtGefundenException.class);
   }
 
@@ -104,13 +135,13 @@ class StornierenTest extends AbstractServiceTest {
     Fixture f = veroeffentlichterSprechtag();
     Termin termin = alleTermine().get(0);
     UUID erste = buche(f.lehrauftrag(), termin, "Eltern Müller", "Lukas Müller");
-    stornieren.storniere(erste);
+    stornieren.storniere(erste, false);
     // Der frei gewordene Slot wird sofort von einer anderen Familie belegt.
     UUID zweite =
         buche(f.lehrauftrag(), termine.lade(termin.id()).orElseThrow(), "Eltern Schmidt", "Mia");
 
     // Der alte Browser-Tab des Organizers klickt dieselbe Zeile noch einmal.
-    assertThatThrownBy(() -> stornieren.storniere(erste))
+    assertThatThrownBy(() -> stornieren.storniere(erste, false))
         .isInstanceOf(BuchungBereitsStorniertException.class);
 
     Termin neu = termine.lade(termin.id()).orElseThrow();
@@ -126,7 +157,7 @@ class StornierenTest extends AbstractServiceTest {
     schliesseAb(f.sprechtag().id().wert());
 
     // Am Service vorbei an der Oberfläche: Die Auswertungs-Route ist per URL erreichbar.
-    assertThatThrownBy(() -> stornieren.storniere(buchung))
+    assertThatThrownBy(() -> stornieren.storniere(buchung, false))
         .isInstanceOf(SprechtagNichtVeroeffentlichtException.class);
 
     assertThat(alleBuchungen()).singleElement().satisfies(b -> assertThat(b.istAktiv()).isTrue());
@@ -139,7 +170,7 @@ class StornierenTest extends AbstractServiceTest {
     UUID buchung = buche(f.lehrauftrag(), slots.get(0), "Eltern Müller", "Lukas Müller");
     buche(f.lehrauftrag(), slots.get(1), "Eltern Schmidt", "Mia Schmidt");
 
-    stornieren.storniere(buchung);
+    stornieren.storniere(buchung, false);
 
     LehrkraftPlan plan = auswertung(f).plaene().get(0);
     assertThat(plan.anzahl()).isEqualTo(1);
@@ -168,7 +199,7 @@ class StornierenTest extends AbstractServiceTest {
     Termin termin = alleTermine().get(0);
     UUID buchung = buche(f.lehrauftrag(), termin, "Eltern Müller", "Lukas Müller");
 
-    stornieren.storniere(buchung);
+    stornieren.storniere(buchung, false);
 
     // Die Eltern-Strecke meldet den Slot wieder als frei …
     assertThat(slot(f, termin).buchbar()).isTrue();

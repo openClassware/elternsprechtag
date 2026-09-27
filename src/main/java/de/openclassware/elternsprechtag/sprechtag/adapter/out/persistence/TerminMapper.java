@@ -56,7 +56,8 @@ final class TerminMapper {
             zeile.getFachName()),
         Notiz.vielleicht(zeile.getNotiz()).orElse(null),
         zeile.getStatus(),
-        zeile.getErinnerungVersendetAm());
+        zeile.getErinnerungVersendetAm(),
+        zeile.getAnonymisiertAm());
   }
 
   static TerminZeile zuZeile(Termin termin) {
@@ -91,6 +92,7 @@ final class TerminMapper {
         ziel.lehrkraftKuerzel(),
         ziel.klasse(),
         ziel.fach(),
-        buchung.erinnerungVersendetAm().orElse(null));
+        buchung.erinnerungVersendetAm().orElse(null),
+        buchung.anonymisiertAm().orElse(null));
   }
 }

@@ -1,17 +1,18 @@
 /* Wörtliche Werte, keine `--lumo-*`-Variablen: Das Projekt bindet Lumo nicht ein, eine
    Deklaration mit unbekannter Variable fiele ersatzlos aus (siehe cancel-sprechtag-dialog.css). */
-.storno-buchung-dialog__message {
+.angaben-entfernen-dialog__message {
   margin-bottom: 1rem;
   max-width: 28rem;
 }
 
-.storno-buchung-dialog__buchung {
+.angaben-entfernen-dialog__buchung {
   font-weight: 600;
   color: #1f2933;
 }
 
-.storno-buchung-dialog__entfernen {
-  display: block;
-  margin-top: 1.25rem;
+.angaben-entfernen-dialog__weitere {
+  margin-top: 1rem;
   max-width: 28rem;
+  font-size: 14px;
+  color: #5a6069;
 }

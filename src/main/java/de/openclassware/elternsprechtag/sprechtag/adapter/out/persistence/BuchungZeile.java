@@ -47,4 +47,7 @@ class BuchungZeile {
 
   /** {@code null} heißt: noch keine Erinnerung versendet (Issue #107). */
   private LocalDateTime erinnerungVersendetAm;
+
+  /** {@code null} heißt: Die Buchung trägt noch die Angaben der Familie (Issue #129). */
+  private LocalDateTime anonymisiertAm;
 }

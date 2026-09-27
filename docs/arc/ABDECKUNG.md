@@ -191,7 +191,9 @@ widersinnig — und sie wäre der dritte Zweck der Eltern-Adresse und damit nach
 Fall, in dem die Familie *nichts* weiß, ist der Ausfall einer Lehrkraft; er hat einen eigenen
 Termin-Zustand und eine eigene Mail. Storniert wird nur an einem **veröffentlichten** Sprechtag:
 Danach bucht niemand mehr, „wieder frei" wäre eine Lüge, und ein Löschverlangen nach dem Sprechtag
-ist die Anonymisierung aus Phase 6.
+ist die Anonymisierung aus Phase 6. Ein Löschverlangen *vor* dem Sprechtag ist ein Storno, bei dem
+die Angaben der Familie im selben Zug fallen (#129) — ein Storno allein ließe sie bis zum Ende der
+Aufbewahrungsfrist stehen.
 
 **Der Organizer muss buchen können — das ist eine Zugangsfrage, kein Komfort.** Ohne eigene Strecke
 gibt es für eine Familie ohne E-Mail oder ohne Gerät *keinen* Weg in einen Termin, auch nicht über
@@ -434,11 +436,11 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 | Ablauf der Frist | — | Elternname, Schülername, E-Mail und Notiz werden geleert, die Buchung bleibt; gilt auch für `ABGESAGT` | muss | **erfüllt** — `Termin.anonymisiere` ersetzt die Familie jeder Buchung, auch stornierter, durch Pseudonyme des Laufs (`Eltern-<seed>-001`, als E-Mail `elternsprechtag.anonymisierung-email`, Default `noreply@openclassware.de`) und leert die Notiz; Status und Belegung bleiben. Erst danach bekommt der Sprechtag `anonymisiertAm` — ein abgebrochener Lauf wiederholt ihn. Entwürfe sind ausgenommen: Sie tragen nie Buchungen und bleiben änderbar |
 | Auswertung nach Fristablauf | Organizer | `anonymisiertAm` am Sprechtag, Hinweis mit Datum statt scheinbarem Datenverlust | muss | **erfüllt** — `Auswerten.SprechtagAuswertung.anonymisiertAm` (auf den Tag gekürzt) aus dem Kopf-SQL; die Auswertung zeigt zwischen Kopf und Filter den Info-Hinweis „Personenbezogene Angaben entfernt" mit Datum und dem, was erhalten bleibt (`AuswertungPresenter.anonymisierungsHinweis`), auch am abgesagten Sprechtag. Die Tabelle bleibt unverändert mit Pseudonymen, Zählern und Entfallen-Hinweisen; ein abgebrochener Lauf ohne Vermerk zeigt noch keinen Hinweis |
 | Vorwarnung vor der Anonymisierung | Organizer | abgeschlossene Sprechtage zeigen in der Liste, wann ihre Daten fallen | muss | **erfüllt** — `Sprechtagsuebersicht.Datenfrist` an jedem abgeschlossenen und abgesagten Sprechtag, auch ohne Buchung (dieselbe Regel wie die Kandidatensuche des Laufs): vorher „Personenbezogene Angaben bis …“ mit `Aufbewahrungsfrist.verfuegbarBis` (Kalendertag von Endzeit plus Frist; stimmt, weil der Lauf nachts läuft), nachher „… entfernt am …“ mit dem Tag von `anonymisiertAm`. Ruhig in der Titelzelle, ohne Eskalation; Lauf und Liste teilen eine Frist-Bean (`AufbewahrungsfristConfig`) |
-| Löschverlangen einer Familie nach dem Sprechtag | Organizer | Einzelaktion „Daten dieser Buchung entfernen" mit Rückfrage — zieht dieselbe Anonymisierung vor | muss | fehlt |
+| Löschverlangen einer Familie nach dem Sprechtag | Organizer | Einzelaktion „Daten dieser Buchung entfernen" mit Rückfrage — zieht dieselbe Anonymisierung vor | muss | **erfüllt** — Icon „Angaben entfernen" je Zeile an `ABGESCHLOSSEN`/`ABGESAGT` mit Rückfrage (`AngabenEntfernenDialog`) und dem festen Hinweis auf weitere Termine der Familie; `AngabenEntfernen` → `Termin.entferneAngaben` ersetzt genau eine Buchung durch ein Pseudonym, die Zusage bleibt stehen und zählt weiter. `Buchung.anonymisiertAm` (V11, vom Nachtlauf mitgesetzt, Altbestand nachgetragen) nimmt das Icon weg und zeigt „Angaben entfernt am …" in der Zeile, solange der Sprechtag selbst nicht anonymisiert ist. Stornierte Buchungen blendet der Schalter „Stornierte anzeigen" ein; sie tragen dasselbe Icon, auch am veröffentlichten Sprechtag |
 | Alter Sprechtag als Vorlage | Organizer | `duplicate` kopiert alle Vorlagefelder und leitet Datumsabhängiges neu ab | muss | teilweise — die drei neuen Felder fehlen ihm |
 | Versehentlich angelegter Sprechtag | Organizer | löschbar, solange `ENTWURF` **und** ohne Buchung | muss | fehlt — kein Löschen im Projekt |
 | Auskunftsverlangen einzelner Eltern | Organizer | Namenssuche in der Auswertung, vorlesen oder drucken | muss | fällt mit Phase 5 ab |
-| Löschverlangen vor dem Sprechtag | Organizer | fachlich eine Stornierung | muss | fällt mit Phase 3 ab |
+| Löschverlangen vor dem Sprechtag | Organizer | Storno mit entfernten Angaben | muss | **erfüllt** (#129) — Checkbox „Angaben der Familie entfernen" im Storno-Dialog, vorab leer; `Stornieren.storniere(buchungId, angabenEntfernen)` storniert und anonymisiert in einer Transaktion am `Termin`. Wer ohne Haken storniert wurde, ist über „Stornierte anzeigen" weiter erreichbar. Eine geltende Zusage am veröffentlichten Sprechtag lässt sich nicht bloß anonymisieren (`BuchungNochAktivException`) — das hinterließe einen Geistertermin. Umbuchen entfernt die Angaben der alten Buchung immer; sie stehen in der neuen |
 | Eltern sehen ihre Buchung über den alten Link wieder | Eltern | — | darf fehlen | Beleg ist die Bestätigungsmail, Weg drumherum der Anruf — dieselbe Einstufung wie in Phase 5 |
 | Archivierung gegen das Anwachsen der Liste über Jahre | Organizer | — | darf fehlen | der Statusfilter blendet Abgeschlossenes weg; anonymisierte Sprechtage sind nur noch Zahlen |
 | Dauerhafter namentlicher Gesprächsbeleg | Organizer | — | bewusst nein | — |
@@ -470,6 +472,23 @@ nächste Sprechtag geplant wird (Slot-Dauer, welche Lehrkraft überrannt wurde, 
 blieben). Es braucht dafür kein zweites Aggregat-Modell, nur ein Leeren von Feldern. Das
 Löschverlangen einer Familie benutzt denselben Mechanismus vorgezogen auf eine einzelne Buchung —
 kein Sonderweg, und die Auslastungszahl bleibt unverfälscht.
+
+**Löschverlangen: jederzeit, je Buchung, und auch nach einem Storno (#129).** Eine Familie kann die
+Löschung jederzeit verlangen, nicht erst nach dem Sprechtag. Vor dem Sprechtag ist das ein Storno
+mit Haken bei „Angaben der Familie entfernen" (bewusst nicht vorab angehakt), danach das Icon
+„Angaben entfernen" an der Zeile. Beides trifft **genau eine Buchung**: Eine Familien-Identität
+kennt das Modell nicht, weitere Termine entfernt der Organizer einzeln — die Rückfrage erinnert
+daran. Damit auch eine längst stornierte Buchung erreichbar bleibt, blendet der Schalter „Stornierte
+anzeigen" sie in die Auswertung ein. Verworfen wurden: die Lücke hinzunehmen (erfüllt das Verlangen
+nicht) und die stornierten Buchungen nur über die Namenssuche (#121) zu finden (erfordert das
+Wissen, dass es sie gibt und die Suche sie findet).
+
+**Was nach dem Entfernen stehen bleibt.** Lehrkraft, Klasse, Fach und Uhrzeit bleiben bewusst — sie
+sind die Auslastung. Wer die Klassenliste hat, kann eine einzelne pseudonyme Zeile in einer kleinen
+Klasse unter Umständen wieder einem Kind zuordnen. Ob dieses Restrisiko trägt, bewertet die Schule
+als Verantwortliche; das Produkt behandelt die Einzelaktion genauso wie den Lauf nach Fristablauf.
+Festgehalten wird nur, **wann** entfernt wurde (`Buchung.anonymisiertAm`), nicht **wer** — ein
+Protokoll bleibt bewusst nein.
 
 **Frist ab dem Ende des Sprechtags, nicht ab dem Statuswechsel.** Der Zeitpunkt steht am Datensatz,
 ist unabhängig davon, ob jemand rechtzeitig geklickt hat, und ist auch für einen abgesagten Sprechtag
