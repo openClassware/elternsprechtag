@@ -56,10 +56,12 @@
 }
 
 /* Vorwarnung vor der Anonymisierung (#128): ruhig wie der Ort, keine Warnfarbe —
-   sie steht einen Monat lang an jeder abgeschlossenen Zeile. */
+   sie steht einen Monat lang an jeder abgeschlossenen Zeile. Anders als der Ort bricht sie
+   auf schmalen Breiten um; das Icon bleibt dann neben der ersten Zeile statt mittig zwischen
+   beiden, der Versatz gleicht Icon- und Zeilenhöhe aus. */
 .sprechtag-table__datenfrist {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 5px;
     font-size: 13px;
     color: #5a6069;
@@ -69,6 +71,7 @@
     flex-shrink: 0;
     width: 14px;
     height: 14px;
+    margin-top: 2px;
     color: #8a909a;
 }
 
