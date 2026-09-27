@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.Datenfrist;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungView;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.EditSprechtagView;
@@ -122,7 +123,34 @@ public class SprechtagTable extends Div {
       title.add(location);
     }
 
+    if (sprechtag.datenfrist() != null) {
+      title.add(createDatenfrist(sprechtag.datenfrist()));
+    }
+
     return title;
+  }
+
+  /**
+   * Die Vorwarnung vor der Anonymisierung (Issue #128) — bewusst ruhig und ohne Eskalation: Sie
+   * steht einen Monat lang an jeder abgeschlossenen Zeile.
+   */
+  private Component createDatenfrist(Datenfrist datenfrist) {
+    Div hinweis = new Div();
+    hinweis.addClassName("sprechtag-table__datenfrist");
+    String datum = Formats.dateLong(datenfrist.datum());
+    switch (datenfrist.art()) {
+      case VERFUEGBAR_BIS ->
+          hinweis.add(
+              VaadinIcon.TIMER.create(),
+              new Span(getTranslation("manage-sprechtag.datenfrist.verfuegbar-bis", datum)));
+      case ENTFERNT_AM -> {
+        hinweis.addClassName("sprechtag-table__datenfrist--entfernt");
+        hinweis.add(
+            VaadinIcon.ERASER.create(),
+            new Span(getTranslation("manage-sprechtag.datenfrist.entfernt-am", datum)));
+      }
+    }
+    return hinweis;
   }
 
   private Component createTime(SprechtagZeile sprechtag) {

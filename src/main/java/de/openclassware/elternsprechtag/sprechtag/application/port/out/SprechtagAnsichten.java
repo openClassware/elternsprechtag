@@ -51,7 +51,9 @@ public interface SprechtagAnsichten {
   List<SprechtagId> anonymisierungsKandidaten(LocalDate spaetestensAm);
 
   /**
-   * Eine Zeile der Organizer-Übersicht. {@code ort} darf {@code null} sein.
+   * Eine Zeile der Organizer-Übersicht. {@code ort} darf {@code null} sein; {@code anonymisiertAm}
+   * ist {@code null}, solange der Anonymisierungs-Lauf den Sprechtag nicht vollständig erledigt hat
+   * — die Liste warnt dann noch vor ihm (Issue #128).
    */
   record SprechtagZeile(
       UUID id,
@@ -62,7 +64,8 @@ public interface SprechtagAnsichten {
       String ort,
       SprechtagStatus status,
       String accessToken,
-      List<UUID> klasseIds) {}
+      List<UUID> klasseIds,
+      LocalDateTime anonymisiertAm) {}
 
   /**
    * {@code ort} darf {@code null} sein; {@code schulkontakt} ist am Sprechtag Pflicht.
