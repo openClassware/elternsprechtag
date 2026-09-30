@@ -11,6 +11,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Nimmt eine Buchung zurück — die Gegenbewegung zum Buchen und der Weg, auf dem im Abdeckungs-Maßstab
  * mehrere Fälle ruhen: Eltern-Storno per Anruf, Dubletten, Tippfehler in der Adresse, Löschverlangen
- * vor dem Sprechtag.
+ * vor dem Sprechtag. Für Letzteres fallen mit {@code angabenEntfernen} die Angaben der Familie im
+ * selben Zug, am selben Termin (Issue #129).
  *
  * <p>Der Vorgang <b>verschickt nichts</b>. Das Aggregat meldet zwar {@code BuchungStorniert}; die
  * Meldung wird hier abgeholt und verworfen, statt sie über den Ereignis-Port zu veröffentlichen. Die
@@ -39,10 +41,11 @@ class StornierenService implements Stornieren {
 
   private final Termine termine;
   private final Sprechtage sprechtage;
+  private final Pseudonymgeber pseudonymgeber;
 
   @Override
   @Transactional
-  public void storniere(UUID buchungId) {
+  public void storniere(UUID buchungId, boolean angabenEntfernen) {
     BuchungId id = BuchungId.von(buchungId);
     Termin termin =
         termine
@@ -75,6 +78,11 @@ class StornierenService implements Stornieren {
     }
 
     termin.storniere(id);
+    if (angabenEntfernen) {
+      // Dasselbe Aggregat, dieselbe Transaktion: storniert ohne entfernte Angaben gibt es nicht als
+      // Zwischenstand, wenn die Familie die Löschung verlangt hat (Issue #129).
+      termin.entferneAngaben(id, pseudonymgeber.neuerLauf(), LocalDateTime.now(), true);
+    }
     try {
       // Sofort speichern, nach dem Muster aus dem Buchen: Ein Versionskonflikt soll hier auftreten
       // und nicht erst beim Commit, wo ihn kein catch mehr übersetzen könnte.

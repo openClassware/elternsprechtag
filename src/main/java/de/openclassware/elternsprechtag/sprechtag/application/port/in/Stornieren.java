@@ -18,6 +18,10 @@ public interface Stornieren {
   /**
    * Nimmt die Buchung zurück: Sie geht auf {@code STORNIERT}, ihr Termin ist danach wieder buchbar.
    *
+   * <p>Mit {@code angabenEntfernen} fallen im selben Zug die Angaben der Familie — das
+   * Löschverlangen vor dem Sprechtag (Issue #129). Dieselbe Anonymisierung wie nach Ablauf der
+   * Aufbewahrungsfrist; ohne den Haken bleiben die Angaben bis dahin stehen.
+   *
    * @throws BuchungNichtGefundenException wenn es die Buchung nicht gibt
    * @throws BuchungBereitsStorniertException wenn sie nicht (mehr) die aktive Buchung ihres Termins
    *     ist — ein zweites Storno derselben Zeile scheitert und lässt einen inzwischen neu gebuchten
@@ -27,5 +31,5 @@ public interface Stornieren {
    *     Prüfung liegt hier und nicht nur in der Oberfläche: Die Auswertungs-Route ist per URL für
    *     jeden Sprechtag-Status erreichbar
    */
-  void storniere(UUID buchungId);
+  void storniere(UUID buchungId, boolean angabenEntfernen);
 }

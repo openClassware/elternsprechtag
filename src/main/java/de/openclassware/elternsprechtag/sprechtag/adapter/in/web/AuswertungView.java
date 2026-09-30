@@ -4,6 +4,7 @@ import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
@@ -24,6 +25,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenL
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungPresenter.AusfallAusgang;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AngabenEntfernenDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AusfallDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.StornoBuchungDialog;
@@ -54,12 +56,15 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private final Div anonymisiertHinweis = new Div();
   private final Paragraph anonymisiertText = new Paragraph();
   private final ComboBox<LehrkraftPlan> lehrkraftFilter = new ComboBox<>();
+  private final Checkbox stornierteSchalter = new Checkbox();
   private final Div sections = new Div();
 
+  private SprechtagAuswertung auswertung;
   private List<LehrkraftPlan> allePlaene = List.of();
   private UUID sprechtagId;
   private UUID filterLehrkraft;
-  private boolean stornoMoeglich;
+  private boolean stornierteAnzeigen;
+  private boolean aktionsspalte;
   private boolean nachtragenMoeglich;
   private boolean ausfallMoeglich;
 
@@ -90,6 +95,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     // Auswertung des nächsten Sprechtags stillschweigend gefiltert da.
     if (!id.get().equals(sprechtagId)) {
       filterLehrkraft = null;
+      stornierteAnzeigen = false;
     }
     this.sprechtagId = id.get();
     render(auswertung.get());
@@ -100,8 +106,11 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     headerMeta.removeAll();
     headerMeta.add(new Span(Formats.dateLong(auswertung.datum())));
 
+    this.auswertung = auswertung;
     allePlaene = auswertung.plaene();
-    stornoMoeglich = presenter.darfStornieren(auswertung);
+    aktionsspalte = presenter.hatAktionsspalte(auswertung);
+    stornierteSchalter.setVisible(presenter.hatStornierte(auswertung));
+    stornierteSchalter.setValue(stornierteAnzeigen);
     nachtragenMoeglich = presenter.darfNachtragen(auswertung);
     ausfallMoeglich = presenter.darfAusfallErfassen(auswertung);
     headerNachtragenButton.setVisible(nachtragenMoeglich);
@@ -139,6 +148,11 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
 
   private void onFilterChange(LehrkraftPlan selected) {
     filterLehrkraft = selected == null ? null : selected.lehrerId();
+    renderSections(presenter.filter(allePlaene, filterLehrkraft));
+  }
+
+  private void onStornierteChange(boolean anzeigen) {
+    stornierteAnzeigen = anzeigen;
     renderSections(presenter.filter(allePlaene, filterLehrkraft));
   }
 
@@ -217,7 +231,18 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     lehrkraftFilter.setClearButtonVisible(true);
     lehrkraftFilter.setItemLabelGenerator(LehrkraftPlan::anzeigeName);
     lehrkraftFilter.addValueChangeListener(event -> onFilterChange(event.getValue()));
-    filterRow.add(lehrkraftFilter);
+    // Stornierte Buchungen stehen nur auf Wunsch im Plan — dort, um ihre Angaben auf Verlangen der
+    // Familie zu entfernen (Issue #129). Ohne Stornierte gibt es den Schalter nicht.
+    stornierteSchalter.setLabel(getTranslation("auswertung.stornierte.label"));
+    stornierteSchalter.addClassName("auswertung__stornierte-schalter");
+    stornierteSchalter.setVisible(false);
+    stornierteSchalter.addValueChangeListener(
+        event -> {
+          if (event.isFromClient()) {
+            onStornierteChange(event.getValue());
+          }
+        });
+    filterRow.add(lehrkraftFilter, stornierteSchalter);
     return filterRow;
   }
 
@@ -302,7 +327,8 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   }
 
   private Component createSectionBody(LehrkraftPlan plan) {
-    if (plan.zeilen().isEmpty()) {
+    List<BuchungsZeile> zeilen = presenter.sichtbareZeilen(plan, stornierteAnzeigen);
+    if (zeilen.isEmpty()) {
       Div empty = new Div();
       empty.addClassName("auswertung__section-empty");
       empty.setText(getTranslation("auswertung.section.empty"));
@@ -311,11 +337,11 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
 
     Div table = new Div();
     table.addClassName("auswertung__table");
-    if (stornoMoeglich) {
+    if (aktionsspalte) {
       table.addClassName("auswertung__table--mit-aktion");
     }
     table.add(createTableHead());
-    plan.zeilen().stream().map(zeile -> createRow(plan, zeile)).forEach(table::add);
+    zeilen.stream().map(zeile -> createRow(plan, zeile)).forEach(table::add);
     return table;
   }
 
@@ -330,7 +356,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
         headCell("auswertung.table.fach"),
         headCell("auswertung.table.eltern"),
         headCell("auswertung.table.notiz"));
-    if (stornoMoeglich) {
+    if (aktionsspalte) {
       head.add(headCell("auswertung.table.aktion"));
     }
     return head;
@@ -345,40 +371,117 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private Component createRow(LehrkraftPlan plan, BuchungsZeile zeile) {
     Div row = new Div();
     row.addClassName("auswertung__row");
+    if (zeile.storniert()) {
+      row.addClassName("auswertung__row--storniert");
+    }
     row.add(
-        cell(Formats.time(zeile.startzeit()), "auswertung__cell--zeit"),
+        createZeitCell(zeile),
         cell(zeile.schuelerName(), "auswertung__cell--schueler"),
         cell(zeile.klasse(), "auswertung__cell--klasse"),
         cell(zeile.fach(), "auswertung__cell--fach"),
         cell(zeile.elternName(), "auswertung__cell--eltern"),
-        cell(zeile.notiz() == null ? "" : zeile.notiz(), "auswertung__cell--notiz"));
-    if (stornoMoeglich) {
-      row.add(createStornoAktion(plan, zeile));
+        createNotizCell(zeile));
+    if (aktionsspalte) {
+      row.add(createAktion(plan, zeile));
     }
     return row;
   }
 
-  private Component createStornoAktion(LehrkraftPlan plan, BuchungsZeile zeile) {
+  /** Die Uhrzeit bleibt Scan-Anker; eine stornierte Zeile trägt darunter ihren Zustand. */
+  private Component createZeitCell(BuchungsZeile zeile) {
+    Div cell = new Div();
+    cell.addClassName("auswertung__cell");
+    cell.addClassName("auswertung__cell--zeit");
+    cell.add(new Span(Formats.time(zeile.startzeit())));
+    presenter
+        .zustandsEtikett(zeile)
+        .ifPresent(
+            schluessel -> {
+              Span etikett = new Span(getTranslation(schluessel));
+              etikett.addClassName("auswertung__zeile-zustand");
+              cell.add(etikett);
+            });
+    return cell;
+  }
+
+  /**
+   * Die Notiz — oder, sind die Angaben entfernt, der Vermerk dazu. Die Notiz ist dann ohnehin leer,
+   * und der Vermerk erklärt die Platzhalter in derselben Zeile.
+   */
+  private Component createNotizCell(BuchungsZeile zeile) {
+    Optional<String> vermerk =
+        presenter
+            .entferntVermerk(auswertung, zeile)
+            .map(datum -> getTranslation("auswertung.zeile.entfernt", Formats.dateLong(datum)));
+    if (vermerk.isPresent()) {
+      Span cell = cell(vermerk.get(), "auswertung__cell--notiz");
+      cell.addClassName("auswertung__cell--entfernt");
+      return cell;
+    }
+    return cell(zeile.notiz() == null ? "" : zeile.notiz(), "auswertung__cell--notiz");
+  }
+
+  private Component createAktion(LehrkraftPlan plan, BuchungsZeile zeile) {
     Div aktion = new Div();
     aktion.addClassName("auswertung__cell");
     aktion.addClassName("auswertung__cell--aktion");
+    if (presenter.darfStornieren(auswertung, zeile)) {
+      aktion.add(createUmbuchenButton(plan, zeile), createStornoButton(plan, zeile));
+    }
+    if (presenter.darfAngabenEntfernen(auswertung, zeile)) {
+      aktion.add(createEntfernenButton(plan, zeile));
+    }
+    return aktion;
+  }
 
+  private Button createEntfernenButton(LehrkraftPlan plan, BuchungsZeile zeile) {
+    Button entfernen = new Button(VaadinIcon.ERASER.create());
+    entfernen.addClassName("auswertung__entfernen");
+    entfernen.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.ERROR, ButtonVariant.SMALL);
+    entfernen.setAriaLabel(getTranslation("auswertung.entfernen.button"));
+    entfernen.setTooltipText(getTranslation("auswertung.entfernen.button"));
+    entfernen.addClickListener(_ -> openEntfernenDialog(plan, zeile));
+    return entfernen;
+  }
+
+  private void openEntfernenDialog(LehrkraftPlan plan, BuchungsZeile zeile) {
+    new AngabenEntfernenDialog(
+            zeile.schuelerName(),
+            zeile.elternName(),
+            Formats.time(zeile.startzeit()),
+            plan.anzeigeName(),
+            () -> entferneAngaben(zeile))
+        .open();
+  }
+
+  private void entferneAngaben(BuchungsZeile zeile) {
+    Optional<Meldung> weigerung = presenter.entferneAngaben(zeile.buchungId());
+    if (weigerung.isPresent()) {
+      SprechtagMeldungen.zeige(this, weigerung.get());
+    } else {
+      Notification.show(getTranslation("auswertung.entfernen.erfolg", zeile.schuelerName()));
+    }
+    reload();
+  }
+
+  private Button createUmbuchenButton(LehrkraftPlan plan, BuchungsZeile zeile) {
     Button umbuchen = new Button(VaadinIcon.EXCHANGE.create());
     umbuchen.addClassName("auswertung__umbuchen");
     umbuchen.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
     umbuchen.setAriaLabel(getTranslation("auswertung.umbuchen.button"));
     umbuchen.setTooltipText(getTranslation("auswertung.umbuchen.button"));
     umbuchen.addClickListener(_ -> openUmbuchenDialog(plan, zeile));
+    return umbuchen;
+  }
 
+  private Button createStornoButton(LehrkraftPlan plan, BuchungsZeile zeile) {
     Button storno = new Button(VaadinIcon.CLOSE_SMALL.create());
     storno.addClassName("auswertung__storno");
     storno.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.ERROR, ButtonVariant.SMALL);
     storno.setAriaLabel(getTranslation("auswertung.storno.button"));
     storno.setTooltipText(getTranslation("auswertung.storno.button"));
     storno.addClickListener(_ -> openStornoDialog(plan, zeile));
-
-    aktion.add(umbuchen, storno);
-    return aktion;
+    return storno;
   }
 
   private void openStornoDialog(LehrkraftPlan plan, BuchungsZeile zeile) {
@@ -386,16 +489,17 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
             zeile.schuelerName(),
             Formats.time(zeile.startzeit()),
             plan.anzeigeName(),
-            () -> storniere(zeile))
+            angabenEntfernen -> storniere(zeile, angabenEntfernen))
         .open();
   }
 
-  private void storniere(BuchungsZeile zeile) {
-    Optional<Meldung> weigerung = presenter.storniere(zeile.buchungId());
+  private void storniere(BuchungsZeile zeile, boolean angabenEntfernen) {
+    Optional<Meldung> weigerung = presenter.storniere(zeile.buchungId(), angabenEntfernen);
     if (weigerung.isPresent()) {
       SprechtagMeldungen.zeige(this, weigerung.get());
     } else {
-      Notification.show(getTranslation("auswertung.storno.erfolg", zeile.schuelerName()));
+      Notification.show(
+          getTranslation(presenter.stornoErfolg(angabenEntfernen), zeile.schuelerName()));
     }
     reload();
   }
@@ -430,7 +534,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     reload();
   }
 
-  private Component cell(String text, String modifier) {
+  private Span cell(String text, String modifier) {
     Span cell = new Span(text);
     cell.addClassName("auswertung__cell");
     cell.addClassName(modifier);

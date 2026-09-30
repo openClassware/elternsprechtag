@@ -190,12 +190,54 @@ public final class Termin extends AggregateRoot {
    *
    * @return ob der Slot überhaupt Buchungen trug
    */
-  public boolean anonymisiere(Pseudonymisierung pseudonyme) {
+  public boolean anonymisiere(Pseudonymisierung pseudonyme, LocalDateTime jetzt) {
     Objects.requireNonNull(pseudonyme, "pseudonyme");
     for (Buchung buchung : buchungen) {
-      buchung.anonymisiere(pseudonyme.naechsteFamilie());
+      buchung.anonymisiere(pseudonyme.naechsteFamilie(), jetzt);
     }
     return !buchungen.isEmpty();
+  }
+
+  /**
+   * Zieht die Anonymisierung für eine einzelne Buchung vor — das Löschverlangen einer Familie
+   * (Issue #129). Dieselbe Wirkung wie der Lauf nach Ablauf der Frist: Die Familie weicht einem
+   * Pseudonym, die Notiz fällt, Status und Belegung bleiben. Kein Ereignis.
+   *
+   * <p>Ob der Sprechtag noch läuft, weiß der Termin nicht; die Antwort kommt als Parameter herein,
+   * entschieden wird hier. Eine noch geltende Zusage an einem veröffentlichten Sprechtag bleibt
+   * unberührt ({@link BuchungNochAktivException}) — ohne Storno bliebe ein Geistertermin.
+   *
+   * @param sprechtagVeroeffentlicht ob der Sprechtag dieses Termins gerade veröffentlicht ist
+   * @return ob sich etwas geändert hat; {@code false} für eine Buchung, deren Angaben schon
+   *     gefallen sind — ein zweiter Klick aus einem alten Tab ist kein Fehler
+   * @throws BuchungNichtGefundenException wenn die Buchung nicht zu diesem Termin gehört
+   */
+  public boolean entferneAngaben(
+      BuchungId buchungId,
+      Pseudonymisierung pseudonyme,
+      LocalDateTime jetzt,
+      boolean sprechtagVeroeffentlicht) {
+    Objects.requireNonNull(pseudonyme, "pseudonyme");
+    Buchung buchung = buchung(buchungId);
+    if (buchung.istAnonymisiert()) {
+      return false;
+    }
+    if (buchung.istAktiv() && sprechtagVeroeffentlicht) {
+      throw new BuchungNochAktivException(
+          "Die Buchung gilt noch; vor dem Sprechtag wird sie storniert: " + buchungId.wert());
+    }
+    buchung.anonymisiere(pseudonyme.naechsteFamilie(), jetzt);
+    return true;
+  }
+
+  private Buchung buchung(BuchungId buchungId) {
+    return buchungen.stream()
+        .filter(kandidat -> kandidat.id().equals(buchungId))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new BuchungNichtGefundenException(
+                    "Buchung gehört nicht zu diesem Termin: " + buchungId.wert()));
   }
 
   /** Angeboten und frei. Abgeleitet, nicht gespeichert. */

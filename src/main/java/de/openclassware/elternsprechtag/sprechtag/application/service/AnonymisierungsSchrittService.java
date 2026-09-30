@@ -29,12 +29,12 @@ class AnonymisierungsSchrittService {
 
   /** Ersetzt die Familien aller Buchungen eines Termins. Ein zweites Mal überschreibt nur erneut. */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  void anonymisiereTermin(TerminId id, Pseudonymisierung pseudonyme) {
+  void anonymisiereTermin(TerminId id, Pseudonymisierung pseudonyme, LocalDateTime jetzt) {
     Termin termin =
         termine
             .lade(id)
             .orElseThrow(() -> new IllegalStateException("Termin nicht gefunden: " + id.wert()));
-    if (termin.anonymisiere(pseudonyme)) {
+    if (termin.anonymisiere(pseudonyme, jetzt)) {
       termine.speichere(termin);
     }
   }

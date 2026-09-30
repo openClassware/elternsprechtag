@@ -2,7 +2,11 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Buchungsstatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Verfuegbarkeit;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,7 +35,8 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
          and b.status = 'ZUGESAGT'
       """;
 
-  private static final String AKTIVE_BUCHUNGEN =
+  /** Geltende und stornierte Buchungen — die Auswertung trennt sie selbst (Issue #129). */
+  private static final String BUCHUNGEN_FUER_AUSWERTUNG =
       """
       select b.id                as buchung_id,
              b.lehrkraft_id      as lehrkraft_id,
@@ -42,10 +47,15 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
              b.klasse_name       as klasse_name,
              b.fach_name         as fach_name,
              b.eltern_name       as eltern_name,
-             b.notiz             as notiz
-      """
-          + AKTIVE_EINES_SPRECHTAGS
-          + " order by t.startzeit";
+             b.notiz             as notiz,
+             b.status            as status,
+             b.anonymisiert_am   as anonymisiert_am,
+             t.verfuegbarkeit    as verfuegbarkeit
+        from buchungen b
+        join termin t on t.id = b.termin_id
+       where t.sprechtag_id = :sprechtagId
+       order by t.startzeit, b.erstellt_am
+      """;
 
   private static final String BELEGE =
       """
@@ -78,9 +88,9 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
   private final NamedParameterJdbcTemplate jdbc;
 
   @Override
-  public List<AuswertungsZeile> aktiveBuchungen(SprechtagId sprechtag) {
+  public List<AuswertungsZeile> buchungenFuerAuswertung(SprechtagId sprechtag) {
     return jdbc.query(
-        AKTIVE_BUCHUNGEN,
+        BUCHUNGEN_FUER_AUSWERTUNG,
         Map.of("sprechtagId", sprechtag.wert()),
         (rs, zeile) ->
             new AuswertungsZeile(
@@ -93,7 +103,14 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
                 rs.getString("klasse_name"),
                 rs.getString("fach_name"),
                 rs.getString("eltern_name"),
-                rs.getString("notiz")));
+                rs.getString("notiz"),
+                Buchungsstatus.STORNIERT.name().equals(rs.getString("status")),
+                Verfuegbarkeit.ENTFAELLT.name().equals(rs.getString("verfuegbarkeit")),
+                zeitpunkt(rs.getTimestamp("anonymisiert_am"))));
+  }
+
+  private static LocalDateTime zeitpunkt(Timestamp wert) {
+    return wert == null ? null : wert.toLocalDateTime();
   }
 
   @Override

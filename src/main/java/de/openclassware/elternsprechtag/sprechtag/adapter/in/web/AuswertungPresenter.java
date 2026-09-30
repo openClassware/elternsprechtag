@@ -1,6 +1,8 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.AngabenEntfernen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen;
@@ -13,6 +15,8 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.U
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +31,7 @@ class AuswertungPresenter {
   private final Stornieren stornieren;
   private final Umbuchen umbuchen;
   private final EntfallenLassen entfallenLassen;
+  private final AngabenEntfernen angabenEntfernen;
 
   Optional<SprechtagAuswertung> werteAus(UUID sprechtagId) {
     return auswerten.werteAus(sprechtagId);
@@ -77,15 +82,106 @@ class AuswertungPresenter {
   }
 
   /**
+   * Ob die Tabelle eine Aktionsspalte trägt: überall dort, wo es an irgendeiner Zeile etwas zu tun
+   * geben kann — Storno und Umbuchen am veröffentlichten Sprechtag, „Angaben entfernen" auch danach.
+   * Nach dem Anonymisierungs-Lauf gibt es nichts mehr zu entfernen, die Spalte fällt weg.
+   */
+  boolean hatAktionsspalte(SprechtagAuswertung auswertung) {
+    return auswertung.status() != SprechtagStatus.ENTWURF && auswertung.anonymisiertAm() == null;
+  }
+
+  /**
+   * Ob diese Zeile „Angaben entfernen" anbietet (Issue #129): solange ihre Angaben noch dastehen,
+   * und an einem veröffentlichten Sprechtag nur für eine stornierte Buchung — eine geltende Zusage
+   * läuft dort über das Storno mit entfernten Angaben. Verbindlich prüft der Termin.
+   */
+  boolean darfAngabenEntfernen(SprechtagAuswertung auswertung, BuchungsZeile zeile) {
+    return hatAktionsspalte(auswertung)
+        && zeile.anonymisiertAm() == null
+        && (zeile.storniert() || auswertung.status() != SprechtagStatus.VEROEFFENTLICHT);
+  }
+
+  /** Ob diese Zeile Storno und Umbuchen anbietet — nur eine geltende Zusage, nur veröffentlicht. */
+  boolean darfStornieren(SprechtagAuswertung auswertung, BuchungsZeile zeile) {
+    return darfStornieren(auswertung) && !zeile.storniert();
+  }
+
+  /**
+   * Der Vermerk „Angaben entfernt am …" an der Zeile. Nach dem Anonymisierungs-Lauf erklärt der
+   * Hinweis über der Tabelle alles, der Vermerk an jeder Zeile wäre nur Wiederholung.
+   */
+  Optional<LocalDate> entferntVermerk(SprechtagAuswertung auswertung, BuchungsZeile zeile) {
+    if (auswertung.anonymisiertAm() != null) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(zeile.anonymisiertAm());
+  }
+
+  /**
+   * Das Etikett unter der Uhrzeit einer stornierten Zeile: „entfallen", wenn der Ausfall der
+   * Lehrkraft sie zurückgenommen hat, sonst „storniert". Eine geltende Zusage trägt keins.
+   */
+  Optional<String> zustandsEtikett(BuchungsZeile zeile) {
+    if (!zeile.storniert()) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        zeile.entfallen() ? "auswertung.zeile.entfallen" : "auswertung.zeile.storniert");
+  }
+
+  /** Ob es den Schalter „Stornierte anzeigen" braucht — nur, wenn es Stornierte gibt. */
+  boolean hatStornierte(SprechtagAuswertung auswertung) {
+    return auswertung.plaene().stream().anyMatch(plan -> !plan.stornierte().isEmpty());
+  }
+
+  /**
+   * Die Zeilen eines Plans, wie der View sie zeigt: die geltenden Zusagen, auf Wunsch mit den
+   * stornierten dazwischen — chronologisch, eine stornierte vor einer späteren Buchung desselben
+   * Slots.
+   */
+  List<BuchungsZeile> sichtbareZeilen(LehrkraftPlan plan, boolean stornierteAnzeigen) {
+    if (!stornierteAnzeigen || plan.stornierte().isEmpty()) {
+      return plan.zeilen();
+    }
+    List<BuchungsZeile> alle = new ArrayList<>(plan.stornierte());
+    alle.addAll(plan.zeilen());
+    // Stabil sortiert: Bei gleicher Startzeit bleibt die stornierte vor der geltenden stehen.
+    alle.sort(Comparator.comparing(BuchungsZeile::startzeit));
+    return alle;
+  }
+
+  /**
    * Reicht das Storno an den Use Case durch.
    *
+   * @param angabenEntfernen ob die Angaben der Familie im selben Zug fallen — das Löschverlangen
+   *     vor dem Sprechtag
    * @return leer, wenn es geklappt hat — sonst die Begründung der Weigerung. Eine verletzte
    *     Vorbedingung (fremder Tab, Sprechtag inzwischen abgeschlossen) soll der Organizer sehen und
    *     nicht als stille Wirkungslosigkeit erleben.
    */
-  Optional<Meldung> storniere(UUID buchungId) {
+  Optional<Meldung> storniere(UUID buchungId, boolean angabenEntfernen) {
     try {
-      stornieren.storniere(buchungId);
+      stornieren.storniere(buchungId, angabenEntfernen);
+      return Optional.empty();
+    } catch (RuntimeException fehler) {
+      return Optional.of(SprechtagMeldungen.zu(fehler));
+    }
+  }
+
+  /** Der i18n-Schlüssel der Erfolgsmeldung — mit entfernten Angaben sagt sie das dazu. */
+  String stornoErfolg(boolean angabenEntfernen) {
+    return angabenEntfernen ? "auswertung.storno.erfolg-entfernt" : "auswertung.storno.erfolg";
+  }
+
+  /**
+   * Reicht „Angaben entfernen" an den Use Case durch — Spiegelbild zu
+   * {@link #storniere(UUID, boolean)}.
+   *
+   * @return leer, wenn es geklappt hat — sonst die Begründung der Weigerung.
+   */
+  Optional<Meldung> entferneAngaben(UUID buchungId) {
+    try {
+      angabenEntfernen.entferne(buchungId);
       return Optional.empty();
     } catch (RuntimeException fehler) {
       return Optional.of(SprechtagMeldungen.zu(fehler));

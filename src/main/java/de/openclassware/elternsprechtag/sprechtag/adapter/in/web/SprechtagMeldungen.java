@@ -6,6 +6,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungBereitsStorniertException;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungNichtGefundenException;
+import de.openclassware.elternsprechtag.sprechtag.domain.BuchungNochAktivException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagHatBuchungenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.StatusuebergangException;
@@ -102,6 +103,9 @@ final class SprechtagMeldungen {
     }
     if (fehler instanceof SprechtagNichtVeroeffentlichtException) {
       return Meldung.fehler("buchung.fehler.sprechtag-nicht-veroeffentlicht");
+    }
+    if (fehler instanceof BuchungNochAktivException) {
+      return Meldung.fehler("buchung.fehler.noch-aktiv");
     }
     if (fehler instanceof TerminBelegtException) {
       return Meldung.fehler("buchung.fehler.termin-belegt");

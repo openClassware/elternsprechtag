@@ -90,7 +90,7 @@ class StornoOhneVersandTest extends AbstractServiceTest {
     sender.reset();
     UUID buchung = termine.lade(termin.id()).orElseThrow().aktiveBuchung().orElseThrow().id().wert();
 
-    stornieren.storniere(buchung);
+    stornieren.storniere(buchung, false);
 
     assertThat(sender.versucht).isEmpty();
     assertThat(sender.empfangen).isEmpty();

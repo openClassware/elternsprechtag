@@ -178,7 +178,7 @@ abgesagte Sprechtage. Danach anonymisiert ein nächtlicher Lauf die Buchungen (s
 |--------------------------------------------|---------------|--------------------------------------------------------------------------------------|
 | `ELTERNSPRECHTAG_AUFBEWAHRUNGSFRIST_TAGE`  | `30`          | Frist in Tagen, mindestens 1.                                                        |
 | `ELTERNSPRECHTAG_ANONYMISIERUNG_CRON`      | `0 0 1 * * *` | Wann der Anonymisierungs-Lauf startet (Spring-Cron: Sekunde Minute Stunde Tag Monat Wochentag). |
-| `ELTERNSPRECHTAG_ANONYMISIERUNG_EMAIL`     | `noreply@openclassware.de` | Die E-Mail, die jede anonymisierte Buchung statt der Elternadresse trägt. Sollte keine Post annehmen; darf nicht leer sein. |
+| `ELTERNSPRECHTAG_ANONYMISIERUNG_EMAIL`     | `noreply@openclassware.de` | Die E-Mail, die jede anonymisierte Buchung statt der Elternadresse trägt — nach Ablauf der Frist wie nach einem Löschverlangen. Sollte keine Post annehmen; darf nicht leer sein. |
 
 Die Anonymisierung ist endgültig: Eine nachträglich verlängerte Frist holt bereits ersetzte Namen
 nicht zurück.
@@ -258,6 +258,12 @@ Daten einzutragen, ist zu empfehlen.
   bleibt als Zahl stehen (wann, bei welcher Lehrkraft), damit die Auslastung für die Planung des
   nächsten Sprechtags erhalten bleibt. Datenbank-Backups erfasst das nicht — deren
   Aufbewahrung regelt die betreibende Schule.
+- **Löschverlangen einer Familie.** Verlangt eine Familie die Löschung vorher, entfernt der
+  Organizer die Angaben einer einzelnen Buchung sofort — vor dem Sprechtag beim Stornieren, danach
+  über „Angaben entfernen" in der Auswertung, bei stornierten Buchungen über „Stornierte anzeigen".
+  Es wirkt dieselbe Anonymisierung wie nach Ablauf der Frist. Lehrkraft, Klasse, Fach und Uhrzeit
+  bleiben stehen; ob eine Zeile darüber noch einem Kind zuzuordnen ist, bewertet die Schule.
+  Festgehalten wird der Zeitpunkt, nicht wer entfernt hat.
 
 ### Verantwortlichkeit
 

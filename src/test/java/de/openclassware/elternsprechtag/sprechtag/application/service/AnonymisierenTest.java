@@ -98,6 +98,9 @@ class AnonymisierenTest extends AbstractServiceTest {
         .containsExactly(Buchungsstatus.ZUGESAGT, Buchungsstatus.STORNIERT);
     Sprechtag danach = ladeSprechtag(f.sprechtag().id().wert());
     assertThat(danach.anonymisiertAm()).isPresent();
+    // Issue #129: Der Lauf vermerkt auch an jeder Buchung — die Auswertung bietet dort kein
+    // „Angaben entfernen" mehr an.
+    assertThat(buchungen).allSatisfy(buchung -> assertThat(buchung.anonymisiertAm()).isPresent());
     assertThat(danach.status()).isEqualTo(SprechtagStatus.ABGESCHLOSSEN);
   }
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -294,7 +295,7 @@ class TerminTest {
     termin.buche(familie("schmidt"), ziel(), new Notiz("Frage"), JETZT);
     termin.ereignisseAbholen();
 
-    boolean geaendert = termin.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL));
+    boolean geaendert = termin.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT);
 
     assertThat(geaendert).isTrue();
     assertThat(termin.buchungen())
@@ -314,7 +315,7 @@ class TerminTest {
     BuchungId aktiv = termin.buche(familie("mueller"), ziel, null, JETZT);
     termin.erinnereBuchung(aktiv, JETZT.plusDays(1));
 
-    termin.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL));
+    termin.anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT);
 
     Buchung buchung = termin.aktiveBuchung().orElseThrow();
     assertThat(buchung.id()).isEqualTo(aktiv);
@@ -327,6 +328,103 @@ class TerminTest {
 
   @Test
   void anonymisiere_ohneBuchung_aendertNichts() {
-    assertThat(freierTermin().anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL))).isFalse();
+    assertThat(freierTermin().anonymisiere(Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT)).isFalse();
+  }
+
+  /** Issue #129: das Löschverlangen einer Familie zieht die Anonymisierung für eine Buchung vor. */
+  @Test
+  void entferneAngaben_stornierteBuchung_ersetztFamilieUndVermerktDenZeitpunkt() {
+    Termin termin = freierTermin();
+    BuchungId storniert = termin.buche(familie("mueller"), ziel(), new Notiz("Anliegen"), JETZT);
+    termin.storniere(storniert);
+    termin.ereignisseAbholen();
+
+    boolean geaendert =
+        termin.entferneAngaben(
+            storniert, Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT.plusDays(2), true);
+
+    assertThat(geaendert).isTrue();
+    Buchung buchung = termin.buchungen().getFirst();
+    assertThat(buchung.familie()).isEqualTo(new Familie("Eltern-ab12-001", "Schueler-ab12-001", EMAIL));
+    assertThat(buchung.notiz()).isEmpty();
+    assertThat(buchung.status()).isEqualTo(Buchungsstatus.STORNIERT);
+    assertThat(buchung.anonymisiertAm()).contains(JETZT.plusDays(2));
+    assertThat(termin.ereignisseAbholen()).isEmpty();
+  }
+
+  /** Vor dem Sprechtag hieße es einen Geistertermin: erst stornieren, dann entfernen. */
+  @Test
+  void entferneAngaben_geltendeZusageAnVeroeffentlichtemSprechtag_wirdAbgewiesen() {
+    Termin termin = freierTermin();
+    BuchungId aktiv = termin.buche(familie("mueller"), ziel(), new Notiz("Anliegen"), JETZT);
+
+    assertThatThrownBy(
+            () ->
+                termin.entferneAngaben(
+                    aktiv, Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT, true))
+        .isInstanceOf(BuchungNochAktivException.class);
+    Buchung buchung = termin.aktiveBuchung().orElseThrow();
+    assertThat(buchung.familie()).isEqualTo(familie("mueller"));
+    assertThat(buchung.notiz()).contains(new Notiz("Anliegen"));
+    assertThat(buchung.anonymisiertAm()).isEmpty();
+  }
+
+  /** Nach dem Sprechtag bleibt die Zusage stehen — die Belegung ist das Wissen, das bleiben soll. */
+  @Test
+  void entferneAngaben_geltendeZusageNachDemSprechtag_bleibtBelegt() {
+    Termin termin = freierTermin();
+    BuchungId aktiv = termin.buche(familie("mueller"), ziel(), null, JETZT);
+
+    termin.entferneAngaben(aktiv, Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT, false);
+
+    Buchung buchung = termin.aktiveBuchung().orElseThrow();
+    assertThat(buchung.id()).isEqualTo(aktiv);
+    assertThat(buchung.familie()).isEqualTo(new Familie("Eltern-ab12-001", "Schueler-ab12-001", EMAIL));
+    assertThat(buchung.anonymisiertAm()).contains(JETZT);
+    assertThat(termin.istBuchbar()).isFalse();
+  }
+
+  /** Der zweite Klick aus einem alten Tab: still, ohne Fehler, und der erste Zeitpunkt bleibt. */
+  @Test
+  void entferneAngaben_zweitesMal_aendertNichtsMehr() {
+    Termin termin = freierTermin();
+    BuchungId aktiv = termin.buche(familie("mueller"), ziel(), null, JETZT);
+    termin.entferneAngaben(aktiv, Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT, false);
+
+    boolean geaendert =
+        termin.entferneAngaben(
+            aktiv, Pseudonymisierung.mitSeed("cd34", EMAIL), JETZT.plusDays(1), false);
+
+    assertThat(geaendert).isFalse();
+    Buchung buchung = termin.aktiveBuchung().orElseThrow();
+    assertThat(buchung.familie().elternName()).isEqualTo("Eltern-ab12-001");
+    assertThat(buchung.anonymisiertAm()).contains(JETZT);
+  }
+
+  @Test
+  void entferneAngaben_fremdeBuchung_wirdAbgewiesen() {
+    Termin termin = freierTermin();
+
+    assertThatThrownBy(
+            () ->
+                termin.entferneAngaben(
+                    BuchungId.neu(), Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT, false))
+        .isInstanceOf(BuchungNichtGefundenException.class);
+  }
+
+  /** Der Nachtlauf vermerkt an jeder Buchung; eine vorher entfernte behält ihren Zeitpunkt. */
+  @Test
+  void anonymisiere_vermerktDenZeitpunkt_undBehaeltEinenFrueheren() {
+    Termin termin = freierTermin();
+    BuchungId frueher = termin.buche(familie("mueller"), ziel(), null, JETZT);
+    termin.storniere(frueher);
+    termin.entferneAngaben(frueher, Pseudonymisierung.mitSeed("ab12", EMAIL), JETZT, true);
+    termin.buche(familie("schmidt"), ziel(), null, JETZT);
+
+    termin.anonymisiere(Pseudonymisierung.mitSeed("cd34", EMAIL), JETZT.plusDays(31));
+
+    assertThat(termin.buchungen())
+        .extracting(Buchung::anonymisiertAm)
+        .containsExactly(Optional.of(JETZT), Optional.of(JETZT.plusDays(31)));
   }
 }

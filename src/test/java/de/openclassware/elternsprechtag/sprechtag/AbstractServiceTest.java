@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag;
 
 import de.openclassware.elternsprechtag.schulorganisation.application.port.in.Stammdatenpflege;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Absagen;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.AngabenEntfernen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Abschliessen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Anlegen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
@@ -99,6 +100,7 @@ public abstract class AbstractServiceTest {
   @Autowired protected Buchungsoptionen buchungsoptionen;
   @Autowired protected Erinnern erinnern;
   @Autowired protected EntfallenLassen entfallenLassen;
+  @Autowired protected AngabenEntfernen angabenEntfernen;
 
   /** Nur zum Aufräumen und um Aggregate der Reihe nach einzusammeln — nie für Zusicherungen. */
   @Autowired protected JdbcTemplate jdbc;

@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.application.port.out;
 
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -13,8 +14,12 @@ import java.util.UUID;
  */
 public interface BuchungsAnsichten {
 
-  /** Aktive Buchungen eines Sprechtags, chronologisch nach Startzeit. */
-  List<AuswertungsZeile> aktiveBuchungen(SprechtagId sprechtag);
+  /**
+   * Alle Buchungen eines Sprechtags, geltende wie stornierte, chronologisch nach Startzeit — die
+   * Grundlage der Auswertung. Stornierte führt sie, damit ihre Angaben auf Verlangen der Familie
+   * entfernt werden können (Issue #129); was davon zählt, entscheidet der Use Case.
+   */
+  List<AuswertungsZeile> buchungenFuerAuswertung(SprechtagId sprechtag);
 
   /**
    * Die Buchungen genau dieser Ids, chronologisch — die Menge eines Vorgangs für die
@@ -40,7 +45,8 @@ public interface BuchungsAnsichten {
   List<BuchungId> aktiveUnerinnerteBuchungen(SprechtagId sprechtag);
 
   /**
-   * Eine Zeile des Terminplans einer Lehrkraft. {@code notiz} darf {@code null} sein.
+   * Eine Zeile des Terminplans einer Lehrkraft. {@code notiz} und {@code anonymisiertAm} dürfen
+   * {@code null} sein.
    *
    * <p>Die {@code buchungId} trägt die Zeile, damit die Oberfläche eine Aktion auf genau diese
    * Buchung beziehen kann — ohne sie wäre eine Zeile im Terminplan nicht adressierbar.
@@ -59,7 +65,10 @@ public interface BuchungsAnsichten {
       String klasse,
       String fach,
       String elternName,
-      String notiz) {}
+      String notiz,
+      boolean storniert,
+      boolean entfallen,
+      LocalDateTime anonymisiertAm) {}
 
   /**
    * Eine Zeile für den Buchungsbeleg. Trägt die Sprechtag-Id mit, damit der Versand die Kopfdaten

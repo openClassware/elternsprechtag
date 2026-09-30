@@ -89,6 +89,23 @@ class UmbuchenTest extends AbstractServiceTest {
         .hasValueSatisfying(n -> assertThat(n.text()).isEqualTo("Bitte pünktlich"));
   }
 
+  /** Issue #129: Die Angaben leben in der neuen Buchung weiter — die alte wäre nur eine Dublette. */
+  @Test
+  void umbuche_entferntDieAngabenDerAltenBuchung() {
+    Fixture f = veroeffentlichterSprechtag();
+    List<Termin> slots = alleTermine();
+    UUID alte =
+        buche(f.lehrauftrag(), slots.get(0), "Eltern Müller", "Lukas Müller", "Bitte pünktlich");
+
+    umbuchen.umbuche(new UmbuchAnfrage(alte, slots.get(2).id().wert()));
+
+    Buchung alteBuchung = termine.lade(slots.get(0).id()).orElseThrow().buchungen().getFirst();
+    assertThat(alteBuchung.familie().elternName()).isNotEqualTo("Eltern Müller");
+    assertThat(alteBuchung.familie().schuelerName()).isNotEqualTo("Lukas Müller");
+    assertThat(alteBuchung.notiz()).isEmpty();
+    assertThat(alteBuchung.anonymisiertAm()).isPresent();
+  }
+
   @Test
   void umbuche_stelltDenAltenSlotWiederFreiUndStorniertDieAlteBuchung() {
     Fixture f = veroeffentlichterSprechtag();

@@ -46,6 +46,11 @@ public interface Auswerten {
    * Ganztags-Ausfall hier sichtbar und trägt den Hinweis. Eine Lehrkraft ohne Lehrauftrag und ohne
    * je eine Buchung gehabt zu haben, hat schlicht keinen Anzeigenamen — den liefert nur die
    * Schulorganisation oder eine eingefrorene Buchung, nie der Termin allein.
+   *
+   * <p>{@code zeilen} sind die geltenden Zusagen, {@code anzahl} zählt genau sie.
+   * {@code stornierte} stehen gesondert und ebenfalls chronologisch daneben (Issue #129): Sie zählen
+   * nicht zum Plan, bleiben aber erreichbar, damit ihre Angaben auf Verlangen der Familie entfernt
+   * werden können.
    */
   record LehrkraftPlan(
       UUID lehrerId,
@@ -53,7 +58,8 @@ public interface Auswerten {
       String anzeigeName,
       int anzahl,
       int entfalleneAnzahl,
-      List<BuchungsZeile> zeilen) {}
+      List<BuchungsZeile> zeilen,
+      List<BuchungsZeile> stornierte) {}
 
   /**
    * Eine Buchungszeile im Terminplan einer Lehrkraft. Klasse und Fach sind der eingefrorene Stand
@@ -61,7 +67,13 @@ public interface Auswerten {
    * Sprechtags nicht verändern.
    *
    * <p>Die {@code buchungId} ist die Identität der Zeile: Nur mit ihr kann die Oberfläche eine
-   * Aktion — heute das Storno — auf genau diese Buchung beziehen.
+   * Aktion — Storno, Umbuchen, Angaben entfernen — auf genau diese Buchung beziehen.
+   *
+   * <p>{@code anonymisiertAm} ist der Tag, an dem die Angaben der Familie gefallen sind, oder
+   * {@code null}, solange sie noch dastehen (Issue #129). Nur der Tag, wie am Sprechtag.
+   *
+   * <p>{@code entfallen} heißt: Der Termin der Zeile entfällt — eine stornierte Buchung darauf hat
+   * der Ausfall der Lehrkraft zurückgenommen, nicht die Familie.
    */
   record BuchungsZeile(
       UUID buchungId,
@@ -70,5 +82,8 @@ public interface Auswerten {
       String klasse,
       String fach,
       String elternName,
-      String notiz) {}
+      String notiz,
+      boolean storniert,
+      boolean entfallen,
+      LocalDate anonymisiertAm) {}
 }

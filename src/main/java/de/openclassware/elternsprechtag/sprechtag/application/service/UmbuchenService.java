@@ -47,6 +47,7 @@ class UmbuchenService implements Umbuchen {
   private final Sprechtage sprechtage;
   private final TerminAnsichten terminAnsichten;
   private final Ereignisse ereignisse;
+  private final Pseudonymgeber pseudonymgeber;
 
   @Override
   @Transactional(readOnly = true)
@@ -120,6 +121,9 @@ class UmbuchenService implements Umbuchen {
     }
 
     alterTermin.storniere(alteId);
+    // Die Angaben leben in der neuen Buchung weiter; die alte bliebe nur eine Dublette mit Namen,
+    // die der Schalter „Stornierte anzeigen" wieder hervorholte (Issue #129).
+    alterTermin.entferneAngaben(alteId, pseudonymgeber.neuerLauf(), jetzt, true);
     try {
       termine.speichere(alterTermin);
     } catch (OptimisticLockingFailureException konflikt) {

@@ -104,7 +104,16 @@
 }
 
 .auswertung__filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px 24px;
     padding: 1rem 1.5rem;
+}
+
+/* Wie beim Hinweis oben: setVisible(false) setzt nur das hidden-Attribut. */
+.auswertung__stornierte-schalter[hidden] {
+    display: none;
 }
 
 .auswertung__filter-select {
@@ -211,8 +220,32 @@
 }
 
 .auswertung__cell--zeit {
+    display: flex;
+    flex-direction: column;
     font-weight: 600;
     color: #1f2933;
+}
+
+/* Stornierte Zeilen (Issue #129) stehen nur auf Wunsch im Plan und zählen nicht mit — gedämpft,
+   damit der Blick weiter an den geltenden Terminen hängt. */
+.auswertung__row--storniert {
+    background: #fafafa;
+}
+
+.auswertung__row--storniert .auswertung__cell:not(.auswertung__cell--aktion) {
+    color: #8a909a;
+}
+
+/* „storniert" oder „entfallen" unter der Uhrzeit. Klein geschrieben statt in Versalien: Das Wort
+   bräche sonst in der 64 px schmalen Zeitspalte der Telefon-Karte um. */
+.auswertung__zeile-zustand {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8a909a;
+}
+
+.auswertung__cell--entfernt {
+    font-style: italic;
 }
 
 .auswertung__cell--schueler {
@@ -231,7 +264,8 @@
 }
 
 .auswertung__storno,
-.auswertung__umbuchen {
+.auswertung__umbuchen,
+.auswertung__entfernen {
     /* Mindestens 44 px Trefferfläche — dieselbe Untergrenze wie am Telefon (375 × 667 px). */
     min-width: 44px;
     height: 44px;
@@ -295,5 +329,11 @@
         grid-column: 1 / span 2;
         grid-row: 3;
         justify-content: flex-start;
+    }
+
+    /* Eine Zeile ohne Aktion — etwa mit schon entfernten Angaben — soll keine leere dritte Reihe
+       in die Karte ziehen. */
+    .auswertung__cell--aktion:empty {
+        display: none;
     }
 }

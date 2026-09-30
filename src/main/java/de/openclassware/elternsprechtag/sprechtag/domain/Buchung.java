@@ -21,6 +21,9 @@ public final class Buchung {
   private Buchungsstatus status;
   private LocalDateTime erinnerungVersendetAm;
 
+  /** Wann Familie und Notiz einem Pseudonym gewichen sind; {@code null} heißt: noch nicht. */
+  private LocalDateTime anonymisiertAm;
+
   private Buchung(
       BuchungId id,
       LocalDateTime erstelltAm,
@@ -28,7 +31,8 @@ public final class Buchung {
       Buchungsziel ziel,
       Notiz notiz,
       Buchungsstatus status,
-      LocalDateTime erinnerungVersendetAm) {
+      LocalDateTime erinnerungVersendetAm,
+      LocalDateTime anonymisiertAm) {
     this.id = Objects.requireNonNull(id, "id");
     this.erstelltAm = Objects.requireNonNull(erstelltAm, "erstelltAm");
     this.familie = Objects.requireNonNull(familie, "familie");
@@ -36,6 +40,7 @@ public final class Buchung {
     this.status = Objects.requireNonNull(status, "status");
     this.notiz = notiz;
     this.erinnerungVersendetAm = erinnerungVersendetAm;
+    this.anonymisiertAm = anonymisiertAm;
   }
 
   /**
@@ -46,7 +51,7 @@ public final class Buchung {
    */
   static Buchung zugesagt(
       BuchungId id, LocalDateTime erstelltAm, Familie familie, Buchungsziel ziel, Notiz notiz) {
-    return new Buchung(id, erstelltAm, familie, ziel, notiz, Buchungsstatus.ZUGESAGT, null);
+    return new Buchung(id, erstelltAm, familie, ziel, notiz, Buchungsstatus.ZUGESAGT, null, null);
   }
 
   /**
@@ -56,6 +61,8 @@ public final class Buchung {
    * @param notiz darf {@code null} sein
    * @param erinnerungVersendetAm darf {@code null} sein — dann ist noch keine Erinnerung
    *     verschickt worden
+   * @param anonymisiertAm darf {@code null} sein — dann trägt die Buchung noch die Angaben der
+   *     Familie
    */
   public static Buchung rekonstruiere(
       BuchungId id,
@@ -64,8 +71,10 @@ public final class Buchung {
       Buchungsziel ziel,
       Notiz notiz,
       Buchungsstatus status,
-      LocalDateTime erinnerungVersendetAm) {
-    return new Buchung(id, erstelltAm, familie, ziel, notiz, status, erinnerungVersendetAm);
+      LocalDateTime erinnerungVersendetAm,
+      LocalDateTime anonymisiertAm) {
+    return new Buchung(
+        id, erstelltAm, familie, ziel, notiz, status, erinnerungVersendetAm, anonymisiertAm);
   }
 
   /** Nimmt die Zusage zurück; gibt zurück, ob sich dadurch etwas geändert hat. */
@@ -93,13 +102,24 @@ public final class Buchung {
   }
 
   /**
-   * Ersetzt die Familie durch ein Pseudonym und leert die Notiz (Issue #126). Nur für
-   * {@link Termin}. Status, Ziel und Zeitstempel bleiben — sie sind die Auslastung, nicht die
-   * Person. Ein zweiter Aufruf überschreibt das Pseudonym nur ein weiteres Mal.
+   * Ersetzt die Familie durch ein Pseudonym und leert die Notiz — nach Ablauf der Frist (Issue
+   * #126) oder vorgezogen auf Verlangen der Familie (#129). Nur für {@link Termin}. Status, Ziel und
+   * Zeitstempel bleiben — sie sind die Auslastung, nicht die Person.
+   *
+   * <p>Ein zweiter Aufruf überschreibt das Pseudonym nur ein weiteres Mal; der Vermerk
+   * {@code anonymisiertAm} behält den ersten Zeitpunkt — da sind die Angaben gefallen.
    */
-  void anonymisiere(Familie ersatz) {
+  void anonymisiere(Familie ersatz, LocalDateTime jetzt) {
     familie = Objects.requireNonNull(ersatz, "ersatz");
     notiz = null;
+    if (anonymisiertAm == null) {
+      anonymisiertAm = Objects.requireNonNull(jetzt, "jetzt");
+    }
+  }
+
+  /** Ob die Angaben der Familie bereits einem Pseudonym gewichen sind. */
+  public boolean istAnonymisiert() {
+    return anonymisiertAm != null;
   }
 
   public boolean istAktiv() {
@@ -132,5 +152,9 @@ public final class Buchung {
 
   public Optional<LocalDateTime> erinnerungVersendetAm() {
     return Optional.ofNullable(erinnerungVersendetAm);
+  }
+
+  public Optional<LocalDateTime> anonymisiertAm() {
+    return Optional.ofNullable(anonymisiertAm);
   }
 }

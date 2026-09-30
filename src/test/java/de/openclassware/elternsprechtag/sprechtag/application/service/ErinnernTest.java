@@ -128,7 +128,7 @@ class ErinnernTest extends AbstractServiceTest {
   void erinnere_stornierteBuchung_erinnertNicht() {
     Fixture f = veroeffentlichterSprechtag(LocalDate.now().plusDays(1), ErinnerungsVorlauf.EIN_TAG);
     UUID buchung = buche(f.lehrauftrag(), alleTermine().get(0));
-    stornieren.storniere(buchung);
+    stornieren.storniere(buchung, false);
 
     int anzahl = erinnern.erinnere();
 
