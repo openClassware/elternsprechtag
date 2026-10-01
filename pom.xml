@@ -33,8 +33,8 @@
     <properties>
         <java.version>25</java.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
-        <vaadin.version>25.2.6</vaadin.version>
-        <archunit.version>1.4.2</archunit.version>
+        <vaadin.version>25.3.0</vaadin.version>
+        <archunit.version>1.5.1</archunit.version>
     </properties>
     <dependencies>
         <!-- Spring Data JDBC trägt die Aggregate beider Kontexte (ADR 0004). JPA/Hibernate ist
