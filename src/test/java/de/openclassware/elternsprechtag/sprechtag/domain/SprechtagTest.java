@@ -294,33 +294,55 @@ class SprechtagTest {
   @Nested
   class Anmeldung {
 
+    private static final LocalDateTime LANGE_VORHER = DATUM.minusDays(10).atTime(12, 0);
+    private static final LocalDateTime DANACH = DATUM.plusDays(1).atTime(12, 0);
+
+    /** Frist 3: Der dritte Tag vorher zählt ganz, die Mitternacht danach schließt. */
     @Test
-    void anmeldeschlussIstDasDatumMinusDieFrist() {
+    void anmeldeschlussIstDieMitternachtNachDemLetztenTag() {
       Sprechtag sprechtag = entwurf();
       sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(3));
 
-      assertThat(sprechtag.anmeldeschluss()).isEqualTo(DATUM.minusDays(3));
+      assertThat(sprechtag.anmeldeschluss()).isEqualTo(DATUM.minusDays(2).atStartOfDay());
     }
 
-    /** „Anmeldung bis 19.03." meint den ganzen 19.03. */
+    /** „Anmeldung bis 19.07." meint den ganzen 19.07. */
     @Test
-    void amAnmeldeschlussSelbst_nimmtErElternbuchungenNochAn() {
+    void amLetztenTagKurzVorMitternacht_nimmtErElternbuchungenNochAn() {
       Sprechtag sprechtag = veroeffentlicht();
 
-      assertThat(sprechtag.nimmtElternbuchungenAn(sprechtag.anmeldeschluss())).isTrue();
+      assertThat(sprechtag.nimmtElternbuchungenAn(DATUM.minusDays(1).atTime(23, 59))).isTrue();
     }
 
     @Test
-    void amTagNachDemAnmeldeschluss_nimmtErKeineElternbuchungenMehrAn() {
+    void abMitternachtNachDemLetztenTag_nimmtErKeineElternbuchungenMehrAn() {
       Sprechtag sprechtag = veroeffentlicht();
 
-      assertThat(sprechtag.nimmtElternbuchungenAn(sprechtag.anmeldeschluss().plusDays(1)))
-          .isFalse();
+      assertThat(sprechtag.nimmtElternbuchungenAn(DATUM.atStartOfDay())).isFalse();
+    }
+
+    /** Issue #118 — bei Frist 0 schließt die Anmeldung mit dem Beginn, nicht um Mitternacht. */
+    @Test
+    void beiFristNull_nimmtErBisKurzVorDemBeginnElternbuchungenAn() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(0));
+
+      assertThat(sprechtag.nimmtElternbuchungenAn(DATUM.atTime(13, 59))).isTrue();
+    }
+
+    /** Issue #118 — sonst ließe sich um 14:30 ein Slot für 14:15 buchen. */
+    @Test
+    void beiFristNull_nimmtErAbDemBeginnKeineElternbuchungenMehrAn() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(0));
+
+      assertThat(sprechtag.nimmtElternbuchungenAn(DATUM.atTime(NACHMITTAG.beginn()))).isFalse();
+      assertThat(sprechtag.anmeldungBeendet(DATUM.atTime(NACHMITTAG.beginn()))).isTrue();
     }
 
     @Test
     void einEntwurfNimmtKeineElternbuchungenAn() {
-      assertThat(entwurf().nimmtElternbuchungenAn(DATUM.minusDays(10))).isFalse();
+      assertThat(entwurf().nimmtElternbuchungenAn(LANGE_VORHER)).isFalse();
     }
 
     @Test
@@ -328,26 +350,26 @@ class SprechtagTest {
       Sprechtag sprechtag = veroeffentlicht();
       sprechtag.sageAb();
 
-      assertThat(sprechtag.nimmtElternbuchungenAn(DATUM.minusDays(10))).isFalse();
+      assertThat(sprechtag.nimmtElternbuchungenAn(LANGE_VORHER)).isFalse();
     }
 
     @Test
     void einAbgeschlossenerSprechtagNimmtKeineElternbuchungenAn() {
-      assertThat(abgeschlossen().nimmtElternbuchungenAn(DATUM.minusDays(10))).isFalse();
+      assertThat(abgeschlossen().nimmtElternbuchungenAn(LANGE_VORHER)).isFalse();
     }
 
     @Test
-    void amAnmeldeschlussSelbst_istDieAnmeldungNochNichtBeendet() {
+    void kurzVorDemAnmeldeschluss_istDieAnmeldungNochNichtBeendet() {
       Sprechtag sprechtag = veroeffentlicht();
 
-      assertThat(sprechtag.anmeldungBeendet(sprechtag.anmeldeschluss())).isFalse();
+      assertThat(sprechtag.anmeldungBeendet(sprechtag.anmeldeschluss().minusMinutes(1))).isFalse();
     }
 
     @Test
-    void amTagNachDemAnmeldeschluss_istDieAnmeldungBeendet() {
+    void amAnmeldeschluss_istDieAnmeldungBeendet() {
       Sprechtag sprechtag = veroeffentlicht();
 
-      assertThat(sprechtag.anmeldungBeendet(sprechtag.anmeldeschluss().plusDays(1))).isTrue();
+      assertThat(sprechtag.anmeldungBeendet(sprechtag.anmeldeschluss())).isTrue();
     }
 
     /** Auch nach der Endzeit — bis der Tagesjob abschließt, bleibt es „Anmeldung beendet". */
@@ -355,12 +377,12 @@ class SprechtagTest {
     void nachDerEndzeit_istDieAnmeldungBeendetBisZumAbschluss() {
       Sprechtag sprechtag = veroeffentlicht();
 
-      assertThat(sprechtag.anmeldungBeendet(DATUM.plusDays(1))).isTrue();
+      assertThat(sprechtag.anmeldungBeendet(DANACH)).isTrue();
     }
 
     @Test
     void imEntwurfIstDieAnmeldungNieBeendet() {
-      assertThat(entwurf().anmeldungBeendet(DATUM.plusDays(1))).isFalse();
+      assertThat(entwurf().anmeldungBeendet(DANACH)).isFalse();
     }
 
     @Test
@@ -368,25 +390,25 @@ class SprechtagTest {
       Sprechtag sprechtag = veroeffentlicht();
       sprechtag.sageAb();
 
-      assertThat(sprechtag.anmeldungBeendet(DATUM.plusDays(1))).isFalse();
+      assertThat(sprechtag.anmeldungBeendet(DANACH)).isFalse();
     }
 
     @Test
     void nachDemAbschlussIstDieAnmeldungNieBeendet() {
-      assertThat(abgeschlossen().anmeldungBeendet(DATUM.plusDays(1))).isFalse();
+      assertThat(abgeschlossen().anmeldungBeendet(DANACH)).isFalse();
     }
 
     /** Die Anmeldung verlängern, wenn sich zu wenige eingetragen haben. */
     @Test
     void eineAbgelaufeneFristLaesstSichNachDemVeroeffentlichenWiederOeffnen() {
       Sprechtag sprechtag = veroeffentlicht();
-      LocalDate heute = DATUM.minusDays(1);
+      LocalDateTime jetzt = DATUM.minusDays(1).atTime(12, 0);
       sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(5));
-      assertThat(sprechtag.nimmtElternbuchungenAn(heute)).isFalse();
+      assertThat(sprechtag.nimmtElternbuchungenAn(jetzt)).isFalse();
 
       sprechtag.aendereAnmeldefrist(Anmeldefrist.vonTagen(0));
 
-      assertThat(sprechtag.nimmtElternbuchungenAn(heute)).isTrue();
+      assertThat(sprechtag.nimmtElternbuchungenAn(jetzt)).isTrue();
     }
 
     @Test

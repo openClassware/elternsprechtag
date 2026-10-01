@@ -5,7 +5,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.ElternbuchungGeschlosse
 import de.openclassware.elternsprechtag.sprechtag.domain.Familie;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,9 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
  * nur die Vorbedingung des Eltern-Submits: Der Elternlink nimmt noch Buchungen an (Issue #122).
  *
  * <p>Die Prüfung sitzt hier und nicht nur beim Öffnen der Seite, weil zwischen Öffnen und Abschicken
- * Zeit vergeht: Mitternacht kann den Anmeldeschluss überschreiten, der Organizer kann absagen. Sie
- * läuft wie im {@code NachtragenService} <b>vor</b> der Zeitkonflikt-Prüfung — die geschlossene
- * Anmeldung ist der grundsätzlichere Fehler.
+ * Zeit vergeht: Der Anmeldeschluss kann verstreichen — bei Frist 0 mit dem Beginn des Sprechtags
+ * (Issue #118) —, der Organizer kann absagen. Sie läuft wie im {@code NachtragenService} <b>vor</b>
+ * der Zeitkonflikt-Prüfung — die geschlossene Anmeldung ist der grundsätzlichere Fehler.
  */
 @RequiredArgsConstructor
 @Service
@@ -42,9 +42,9 @@ class BuchenService implements Buchen {
   }
 
   private void pruefeElternbuchungOffen(List<BuchungsVorgangService.Wunsch> wuensche) {
-    LocalDate heute = LocalDate.now();
+    LocalDateTime jetzt = LocalDateTime.now();
     for (Sprechtag sprechtag : vorgang.sprechtageDer(wuensche)) {
-      if (!sprechtag.nimmtElternbuchungenAn(heute)) {
+      if (!sprechtag.nimmtElternbuchungenAn(jetzt)) {
         throw new ElternbuchungGeschlossenException(
             "Der Elternlink nimmt keine Buchung mehr an — Status "
                 + sprechtag.status()

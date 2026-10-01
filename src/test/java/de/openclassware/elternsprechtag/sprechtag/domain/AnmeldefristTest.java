@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -11,6 +13,9 @@ import org.junit.jupiter.api.Test;
  * fängt den Tippfehler ab — 40 statt 4 schlösse die Anmeldung wochenlang vorher.
  */
 class AnmeldefristTest {
+
+  private static final LocalDate DATUM = LocalDate.of(2026, 3, 24);
+  private static final LocalTime BEGINN = LocalTime.of(15, 0);
 
   @Test
   void amTagSelbst_istErlaubt() {
@@ -49,8 +54,29 @@ class AnmeldefristTest {
   }
 
   @Test
-  void anmeldeschlussIstDasDatumMinusDieTage() {
-    assertThat(Anmeldefrist.vonTagen(4).anmeldeschlussFuer(LocalDate.of(2026, 3, 24)))
-        .isEqualTo(LocalDate.of(2026, 3, 20));
+  void letzterTagIstDasDatumMinusDieTage() {
+    assertThat(Anmeldefrist.vonTagen(4).letzterTagFuer(DATUM)).isEqualTo(LocalDate.of(2026, 3, 20));
+  }
+
+  /** Ab 1 zählt der letzte Tag ganz — der Schluss ist die Mitternacht danach. */
+  @Test
+  void abEinemTag_schliesstDieAnmeldungMitDemEndeDesLetztenTags() {
+    assertThat(Anmeldefrist.vonTagen(4).anmeldeschlussFuer(DATUM, BEGINN))
+        .isEqualTo(LocalDateTime.of(2026, 3, 21, 0, 0));
+    assertThat(Anmeldefrist.vonTagen(1).anmeldeschlussFuer(DATUM, BEGINN))
+        .isEqualTo(DATUM.atStartOfDay());
+  }
+
+  /** Issue #118 — bei 0 stünden sonst am Tag selbst Slots zur Wahl, die schon begonnen haben. */
+  @Test
+  void beiNull_schliesstDieAnmeldungMitDemBeginn() {
+    assertThat(Anmeldefrist.vonTagen(0).anmeldeschlussFuer(DATUM, BEGINN))
+        .isEqualTo(DATUM.atTime(BEGINN));
+  }
+
+  @Test
+  void nurBeiNull_schliesstDieAnmeldungMitDemBeginn() {
+    assertThat(Anmeldefrist.vonTagen(0).schliesstMitBeginn()).isTrue();
+    assertThat(Anmeldefrist.vonTagen(1).schliesstMitBeginn()).isFalse();
   }
 }

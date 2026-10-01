@@ -10,6 +10,8 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagF
 import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -66,19 +68,35 @@ class EditSprechtagPresenter {
    * Der Hilfetext unter der Anmeldefrist: der errechnete Anmeldeschluss, sobald ein Datum gewählt
    * ist; ohne Datum eine Erklärung der Frist; bei einer Frist außerhalb ihres Bereichs nichts — dort
    * spricht die Validierung. Gerechnet wird mit derselben {@link Anmeldefrist}, die das Aggregat
-   * hält: Hilfetext und Elternlink sollen nie verschiedene Tage nennen.
+   * hält: Hilfetext und Elternlink sollen nie verschiedene Zeitpunkte nennen.
+   *
+   * <p>Bei Frist 0 schließt die Anmeldung mit dem Beginn (Issue #118), der Text nennt dann die
+   * Uhrzeit — solange noch kein Beginn gewählt ist, steht dort die Erklärung.
    */
-  Optional<Hilfetext> anmeldefristHilfetext(LocalDate datum, Integer anmeldefristTage) {
+  Optional<Hilfetext> anmeldefristHilfetext(
+      LocalDate datum, LocalTime beginn, Integer anmeldefristTage) {
     if (datum == null) {
       return Optional.of(new Hilfetext("edit-sprechtag.field.anmeldefrist.helper-ohne-datum"));
     }
     if (anmeldefristTage == null || !Anmeldefrist.istZulaessig(anmeldefristTage)) {
       return Optional.empty();
     }
-    LocalDate schluss = Anmeldefrist.vonTagen(anmeldefristTage).anmeldeschlussFuer(datum);
+    Anmeldefrist frist = Anmeldefrist.vonTagen(anmeldefristTage);
+    if (!frist.schliesstMitBeginn()) {
+      return Optional.of(
+          new Hilfetext(
+              "edit-sprechtag.field.anmeldefrist.helper",
+              Formats.weekdayDateShort(frist.letzterTagFuer(datum))));
+    }
+    if (beginn == null) {
+      return Optional.of(new Hilfetext("edit-sprechtag.field.anmeldefrist.helper-ohne-datum"));
+    }
+    LocalDateTime schluss = frist.anmeldeschlussFuer(datum, beginn);
     return Optional.of(
         new Hilfetext(
-            "edit-sprechtag.field.anmeldefrist.helper", Formats.weekdayDateShort(schluss)));
+            "edit-sprechtag.field.anmeldefrist.helper-mit-uhrzeit",
+            Formats.weekdayDateShort(schluss.toLocalDate()),
+            Formats.time(schluss.toLocalTime())));
   }
 
   /**

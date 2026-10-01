@@ -10,7 +10,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
 import de.openclassware.elternsprechtag.sprechtag.domain.KlasseId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -64,22 +64,22 @@ class SprechtagszugangService implements Sprechtagszugang {
         sprechtag.ort(),
         sprechtag.beschreibung(),
         sprechtag.slotdauer().minuten(),
-        stand(sprechtag, LocalDate.now()),
+        stand(sprechtag, LocalDateTime.now()),
         sprechtag.schulkontakt().text(),
         auswahl);
   }
 
-  private static Zugangsstand stand(Sprechtag sprechtag, LocalDate heute) {
+  private static Zugangsstand stand(Sprechtag sprechtag, LocalDateTime jetzt) {
     if (sprechtag.status() == SprechtagStatus.ABGESAGT) {
       return Zugangsstand.ABGESAGT;
     }
     if (sprechtag.status() == SprechtagStatus.ABGESCHLOSSEN) {
       return Zugangsstand.VORBEI;
     }
-    if (sprechtag.nimmtElternbuchungenAn(heute)) {
+    if (sprechtag.nimmtElternbuchungenAn(jetzt)) {
       return Zugangsstand.BUCHBAR;
     }
-    if (sprechtag.anmeldungBeendet(heute)) {
+    if (sprechtag.anmeldungBeendet(jetzt)) {
       return Zugangsstand.ANMELDUNG_BEENDET;
     }
     return Zugangsstand.NICHT_VERFUEGBAR;

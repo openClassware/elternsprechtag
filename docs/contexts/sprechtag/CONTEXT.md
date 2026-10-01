@@ -65,16 +65,18 @@ Zwei Begriffe, einer gespeichert, einer errechnet:
 
 - **Anmeldefrist** — der Abstand „N Tage vor dem Sprechtag", den der Organizer einträgt und der am
   Sprechtag steht (`Anmeldefrist`). Pflichtfeld, vorbelegt mit **1** (Vortag), erlaubt sind 0
-  (am Tag selbst) bis 28 — die Obergrenze fängt den Tippfehler 40 statt 4 ab.
-- **Anmeldeschluss** — das Datum, das daraus folgt: Datum des Sprechtags minus Anmeldefrist. Er
-  gilt **einschließlich**: „Anmeldung bis 19.03." heißt, Eltern buchen den ganzen 19.03. über.
-  Tagesgranularität, keine Uhrzeit.
+  (bis zum Beginn des Sprechtags) bis 28 — die Obergrenze fängt den Tippfehler 40 statt 4 ab.
+- **Anmeldeschluss** — der Zeitpunkt, der daraus folgt: mit dem **Beginn** des Sprechtags,
+  spätestens aber am Ende des Tages N Tage vorher. Ab N = 1 zählt der letzte Tag ganz: „Anmeldung
+  bis 19.03." heißt, Eltern buchen den ganzen 19.03. über. Bei N = 0 schließt der Link mit dem
+  Beginn — sonst stünden am Tag selbst Slots zur Wahl, die schon begonnen haben (#118). Im Code
+  ist der Anmeldeschluss der erste Moment, in dem der Link **nicht mehr** annimmt.
 
 Der Anmeldeschluss schließt **nur den Elternlink** — beim Öffnen der Seite ebenso wie beim
 Abschicken. Die Organizer-Strecke (**Nachtragen**) bleibt bis zum Abschluss offen: Wer am Tag
 selbst anruft oder vor der Tür steht, bekommt über den Organizer noch einen Termin. Ob der Link
-bucht, entscheidet genau eine Stelle, `Sprechtag.nimmtElternbuchungenAn(heute)`: veröffentlicht
-**und** der Anmeldeschluss nicht vorbei.
+bucht, entscheidet genau eine Stelle, `Sprechtag.nimmtElternbuchungenAn(jetzt)`: veröffentlicht
+**und** der Anmeldeschluss nicht erreicht. Eine Zeitprüfung je Slot gibt es deshalb nicht.
 
 Die Anmeldefrist gehört **nicht** zur Zeitstruktur — sie erzeugt keinen Termin und macht keine
 Buchung ungültig. Deshalb bleibt sie wie der Erinnerungsvorlauf auch nach dem Veröffentlichen
@@ -85,7 +87,7 @@ Buchung ungültig. Deshalb bleibt sie wie der Erinnerungsvorlauf auch nach dem V
 übernimmt den Abstand, und der passt zu jedem Datum, auf das der Organizer sie danach setzt. Ein
 gespeichertes Datum wäre in der Kopie längst verstrichen — „tot geboren".
 
-Sprachgebrauch: **Anmeldefrist** für den eingetragenen Abstand, **Anmeldeschluss** für das Datum.
+Sprachgebrauch: **Anmeldefrist** für den eingetragenen Abstand, **Anmeldeschluss** für den errechneten Zeitpunkt.
 Nicht „Deadline".
 
 ### Aufbewahrungsfrist und Anonymisierung
@@ -298,7 +300,7 @@ Eltern melden sich **nicht** an. Jeder Sprechtag trägt ein `accessToken`; darau
 darf buchen — das Token ist der gesamte Zugangsschutz, und das ist eine bewusste Entscheidung.
 
 Der Link führt je nach Sprechtag-Status zu einem von fünf Ergebnissen (`Zugangsstand`): **buchbar**
-(nur bei `VEROEFFENTLICHT` und bis einschließlich zum **Anmeldeschluss**), **Anmeldung beendet**
+(nur bei `VEROEFFENTLICHT` und bis zum **Anmeldeschluss**), **Anmeldung beendet**
 (`VEROEFFENTLICHT`, Anmeldeschluss vorbei, bis der Tagesjob den Sprechtag abschließt), **vorbei**
 (`ABGESCHLOSSEN`), **abgesagt** (auch nach dem Datum) oder **nicht verfügbar** (unbekanntes Token,
 Entwurf). Beendet, vorbei und abgesagt zeigen dieselbe **Hinweisseite**: Titel, Datum und den
