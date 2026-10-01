@@ -73,6 +73,9 @@ class SprechtagszugangService implements Sprechtagszugang {
     if (sprechtag.status() == SprechtagStatus.ABGESAGT) {
       return Zugangsstand.ABGESAGT;
     }
+    if (sprechtag.status() == SprechtagStatus.ABGESCHLOSSEN) {
+      return Zugangsstand.VORBEI;
+    }
     if (sprechtag.nimmtElternbuchungenAn(heute)) {
       return Zugangsstand.BUCHBAR;
     }

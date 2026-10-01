@@ -82,11 +82,8 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     ElternsprechtagPresenter.ZugangsErgebnis ergebnis = presenter.pruefeZugang(accessToken);
     switch (ergebnis.zugang()) {
       case BUCHBAR -> add(createHeader(), createBookingCard(ergebnis.sprechtag()));
-      case ANMELDUNG_BEENDET -> add(createHeader(), createAnmeldungBeendet(ergebnis.sprechtag()));
-      case ABGESAGT ->
-          add(
-              createMessage(
-                  "elternsprechtag.cancelled.title", "elternsprechtag.cancelled.description"));
+      case HINWEISSEITE ->
+          add(createHeader(), createHinweisseite(ergebnis.sprechtag(), ergebnis.hinweisseite()));
       case NICHT_VERFUEGBAR ->
           add(
               createMessage(
@@ -126,25 +123,26 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   /**
-   * Nach dem Anmeldeschluss (Issue #123): wann und wo der Sprechtag ist und als Hauptaussage der
-   * Schulkontakt — der Weg, auf dem die Familie jetzt noch zu einem Termin kommt. Keine Klassen,
-   * keine Lehrkräfte, keine Buchungsauskunft: Das Token hängt am Sprechtag, nicht an der Familie.
+   * Nach dem Anmeldeschluss (#123), nach dem Sprechtag und nach der Absage (#131): welcher Sprechtag
+   * gemeint ist und als Hauptaussage der Schulkontakt. Kein Ort, keine Klassen, keine Lehrkräfte,
+   * keine Buchungsauskunft. Die Texte wählt der Presenter.
    */
-  private Component createAnmeldungBeendet(OeffentlicherSprechtag sprechtag) {
+  private Component createHinweisseite(
+      OeffentlicherSprechtag sprechtag, ElternsprechtagPresenter.Hinweisseite texte) {
     Div card = new Div();
     card.addClassName("elternsprechtag-view__card");
 
-    H1 title = new H1(getTranslation("elternsprechtag.beendet.title"));
-    title.addClassName("elternsprechtag-view__beendet-title");
+    H1 title = new H1(getTranslation(texte.titelKey()));
+    title.addClassName("elternsprechtag-view__hinweisseite-title");
 
     Div body = new Div();
     body.addClassName("elternsprechtag-view__body");
-    body.addClassName("elternsprechtag-view__body--beendet");
+    body.addClassName("elternsprechtag-view__body--hinweisseite");
 
-    Paragraph hinweis = new Paragraph(getTranslation("elternsprechtag.beendet.hinweis"));
-    hinweis.addClassName("elternsprechtag-view__beendet-text");
-    Paragraph kontaktIntro = new Paragraph(getTranslation("elternsprechtag.beendet.kontakt"));
-    kontaktIntro.addClassName("elternsprechtag-view__beendet-text");
+    Paragraph hinweis = new Paragraph(getTranslation(texte.hinweisKey()));
+    hinweis.addClassName("elternsprechtag-view__hinweisseite-text");
+    Paragraph kontaktIntro = new Paragraph(getTranslation(texte.kontaktKey()));
+    kontaktIntro.addClassName("elternsprechtag-view__hinweisseite-text");
 
     // Zeilenumbrüche des gepflegten Kontakts bleiben erhalten — per CSS (pre-line), nicht per <br>.
     Div kontakt = new Div();
@@ -152,19 +150,21 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     kontakt.setText(sprechtag.schulkontakt());
 
     body.add(hinweis, kontaktIntro, kontakt);
-    card.add(title, createKopf(sprechtag, false), body);
+    card.add(title, createKopf(sprechtag, false, false), body);
     return card;
   }
 
   private Component createInfo(OeffentlicherSprechtag sprechtag) {
-    return createKopf(sprechtag, true);
+    return createKopf(sprechtag, true, true);
   }
 
   /**
-   * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs-, Bestätigungs- und „Anmeldung
-   * beendet"-Seite. Nur beim Buchen kommen die Intro-Zeile und die Beschreibung dazu.
+   * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs-, Bestätigungs- und Hinweisseite. Nur beim
+   * Buchen kommen die Intro-Zeile und die Beschreibung dazu. Den Ort braucht nur, wer noch hingeht —
+   * die Hinweisseite lässt ihn weg (#131).
    */
-  private Div createKopf(OeffentlicherSprechtag sprechtag, boolean withBookingText) {
+  private Div createKopf(
+      OeffentlicherSprechtag sprechtag, boolean withBookingText, boolean mitOrt) {
     Div kopf = new Div();
     kopf.addClassName("elternsprechtag-view__kopf");
 
@@ -179,7 +179,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
         metaItem(
             VaadinIcon.CLOCK,
             Formats.time(sprechtag.beginn()) + "–" + Formats.time(sprechtag.ende())));
-    if (sprechtag.ort() != null && !sprechtag.ort().isBlank()) {
+    if (mitOrt && sprechtag.ort() != null && !sprechtag.ort().isBlank()) {
       meta.add(metaItem(VaadinIcon.MAP_MARKER, sprechtag.ort()));
     }
     kopf.add(meta);
@@ -504,7 +504,9 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     Div card = new Div();
     card.addClassName("elternsprechtag-view__card");
     card.add(
-        createSuccessBanner(count), createKopf(sprechtag, false), createConfirmBody(angaben, count));
+        createSuccessBanner(count),
+        createKopf(sprechtag, false, true),
+        createConfirmBody(angaben, count));
     add(createHeader(), card);
   }
 

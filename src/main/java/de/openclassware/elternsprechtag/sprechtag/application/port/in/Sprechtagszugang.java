@@ -19,15 +19,17 @@ public interface Sprechtagszugang {
   /**
    * Was der Elternlink heute zeigt.
    *
-   * <p>Ein Enum und nicht zwei Fragen als Booleans: Mit „Anmeldung beendet" (Issue #123) und später
-   * „vorbei" (#131) wären das sich ausschließende Flags, deren Reihenfolge der Presenter kennen
-   * müsste. Der Stand liegt bewusst im Port und nicht in der Domäne — er ist die Sicht der Eltern,
-   * kein Status des Sprechtags. Entwurf und abgeschlossen sind für sie schlicht {@link
-   * #NICHT_VERFUEGBAR}.
+   * <p>Ein Enum und nicht mehrere Fragen als Booleans: „Anmeldung beendet" (Issue #123) und
+   * „vorbei" (#131) wären sich ausschließende Flags, deren Reihenfolge der Presenter kennen müsste.
+   * Der Stand liegt bewusst im Port und nicht in der Domäne — er ist die Sicht der Eltern, kein
+   * Status des Sprechtags. {@link #VORBEI} folgt allein dem Status abgeschlossen, nicht der Uhr:
+   * Bis der Tagesjob abschließt, ist die Anmeldung beendet. Ein Entwurf ist für Eltern schlicht
+   * {@link #NICHT_VERFUEGBAR}.
    */
   enum Zugangsstand {
     BUCHBAR,
     ANMELDUNG_BEENDET,
+    VORBEI,
     ABGESAGT,
     NICHT_VERFUEGBAR
   }

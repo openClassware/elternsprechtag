@@ -494,9 +494,9 @@
     overflow-wrap: anywhere;
 }
 
-/* Anmeldung beendet (#123): Überschrift als erste Kartensektion wie das Erfolgs-Banner, dann der
+/* Hinweisseite (#123, #131): Überschrift als erste Kartensektion wie das Erfolgs-Banner, dann der
    Sprechtag-Kopf, dann Hinweis und Schulkontakt. */
-.elternsprechtag-view__beendet-title {
+.elternsprechtag-view__hinweisseite-title {
     margin: 0;
     padding: 2rem;
     border-bottom: 1px solid #e5e7eb;
@@ -506,14 +506,14 @@
     color: #111827;
 }
 
-.elternsprechtag-view__beendet-text {
+.elternsprechtag-view__hinweisseite-text {
     margin: 0;
     color: #374151;
     line-height: 1.5;
 }
 
-/* Nach __beendet-text: gleiche Spezifität, der Abstand muss dessen margin: 0 überstimmen. */
-.elternsprechtag-view__body--beendet > * + * {
+/* Nach __hinweisseite-text: gleiche Spezifität, der Abstand muss dessen margin: 0 überstimmen. */
+.elternsprechtag-view__body--hinweisseite > * + * {
     margin-top: 1rem;
 }
 
@@ -532,7 +532,7 @@
     overflow-wrap: anywhere;
 }
 
-/* Cancelled / unavailable states: no header, centered message. */
+/* Unavailable state: no header, centered message. */
 .elternsprechtag-view__message {
     max-width: 480px;
     text-align: center;
@@ -558,7 +558,7 @@
 
     .elternsprechtag-view__kopf,
     .elternsprechtag-view__body,
-    .elternsprechtag-view__beendet-title {
+    .elternsprechtag-view__hinweisseite-title {
         padding: 1.25rem;
     }
 
@@ -567,7 +567,7 @@
     }
 
     /* Nach __body: gleiche Spezifität, der engere Abstand muss die Regel davor überstimmen. */
-    .elternsprechtag-view__body--beendet > * + * {
+    .elternsprechtag-view__body--hinweisseite > * + * {
         margin-top: 1rem;
     }
 

@@ -27,30 +27,48 @@ class ElternsprechtagPresenter {
   /** Welcher Screen der Eltern-View aus dem Zugriff folgt. */
   enum Zugang {
     BUCHBAR,
-    ANMELDUNG_BEENDET,
-    ABGESAGT,
+    /** Nicht mehr buchbar, aber der Sprechtag ist bekannt: Kopf und Schulkontakt. */
+    HINWEISSEITE,
     NICHT_VERFUEGBAR
   }
 
   /**
-   * Ergebnis der Zugriffsprüfung; {@code sprechtag} ist nur bei {@link Zugang#BUCHBAR} und {@link
-   * Zugang#ANMELDUNG_BEENDET} gesetzt.
+   * Die Texte einer Hinweisseite als Übersetzungs-Keys. Anmeldung beendet (#123), vorbei und
+   * abgesagt (#131) teilen den Aufbau und unterscheiden sich nur hier.
    */
-  record ZugangsErgebnis(Zugang zugang, OeffentlicherSprechtag sprechtag) {}
+  record Hinweisseite(String titelKey, String hinweisKey, String kontaktKey) {}
 
-  /** Spiegelt den Zugangsstand des Use Case; ein unbekanntes Token ist nicht verfügbar. */
+  /**
+   * Ergebnis der Zugriffsprüfung; {@code sprechtag} ist bei {@link Zugang#BUCHBAR} und {@link
+   * Zugang#HINWEISSEITE} gesetzt, {@code hinweisseite} nur bei {@link Zugang#HINWEISSEITE}.
+   */
+  record ZugangsErgebnis(
+      Zugang zugang, OeffentlicherSprechtag sprechtag, Hinweisseite hinweisseite) {}
+
+  /**
+   * Spiegelt den Zugangsstand des Use Case; ein unbekanntes Token ist nicht verfügbar. Keine der
+   * Hinweisseiten gibt Buchungsauskunft — das Token hängt am Sprechtag, nicht an der Familie.
+   */
   ZugangsErgebnis pruefeZugang(String accessToken) {
     Optional<OeffentlicherSprechtag> gefunden = sprechtagszugang.oeffne(accessToken);
     if (gefunden.isEmpty()) {
-      return new ZugangsErgebnis(Zugang.NICHT_VERFUEGBAR, null);
+      return new ZugangsErgebnis(Zugang.NICHT_VERFUEGBAR, null, null);
     }
     OeffentlicherSprechtag sprechtag = gefunden.get();
     return switch (sprechtag.stand()) {
-      case BUCHBAR -> new ZugangsErgebnis(Zugang.BUCHBAR, sprechtag);
-      case ANMELDUNG_BEENDET -> new ZugangsErgebnis(Zugang.ANMELDUNG_BEENDET, sprechtag);
-      case ABGESAGT -> new ZugangsErgebnis(Zugang.ABGESAGT, null);
-      case NICHT_VERFUEGBAR -> new ZugangsErgebnis(Zugang.NICHT_VERFUEGBAR, null);
+      case BUCHBAR -> new ZugangsErgebnis(Zugang.BUCHBAR, sprechtag, null);
+      case ANMELDUNG_BEENDET -> hinweisseite(sprechtag, "elternsprechtag.beendet");
+      case VORBEI -> hinweisseite(sprechtag, "elternsprechtag.vorbei");
+      case ABGESAGT -> hinweisseite(sprechtag, "elternsprechtag.cancelled");
+      case NICHT_VERFUEGBAR -> new ZugangsErgebnis(Zugang.NICHT_VERFUEGBAR, null, null);
     };
+  }
+
+  private static ZugangsErgebnis hinweisseite(OeffentlicherSprechtag sprechtag, String prefix) {
+    return new ZugangsErgebnis(
+        Zugang.HINWEISSEITE,
+        sprechtag,
+        new Hinweisseite(prefix + ".title", prefix + ".hinweis", prefix + ".kontakt"));
   }
 
   List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId) {

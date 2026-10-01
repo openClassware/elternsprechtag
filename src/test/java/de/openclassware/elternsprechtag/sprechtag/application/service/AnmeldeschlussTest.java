@@ -46,6 +46,7 @@ class AnmeldeschlussTest extends AbstractServiceTest {
   @Autowired private ApplicationEvents events;
 
   private static final LocalDate MORGEN = LocalDate.now().plusDays(1);
+  private static final String SCHULKONTAKT = "Frau Weber\nTel. 0123 456789";
 
   private record Fixture(Sprechtag sprechtag, UUID lehrauftrag) {}
 
@@ -129,23 +130,32 @@ class AnmeldeschlussTest extends AbstractServiceTest {
   @Test
   void zugang_nachDemAnmeldeschluss_istBeendetMitDemGepflegtenSchulkontakt() {
     Fixture f = veroeffentlicht(2);
-    UUID id = f.sprechtag().id().wert();
-    SprechtagFormular geladen = bearbeiten.ladeFormular(id).orElseThrow();
-    geladen.setSchulkontakt("Frau Weber\nTel. 0123 456789");
-    bearbeiten.bearbeite(id, geladen);
+    pflegeSchulkontakt(f);
 
     OeffentlicherSprechtag geoeffnet = oeffne(f);
 
     assertThat(geoeffnet.stand()).isEqualTo(Zugangsstand.ANMELDUNG_BEENDET);
-    assertThat(geoeffnet.schulkontakt()).isEqualTo("Frau Weber\nTel. 0123 456789");
+    assertThat(geoeffnet.schulkontakt()).isEqualTo(SCHULKONTAKT);
   }
 
+  /** Issue #131 — auch die Absage nennt den Weg zur Schule. */
   @Test
-  void zugang_einesAbgesagten_istAbgesagtAuchNachDemAnmeldeschluss() {
+  void zugang_einesAbgesagten_istAbgesagtAuchNachDemAnmeldeschlussMitDemGepflegtenSchulkontakt() {
     Fixture f = veroeffentlicht(2);
+    pflegeSchulkontakt(f);
     absagen.sageAb(f.sprechtag().id().wert());
 
-    assertThat(stand(f)).isEqualTo(Zugangsstand.ABGESAGT);
+    OeffentlicherSprechtag geoeffnet = oeffne(f);
+
+    assertThat(geoeffnet.stand()).isEqualTo(Zugangsstand.ABGESAGT);
+    assertThat(geoeffnet.schulkontakt()).isEqualTo(SCHULKONTAKT);
+  }
+
+  private void pflegeSchulkontakt(Fixture f) {
+    UUID id = f.sprechtag().id().wert();
+    SprechtagFormular geladen = bearbeiten.ladeFormular(id).orElseThrow();
+    geladen.setSchulkontakt(SCHULKONTAKT);
+    bearbeiten.bearbeite(id, geladen);
   }
 
   @Test
@@ -153,12 +163,17 @@ class AnmeldeschlussTest extends AbstractServiceTest {
     assertThat(stand(entwurf(2))).isEqualTo(Zugangsstand.NICHT_VERFUEGBAR);
   }
 
+  /** Issue #131 — „vorbei" folgt dem Abschluss, nicht der Uhr; der Kontakt bleibt die Aussage. */
   @Test
-  void zugang_einesAbgeschlossenen_istNichtVerfuegbar() {
+  void zugang_einesAbgeschlossenen_istVorbeiMitDemGepflegtenSchulkontakt() {
     Fixture f = veroeffentlicht(2);
+    pflegeSchulkontakt(f);
     schliesseAb(f.sprechtag().id().wert());
 
-    assertThat(stand(f)).isEqualTo(Zugangsstand.NICHT_VERFUEGBAR);
+    OeffentlicherSprechtag geoeffnet = oeffne(f);
+
+    assertThat(geoeffnet.stand()).isEqualTo(Zugangsstand.VORBEI);
+    assertThat(geoeffnet.schulkontakt()).isEqualTo(SCHULKONTAKT);
   }
 
   // --- Organizer-Strecke -------------------------------------------------------------------
