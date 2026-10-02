@@ -103,7 +103,9 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     // Vaadin benutzt dieselbe View-Instanz wieder, wenn nur der URL-Parameter wechselt. Die
     // Filterauswahl soll ein Storno überleben, aber nicht den Sprechtag — sonst stünde die
     // Auswertung des nächsten Sprechtags stillschweigend gefiltert da.
-    if (!id.get().equals(sprechtagId)) {
+    // Verglichen wird mit dem Feld, nicht mit dem gleichnamigen String-Parameter — eine UUID ist
+    // nie gleich einem String, die Auswahl fiele sonst bei jeder Navigation.
+    if (!id.get().equals(this.sprechtagId)) {
       filterLehrkraft = null;
       stornierteAnzeigen = false;
       suchbegriff = "";
