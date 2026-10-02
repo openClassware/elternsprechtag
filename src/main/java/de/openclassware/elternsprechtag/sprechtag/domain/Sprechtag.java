@@ -208,23 +208,27 @@ public final class Sprechtag extends AggregateRoot {
   }
 
   /**
-   * Ob der Elternlink heute eine Buchung annimmt: veröffentlicht und der {@link #anmeldeschluss()}
-   * noch nicht vorbei — er zählt einschließlich. Die eine Stelle, an der das entschieden wird; der
-   * Organizer-Nachtrag fragt hier bewusst nicht, er bleibt bis zum Abschluss offen.
+   * Ob der Elternlink jetzt eine Buchung annimmt: veröffentlicht und der {@link #anmeldeschluss()}
+   * noch nicht erreicht. Die eine Stelle, an der das entschieden wird; der Organizer-Nachtrag fragt
+   * hier bewusst nicht, er bleibt bis zum Abschluss offen.
+   *
+   * <p>Weil der Anmeldeschluss spätestens der Beginn des Sprechtags ist, steht über den Elternlink
+   * nie ein Slot zur Wahl, der schon begonnen hat (Issue #118) — eine Zeitprüfung je Slot braucht es
+   * deshalb nicht.
    */
-  public boolean nimmtElternbuchungenAn(LocalDate heute) {
-    return status == SprechtagStatus.VEROEFFENTLICHT && !heute.isAfter(anmeldeschluss());
+  public boolean nimmtElternbuchungenAn(LocalDateTime jetzt) {
+    return status == SprechtagStatus.VEROEFFENTLICHT && jetzt.isBefore(anmeldeschluss());
   }
 
   /**
    * Das Gegenstück zu {@link #nimmtElternbuchungenAn} für den veröffentlichten Sprechtag: Der
-   * {@link #anmeldeschluss()} liegt hinter {@code heute} (Issue #123). Eine Endzeit-Prüfung gibt es
+   * {@link #anmeldeschluss()} ist erreicht (Issue #123). Eine Endzeit-Prüfung gibt es
    * hier bewusst nicht — auch nach dem Sprechtag bleibt es dabei, bis {@link
    * #schliesseAbWennVorbei} ihn abschließt. Entwurf, abgesagt und abgeschlossen sind nie „Anmeldung
    * beendet".
    */
-  public boolean anmeldungBeendet(LocalDate heute) {
-    return status == SprechtagStatus.VEROEFFENTLICHT && heute.isAfter(anmeldeschluss());
+  public boolean anmeldungBeendet(LocalDateTime jetzt) {
+    return status == SprechtagStatus.VEROEFFENTLICHT && !jetzt.isBefore(anmeldeschluss());
   }
 
   /**
@@ -485,8 +489,11 @@ public final class Sprechtag extends AggregateRoot {
     return Optional.ofNullable(anonymisiertAm);
   }
 
-  /** Der letzte Tag, an dem Eltern über den Link buchen können — einschließlich. */
-  public LocalDate anmeldeschluss() {
-    return anmeldefrist.anmeldeschlussFuer(datum);
+  /**
+   * Ab wann der Elternlink keine Buchung mehr annimmt — ausschließlich; siehe {@link
+   * Anmeldefrist#anmeldeschlussFuer}.
+   */
+  public LocalDateTime anmeldeschluss() {
+    return anmeldefrist.anmeldeschlussFuer(datum, zeitfenster.beginn());
   }
 }

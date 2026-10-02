@@ -439,17 +439,23 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
 
   /**
    * Schreibt unter Erinnerung und Anmeldefrist den errechneten Tag — sobald ein Datum gewählt ist,
-   * und bei jeder Änderung von Datum, Erinnerung oder Frist neu. Die Rechnung liefert der Presenter.
+   * und bei jeder Änderung von Datum, Beginn, Erinnerung oder Frist neu. Die Rechnung liefert der
+   * Presenter.
    */
   private void zeigeHilfetexte() {
-    if (erinnerungsVorlauf == null || anmeldefrist == null || datePicker == null) {
+    if (erinnerungsVorlauf == null
+        || anmeldefrist == null
+        || datePicker == null
+        || startTime == null) {
       return; // noch im Aufbau
     }
     LocalDate datum = datePicker.getValue();
     erinnerungsVorlauf.setHelperText(
         uebersetze(presenter.erinnerungHilfetext(datum, erinnerungsVorlauf.getValue())));
     anmeldefrist.setHelperText(
-        uebersetze(presenter.anmeldefristHilfetext(datum, anmeldefrist.getValue())));
+        uebersetze(
+            presenter.anmeldefristHilfetext(
+                datum, startTime.getValue(), anmeldefrist.getValue())));
   }
 
   private String uebersetze(Optional<EditSprechtagPresenter.Hilfetext> hilfetext) {
@@ -484,6 +490,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     startTime = new TimePicker();
     startTime.setLabel(getTranslation("edit-sprechtag.field.startzeit.label"));
     startTime.setRequiredIndicatorVisible(true);
+    startTime.addValueChangeListener(_ -> zeigeHilfetexte());
 
     endTime = new TimePicker();
     endTime.setLabel(getTranslation("edit-sprechtag.field.endzeit.label"));
