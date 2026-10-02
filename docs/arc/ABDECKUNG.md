@@ -381,7 +381,7 @@ Lehrkraft bekommt ihren Plan als Datei, nicht als Login.
 | Anmeldeschluss | Organizer | Pflichtfeld am `Sprechtag`, beim Anlegen mit dem Vortag vorbelegt, änderbar | muss | **erfüllt** — `Anmeldefrist` (0–28 Tage vor dem Sprechtag, vorbelegt mit 1; 0 schließt mit dem Beginn, sonst zählt der letzte Tag ganz), bis zum Endzustand änderbar, auch zum Wiederöffnen; das Formular zeigt den errechneten Anmeldeschluss, das Veröffentlichen meldet einen schon verstrichenen |
 | Elternlink nach Fristablauf | Eltern | nicht mehr buchbar; Hinweis „Anmeldung beendet" plus Datum und Schulkontakt | muss | **erfüllt** — nicht mehr buchbar, beim Öffnen wie beim Abschicken (`Sprechtag.nimmtElternbuchungenAn`, `ElternbuchungGeschlossenException`); der Link zeigt die eigene Seite „Die Anmeldung ist beendet" mit Titel, Datum, Uhrzeit und dem Schulkontakt als Hauptaussage (`Sprechtag.anmeldungBeendet`, `Zugangsstand.ANMELDUNG_BEENDET`) — bis der Tagesjob abschließt, auch am Tag selbst und nach der Endzeit. Wer beim Abschicken abgewiesen wird, liest „nicht gebucht" und landet auf derselben Seite |
 | Familie ruft am Tag selbst an, jemand steht spontan vor der Tür | Organizer | die Frist schließt nur den Elternlink; die Organizer-Buchungsstrecke bleibt bis zum Abschluss offen | muss | **erfüllt** — die Frist prüft allein `Buchen`; `Nachtragen` fragt sie nicht und bleibt bis zum Abschluss offen |
-| Telefonauskunft „wann habe ich meinen Termin?" | Organizer | Suche nach Schüler- oder Elternname in der Auswertung | muss | fehlt (#121) — nur Lehrkraft-Filter, **keine** Namenssuche |
+| Telefonauskunft „wann habe ich meinen Termin?" | Organizer | Suche nach Schüler- oder Elternname in der Auswertung | muss | **erfüllt** (#121) — Suchfeld vor dem Lehrkraft-Filter, gefiltert wird beim Tippen: Jedes Wort muss als Teilstring im Schüler- oder Elternnamen stehen, also findet „Lena Müller" auch „Müller, Lena". Die gegliederte Ansicht bleibt, Lehrkräfte ohne Treffer fallen weg, jede Zeile behält ihre Aktionen. Die Regel liegt Vaadin-frei in `Namenssuche`, die Ansicht leitet `AuswertungPresenter.ansicht` ab |
 | Eltern sehen ihre eigene Buchung wieder | Eltern | — | darf fehlen | Token hängt am Sprechtag, nicht an der Familie; Beleg bleibt die Bestätigungsmail, Weg drumherum der Anruf |
 | Änderungen nach dem Druck erreichen die Lehrkraft | Lehrkraft | — | darf fehlen | der Zeitstempel im PDF-Kopf macht das Alter des Blattes sichtbar; der Rest ist mündliche Organisation |
 | Entfallene Termine auf dem Blatt (durchgestrichen statt verschwunden) | Lehrkraft | — | darf fehlen | fehlt mit dem Export |
@@ -424,6 +424,17 @@ können (`darf fehlen`, oben), ist die Telefonauskunft der Weg drumherum — und
 wenn der Organizer nach dem Namen suchen kann. Ohne sie fiele „Eltern sehen ihre eigene Buchung
 wieder" auf `muss` zurück.
 
+**Die Suche filtert, sie verzweigt nicht (#121).** Sie schränkt die vorhandene, nach Lehrkraft
+gegliederte Ansicht ein, statt eine eigene Trefferliste aufzumachen: Der Anrufer will oft nicht nur
+wissen, wann er dran ist, sondern umbuchen oder stornieren — die Aktionen bleiben an der Zeile, und
+das Tabellen-Karten-Muster bleibt das einzige. Lehrkraft-Filter und Suche gelten zugleich; der
+gesetzte Filter steht mit Namen daneben. Die Kopfzahlen der Abschnitte bleiben die der Lehrkraft.
+Der Suchbegriff steht bewusst **nicht** in der URL: Ein Name als Query-Parameter landete in
+Browser-Historie und Server-Logs — die Datenspur, die die Anonymisierung vermeiden soll. Den Schalter
+„Stornierte anzeigen" respektiert die Suche, verschweigt aber nichts: Passen ausgeblendete stornierte
+Buchungen, sagt sie es. Am anonymisierten Sprechtag bleibt das Suchfeld; der Hinweis über der
+Tabelle erklärt, warum es keine echten Namen mehr findet.
+
 **Rückwirkung auf Phase 2.** Der Anmeldeschluss ist ein Feld am `Sprechtag` und entsteht in der
 Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetragen.
 
@@ -442,7 +453,7 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 | Löschverlangen einer Familie nach dem Sprechtag | Organizer | Einzelaktion „Daten dieser Buchung entfernen" mit Rückfrage — zieht dieselbe Anonymisierung vor | muss | **erfüllt** — Icon „Angaben entfernen" je Zeile an `ABGESCHLOSSEN`/`ABGESAGT` mit Rückfrage (`AngabenEntfernenDialog`) und dem festen Hinweis auf weitere Termine der Familie; `AngabenEntfernen` → `Termin.entferneAngaben` ersetzt genau eine Buchung durch ein Pseudonym, die Zusage bleibt stehen und zählt weiter. `Buchung.anonymisiertAm` (V11, vom Nachtlauf mitgesetzt, Altbestand nachgetragen) nimmt das Icon weg und zeigt „Angaben entfernt am …" in der Zeile, solange der Sprechtag selbst nicht anonymisiert ist. Stornierte Buchungen blendet der Schalter „Stornierte anzeigen" ein — gedämpft, mit „storniert" oder, wenn der Ausfall der Lehrkraft sie zurückgenommen hat, „entfallen"; sie tragen dasselbe Icon, auch am veröffentlichten Sprechtag |
 | Alter Sprechtag als Vorlage | Organizer | `duplicate` kopiert alle Vorlagefelder und leitet Datumsabhängiges neu ab | muss | **erfüllt** — `Sprechtag.dupliziere` übernimmt Schulkontakt, Erinnerungsvorlauf und Anmeldefrist; die Frist ist relativ gespeichert und passt deshalb zu jedem neuen Datum (siehe Anmerkung). Issue #130 ist damit gegenstandslos |
 | Versehentlich angelegter Sprechtag | Organizer | löschbar, solange `ENTWURF` **und** ohne Buchung | muss | fehlt (#132) — kein Löschen im Projekt |
-| Auskunftsverlangen einzelner Eltern | Organizer | Namenssuche in der Auswertung, vorlesen oder drucken | muss | fehlt — fällt mit der Namenssuche aus Phase 5 ab (#121) |
+| Auskunftsverlangen einzelner Eltern | Organizer | Namenssuche in der Auswertung, vorlesen oder drucken | muss | **erfüllt** (#121) — dieselbe Namenssuche; trifft sie stornierte Buchungen, die der Schalter gerade ausblendet, sagt ein Hinweis „N stornierte Buchungen passen ebenfalls" und blendet sie auf Klick ein. Vorgelesen wird aus der gefilterten Ansicht; einen eigenen Druck gibt es nicht |
 | Löschverlangen vor dem Sprechtag | Organizer | Storno mit entfernten Angaben | muss | **erfüllt** (#129) — Checkbox „Angaben der Familie entfernen" im Storno-Dialog, vorab leer; `Stornieren.storniere(buchungId, angabenEntfernen)` storniert und anonymisiert in einer Transaktion am `Termin`. Wer ohne Haken storniert wurde, ist über „Stornierte anzeigen" weiter erreichbar. Eine geltende Zusage am veröffentlichten Sprechtag lässt sich nicht bloß anonymisieren (`BuchungNochAktivException`) — das hinterließe einen Geistertermin. Umbuchen entfernt die Angaben der alten Buchung immer; sie stehen in der neuen |
 | Eltern sehen ihre Buchung über den alten Link wieder | Eltern | — | darf fehlen | Beleg ist die Bestätigungsmail, Weg drumherum der Anruf — dieselbe Einstufung wie in Phase 5 |
 | Archivierung gegen das Anwachsen der Liste über Jahre | Organizer | — | darf fehlen | der Statusfilter blendet Abgeschlossenes weg; anonymisierte Sprechtage sind nur noch Zahlen |
@@ -562,8 +573,7 @@ hier ist der Ort dafür.
 
 Für jeden Fall der Stufe `muss`, der heute fehlt, liegt ein Issue im Tracker. Hier stehen nur die
 **offenen**; erledigte Issues sind herausgenommen, die erfüllten Zeilen in den Tabellen nennen ihr
-Issue. Fälle, die mit einem anderen Issue abfallen (Auskunftsverlangen mit der Namenssuche), sind
-dort genannt statt doppelt geführt.
+Issue.
 
 **Phase 2 — Sprechtag vorbereiten und veröffentlichen**
 
@@ -591,8 +601,6 @@ dort genannt statt doppelt geführt.
 | Issue | Fall |
 |---|---|
 | [#120](https://github.com/openClassware/elternsprechtag/issues/120) | PDF-Export der Lehrkraft-Pläne (inkl. Inhalt des Blatts) |
-| [#121](https://github.com/openClassware/elternsprechtag/issues/121) | Namenssuche in der Auswertung — trägt auch das Auskunftsverlangen aus Phase 6 |
-
 **Phase 6 — Nach dem Sprechtag**
 
 | Issue | Fall |
