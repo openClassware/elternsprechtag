@@ -13,6 +13,8 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.NotFoundException;
@@ -24,6 +26,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungPresenter.AusfallAusgang;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungPresenter.Planansicht;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AngabenEntfernenDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AusfallDialog;
@@ -39,7 +42,7 @@ import java.util.UUID;
 /**
  * Organizer-Auswertung eines Sprechtags: Terminplan je Lehrkraft. Bewusst dumm — Lade- und
  * Filter-Entscheidungen liegen im {@link AuswertungPresenter}; die View hält nur die aktuelle
- * Filterauswahl (Per-View-Zustand) und rendert das gelieferte Read-Model.
+ * Filterauswahl und den Suchbegriff (Per-View-Zustand) und rendert das gelieferte Read-Model.
  */
 @Route(value = AuswertungView.ROUTE, layout = MainLayout.class)
 @RolesAllowed(Roles.ORGANIZER)
@@ -57,12 +60,18 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private final Paragraph anonymisiertText = new Paragraph();
   private final ComboBox<LehrkraftPlan> lehrkraftFilter = new ComboBox<>();
   private final Checkbox stornierteSchalter = new Checkbox();
+  private final TextField suchfeld = new TextField();
+  private final Div suchhinweis = new Div();
+  private final Span suchhinweisText = new Span();
   private final Div sections = new Div();
 
   private SprechtagAuswertung auswertung;
   private List<LehrkraftPlan> allePlaene = List.of();
   private UUID sprechtagId;
   private UUID filterLehrkraft;
+  // Bewusst nicht in der URL: Ein Name als Query-Parameter landete in Browser-Historie und
+  // Server-Logs — genau die Datenspur, die die Anonymisierung vermeiden soll.
+  private String suchbegriff = "";
   private boolean stornierteAnzeigen;
   private boolean aktionsspalte;
   private boolean nachtragenMoeglich;
@@ -79,6 +88,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
         createHeader(),
         createAnonymisiertHinweis(),
         createFilter(),
+        createSuchhinweis(),
         sections);
   }
 
@@ -93,9 +103,13 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     // Vaadin benutzt dieselbe View-Instanz wieder, wenn nur der URL-Parameter wechselt. Die
     // Filterauswahl soll ein Storno überleben, aber nicht den Sprechtag — sonst stünde die
     // Auswertung des nächsten Sprechtags stillschweigend gefiltert da.
-    if (!id.get().equals(sprechtagId)) {
+    // Verglichen wird mit dem Feld, nicht mit dem gleichnamigen String-Parameter — eine UUID ist
+    // nie gleich einem String, die Auswahl fiele sonst bei jeder Navigation.
+    if (!id.get().equals(this.sprechtagId)) {
       filterLehrkraft = null;
       stornierteAnzeigen = false;
+      suchbegriff = "";
+      suchfeld.clear();
     }
     this.sprechtagId = id.get();
     render(auswertung.get());
@@ -128,7 +142,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     UUID gewaehlt = filterLehrkraft;
     lehrkraftFilter.setItems(allePlaene);
     lehrkraftFilter.setValue(planMit(gewaehlt));
-    renderSections(presenter.filter(allePlaene, filterLehrkraft));
+    renderSections();
   }
 
   /** Lädt die Auswertung neu — nach einem Storno ist der bisherige Stand überholt. */
@@ -148,17 +162,48 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
 
   private void onFilterChange(LehrkraftPlan selected) {
     filterLehrkraft = selected == null ? null : selected.lehrerId();
-    renderSections(presenter.filter(allePlaene, filterLehrkraft));
+    renderSections();
   }
 
   private void onStornierteChange(boolean anzeigen) {
     stornierteAnzeigen = anzeigen;
-    renderSections(presenter.filter(allePlaene, filterLehrkraft));
+    renderSections();
   }
 
-  private void renderSections(List<LehrkraftPlan> plaene) {
+  private void onSucheChange(String begriff) {
+    suchbegriff = begriff;
+    renderSections();
+  }
+
+  /** Der Hinweis auf ausgeblendete stornierte Treffer schaltet „Stornierte anzeigen" ein. */
+  private void zeigeStornierte() {
+    stornierteSchalter.setValue(true);
+    onStornierteChange(true);
+  }
+
+  private void renderSections() {
+    Planansicht ansicht =
+        presenter.ansicht(allePlaene, filterLehrkraft, suchbegriff, stornierteAnzeigen);
     sections.removeAll();
-    plaene.stream().map(this::createSection).forEach(sections::add);
+    ansicht.plaene().stream().map(this::createSection).forEach(sections::add);
+    ansicht
+        .keinTrefferFuer()
+        .ifPresent(begriff -> sections.add(createKeinTreffer(begriff)));
+    int verborgen = ansicht.verborgeneStornierte();
+    suchhinweis.setVisible(verborgen > 0);
+    if (verborgen > 0) {
+      suchhinweisText.setText(
+          verborgen == 1
+              ? getTranslation("auswertung.suche.stornierte.one")
+              : getTranslation("auswertung.suche.stornierte.other", verborgen));
+    }
+  }
+
+  private Component createKeinTreffer(String begriff) {
+    Div leer = new Div();
+    leer.addClassName("auswertung__leer");
+    leer.setText(getTranslation("auswertung.suche.leer", begriff));
+    return leer;
   }
 
   private Breadcrumb createBreadcrumb() {
@@ -225,6 +270,20 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private Component createFilter() {
     Div filterRow = new Div();
     filterRow.addClassName("auswertung__filter");
+    // Die Namenssuche (Issue #121) ist der Einstieg der Telefonauskunft und steht deshalb vorn.
+    // Gefiltert wird schon beim Tippen, kurz verzögert — der Name wird oft buchstabiert.
+    suchfeld.addClassName("auswertung__suche");
+    suchfeld.setLabel(getTranslation("auswertung.suche.label"));
+    suchfeld.setPlaceholder(getTranslation("auswertung.suche.placeholder"));
+    suchfeld.setPrefixComponent(VaadinIcon.SEARCH.create());
+    suchfeld.setClearButtonVisible(true);
+    suchfeld.setValueChangeMode(ValueChangeMode.LAZY);
+    suchfeld.addValueChangeListener(
+        event -> {
+          if (event.isFromClient()) {
+            onSucheChange(event.getValue());
+          }
+        });
     lehrkraftFilter.addClassName("auswertung__filter-select");
     lehrkraftFilter.setLabel(getTranslation("auswertung.filter.label"));
     lehrkraftFilter.setPlaceholder(getTranslation("auswertung.filter.alle"));
@@ -242,8 +301,26 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
             onStornierteChange(event.getValue());
           }
         });
-    filterRow.add(lehrkraftFilter, stornierteSchalter);
+    filterRow.add(suchfeld, lehrkraftFilter, stornierteSchalter);
     return filterRow;
+  }
+
+  /**
+   * Hinweis unter der Filterzeile, wenn die Suche stornierte Buchungen trifft, die der Schalter
+   * gerade ausblendet — beim Auskunftsverlangen gehören sie dazu. Sichtbar nur, wenn der Presenter
+   * eine Zahl liefert.
+   */
+  private Component createSuchhinweis() {
+    suchhinweis.addClassName("auswertung__suchhinweis");
+    suchhinweis.getElement().setAttribute("role", "status");
+    suchhinweis.setVisible(false);
+    suchhinweisText.addClassName("auswertung__suchhinweis-text");
+    Button anzeigen = new Button(getTranslation("auswertung.stornierte.label"));
+    anzeigen.addClassName("auswertung__suchhinweis-button");
+    anzeigen.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
+    anzeigen.addClickListener(_ -> zeigeStornierte());
+    suchhinweis.add(suchhinweisText, anzeigen);
+    return suchhinweis;
   }
 
   private Component createSection(LehrkraftPlan plan) {

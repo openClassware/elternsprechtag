@@ -248,14 +248,31 @@ class AuswertungPresenter {
   }
 
   /**
-   * Filtert die Lehrkraft-Pläne auf genau eine Lehrkraft. {@code lehrerId == null} bedeutet „alle
-   * Lehrkräfte". Reine Teilmengen-Bildung ohne Zustand (analog {@code ManageSprechtagPresenter.filter});
-   * die aktuelle Auswahl hält der View.
+   * Was die View unter der Filterzeile zeigt: Lehrkraft-Filter und Namenssuche gelten zugleich
+   * (Issue #121). {@code lehrerId == null} bedeutet „alle Lehrkräfte", ein leerer Suchbegriff „keine
+   * Suche". Reine Ableitung ohne Zustand — Auswahl und Begriff hält der View.
    */
-  List<LehrkraftPlan> filter(List<LehrkraftPlan> alle, UUID lehrerId) {
-    if (lehrerId == null) {
-      return alle;
-    }
-    return alle.stream().filter(plan -> plan.lehrerId().equals(lehrerId)).toList();
+  Planansicht ansicht(
+      List<LehrkraftPlan> alle, UUID lehrerId, String suchbegriff, boolean stornierteAnzeigen) {
+    List<LehrkraftPlan> plaene =
+        lehrerId == null
+            ? alle
+            : alle.stream().filter(plan -> plan.lehrerId().equals(lehrerId)).toList();
+    Namenssuche suche = Namenssuche.nach(suchbegriff);
+    List<LehrkraftPlan> treffer = suche.filtere(plaene, stornierteAnzeigen);
+    Optional<String> keinTreffer =
+        suche.istAktiv() && treffer.isEmpty() ? Optional.of(suche.begriff()) : Optional.empty();
+    // Ausgeblendete stornierte Treffer verschwiegen sonst eine gespeicherte Buchung der Familie —
+    // beim Auskunftsverlangen genau die falsche Antwort.
+    int verborgeneStornierte = stornierteAnzeigen ? 0 : suche.stornierteTreffer(plaene);
+    return new Planansicht(treffer, keinTreffer, verborgeneStornierte);
   }
+
+  /**
+   * Die Pläne, die die View rendert; dazu der Suchbegriff für „Keine Buchung passt zu …", wenn eine
+   * Suche nichts findet, und die Zahl passender stornierter Buchungen, die der Schalter gerade
+   * ausblendet ({@code 0}: kein Hinweis).
+   */
+  record Planansicht(
+      List<LehrkraftPlan> plaene, Optional<String> keinTrefferFuer, int verborgeneStornierte) {}
 }

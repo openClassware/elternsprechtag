@@ -1,6 +1,6 @@
 # Abdeckung der wesentlichen Anwendungsfälle
 
-**Stand: 2026-09-14.** Dieser Maßstab bezieht sich auf den *realen Ablauf eines Elternsprechtags
+**Stand: 2026-10-02.** Dieser Maßstab bezieht sich auf den *realen Ablauf eines Elternsprechtags
 an einer Schule* — nicht auf die dokumentierte Domäne und nicht auf den vorhandenen Code. Er
 listet für die Phasen 2–6 dieses Ablaufs die Fälle jenseits des Happy Path auf und stuft jeden
 ein.
@@ -165,11 +165,11 @@ Organizer selbst korrigierbar, bevor Schaden entsteht.
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
 | Buchung stornieren, Slot wird wieder frei | Organizer | Storno in der Auswertung, Termin geht auf `FREI` zurück | muss | **erfüllt** — Storno-Aktion je Zeile mit Bestätigungsdialog, `Stornieren`-Use-Case setzt die Buchung auf `STORNIERT` und gibt den Slot frei; ohne Mail, nur bei `VEROEFFENTLICHT` |
-| Organizer bucht im Namen einer Familie (Nachtragen, Umbuchen) | Organizer | eigene Buchungsstrecke mit denselben Regeln | muss | fehlt vollständig — die einzige Buchungsstrecke ist die Eltern-Ansicht hinter dem Zugangs-Link |
-| Familie hat keine E-Mail-Adresse | Organizer | Stellvertreteradresse der Schule eintragen | muss | `eltern_email` ist `not null` (`Buchung:41`), aber es gibt keine Strecke, über die der Organizer bucht |
+| Organizer bucht im Namen einer Familie (Nachtragen, Umbuchen) | Organizer | eigene Buchungsstrecke mit denselben Regeln | muss | **erfüllt** (#104) — eigene Route `NachtragenView` aus der Auswertung mit eigenem Port `Nachtragen`: dieselben Regeln wie der Eltern-Submit (alles oder nichts, kein Zeitkonflikt), nur an einem veröffentlichten Sprechtag, ohne Anmeldeschluss. Umbuchen je Zeile über den `UmbuchenDialog` (`Umbuchen`): Neubuchung und Storno in einem Zug, der alte Slot wird erst frei, wenn der neue steht — nur auf einen freien Slot derselben Lehrkraft |
+| Familie hat keine E-Mail-Adresse | Organizer | Stellvertreteradresse der Schule eintragen | muss | **erfüllt** (#104) — Schalter „Familie hat keine eigene E-Mail-Adresse" im Nachtragen setzt die konfigurierte `elternsprechtag.stellvertreteradresse`; ohne konfigurierte Adresse fehlt der Schalter. Offen bleibt die letzte Meile: Die Absage an diese Adresse nennt die Familien nicht (#148, siehe unten) |
 | Gewählter Slot wird während des Absendens vergeben | Eltern | Meldung, übrige Auswahl bleibt, nur der verlorene Slot neu | muss | **erfüllt** — `TerminBelegtException` wird gefangen, Optionen neu geladen, ungültige Slots verworfen (`ElternsprechtagView:530`, `BookingSession.reload`) |
 | Vergangene Slots sind noch buchbar | Eltern | vergangene Slots nicht mehr wählbar | muss | **erfüllt** (#118) — keine Prüfung je Slot, sondern über den Anmeldeschluss: Er ist spätestens der Beginn des Sprechtags, bei Frist 0 genau dieser (`Anmeldefrist.anmeldeschlussFuer`). Solange der Elternlink annimmt, hat also kein Slot begonnen. Der Organizer-Nachtrag bleibt bewusst ohne Zeitprüfung — er trägt auch ein Gespräch nach, das schon stattgefunden hat |
-| Alle Slots einer Lehrkraft belegt | Eltern | sichtbar, dass nichts frei ist | muss | teilweise — belegte Slots werden als `BELEGT` gerendert (`BookingSession.slotState`), ein eigener Hinweistext fehlt |
+| Alle Slots einer Lehrkraft belegt | Eltern | sichtbar, dass nichts frei ist | muss | teilweise (#119) — belegte Slots werden als `BELEGT` gerendert (`BookingSession.slotState`), ein eigener Hinweistext fehlt |
 | Buchungsschluss vor dem Sprechtag | Organizer | Anmeldeschluss am Sprechtag | muss | **erfüllt** — Anmeldefrist am `Sprechtag`, in Phase 5 erhoben und eingestuft; bei Frist 0 schließt der Elternlink mit dem Beginn des Sprechtags (#118) |
 | Eltern stornieren ihre Buchung selbst | Eltern | — | darf fehlen | fehlt; bräuchte ein Token je Buchung. Weg drumherum: Anruf, der Organizer storniert — der Weg drumherum ist gebaut |
 | Dieselbe Familie bucht zweimal | Eltern | — | darf fehlen | keine Dublettenprüfung in `buchen()`; heilbar, weil der Organizer eine der beiden Zeilen storniert |
@@ -249,12 +249,12 @@ in Phase 3.
 | Einzelne Lehrkraft fällt aus (ganz oder teilweise) | Eltern | Termine entfallen, betroffene Familien werden benachrichtigt | muss | **erfüllt** — `EntfallenLassen`-Use-Case setzt `Termin.lassEntfallen()` je gewähltem Termin, storniert eine aktive Buchung mit und benachrichtigt betroffene Familien nach Commit; Sammelaktion „Lehrkraft fällt aus" im `AusfallDialog` der Auswertung |
 | Ein Termin ist nicht buchbar, weil er entfällt | Eltern | nicht buchbar | muss | **erfüllt** — `Verfuegbarkeit.ENTFAELLT` ist gespeichert, `Termin.istBuchbar()` liefert `false`; die Eltern-Ansicht fasst „belegt" und „entfällt" bewusst zu `buchbar=false` zusammen (`Buchungsoptionen.SlotOption`), ein dritter, für die Eltern unterscheidbarer Zustand ist nicht geplant |
 | Absage-Nachricht führt zurück in die Buchung | Eltern | Zugangs-Link in der Mail, Familie bucht selbst neu | muss | fehlt; der Link existiert nirgends — die Bestätigungsmail ist ein reiner Beleg ohne Aktion, und es fehlt eine konfigurierte öffentliche Basis-URL, aus der sich eine absolute Adresse bauen ließe (#109) |
-| Erinnerung vor dem Sprechtag | Eltern | automatischer Versand zum gewählten Vorlauf | muss | fehlt vollständig — jeder Mailversand hängt heute an einer Organizer-Handlung |
-| Erinnerungszeitpunkt wählbar | Organizer | Auswahl fester Optionen am `Sprechtag`, auch nach dem Veröffentlichen änderbar | muss | kein Feld |
-| Keine Erinnerung für abgesagten Sprechtag oder stornierte Buchung | Eltern | Versand überspringt sie | muss | fehlt (mit der Erinnerung selbst) |
-| E-Mail-Versand schlägt fehl, niemand erfährt es | Organizer | Liste der nicht erreichten Familien in der Auswertung | muss | fehlt — best-effort mit `log.warn` je Adresse (`AbsageBenachrichtigungService`), `@Async` nach Commit, die UI erfährt nichts |
-| Tippfehler in der Adresse beim Erfassen | Eltern | zweite Eingabe „E-Mail wiederholen" | muss | fehlt; `EmailField` prüft nur das Format |
-| Einzelnen Termin verschieben, Buchung behalten | Organizer | Umbuchen in einem Zug, neue Bestätigungsmail | muss | fehlt — fällt mit der Organizer-Buchungsstrecke aus Phase 3 ab |
+| Erinnerung vor dem Sprechtag | Eltern | automatischer Versand zum gewählten Vorlauf | muss | **erfüllt** (#105, #107) — Zweckerweiterung in [ADR 0006](../adr/0006-zweckerweiterung-eltern-email-erinnerung.md); `ErinnerungsScheduler` läuft täglich (`elternsprechtag.scheduler.erinnerung-cron`, Default 7 Uhr) und ruft `Erinnern.erinnere`. Verfallen statt nachholen (`ErinnerungsVorlauf.istFaelligAm`), ein Zeitstempel an der `Buchung` (V8) verhindert Doppelversand, jede Buchung wird in eigener Transaktion markiert |
+| Erinnerungszeitpunkt wählbar | Organizer | Auswahl fester Optionen am `Sprechtag`, auch nach dem Veröffentlichen änderbar | muss | **erfüllt** (#106) — `ErinnerungsVorlauf` (keine · 1 · 2 · 3 Tage vorher), Pflichtfeld im Formular; nicht Teil der Zeitstruktur, bleibt also nach dem Veröffentlichen änderbar und wirkt ab dem nächsten Lauf |
+| Keine Erinnerung für abgesagten Sprechtag oder stornierte Buchung | Eltern | Versand überspringt sie | muss | **erfüllt** — Kandidaten sind nur veröffentlichte Sprechtage mit gesetztem Vorlauf und deren aktive, noch nicht erinnerte Buchungen; am `Termin` wird vor dem Markieren erneut geprüft |
+| E-Mail-Versand schlägt fehl, niemand erfährt es | Organizer | Liste der nicht erreichten Familien in der Auswertung | muss | fehlt (#110) — best-effort mit `log.warn` je Adresse in allen vier Mailwegen (Absage, Ausfall, Bestätigung, Erinnerung), `@Async` nach Commit, die UI erfährt nichts |
+| Tippfehler in der Adresse beim Erfassen | Eltern | zweite Eingabe „E-Mail wiederholen" | muss | fehlt (#111); `EmailField` prüft nur das Format |
+| Einzelnen Termin verschieben, Buchung behalten | Organizer | Umbuchen in einem Zug, neue Bestätigungsmail | muss | **erfüllt** (#104) — `Umbuchen` aus Phase 3; Familie, Notiz und Buchungsziel wandern in die neue Buchung, die Angaben der alten fallen. Genau eine Mail mit dem Anlass `UMBUCHUNG`, die die Änderung benennt |
 | Elternlink nach der Absage | Eltern | Hinweis „abgesagt" plus Datum und Schulkontakt, keine Buchungsauskunft | muss | **erfüllt** (#131) — `Zugangsstand.ABGESAGT` hat Vorrang vor allen anderen Ständen und bleibt auch nach dem Datum stehen: Ein abgesagter Sprechtag wird nie abgeschlossen. Die Seite „Dieser Elternsprechtag wurde abgesagt" hat denselben Aufbau wie „Anmeldung beendet" — Titel, Datum, Uhrzeit und der Schulkontakt als Hauptaussage, ohne Ort (`ElternsprechtagPresenter.Hinweisseite`) |
 | Absage-Dialog nennt die Zahl der Betroffenen | Organizer | Zahl vor dem Bestätigen | muss | **erfüllt** — `Absagen.zaehleBetroffeneEltern`, je Adresse einmal gezählt |
 | Absage ohne jede Buchung | Organizer | kein Versand, kein Fehler | muss | **erfüllt** — `benachrichtige` steigt bei leerer Adressliste aus |
@@ -376,12 +376,12 @@ Lehrkraft bekommt ihren Plan als Datei, nicht als Login.
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Lehrkraft braucht ihren Tagesplan | Lehrkraft | PDF-Export aus der Auswertung: ohne Filter ein ZIP mit einem PDF je Lehrkraft, mit gesetztem Lehrkraft-Filter genau dieses eine PDF | muss | `AuswertungView` hat den Filter je Lehrkraft, aber **keinen** Export |
-| Inhalt des Blatts | Lehrkraft | Kopf mit Lehrkraft, Sprechtag, Datum, Ort und „Stand: \<Zeitstempel\>"; alle Slots chronologisch — **auch die freien** — mit Zeit, Schüler, Klasse, Fach, Elternname, Notiz; rechts eine leere Spalte für Handschrift | muss | `Auswerten.BuchungsZeile` liefert nur aktive Buchungen, freie Slots erscheinen nicht |
+| Lehrkraft braucht ihren Tagesplan | Lehrkraft | PDF-Export aus der Auswertung: ohne Filter ein ZIP mit einem PDF je Lehrkraft, mit gesetztem Lehrkraft-Filter genau dieses eine PDF | muss | fehlt (#120) — `AuswertungView` hat den Filter je Lehrkraft, aber **keinen** Export |
+| Inhalt des Blatts | Lehrkraft | Kopf mit Lehrkraft, Sprechtag, Datum, Ort und „Stand: \<Zeitstempel\>"; alle Slots chronologisch — **auch die freien** — mit Zeit, Schüler, Klasse, Fach, Elternname, Notiz; rechts eine leere Spalte für Handschrift | muss | fehlt (#120) — `Auswerten.BuchungsZeile` liefert nur Buchungen, freie Slots erscheinen nicht |
 | Anmeldeschluss | Organizer | Pflichtfeld am `Sprechtag`, beim Anlegen mit dem Vortag vorbelegt, änderbar | muss | **erfüllt** — `Anmeldefrist` (0–28 Tage vor dem Sprechtag, vorbelegt mit 1; 0 schließt mit dem Beginn, sonst zählt der letzte Tag ganz), bis zum Endzustand änderbar, auch zum Wiederöffnen; das Formular zeigt den errechneten Anmeldeschluss, das Veröffentlichen meldet einen schon verstrichenen |
 | Elternlink nach Fristablauf | Eltern | nicht mehr buchbar; Hinweis „Anmeldung beendet" plus Datum und Schulkontakt | muss | **erfüllt** — nicht mehr buchbar, beim Öffnen wie beim Abschicken (`Sprechtag.nimmtElternbuchungenAn`, `ElternbuchungGeschlossenException`); der Link zeigt die eigene Seite „Die Anmeldung ist beendet" mit Titel, Datum, Uhrzeit und dem Schulkontakt als Hauptaussage (`Sprechtag.anmeldungBeendet`, `Zugangsstand.ANMELDUNG_BEENDET`) — bis der Tagesjob abschließt, auch am Tag selbst und nach der Endzeit. Wer beim Abschicken abgewiesen wird, liest „nicht gebucht" und landet auf derselben Seite |
 | Familie ruft am Tag selbst an, jemand steht spontan vor der Tür | Organizer | die Frist schließt nur den Elternlink; die Organizer-Buchungsstrecke bleibt bis zum Abschluss offen | muss | **erfüllt** — die Frist prüft allein `Buchen`; `Nachtragen` fragt sie nicht und bleibt bis zum Abschluss offen |
-| Telefonauskunft „wann habe ich meinen Termin?" | Organizer | Suche nach Schüler- oder Elternname in der Auswertung | muss | nur Lehrkraft-Filter, **keine** Namenssuche |
+| Telefonauskunft „wann habe ich meinen Termin?" | Organizer | Suche nach Schüler- oder Elternname in der Auswertung | muss | **erfüllt** (#121) — Suchfeld vor dem Lehrkraft-Filter, gefiltert wird beim Tippen: Jedes Wort muss als Teilstring im Schüler- oder Elternnamen stehen, also findet „Lena Müller" auch „Müller, Lena". Die gegliederte Ansicht bleibt, Lehrkräfte ohne Treffer fallen weg, jede Zeile behält ihre Aktionen. Die Regel liegt Vaadin-frei in `Namenssuche`, die Ansicht leitet `AuswertungPresenter.ansicht` ab |
 | Eltern sehen ihre eigene Buchung wieder | Eltern | — | darf fehlen | Token hängt am Sprechtag, nicht an der Familie; Beleg bleibt die Bestätigungsmail, Weg drumherum der Anruf |
 | Änderungen nach dem Druck erreichen die Lehrkraft | Lehrkraft | — | darf fehlen | der Zeitstempel im PDF-Kopf macht das Alter des Blattes sichtbar; der Rest ist mündliche Organisation |
 | Entfallene Termine auf dem Blatt (durchgestrichen statt verschwunden) | Lehrkraft | — | darf fehlen | fehlt mit dem Export |
@@ -424,6 +424,17 @@ können (`darf fehlen`, oben), ist die Telefonauskunft der Weg drumherum — und
 wenn der Organizer nach dem Namen suchen kann. Ohne sie fiele „Eltern sehen ihre eigene Buchung
 wieder" auf `muss` zurück.
 
+**Die Suche filtert, sie verzweigt nicht (#121).** Sie schränkt die vorhandene, nach Lehrkraft
+gegliederte Ansicht ein, statt eine eigene Trefferliste aufzumachen: Der Anrufer will oft nicht nur
+wissen, wann er dran ist, sondern umbuchen oder stornieren — die Aktionen bleiben an der Zeile, und
+das Tabellen-Karten-Muster bleibt das einzige. Lehrkraft-Filter und Suche gelten zugleich; der
+gesetzte Filter steht mit Namen daneben. Die Kopfzahlen der Abschnitte bleiben die der Lehrkraft.
+Der Suchbegriff steht bewusst **nicht** in der URL: Ein Name als Query-Parameter landete in
+Browser-Historie und Server-Logs — die Datenspur, die die Anonymisierung vermeiden soll. Den Schalter
+„Stornierte anzeigen" respektiert die Suche, verschweigt aber nichts: Passen ausgeblendete stornierte
+Buchungen, sagt sie es. Am anonymisierten Sprechtag bleibt das Suchfeld; der Hinweis über der
+Tabelle erklärt, warum es keine echten Namen mehr findet.
+
 **Rückwirkung auf Phase 2.** Der Anmeldeschluss ist ein Feld am `Sprechtag` und entsteht in der
 Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetragen.
 
@@ -440,9 +451,9 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 | Auswertung nach Fristablauf | Organizer | `anonymisiertAm` am Sprechtag, Hinweis mit Datum statt scheinbarem Datenverlust | muss | **erfüllt** — `Auswerten.SprechtagAuswertung.anonymisiertAm` (auf den Tag gekürzt) aus dem Kopf-SQL; die Auswertung zeigt zwischen Kopf und Filter den Info-Hinweis „Personenbezogene Angaben entfernt" mit Datum und dem, was erhalten bleibt (`AuswertungPresenter.anonymisierungsHinweis`), auch am abgesagten Sprechtag. Die Tabelle bleibt unverändert mit Pseudonymen, Zählern und Entfallen-Hinweisen; ein abgebrochener Lauf ohne Vermerk zeigt noch keinen Hinweis |
 | Vorwarnung vor der Anonymisierung | Organizer | abgeschlossene Sprechtage zeigen in der Liste, wann ihre Daten fallen | muss | **erfüllt** — `Sprechtagsuebersicht.Datenfrist` an jedem abgeschlossenen und abgesagten Sprechtag, auch ohne Buchung (dieselbe Regel wie die Kandidatensuche des Laufs): vorher „Personenbezogene Angaben bis …“ mit `Aufbewahrungsfrist.verfuegbarBis` (Kalendertag von Endzeit plus Frist; stimmt, weil der Lauf nachts läuft), nachher „… entfernt am …“ mit dem Tag von `anonymisiertAm`. Ruhig in der Titelzelle, ohne Eskalation; Lauf und Liste teilen eine Frist-Bean (`AufbewahrungsfristConfig`) |
 | Löschverlangen einer Familie nach dem Sprechtag | Organizer | Einzelaktion „Daten dieser Buchung entfernen" mit Rückfrage — zieht dieselbe Anonymisierung vor | muss | **erfüllt** — Icon „Angaben entfernen" je Zeile an `ABGESCHLOSSEN`/`ABGESAGT` mit Rückfrage (`AngabenEntfernenDialog`) und dem festen Hinweis auf weitere Termine der Familie; `AngabenEntfernen` → `Termin.entferneAngaben` ersetzt genau eine Buchung durch ein Pseudonym, die Zusage bleibt stehen und zählt weiter. `Buchung.anonymisiertAm` (V11, vom Nachtlauf mitgesetzt, Altbestand nachgetragen) nimmt das Icon weg und zeigt „Angaben entfernt am …" in der Zeile, solange der Sprechtag selbst nicht anonymisiert ist. Stornierte Buchungen blendet der Schalter „Stornierte anzeigen" ein — gedämpft, mit „storniert" oder, wenn der Ausfall der Lehrkraft sie zurückgenommen hat, „entfallen"; sie tragen dasselbe Icon, auch am veröffentlichten Sprechtag |
-| Alter Sprechtag als Vorlage | Organizer | `duplicate` kopiert alle Vorlagefelder und leitet Datumsabhängiges neu ab | muss | teilweise — die drei neuen Felder fehlen ihm |
-| Versehentlich angelegter Sprechtag | Organizer | löschbar, solange `ENTWURF` **und** ohne Buchung | muss | fehlt — kein Löschen im Projekt |
-| Auskunftsverlangen einzelner Eltern | Organizer | Namenssuche in der Auswertung, vorlesen oder drucken | muss | fällt mit Phase 5 ab |
+| Alter Sprechtag als Vorlage | Organizer | `duplicate` kopiert alle Vorlagefelder und leitet Datumsabhängiges neu ab | muss | **erfüllt** — `Sprechtag.dupliziere` übernimmt Schulkontakt, Erinnerungsvorlauf und Anmeldefrist; die Frist ist relativ gespeichert und passt deshalb zu jedem neuen Datum (siehe Anmerkung). Issue #130 ist damit gegenstandslos |
+| Versehentlich angelegter Sprechtag | Organizer | löschbar, solange `ENTWURF` **und** ohne Buchung | muss | fehlt (#132) — kein Löschen im Projekt |
+| Auskunftsverlangen einzelner Eltern | Organizer | Namenssuche in der Auswertung, vorlesen oder drucken | muss | **erfüllt** (#121) — dieselbe Namenssuche; trifft sie stornierte Buchungen, die der Schalter gerade ausblendet, sagt ein Hinweis „N stornierte Buchungen passen ebenfalls" und blendet sie auf Klick ein. Vorgelesen wird aus der gefilterten Ansicht; einen eigenen Druck gibt es nicht |
 | Löschverlangen vor dem Sprechtag | Organizer | Storno mit entfernten Angaben | muss | **erfüllt** (#129) — Checkbox „Angaben der Familie entfernen" im Storno-Dialog, vorab leer; `Stornieren.storniere(buchungId, angabenEntfernen)` storniert und anonymisiert in einer Transaktion am `Termin`. Wer ohne Haken storniert wurde, ist über „Stornierte anzeigen" weiter erreichbar. Eine geltende Zusage am veröffentlichten Sprechtag lässt sich nicht bloß anonymisieren (`BuchungNochAktivException`) — das hinterließe einen Geistertermin. Umbuchen entfernt die Angaben der alten Buchung immer; sie stehen in der neuen |
 | Eltern sehen ihre Buchung über den alten Link wieder | Eltern | — | darf fehlen | Beleg ist die Bestätigungsmail, Weg drumherum der Anruf — dieselbe Einstufung wie in Phase 5 |
 | Archivierung gegen das Anwachsen der Liste über Jahre | Organizer | — | darf fehlen | der Statusfilter blendet Abgeschlossenes weg; anonymisierte Sprechtage sind nur noch Zahlen |
@@ -524,8 +535,8 @@ Protokoll mit immer demselben Namen ist Zierde.
 
 **Vorwarnung oder Löschmitteilung per E-Mail — bewusst nein.** An den Organizer nicht, weil er gar
 keine Adresse hinterlegt hat — die Warnung steht deshalb in der Sprechtag-Liste. An die Eltern nicht,
-weil ihre Adresse per ADR 0002 auf Absage und Bestätigung zweckgebunden ist; eine dritte Verwendung
-bräuchte einen eigenen ADR.
+weil ihre Adresse auf Absage, Bestätigung und Erinnerung zweckgebunden ist (ADR 0001, 0002, 0006);
+eine vierte Verwendung bräuchte einen eigenen ADR.
 
 **Der tägliche Scheduler ist der größte gemeinsame Baustein dieses Maßstabs.** Er trägt drei
 Aufgaben: die Erinnerung vor dem Sprechtag (Phase 4), den automatischen Abschluss und die
@@ -560,30 +571,20 @@ hier ist der Ort dafür.
 
 ## Lücken-Issues
 
-Für jeden Fall der Stufe `muss`, der heute fehlt, liegt ein Issue im Tracker. Fälle, die als
-**erfüllt** in den Tabellen stehen, tauchen hier nicht auf; Fälle, die mit einem anderen Issue
-abfallen (Umbuchen, Auskunfts- und Löschverlangen vor dem Sprechtag), sind dort genannt statt
-doppelt geführt.
+Für jeden Fall der Stufe `muss`, der heute fehlt, liegt ein Issue im Tracker. Hier stehen nur die
+**offenen**; erledigte Issues sind herausgenommen, die erfüllten Zeilen in den Tabellen nennen ihr
+Issue.
 
 **Phase 2 — Sprechtag vorbereiten und veröffentlichen**
 
 | Issue | Fall |
 |---|---|
-| [#102](https://github.com/openClassware/elternsprechtag/issues/102) | Schulkontakt als Pflichtfeld am Sprechtag |
-| [#112](https://github.com/openClassware/elternsprechtag/issues/112) | Terminrelevante Felder nach dem Veröffentlichen sperren |
-| [#113](https://github.com/openClassware/elternsprechtag/issues/113) | Rückweg auf Entwurf regeln: erlaubt ohne Buchung, sonst gesperrt |
-| [#114](https://github.com/openClassware/elternsprechtag/issues/114) | Statusübergänge auch in `createOrUpdate` erzwingen |
-| [#115](https://github.com/openClassware/elternsprechtag/issues/115) | Meldung beim Veröffentlichen, wenn keine Klasse einen Lehrauftrag hat |
-| [#116](https://github.com/openClassware/elternsprechtag/issues/116) | Slot-Dauer als Pflichtfeld |
 | [#117](https://github.com/openClassware/elternsprechtag/issues/117) | Token-Neuausstellung **entfernen** |
 
 **Phase 3 — Buchungsphase**
 
 | Issue | Fall |
 |---|---|
-| [#103](https://github.com/openClassware/elternsprechtag/issues/103) | Buchung durch den Organizer stornieren |
-| [#104](https://github.com/openClassware/elternsprechtag/issues/104) | Buchungsstrecke für den Organizer (Nachtragen, Umbuchen, Familien ohne E-Mail) |
-| [#118](https://github.com/openClassware/elternsprechtag/issues/118) | Vergangene Slots nicht mehr buchbar |
 | [#119](https://github.com/openClassware/elternsprechtag/issues/119) | Hinweistext, wenn bei einer Lehrkraft nichts mehr frei ist |
 | [#148](https://github.com/openClassware/elternsprechtag/issues/148) | Absage an die Stellvertreteradresse nennt die betroffenen Familien nicht |
 
@@ -591,10 +592,6 @@ doppelt geführt.
 
 | Issue | Fall |
 |---|---|
-| [#105](https://github.com/openClassware/elternsprechtag/issues/105) | ADR 0006: Zweckerweiterung der Eltern-E-Mail auf die Erinnerung |
-| [#106](https://github.com/openClassware/elternsprechtag/issues/106) | Erinnerungszeitpunkt als Auswahl am Sprechtag |
-| [#107](https://github.com/openClassware/elternsprechtag/issues/107) | Erinnerung vor dem Sprechtag versenden (täglicher Scheduler) |
-| [#108](https://github.com/openClassware/elternsprechtag/issues/108) | Terminzustand `ENTFAELLT` und Sammelaktion „Lehrkraft fällt aus" |
 | [#109](https://github.com/openClassware/elternsprechtag/issues/109) | Zugangs-Link in die Absage-Mail aufnehmen |
 | [#110](https://github.com/openClassware/elternsprechtag/issues/110) | Zustellzustand an der Buchung und Liste „nicht erreicht" |
 | [#111](https://github.com/openClassware/elternsprechtag/issues/111) | Zweite Eingabe „E-Mail wiederholen" |
@@ -604,25 +601,17 @@ doppelt geführt.
 | Issue | Fall |
 |---|---|
 | [#120](https://github.com/openClassware/elternsprechtag/issues/120) | PDF-Export der Lehrkraft-Pläne (inkl. Inhalt des Blatts) |
-| [#121](https://github.com/openClassware/elternsprechtag/issues/121) | Namenssuche in der Auswertung |
-| [#122](https://github.com/openClassware/elternsprechtag/issues/122) | Anmeldeschluss als Pflichtfeld am Sprechtag |
-| [#123](https://github.com/openClassware/elternsprechtag/issues/123) | Elternansicht nach Anmeldeschluss |
-
 **Phase 6 — Nach dem Sprechtag**
 
 | Issue | Fall |
 |---|---|
-| [#124](https://github.com/openClassware/elternsprechtag/issues/124) | Sprechtag automatisch abschließen, wenn die Endzeit verstrichen ist |
-| [#166](https://github.com/openClassware/elternsprechtag/issues/166) | Handabschluss entfernen (ersetzt #125, den Rückweg `ABGESCHLOSSEN → VEROEFFENTLICHT`) |
-| [#126](https://github.com/openClassware/elternsprechtag/issues/126) | Aufbewahrungsfrist und Anonymisierung der Buchungsdaten |
-| [#127](https://github.com/openClassware/elternsprechtag/issues/127) | Auswertung nach Fristablauf: `anonymisiertAm` und Hinweis |
-| [#128](https://github.com/openClassware/elternsprechtag/issues/128) | Vorwarnung in der Sprechtag-Liste, wann die Daten fallen |
-| [#129](https://github.com/openClassware/elternsprechtag/issues/129) | Einzelaktion „Daten dieser Buchung entfernen" |
-| [#130](https://github.com/openClassware/elternsprechtag/issues/130) | `duplicate`: neue Pflichtfelder mitführen, Datumsabhängiges neu ableiten |
-| [#131](https://github.com/openClassware/elternsprechtag/issues/131) | Elternansicht nach dem Sprechtag |
 | [#132](https://github.com/openClassware/elternsprechtag/issues/132) | Buchungsfreie Entwürfe löschen können |
 
-Die Reihenfolge und die Triage-Labels dieser Issues sind noch offen; sie tragen zunächst
-`needs-triage`, blockierte zusätzlich `blocked`. Der tiefste Abhängigkeitsstrang läuft über
-ADR 0006 (#105) und den Erinnerungszeitpunkt (#106) zur Erinnerung (#107), von dort in den
-täglichen Scheduler mit automatischem Abschluss (#124) und Anonymisierung (#126).
+[#130](https://github.com/openClassware/elternsprechtag/issues/130) (`duplicate` mit den neuen
+Pflichtfeldern) ist noch offen, aber gegenstandslos: `Sprechtag.dupliziere` führt alle drei Felder
+mit, die Anmeldefrist relativ zum Datum.
+
+Der tägliche Scheduler — der tiefste Abhängigkeitsstrang über ADR 0006, Erinnerung, automatischen
+Abschluss und Anonymisierung — steht vollständig. Die offenen Issues hängen nicht mehr
+voneinander ab; einzige Voraussetzung außerhalb der Liste ist die öffentliche Basis-URL, die #109
+mitbringen muss.

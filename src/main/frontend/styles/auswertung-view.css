@@ -116,9 +116,37 @@
     display: none;
 }
 
+.auswertung__suche,
 .auswertung__filter-select {
     width: 320px;
     max-width: 100%;
+}
+
+/* Hinweis auf ausgeblendete stornierte Treffer der Namenssuche (#121): eine eigene Zeile direkt
+   unter der Filterzeile, der Button schaltet „Stornierte anzeigen" ein. */
+.auswertung__suchhinweis {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    margin-top: -0.5rem;
+    padding: 0 1.5rem 1rem;
+    font-size: 14px;
+    color: #5a6069;
+}
+
+/* Wie beim Hinweis oben: setVisible(false) setzt nur das hidden-Attribut. */
+.auswertung__suchhinweis[hidden] {
+    display: none;
+}
+
+/* Die Suche findet nichts: steht an der Stelle der Abschnitte. */
+.auswertung__leer {
+    padding: 16px 20px;
+    border: 1px dashed #e5e7eb;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #5a6069;
 }
 
 .auswertung__sections {
@@ -285,9 +313,16 @@
     .auswertung__breadcrumb,
     .auswertung__header,
     .auswertung__filter,
+    .auswertung__suchhinweis,
     .auswertung__sections {
         padding-left: 1rem;
         padding-right: 1rem;
+    }
+
+    /* Suchfeld und Lehrkraft-Filter stehen am Telefon in voller Breite untereinander. */
+    .auswertung__suche,
+    .auswertung__filter-select {
+        width: 100%;
     }
 
     .auswertung__anonymisiert {
