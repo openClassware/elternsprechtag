@@ -6,7 +6,6 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Dupliziere
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
-import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import java.util.Optional;
@@ -43,7 +42,6 @@ class SprechtagBearbeitungService implements Anlegen, Bearbeiten, Duplizieren {
             formular.getOrt(),
             formular.getBeschreibung(),
             Formularwerte.schulkontakt(formular),
-            Formularwerte.accessToken(formular),
             Formularwerte.datum(formular),
             Formularwerte.zeitfenster(formular),
             Formularwerte.slotdauer(formular),
@@ -74,8 +72,7 @@ class SprechtagBearbeitungService implements Anlegen, Bearbeiten, Duplizieren {
         formular.getTitel(),
         formular.getOrt(),
         formular.getBeschreibung(),
-        Formularwerte.schulkontakt(formular),
-        Formularwerte.accessToken(formular));
+        Formularwerte.schulkontakt(formular));
     sprechtag.aendereErinnerungsVorlauf(Formularwerte.erinnerungsVorlauf(formular));
     sprechtag.aendereAnmeldefrist(Formularwerte.anmeldefrist(formular));
     sprechtag.legeZeitstrukturFest(
@@ -89,7 +86,7 @@ class SprechtagBearbeitungService implements Anlegen, Bearbeiten, Duplizieren {
   @Override
   @Transactional
   public UUID dupliziere(UUID id) {
-    Sprechtag kopie = lade(id).dupliziere(AccessToken.neu());
+    Sprechtag kopie = lade(id).dupliziere();
     sprechtage.speichere(kopie);
     return kopie.id().wert();
   }

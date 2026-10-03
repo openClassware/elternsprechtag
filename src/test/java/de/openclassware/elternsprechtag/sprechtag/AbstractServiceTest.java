@@ -22,7 +22,6 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffent
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.ZurueckAufEntwurf;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Termine;
-import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
 import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
@@ -229,7 +228,6 @@ public abstract class AbstractServiceTest {
             ort,
             null,
             Schulkontakt.von(SCHULKONTAKT),
-            AccessToken.neu(),
             datum,
             new Zeitfenster(beginn, ende),
             Slotdauer.vonMinuten(slotMinuten),

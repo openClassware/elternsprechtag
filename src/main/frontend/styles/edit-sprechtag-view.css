@@ -51,3 +51,27 @@
         order: 3;
     }
 }
+
+.edit-sprechtag-view__link-hinweis {
+    margin: 0;
+    color: #6b7280;
+}
+
+/* Der Link öffnet die Elternansicht, der Knopf darin ist nur seine Gestalt. */
+.edit-sprechtag-view__eltern-link {
+    text-decoration: none;
+}
+
+.edit-sprechtag-view__eltern-link vaadin-button {
+    width: 100%;
+    cursor: pointer;
+}
+
+.edit-sprechtag-view__link-aktionen {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.edit-sprechtag-view__link-aktionen > * {
+    flex: 1;
+}

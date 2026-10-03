@@ -119,8 +119,9 @@ Kern-Kette: **Sprechtag → Termin → Buchung**, mit **Lehrauftrag** als Buchun
   (`sprechtag.domain.Sprechtag`) mit zwei tragenden Invarianten: Die **Statusübergänge** laufen
   ausschließlich über ihn (kein zweiter Schreibpfad setzt den Status mehr nebenbei), und die
   **Zeitstruktur friert ab `VEROEFFENTLICHT` ein** — Datum, Zeitfenster, Slot-Dauer und
-  Klassenliste, denn genau daraus sind die Termine entstanden. Titel, Ort, Hinweistext,
-  Schulkontakt und Token bleiben änderbar. Die Klassen stehen als `KlasseId` darin.
+  Klassenliste, denn genau daraus sind die Termine entstanden. Titel, Ort, Hinweistext und
+  Schulkontakt bleiben änderbar. Das Token entsteht mit dem Entwurf und ändert sich nie — ein
+  verteilter Link bleibt gültig (#117). Die Klassen stehen als `KlasseId` darin.
 - **Lehrauftrag** — Verknüpft (Lehrer × Klasse × Fach). Das fachlich-organisatorische
   Ziel einer Buchung.
 - **Termin** — Ein **materialisierter** Zeit-Slot einer Lehrkraft an einem Sprechtag. Ein

@@ -33,7 +33,6 @@ class SprechtagTest {
         "Aula",
         "Bitte pünktlich",
         Schulkontakt.von("Sekretariat, Tel. 0123 456789"),
-        AccessToken.neu(),
         DATUM,
         NACHMITTAG,
         VIERTELSTUNDE,
@@ -73,7 +72,6 @@ class SprechtagTest {
                       null,
                       null,
                       Schulkontakt.von("Sekretariat"),
-                      AccessToken.neu(),
                       DATUM,
                       NACHMITTAG,
                       VIERTELSTUNDE,
@@ -216,11 +214,26 @@ class SprechtagTest {
           "Frühling (Raumänderung)",
           "Turnhalle",
           "Neuer Hinweis",
-          Schulkontakt.von("Sekretariat"),
-          sprechtag.accessToken());
+          Schulkontakt.von("Sekretariat"));
 
       assertThat(sprechtag.titel()).isEqualTo("Frühling (Raumänderung)");
       assertThat(sprechtag.ort()).isEqualTo("Turnhalle");
+    }
+
+    /** #117 — der verteilte Link bleibt gültig, was auch immer am Sprechtag geändert wird. */
+    @Test
+    void zugangsTokenBleibtBeimBeschreibenStehen() {
+      Sprechtag sprechtag = veroeffentlicht();
+      AccessToken vorher = sprechtag.accessToken();
+
+      sprechtag.beschreibeNeu("Neu", "Turnhalle", null, Schulkontakt.von("Sekretariat"));
+
+      assertThat(sprechtag.accessToken()).isEqualTo(vorher);
+    }
+
+    @Test
+    void jederEntwurfBekommtEinEigenesZugangsToken() {
+      assertThat(entwurf().accessToken()).isNotEqualTo(entwurf().accessToken());
     }
 
     /** `ABDECKUNG.md` Z. 93 — ein abgesagter Sprechtag wird nicht über „Speichern" wiederbelebt. */
@@ -235,8 +248,7 @@ class SprechtagTest {
                       "Doch wieder da",
                       null,
                       null,
-                      Schulkontakt.von("Sekretariat"),
-                      sprechtag.accessToken()))
+                      Schulkontakt.von("Sekretariat")))
           .isInstanceOf(StatusuebergangException.class);
     }
 
@@ -615,7 +627,7 @@ class SprechtagTest {
       Sprechtag sprechtag = abgeschlossen();
       sprechtag.vermerkeAnonymisierung(frist, nachAblauf);
 
-      assertThat(sprechtag.dupliziere(AccessToken.neu()).anonymisiertAm()).isEmpty();
+      assertThat(sprechtag.dupliziere().anonymisiertAm()).isEmpty();
     }
 
     /**
@@ -695,7 +707,7 @@ class SprechtagTest {
     void kopieIstEinEntwurfMitEigenemToken() {
       Sprechtag original = veroeffentlicht();
 
-      Sprechtag kopie = original.dupliziere(AccessToken.neu());
+      Sprechtag kopie = original.dupliziere();
 
       assertThat(kopie.status()).isEqualTo(SprechtagStatus.ENTWURF);
       assertThat(kopie.id()).isNotEqualTo(original.id());
@@ -711,7 +723,7 @@ class SprechtagTest {
       Sprechtag original = entwurf();
       original.aendereAnmeldefrist(Anmeldefrist.vonTagen(4));
 
-      Sprechtag kopie = original.dupliziere(AccessToken.neu());
+      Sprechtag kopie = original.dupliziere();
 
       assertThat(kopie.anmeldefrist()).isEqualTo(Anmeldefrist.vonTagen(4));
     }
