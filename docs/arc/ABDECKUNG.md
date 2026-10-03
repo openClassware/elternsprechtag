@@ -376,15 +376,15 @@ Lehrkraft bekommt ihren Plan als Datei, nicht als Login.
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
-| Lehrkraft braucht ihren Tagesplan | Lehrkraft | PDF-Export aus der Auswertung: ohne Filter ein ZIP mit einem PDF je Lehrkraft, mit gesetztem Lehrkraft-Filter genau dieses eine PDF | muss | fehlt (#120) — `AuswertungView` hat den Filter je Lehrkraft, aber **keinen** Export |
-| Inhalt des Blatts | Lehrkraft | Kopf mit Lehrkraft, Sprechtag, Datum, Ort und „Stand: \<Zeitstempel\>"; alle Slots chronologisch — **auch die freien** — mit Zeit, Schüler, Klasse, Fach, Elternname, Notiz; rechts eine leere Spalte für Handschrift | muss | fehlt (#120) — `Auswerten.BuchungsZeile` liefert nur Buchungen, freie Slots erscheinen nicht |
+| Lehrkraft braucht ihren Tagesplan | Lehrkraft | PDF-Export aus der Auswertung: immer ein ZIP mit einem PDF je beteiligter Lehrkraft, unabhängig von Filter und Suche | muss | **erfüllt** (#120) — Download-Knopf im Kopf der Auswertung, in jedem Status, sobald der Sprechtag eine beteiligte Lehrkraft hat; im ZIP liegt auch das Blatt einer Lehrkraft ohne Buchung. Dateinamen mit dem Stand vorn (`2026-10-02_1437_Herbstsprechtag_KRA.pdf` im ZIP `2026-10-02_1437_Herbstsprechtag_Tagesplaene.zip`), ohne Kürzel ersatzweise der Name, Titel und Name auf je 40 Zeichen gekürzt (`Dateinamen`). Port `Drucken`, Adapter `adapter/out/pdf` mit OpenPDF |
+| Inhalt des Blatts | Lehrkraft | Kopf mit Lehrkraft, Sprechtag, Datum, Ort und „Stand: \<Zeitstempel\>"; alle Slots chronologisch — **auch die freien** — mit Zeit, Schüler, Klasse, Fach, Elternname, Notiz; rechts eine leere Spalte für Handschrift | muss | **erfüllt** (#120) — A4 quer, Kopfzeile der Tabelle auf jeder Seite, Fußzeile mit Lehrkraft, Stand und „Seite x von y". Stand ist der Zeitpunkt des Exports, gelesen wird frisch aus der Datenbank (`TerminAnsichten.tagesplan`). Freie Slots tragen den Vermerk „frei"; stornierte Buchungen und entfallene Slots stehen nicht darauf. Eingebettete Liberation Sans, damit auch „Yılmaz" lesbar bleibt |
 | Anmeldeschluss | Organizer | Pflichtfeld am `Sprechtag`, beim Anlegen mit dem Vortag vorbelegt, änderbar | muss | **erfüllt** — `Anmeldefrist` (0–28 Tage vor dem Sprechtag, vorbelegt mit 1; 0 schließt mit dem Beginn, sonst zählt der letzte Tag ganz), bis zum Endzustand änderbar, auch zum Wiederöffnen; das Formular zeigt den errechneten Anmeldeschluss, das Veröffentlichen meldet einen schon verstrichenen |
 | Elternlink nach Fristablauf | Eltern | nicht mehr buchbar; Hinweis „Anmeldung beendet" plus Datum und Schulkontakt | muss | **erfüllt** — nicht mehr buchbar, beim Öffnen wie beim Abschicken (`Sprechtag.nimmtElternbuchungenAn`, `ElternbuchungGeschlossenException`); der Link zeigt die eigene Seite „Die Anmeldung ist beendet" mit Titel, Datum, Uhrzeit und dem Schulkontakt als Hauptaussage (`Sprechtag.anmeldungBeendet`, `Zugangsstand.ANMELDUNG_BEENDET`) — bis der Tagesjob abschließt, auch am Tag selbst und nach der Endzeit. Wer beim Abschicken abgewiesen wird, liest „nicht gebucht" und landet auf derselben Seite |
 | Familie ruft am Tag selbst an, jemand steht spontan vor der Tür | Organizer | die Frist schließt nur den Elternlink; die Organizer-Buchungsstrecke bleibt bis zum Abschluss offen | muss | **erfüllt** — die Frist prüft allein `Buchen`; `Nachtragen` fragt sie nicht und bleibt bis zum Abschluss offen |
 | Telefonauskunft „wann habe ich meinen Termin?" | Organizer | Suche nach Schüler- oder Elternname in der Auswertung | muss | **erfüllt** (#121) — Suchfeld vor dem Lehrkraft-Filter, gefiltert wird beim Tippen: Jedes Wort muss als Teilstring im Schüler- oder Elternnamen stehen, also findet „Lena Müller" auch „Müller, Lena". Die gegliederte Ansicht bleibt, Lehrkräfte ohne Treffer fallen weg, jede Zeile behält ihre Aktionen. Die Regel liegt Vaadin-frei in `Namenssuche`, die Ansicht leitet `AuswertungPresenter.ansicht` ab |
 | Eltern sehen ihre eigene Buchung wieder | Eltern | — | darf fehlen | Token hängt am Sprechtag, nicht an der Familie; Beleg bleibt die Bestätigungsmail, Weg drumherum der Anruf |
 | Änderungen nach dem Druck erreichen die Lehrkraft | Lehrkraft | — | darf fehlen | der Zeitstempel im PDF-Kopf macht das Alter des Blattes sichtbar; der Rest ist mündliche Organisation |
-| Entfallene Termine auf dem Blatt (durchgestrichen statt verschwunden) | Lehrkraft | — | darf fehlen | fehlt mit dem Export |
+| Entfallene Termine auf dem Blatt (durchgestrichen statt verschwunden) | Lehrkraft | — | darf fehlen | fehlt — entfallene Slots verschwinden vom Blatt; wer ausfällt, liest sein Blatt ohnehin nicht |
 | Aushang für die Tür aus der App drucken | Organizer | — | darf fehlen | fehlt |
 | Eigener digitaler Zugang für die Lehrkraft | Lehrkraft | — | bewusst nein | fehlt |
 | Nicht erschienen, Verspätung, Spontanbesuch erfassen | Organizer | — | bewusst nein | fehlt |
@@ -396,8 +396,18 @@ Lehrkraft bekommt ihren Plan als Datei, nicht als Login.
 
 **Der PDF-Export ersetzt den Lehrkraft-Zugang vollständig.** Der Versand geschieht außerhalb der App
 (Mail, Cloud, Chat) — `Lehrer` hat bewusst kein Mailfeld, und eines einzuführen hieße, einen
-Verteilerkanal zu betreiben, für den es keinen Anlass gibt. Der gesetzte Lehrkraft-Filter dient dem
-Nachreichen an eine einzelne Person.
+Verteilerkanal zu betreiben, für den es keinen Anlass gibt. Wer einer einzelnen Person nachreicht,
+nimmt ihre Datei aus dem ZIP.
+
+**Der Export kennt keine Filter (#120).** Ein erster Zuschnitt druckte, was die Auswertung gerade
+zeigte — Lehrkraft-Filter, Suche und „Stornierte anzeigen" eingeschlossen. Das widersprach der
+Erwartung: Wer „Pläne herunterladen" klickt, will die Pläne, nicht einen Ausschnitt seines
+Bildschirms. Deshalb lädt der Use Case selbst, frisch aus der Datenbank, und liefert immer das ZIP
+mit allen beteiligten Lehrkräften. Das Blatt zeigt den vollständigen Tag: belegte Slots mit der
+Familie, freie als Platz für den Nachtrag am Tag selbst — der Organizer bucht bis zum Abschluss
+nach, die Lehrkraft trägt den Namen von Hand ein. Stornierte Buchungen und entfallene Slots
+bleiben weg; das Blatt zeigt, wer kommt. Der Export steht in jedem Status bereit, auch nach der
+Anonymisierung (Platzhalter, mit Vermerk im Kopf).
 
 **Eigener digitaler Zugang für die Lehrkraft — bewusst nein.** Er würde ein zweites Zugangskonzept
 neben dem Access-Token aufreißen (siehe Auth-Modell in [`ARCHITECTURE.md`](ARCHITECTURE.md)).
@@ -596,11 +606,6 @@ Issue.
 | [#110](https://github.com/openClassware/elternsprechtag/issues/110) | Zustellzustand an der Buchung und Liste „nicht erreicht" |
 | [#111](https://github.com/openClassware/elternsprechtag/issues/111) | Zweite Eingabe „E-Mail wiederholen" |
 
-**Phase 5 — Am Tag des Sprechtags**
-
-| Issue | Fall |
-|---|---|
-| [#120](https://github.com/openClassware/elternsprechtag/issues/120) | PDF-Export der Lehrkraft-Pläne (inkl. Inhalt des Blatts) |
 **Phase 6 — Nach dem Sprechtag**
 
 | Issue | Fall |

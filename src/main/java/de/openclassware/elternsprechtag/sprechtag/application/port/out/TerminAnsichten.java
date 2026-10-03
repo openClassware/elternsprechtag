@@ -3,6 +3,7 @@ package de.openclassware.elternsprechtag.sprechtag.application.port.out;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -66,6 +67,32 @@ public interface TerminAnsichten {
 
   /** {@code anzahl} ist stets größer null — wer keinen entfallenen Termin hat, fehlt in der Liste. */
   record EntfalleneZeile(UUID lehrkraftId, int anzahl) {}
+
+  /**
+   * Alle angebotenen Slots eines Sprechtags samt geltender Buchung, chronologisch — der Stoff der
+   * gedruckten Tagespläne (Issue #120). Entfallene Slots fehlen, stornierte Buchungen ebenso: Das
+   * Blatt zeigt, wer kommt, und wo noch Platz ist.
+   */
+  List<TagesplanZeile> tagesplan(SprechtagId sprechtag);
+
+  /**
+   * Ein Slot des Tagesplans. Ohne geltende Buchung ist {@code gebucht} falsch und alle
+   * Buchungsangaben sind {@code null}. Name und Kürzel der Lehrkraft sind der eingefrorene Stand
+   * der Buchung — die einzige Quelle, wenn ihr Lehrauftrag inzwischen verschwunden ist.
+   * {@code notiz} und {@code anonymisiertAm} dürfen auch bei einer Buchung {@code null} sein.
+   */
+  record TagesplanZeile(
+      UUID lehrkraftId,
+      LocalTime startzeit,
+      boolean gebucht,
+      String lehrkraftName,
+      String lehrkraftKuerzel,
+      String schuelerName,
+      String klasse,
+      String fach,
+      String elternName,
+      String notiz,
+      LocalDateTime anonymisiertAm) {}
 
   /**
    * Die Termine eines Sprechtags, an denen mindestens eine Buchung hängt — aktiv oder storniert. Die

@@ -35,6 +35,7 @@
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
         <vaadin.version>25.3.0</vaadin.version>
         <archunit.version>1.5.1</archunit.version>
+        <openpdf.version>3.0.5</openpdf.version>
     </properties>
     <dependencies>
         <!-- Spring Data JDBC trägt die Aggregate beider Kontexte (ADR 0004). JPA/Hibernate ist
@@ -58,6 +59,20 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <!-- Die Tagespläne der Lehrkräfte als PDF (Issue #120). Bleibt hinter dem Port
+             Tagesplandruck im Adapter adapter/out/pdf. -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>${openpdf.version}</version>
+        </dependency>
+        <!-- Liberation Sans regulär und fett als eingebettete Schrift: Die Standard-Helvetica kann
+             nur WinAnsi, Namen wie „Yılmaz" oder „Łukasz" kämen verstümmelt aufs Blatt. -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf-fonts-extra</artifactId>
+            <version>${openpdf.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

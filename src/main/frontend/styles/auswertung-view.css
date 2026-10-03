@@ -33,8 +33,24 @@
     gap: 12px;
 }
 
+.auswertung__header-aktionen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .auswertung__nachtragen-button {
     flex-shrink: 0;
+}
+
+/* Der Link trägt den Download, der Knopf darin nur die Gestalt. */
+.auswertung__druck-link {
+    text-decoration: none;
+}
+
+.auswertung__druck-link vaadin-button {
+    cursor: pointer;
 }
 
 @media (max-width: 640px) {
@@ -42,7 +58,14 @@
         width: 100%;
     }
 
-    .auswertung__nachtragen-button {
+    .auswertung__header-aktionen {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .auswertung__nachtragen-button,
+    .auswertung__druck-link,
+    .auswertung__druck-link vaadin-button {
         width: 100%;
     }
 }
