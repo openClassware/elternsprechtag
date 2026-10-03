@@ -249,7 +249,8 @@ in Phase 3.
 |---|---|---|---|---|
 | Einzelne Lehrkraft fällt aus (ganz oder teilweise) | Eltern | Termine entfallen, betroffene Familien werden benachrichtigt | muss | **erfüllt** — `EntfallenLassen`-Use-Case setzt `Termin.lassEntfallen()` je gewähltem Termin, storniert eine aktive Buchung mit und benachrichtigt betroffene Familien nach Commit; Sammelaktion „Lehrkraft fällt aus" im `AusfallDialog` der Auswertung |
 | Ein Termin ist nicht buchbar, weil er entfällt | Eltern | nicht buchbar | muss | **erfüllt** — `Verfuegbarkeit.ENTFAELLT` ist gespeichert, `Termin.istBuchbar()` liefert `false`; die Eltern-Ansicht fasst „belegt" und „entfällt" bewusst zu `buchbar=false` zusammen (`Buchungsoptionen.SlotOption`), ein dritter, für die Eltern unterscheidbarer Zustand ist nicht geplant |
-| Absage-Nachricht führt zurück in die Buchung | Eltern | Zugangs-Link in der Mail, Familie bucht selbst neu | muss | fehlt; der Link existiert nirgends — die Bestätigungsmail ist ein reiner Beleg ohne Aktion, und es fehlt eine konfigurierte öffentliche Basis-URL, aus der sich eine absolute Adresse bauen ließe (#109) |
+| Ausfall-Nachricht führt zurück in die Buchung | Eltern | Elternlink in der Ausfall-Mail, Familie bucht selbst neu | muss | **erfüllt** (#109) — nur solange der Sprechtag Elternbuchungen annimmt: `EntfallenLassen` fragt beim Schreiben `Sprechtag.nimmtElternbuchungenAn` und gibt die Antwort als `AusfallErfasst.nachbuchbar` an den Versand; danach bleibt die Mail beim Verweis auf die Schule. Der `AusfallDialog` sagt vor dem Bestätigen, welcher Fall eintritt. Der Link entsteht aus der Pflicht-Einstellung `elternsprechtag.oeffentliche-url` (`sprechtag/adapter/Elternlink`), aus der auch der Teilen-Link stammt — nicht mehr aus der Adresszeile des Organizers. Die Komplettabsage-Mail trägt bewusst keinen Link: Der Elternlink eines abgesagten Sprechtags zeigt nur „abgesagt" (#131), es gibt nichts zu buchen. Bestätigung und Erinnerung ebenso nicht — über den Link lässt sich nichts ändern, und er gehört dem Sprechtag, nicht der Familie |
+| Nachbuchung für Betroffene trotz Anmeldeschluss | Eltern | — | darf fehlen | Nach dem Anmeldeschluss vergibt das Sekretariat den Ersatztermin über „Familie nachtragen". Eine Ausnahme vom Anmeldeschluss für Familien mit entfallener Buchung wäre eine Domänenänderung samt Erkennung der Familie ohne Account — nur mit ADR |
 | Erinnerung vor dem Sprechtag | Eltern | automatischer Versand zum gewählten Vorlauf | muss | **erfüllt** (#105, #107) — Zweckerweiterung in [ADR 0006](../adr/0006-zweckerweiterung-eltern-email-erinnerung.md); `ErinnerungsScheduler` läuft täglich (`elternsprechtag.scheduler.erinnerung-cron`, Default 7 Uhr) und ruft `Erinnern.erinnere`. Verfallen statt nachholen (`ErinnerungsVorlauf.istFaelligAm`), ein Zeitstempel an der `Buchung` (V8) verhindert Doppelversand, jede Buchung wird in eigener Transaktion markiert |
 | Erinnerungszeitpunkt wählbar | Organizer | Auswahl fester Optionen am `Sprechtag`, auch nach dem Veröffentlichen änderbar | muss | **erfüllt** (#106) — `ErinnerungsVorlauf` (keine · 1 · 2 · 3 Tage vorher), Pflichtfeld im Formular; nicht Teil der Zeitstruktur, bleibt also nach dem Veröffentlichen änderbar und wirkt ab dem nächsten Lauf |
 | Keine Erinnerung für abgesagten Sprechtag oder stornierte Buchung | Eltern | Versand überspringt sie | muss | **erfüllt** — Kandidaten sind nur veröffentlichte Sprechtage mit gesetztem Vorlauf und deren aktive, noch nicht erinnerte Buchungen; am `Termin` wird vor dem Markieren erneut geprüft |
@@ -610,7 +611,6 @@ Issue.
 
 | Issue | Fall |
 |---|---|
-| [#109](https://github.com/openClassware/elternsprechtag/issues/109) | Zugangs-Link in die Absage-Mail aufnehmen |
 | [#110](https://github.com/openClassware/elternsprechtag/issues/110) | Zustellzustand an der Buchung und Liste „nicht erreicht" |
 
 **Phase 6 — Nach dem Sprechtag**
@@ -625,5 +625,5 @@ mit, die Anmeldefrist relativ zum Datum.
 
 Der tägliche Scheduler — der tiefste Abhängigkeitsstrang über ADR 0006, Erinnerung, automatischen
 Abschluss und Anonymisierung — steht vollständig. Die offenen Issues hängen nicht mehr
-voneinander ab; einzige Voraussetzung außerhalb der Liste ist die öffentliche Basis-URL, die #109
-mitbringen muss.
+voneinander ab; die öffentliche Basis-URL, die früher als Voraussetzung außerhalb der Liste stand,
+hat #109 mitgebracht (`elternsprechtag.oeffentliche-url`).

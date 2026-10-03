@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
+import de.openclassware.elternsprechtag.sprechtag.adapter.Elternlink;
 import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Anlegen;
@@ -26,6 +27,7 @@ class EditSprechtagPresenter {
   private final Klassenauswahl klassenauswahl;
   private final Anlegen anlegen;
   private final Bearbeiten bearbeiten;
+  private final Elternlink elternlink;
 
   /**
    * Was die Klassen-Auswahl anbieten darf: die aktiven Klassen plus die, die dieser Sprechtag schon
@@ -33,6 +35,11 @@ class EditSprechtagPresenter {
    */
   List<KlasseOption> waehlbareKlassen(Collection<UUID> bereitsGewaehlt) {
     return klassenauswahl.waehlbareKlassen(bereitsGewaehlt);
+  }
+
+  /** Der Elternlink zum Weitergeben — derselbe, den die Ausfall-Mail verschickt (Issue #109). */
+  String elternlink(String accessToken) {
+    return elternlink.zu(accessToken);
   }
 
   Optional<SprechtagFormular> loadForm(UUID id) {

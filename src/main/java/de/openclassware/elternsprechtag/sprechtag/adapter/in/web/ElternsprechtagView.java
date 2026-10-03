@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
 
+import de.openclassware.elternsprechtag.sprechtag.adapter.Elternlink;
 import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.EmailWiederholung.Abgleich;
 import com.vaadin.flow.component.Component;
@@ -44,7 +45,7 @@ import java.util.UUID;
 @CssImport("./styles/elternsprechtag-view.css")
 public class ElternsprechtagView extends Div implements HasUrlParameter<String> {
 
-  public static final String ROUTE = "elternsprechtag";
+  public static final String ROUTE = Elternlink.PFAD;
 
   private final ElternsprechtagPresenter presenter;
 

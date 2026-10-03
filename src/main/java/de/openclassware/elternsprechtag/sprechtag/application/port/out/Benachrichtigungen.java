@@ -26,8 +26,11 @@ public interface Benachrichtigungen {
   /** Meldet die Absage an jede Adresse mit aktiver Buchung an diesem Sprechtag, je Adresse einmal. */
   List<Versand> sageAb(SprechtagId sprechtag);
 
-  /** Meldet den Ausfall dieser (eben entfallenen) Buchungen — je Sprechtag und Adresse eine Nachricht. */
-  List<Versand> meldeAusfall(List<BuchungId> buchungen);
+  /**
+   * Meldet den Ausfall dieser (eben entfallenen) Buchungen — je Sprechtag und Adresse eine Nachricht.
+   * Ist {@code nachbuchbar}, führt die Nachricht über den Elternlink zurück in die Buchung.
+   */
+  List<Versand> meldeAusfall(List<BuchungId> buchungen, boolean nachbuchbar);
 
   /**
    * Eine Nachricht: die Buchungen, die sie trug, und ihr Ausgang. Ihr Ergebnis gilt für jede dieser

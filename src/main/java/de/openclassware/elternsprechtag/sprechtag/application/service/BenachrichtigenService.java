@@ -46,7 +46,7 @@ class BenachrichtigenService implements Benachrichtigen {
 
   @Override
   public void meldeAusfall(AusfallErfasst vorgang) {
-    vermerke(Mailart.AUSFALL, benachrichtigungen.meldeAusfall(vorgang.buchungen()));
+    vermerke(Mailart.AUSFALL, benachrichtigungen.meldeAusfall(vorgang.buchungen(), vorgang.nachbuchbar()));
   }
 
   private void vermerke(Mailart art, List<Versand> versand) {

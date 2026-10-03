@@ -29,7 +29,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.NichtErreicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken.Datei;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Angebot;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungPresenter.AusfallAusgang;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungPresenter.Planansicht;
@@ -493,8 +493,8 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private void openAusfallDialog(LehrkraftPlan plan) {
     // Die Auswertung ist ein Read-Modell und darf veraltet sein — dieselbe Begründung wie beim
     // Umbuchen-Dialog. Der Dialog zeigt, was der Query-Port gerade liefert.
-    List<SlotZeile> slots = presenter.ausfallSlots(sprechtagId, plan.lehrerId());
-    new AusfallDialog(plan.anzeigeName(), slots, this::entfalleLassen).open();
+    Angebot angebot = presenter.ausfallAngebot(sprechtagId, plan.lehrerId());
+    new AusfallDialog(plan.anzeigeName(), angebot, this::entfalleLassen).open();
   }
 
   private void entfalleLassen(List<UUID> terminIds) {

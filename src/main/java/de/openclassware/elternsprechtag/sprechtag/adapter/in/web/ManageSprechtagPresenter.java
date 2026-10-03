@@ -1,5 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
+import de.openclassware.elternsprechtag.sprechtag.adapter.Elternlink;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Absagen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Duplizieren;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Loeschen;
@@ -25,9 +26,15 @@ class ManageSprechtagPresenter {
   private final ZurueckAufEntwurf zurueckAufEntwurf;
   private final Duplizieren duplizieren;
   private final Loeschen loeschen;
+  private final Elternlink elternlink;
 
   List<SprechtagZeile> findAllSprechtage() {
     return uebersicht.alle();
+  }
+
+  /** Der Elternlink zum Weitergeben — derselbe, den die Ausfall-Mail verschickt (Issue #109). */
+  String elternlink(String accessToken) {
+    return elternlink.zu(accessToken);
   }
 
   /**

@@ -17,11 +17,11 @@ import java.util.UUID;
 public interface EntfallenLassen {
 
   /**
-   * Alle Slots dieser Lehrkraft an diesem Sprechtag, chronologisch — das Angebot des
-   * Ausfall-Dialogs. Ein Read-Modell wie {@code Buchungsoptionen}: Es darf veraltet sein, die
-   * Entscheidung fällt erneut am Aggregat.
+   * Das Angebot des Ausfall-Dialogs: alle Slots dieser Lehrkraft an diesem Sprechtag, chronologisch,
+   * und ob die Familien nach dem Ausfall selbst neu buchen können. Ein Read-Modell wie {@code
+   * Buchungsoptionen}: Es darf veraltet sein, die Entscheidung fällt erneut am Aggregat.
    */
-  List<SlotZeile> slots(UUID sprechtagId, UUID lehrkraftId);
+  Angebot angebot(UUID sprechtagId, UUID lehrkraftId);
 
   /**
    * Lässt die genannten Termine entfallen. Bereits entfallene Termine werden still übersprungen,
@@ -56,6 +56,18 @@ public interface EntfallenLassen {
       String schuelerName,
       String elternName,
       String familienSchluessel) {}
+
+  /**
+   * Was der Ausfall-Dialog zeigt. {@code nachbuchbar} heißt: Der Sprechtag nimmt jetzt noch
+   * Elternbuchungen an — die Ausfall-Mail trägt dann den Elternlink (Issue #109). Danach vergibt das
+   * Sekretariat Ersatztermine über den Nachtrag.
+   */
+  record Angebot(List<SlotZeile> slots, boolean nachbuchbar) {
+
+    public Angebot {
+      slots = List.copyOf(slots);
+    }
+  }
 
   /** Wie viele Termine tatsächlich entfallen sind und wie viele Adressen benachrichtigt wurden. */
   record Ergebnis(int entfalleneTermine, int benachrichtigteAdressen) {}
