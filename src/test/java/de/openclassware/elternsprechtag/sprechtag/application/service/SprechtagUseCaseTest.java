@@ -103,6 +103,22 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
     assertThat(jdbc.queryForObject("select count(*) from sprechtage", Long.class)).isEqualTo(1);
   }
 
+  /** #117 — auch ein Formular mit fremdem Token würfelt den verteilten Link nicht neu. */
+  @Test
+  void bearbeiten_behaeltDasZugangsToken() {
+    UUID klasse = persistKlasse("5a");
+    UUID id = anlegen.lege(formular("Alt", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse));
+    String token = bearbeiten.ladeFormular(id).orElseThrow().getAccessToken();
+
+    SprechtagFormular geaendert =
+        formular("Neu", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse);
+    geaendert.setAccessToken(UUID.randomUUID().toString());
+    bearbeiten.bearbeite(id, geaendert);
+
+    assertThat(token).isNotBlank();
+    assertThat(ladeSprechtag(id).accessToken().wert()).isEqualTo(token);
+  }
+
   @Test
   void formularTraegtDenSchulkontaktUndDieKlassen() {
     UUID a = persistKlasse("5a");

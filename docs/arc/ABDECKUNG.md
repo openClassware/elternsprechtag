@@ -98,7 +98,7 @@ Organizer einen Sprechtag anlegt.
 | Datum liegt in der Vergangenheit | Organizer | — | darf fehlen | keine Prüfung, `DatePicker` ohne Minimum |
 | Eltern haben den Zugangs-Link verloren | Eltern | — | darf fehlen | Weg drumherum: Anruf in der Schule |
 | Zwei Sprechtage am selben Tag oder überlappend | Organizer | — | darf fehlen | keine Prüfung |
-| Zugangs-Link neu ausstellen | Organizer | — | bewusst nein | weiterhin vorhanden (`EditSprechtagView`, `Sprechtag.beschreibeNeu`) — **wird entfernt**, Issue #117 |
+| Zugangs-Link neu ausstellen | Organizer | — | bewusst nein | **entfernt** (#117) — das Aggregat würfelt das Token beim Entwurf (`Sprechtag.entwirf`), danach ändert es sich nie; das Bearbeiten-Formular zeigt nur noch den Link |
 | Link gerät an Fremde, die Slots blockieren | Organizer | — | bewusst nein | Token ist der gesamte Zugangsschutz |
 
 ### Anmerkungen
@@ -145,9 +145,10 @@ bemerktem Missbrauch billig einen neuen Link liefern, ohne den Sprechtag abzusag
 verlieren. Sie ist ohne konkreten Anlassfall entstanden, und ihre Nebenwirkung ist erheblich: Nach
 dem Neuwürfeln laufen alle bereits verteilten Links ins Leere, ohne dass die betroffenen Eltern
 erfahren, warum. Sie über eine E-Mail an die gebuchten Eltern zu heilen, wäre eine dritte
-Verwendung der Eltern-Adresse und damit laut ADR 0002 ein eigener ADR. Deshalb: **entfernen** und
-bei einem realen Missbrauchsfall neu bewerten. Das ist einer von zwei Einträgen dieses Dokuments,
-die Abbau statt Aufbau verlangen; der andere ist der Handabschluss in Phase 6.
+Verwendung der Eltern-Adresse und damit laut ADR 0002 ein eigener ADR. Deshalb **entfernt** (#117),
+bis ins Aggregat: Das Token entsteht mit dem Entwurf und ist danach unveränderlich. Bei einem realen
+Missbrauchsfall neu bewerten. Das ist einer von zwei Einträgen dieses Dokuments, die Abbau statt
+Aufbau verlangen; der andere ist der Handabschluss in Phase 6.
 
 **Missbrauch des Links — bewusst nein.** Wer den Link hat, darf buchen; das Token ist der gesamte
 Zugangsschutz und laut `docs/contexts/sprechtag/CONTEXT.md` eine bewusste Entscheidung. Personenbezogene Daten gibt die
@@ -584,12 +585,6 @@ hier ist der Ort dafür.
 Für jeden Fall der Stufe `muss`, der heute fehlt, liegt ein Issue im Tracker. Hier stehen nur die
 **offenen**; erledigte Issues sind herausgenommen, die erfüllten Zeilen in den Tabellen nennen ihr
 Issue.
-
-**Phase 2 — Sprechtag vorbereiten und veröffentlichen**
-
-| Issue | Fall |
-|---|---|
-| [#117](https://github.com/openClassware/elternsprechtag/issues/117) | Token-Neuausstellung **entfernen** |
 
 **Phase 3 — Buchungsphase**
 

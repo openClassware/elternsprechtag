@@ -19,8 +19,12 @@ import java.util.Optional;
  *
  * <p>Die tragende Invariante ist das <b>Einfrieren der Zeitstruktur</b>: Datum, Zeitfenster,
  * Slot-Dauer und Klassenliste sind ab {@link SprechtagStatus#VEROEFFENTLICHT} unveränderlich, weil
- * genau aus ihnen die Termine berechnet wurden. Titel, Ort, Hinweistext, Schulkontakt und
- * Zugangs-Token bleiben änderbar — sie beschreiben den Sprechtag, sie bestimmen ihn nicht.
+ * genau aus ihnen die Termine berechnet wurden. Titel, Ort, Hinweistext und Schulkontakt bleiben
+ * änderbar — sie beschreiben den Sprechtag, sie bestimmen ihn nicht.
+ *
+ * <p>Das <b>Zugangs-Token</b> entsteht mit dem Entwurf und ändert sich nie: Ein einmal verteilter
+ * Link bleibt gültig, solange es den Sprechtag gibt. Ein neu gewürfeltes Token ließe alle verteilten
+ * Links ins Leere laufen, ohne dass die Eltern erfahren, warum (`ABDECKUNG.md`, #117).
  *
  * <p>Die Klassen stehen als {@link KlasseId} darin; die Klasse selbst gehört der Schulorganisation.
  */
@@ -38,7 +42,7 @@ public final class Sprechtag extends AggregateRoot {
   private String ort;
   private String beschreibung;
   private Schulkontakt schulkontakt;
-  private AccessToken accessToken;
+  private final AccessToken accessToken;
 
   private LocalDate datum;
   private Zeitfenster zeitfenster;
@@ -85,13 +89,15 @@ public final class Sprechtag extends AggregateRoot {
     this.anonymisiertAm = anonymisiertAm;
   }
 
-  /** Ein frischer Entwurf. Nur so entsteht ein Sprechtag — jeder beginnt als Entwurf. */
+  /**
+   * Ein frischer Entwurf. Nur so entsteht ein Sprechtag — jeder beginnt als Entwurf, mit eigenem
+   * Zugangs-Token.
+   */
   public static Sprechtag entwirf(
       String titel,
       String ort,
       String beschreibung,
       Schulkontakt schulkontakt,
-      AccessToken accessToken,
       LocalDate datum,
       Zeitfenster zeitfenster,
       Slotdauer slotdauer,
@@ -105,7 +111,7 @@ public final class Sprechtag extends AggregateRoot {
         ort,
         beschreibung,
         schulkontakt,
-        accessToken,
+        AccessToken.neu(),
         datum,
         zeitfenster,
         slotdauer,
@@ -159,27 +165,17 @@ public final class Sprechtag extends AggregateRoot {
   /**
    * Ändert, was den Sprechtag beschreibt. Bleibt nach dem Veröffentlichen erlaubt (`ABDECKUNG.md`
    * Z. 90) — ein korrigierter Raum oder ein ergänzter Hinweis erreicht die Eltern über denselben
-   * Link.
-   *
-   * <p>Dass das {@code accessToken} hier mitgeht, ist <em>keine</em> Entscheidung dieser Scheibe,
-   * sondern der übernommene Stand: Die Oberfläche kann den Link neu würfeln. `ABDECKUNG.md` Z. 101
-   * stuft das als <b>bewusst nein</b> ein und verlangt, die Funktion zu entfernen (#117) — dann
-   * verschwindet der Parameter hier mit.
+   * Link. Das Zugangs-Token geht bewusst nicht mit — es ändert sich nie (#117).
    *
    * @throws StatusuebergangException an einem abgesagten oder abgeschlossenen Sprechtag
    */
   public void beschreibeNeu(
-      String titel,
-      String ort,
-      String beschreibung,
-      Schulkontakt schulkontakt,
-      AccessToken accessToken) {
+      String titel, String ort, String beschreibung, Schulkontakt schulkontakt) {
     verlangeOffen("bearbeitet");
     this.titel = pflichtTitel(titel);
     this.ort = ort;
     this.beschreibung = beschreibung;
     this.schulkontakt = Objects.requireNonNull(schulkontakt, "schulkontakt");
-    this.accessToken = Objects.requireNonNull(accessToken, "accessToken");
   }
 
   /**
@@ -377,16 +373,16 @@ public final class Sprechtag extends AggregateRoot {
 
   /**
    * Eine Kopie als frischer Entwurf — gleiche Zeitstruktur und Beschreibung, eigenes Zugangs-Token.
-   * Das Token muss neu sein: Zwei Sprechtage am selben Link wären für die Eltern einer. Die
-   * Anmeldefrist geht unverändert mit — relativ zum Datum gespeichert, passt sie zu jedem neuen.
+   * Das Token muss neu sein: Zwei Sprechtage am selben Link wären für die Eltern einer — {@link
+   * #entwirf} würfelt es. Die Anmeldefrist geht unverändert mit — relativ zum Datum gespeichert,
+   * passt sie zu jedem neuen.
    */
-  public Sprechtag dupliziere(AccessToken neuesToken) {
+  public Sprechtag dupliziere() {
     return entwirf(
         titel,
         ort,
         beschreibung,
         schulkontakt,
-        neuesToken,
         datum,
         zeitfenster,
         slotdauer,

@@ -9,8 +9,8 @@ import java.util.UUID;
  * Use Case: einen bestehenden Sprechtag bearbeiten — Formular laden und zurückschreiben.
  *
  * <p>Was sich dabei noch ändern lässt, entscheidet das Aggregat: Titel, Ort, Hinweistext,
- * Schulkontakt, Zugangs-Token, Erinnerungsvorlauf und Anmeldefrist bis zum Endzustand, Datum,
- * Zeitfenster, Slot-Dauer und Klassen nur im Entwurf.
+ * Schulkontakt, Erinnerungsvorlauf und Anmeldefrist bis zum Endzustand, Datum, Zeitfenster,
+ * Slot-Dauer und Klassen nur im Entwurf. Das Zugangs-Token nie.
  */
 public interface Bearbeiten {
 

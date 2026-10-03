@@ -298,6 +298,8 @@ Sprachgebrauch: **Organizer**, nicht „Admin" und nicht „Sekretariat".
 Eltern melden sich **nicht** an. Jeder Sprechtag trägt ein `accessToken`; daraus entsteht der
 **Zugangs-Link** (`/elternsprechtag/{token}`), den der Organizer verteilt. Wer den Link hat,
 darf buchen — das Token ist der gesamte Zugangsschutz, und das ist eine bewusste Entscheidung.
+Das Token entsteht mit dem Entwurf und **ändert sich nie**: Ein neu ausgestellter Link ließe alle
+verteilten ins Leere laufen, ohne dass die Eltern erfahren, warum (#117).
 
 Der Link führt je nach Sprechtag-Status zu einem von fünf Ergebnissen (`Zugangsstand`): **buchbar**
 (nur bei `VEROEFFENTLICHT` und bis zum **Anmeldeschluss**), **Anmeldung beendet**

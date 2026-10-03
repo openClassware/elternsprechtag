@@ -13,6 +13,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.FormRow;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -72,7 +73,11 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private CheckboxGroup<KlasseOption> klassen;
   private IntegerField erinnerungsVorlauf;
   private IntegerField anmeldefrist;
-  private TextField accessToken;
+  /** Das Token des geladenen Sprechtags; {@code null}, solange er noch nicht gespeichert ist. */
+  private String accessToken;
+
+  private FormRow linkRow;
+  private Paragraph linkHinweis;
   private TextField shareLink;
   private String origin;
 
@@ -127,10 +132,6 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
         .forField(slotInMinutes)
         .asRequired(getTranslation("edit-sprechtag.validation.slot-required"))
         .bind(SprechtagFormular::getSlotInMinuten, SprechtagFormular::setSlotInMinuten);
-
-    binder
-        .forField(accessToken)
-        .bind(SprechtagFormular::getAccessToken, SprechtagFormular::setAccessToken);
 
     // Als Zahl angeboten wie die Anmeldefrist, gespeichert bleibt eine der festen Optionen (#106).
     binder
@@ -217,6 +218,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     // was dort fehlt, fiele beim nächsten Speichern still aus dem Sprechtag.
     zeigeKlassen(form.get().getKlasseIds());
     binder.readBean(form.get());
+    zeigeLink(form.get().getAccessToken());
     if (form.get().isZeitstrukturEingefroren()) {
       sperreZeitstruktur();
     }
@@ -283,36 +285,26 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     getUI().ifPresent(ui -> ui.navigate(OrganizerView.ROUTE));
   }
 
+  /**
+   * Der Link für Eltern. Das Token entsteht erst mit dem Entwurf und ändert sich danach nie (#117) —
+   * ein neuer Sprechtag hat deshalb noch keinen Link, sondern nur den Hinweis, wo er erscheint.
+   */
   private Component createAccessTokenPanel() {
     FormPanel panel = new FormPanel();
     panel.setTitle(getTranslation("edit-sprechtag.zugang.title"));
     panel.setDescription(getTranslation("edit-sprechtag.zugang.description"));
     FormLayout formLayout = panel.getFormLayout();
-    accessToken = new TextField();
-    accessToken.setLabel(getTranslation("edit-sprechtag.field.zugangscode.label"));
-    accessToken.setReadOnly(true);
-    accessToken.setHelperText(getTranslation("edit-sprechtag.field.zugangscode.helper"));
-    accessToken.setValue(UUID.randomUUID().toString());
 
-    FormRow firstRow = new FormRow();
-    firstRow.add(accessToken, 3);
-    Button regenerateAccessTokenButton = new Button();
-    regenerateAccessTokenButton.setIcon(VaadinIcon.REFRESH.create());
-    regenerateAccessTokenButton.setText(getTranslation("edit-sprechtag.button.regenerate"));
-    regenerateAccessTokenButton.addClickListener(
-        _ -> {
-          accessToken.setValue(UUID.randomUUID().toString());
-          updateShareLink();
-        });
-    firstRow.add(regenerateAccessTokenButton, 1);
+    linkHinweis = new Paragraph(getTranslation("edit-sprechtag.zugang.link-entsteht"));
+    linkHinweis.addClassName("edit-sprechtag-view__link-hinweis");
 
     shareLink = new TextField();
     shareLink.setLabel(getTranslation("edit-sprechtag.field.link.label"));
     shareLink.setReadOnly(true);
     shareLink.setHelperText(getTranslation("edit-sprechtag.field.link.helper"));
 
-    FormRow secondRow = new FormRow();
-    secondRow.add(shareLink, 3);
+    linkRow = new FormRow();
+    linkRow.add(shareLink, 3);
     Button copyLinkButton = new Button();
     copyLinkButton.setIcon(VaadinIcon.COPY.create());
     copyLinkButton.setText(getTranslation("edit-sprechtag.button.copy-link"));
@@ -323,10 +315,18 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
                     ui ->
                         ui.getPage()
                             .executeJs("navigator.clipboard.writeText($0)", shareLink.getValue())));
-    secondRow.add(copyLinkButton, 1);
+    linkRow.add(copyLinkButton, 1);
 
-    formLayout.add(firstRow, secondRow);
+    formLayout.add(linkHinweis, linkRow);
+    zeigeLink(null);
     return panel;
+  }
+
+  private void zeigeLink(String token) {
+    accessToken = token;
+    linkHinweis.setVisible(token == null);
+    linkRow.setVisible(token != null);
+    updateShareLink();
   }
 
   @Override
@@ -344,8 +344,8 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   }
 
   private void updateShareLink() {
-    if (origin != null && shareLink != null) {
-      shareLink.setValue(origin + "/" + ElternsprechtagView.ROUTE + "/" + accessToken.getValue());
+    if (origin != null && accessToken != null) {
+      shareLink.setValue(origin + "/" + ElternsprechtagView.ROUTE + "/" + accessToken);
     }
   }
 

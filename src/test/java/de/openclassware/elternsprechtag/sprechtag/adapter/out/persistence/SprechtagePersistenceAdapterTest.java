@@ -91,7 +91,6 @@ class SprechtagePersistenceAdapterTest {
         "Aula",
         "Bitte pünktlich",
         Schulkontakt.von("Sekretariat, Tel. 0123 456789"),
-        AccessToken.neu(),
         DATUM,
         NACHMITTAG,
         Slotdauer.vonMinuten(15),
@@ -185,7 +184,6 @@ class SprechtagePersistenceAdapterTest {
             null,
             null,
             Schulkontakt.von("Sekretariat"),
-            AccessToken.neu(),
             DATUM,
             NACHMITTAG,
             Slotdauer.vonMinuten(15),
@@ -288,8 +286,7 @@ class SprechtagePersistenceAdapterTest {
         "Anderer Titel",
         null,
         null,
-        Schulkontakt.von("Sekretariat"),
-        fensterB.accessToken());
+        Schulkontakt.von("Sekretariat"));
     assertThatThrownBy(() -> sprechtage.speichere(fensterB))
         .isInstanceOf(OptimisticLockingFailureException.class);
 

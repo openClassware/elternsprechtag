@@ -51,3 +51,8 @@
         order: 3;
     }
 }
+
+.edit-sprechtag-view__link-hinweis {
+    margin: 0;
+    color: #6b7280;
+}

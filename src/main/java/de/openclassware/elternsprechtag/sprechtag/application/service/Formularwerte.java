@@ -1,7 +1,6 @@
 package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
-import de.openclassware.elternsprechtag.sprechtag.domain.AccessToken;
 import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.ErinnerungsVorlauf;
 import de.openclassware.elternsprechtag.sprechtag.domain.KlasseId;
@@ -48,12 +47,6 @@ final class Formularwerte {
       throw new IllegalArgumentException("Ein Sprechtag ohne Schulkontakt ist unvollständig");
     }
     return Schulkontakt.von(text);
-  }
-
-  static AccessToken accessToken(SprechtagFormular formular) {
-    return formular.getAccessToken() == null || formular.getAccessToken().isBlank()
-        ? AccessToken.neu()
-        : AccessToken.von(formular.getAccessToken());
   }
 
   static List<KlasseId> klassen(SprechtagFormular formular) {

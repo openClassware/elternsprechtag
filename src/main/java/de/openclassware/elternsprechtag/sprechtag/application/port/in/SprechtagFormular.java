@@ -30,7 +30,14 @@ public class SprechtagFormular {
   private LocalTime beginn;
   private LocalTime ende;
   private Integer slotInMinuten = 15;
-  private String accessToken = UUID.randomUUID().toString();
+
+  /**
+   * Nur Ausgabe: das Token eines gespeicherten Sprechtags, damit die Oberfläche den Link zeigen
+   * kann. Bei einem neuen Formular {@code null} — das Token entsteht erst mit dem Entwurf, und beim
+   * Zurückschreiben liest es niemand (#117).
+   */
+  private String accessToken;
+
   private Set<UUID> klasseIds = new LinkedHashSet<>();
   private ErinnerungsVorlauf erinnerungsVorlauf = ErinnerungsVorlauf.KEINE;
 
