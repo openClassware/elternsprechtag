@@ -293,4 +293,39 @@ class SprechtagePersistenceAdapterTest {
     assertThat(sprechtage.lade(sprechtag.id()).orElseThrow().status())
         .isEqualTo(SprechtagStatus.VEROEFFENTLICHT);
   }
+
+  /** Issue #132: Entfernen nimmt die Teilnehmerliste mit — sie gehört zum Aggregat. */
+  @Test
+  void entferntDasGanzeAggregatSamtKlassen() {
+    Sprechtag sprechtag = entwurf(klasse5a, klasse7b);
+    sprechtage.speichere(sprechtag);
+
+    sprechtage.entferne(sprechtage.lade(sprechtag.id()).orElseThrow());
+
+    assertThat(sprechtage.lade(sprechtag.id())).isEmpty();
+    assertThat(jdbc.queryForObject("select count(*) from sprechtage_klassen", Long.class))
+        .isZero();
+  }
+
+  /**
+   * Entfernt wird gegen die geladene Version: Was ein anderes Fenster inzwischen veröffentlicht hat,
+   * bleibt stehen. Mit {@code deleteById} statt {@code delete(entity)} fiele dieser Test durch.
+   */
+  @Test
+  void zweiFensterAufDemselbenSprechtag_dasEntfernenNachDemVeroeffentlichenScheitert() {
+    Sprechtag sprechtag = entwurf(klasse5a);
+    sprechtage.speichere(sprechtag);
+
+    Sprechtag fensterA = sprechtage.lade(sprechtag.id()).orElseThrow();
+    Sprechtag fensterB = sprechtage.lade(sprechtag.id()).orElseThrow();
+
+    fensterA.veroeffentliche();
+    sprechtage.speichere(fensterA);
+
+    assertThatThrownBy(() -> sprechtage.entferne(fensterB))
+        .isInstanceOf(OptimisticLockingFailureException.class);
+
+    assertThat(sprechtage.lade(sprechtag.id()).orElseThrow().status())
+        .isEqualTo(SprechtagStatus.VEROEFFENTLICHT);
+  }
 }

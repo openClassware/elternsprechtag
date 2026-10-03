@@ -13,6 +13,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Dupliziere
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Erinnern;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Loeschen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Nachtragen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang;
@@ -83,6 +84,7 @@ public abstract class AbstractServiceTest {
   @Autowired protected Anlegen anlegen;
   @Autowired protected Bearbeiten bearbeiten;
   @Autowired protected Duplizieren duplizieren;
+  @Autowired protected Loeschen loeschen;
   @Autowired protected Veroeffentlichen veroeffentlichen;
   @Autowired protected Absagen absagen;
   @Autowired protected Abschliessen abschliessen;
@@ -113,7 +115,8 @@ public abstract class AbstractServiceTest {
   @AfterEach
   void cleanDb() {
     // FK-sichere Reihenfolge. Kein Aggregat-Port hat ein `deleteAll` und keiner soll eins bekommen:
-    // Löschen ist im Betrieb kein Vorgang — Stammdaten werden stillgelegt, Sprechtage abgesagt.
+    // Löschen ist im Betrieb kaum ein Vorgang — Stammdaten werden stillgelegt, Sprechtage abgesagt;
+    // nur ein Entwurf verschwindet, einzeln (#132).
     // Die Tabellen werden hier als das geleert, was sie sind, und das bleibt auf den Testaufbau
     // beschränkt.
     jdbc.update("delete from buchungen");

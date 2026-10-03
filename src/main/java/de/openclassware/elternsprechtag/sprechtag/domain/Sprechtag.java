@@ -351,6 +351,25 @@ public final class Sprechtag extends AggregateRoot {
   }
 
   /**
+   * Prüft, ob sich dieser Sprechtag löschen lässt — nur als Entwurf (#132). Entfernen tut ihn der
+   * Use Case.
+   *
+   * <p>Eine Frage nach Buchungen braucht es dafür nicht: Termine entstehen erst beim
+   * Veröffentlichen, und der Rückweg zum Entwurf gelingt nur, wenn nie gebucht wurde — er verwirft
+   * die Termine dabei. Ein Entwurf hat also nie eine Buchung getragen.
+   *
+   * @throws SprechtagNichtLoeschbarException wenn der Sprechtag kein Entwurf ist
+   */
+  public void verlangeLoeschbar() {
+    if (status != SprechtagStatus.ENTWURF) {
+      throw new SprechtagNichtLoeschbarException(
+          "Nur ein Entwurf lässt sich löschen, dieser Sprechtag ist "
+              + status
+              + ". Wer einen veröffentlichten Sprechtag nicht halten kann, sagt ihn ab.");
+    }
+  }
+
+  /**
    * Die Zeiträume der Gespräche, wie sie beim Veröffentlichen materialisiert werden — je Slot einer,
    * chronologisch. Ein Rest-Slot, der nicht mehr voll ins Zeitfenster passt, entfällt
    * (`ABDECKUNG.md` Z. 96).

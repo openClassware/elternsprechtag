@@ -36,15 +36,18 @@ public class SprechtagTable extends Div {
   private final BiConsumer<SprechtagZeile, SprechtagStatus> onStatusChange;
   private final Consumer<SprechtagZeile> onDuplicate;
   private final Consumer<SprechtagZeile> onShare;
+  private final Consumer<SprechtagZeile> onDelete;
 
   public SprechtagTable(
       List<SprechtagZeile> sprechtage,
       BiConsumer<SprechtagZeile, SprechtagStatus> onStatusChange,
       Consumer<SprechtagZeile> onDuplicate,
-      Consumer<SprechtagZeile> onShare) {
+      Consumer<SprechtagZeile> onShare,
+      Consumer<SprechtagZeile> onDelete) {
     this.onStatusChange = onStatusChange;
     this.onDuplicate = onDuplicate;
     this.onShare = onShare;
+    this.onDelete = onDelete;
     addClassName("sprechtag-table");
     body.addClassName("sprechtag-table__body");
     add(createHead(), body);
@@ -200,6 +203,14 @@ public class SprechtagTable extends Div {
             createMenuItemContent(iconFor(target), labelKeyFor(target)),
             event -> onStatusChange.accept(sprechtag, target));
       }
+    }
+
+    // Löschen räumt Fehlgriffe auf und steht deshalb nur am Entwurf (#132) — als Vorschlag wie die
+    // Statuswechsel oben; die Entscheidung fällt am Aggregat.
+    if (sprechtag.status() == SprechtagStatus.ENTWURF) {
+      contextMenu.addItem(
+          createMenuItemContent(VaadinIcon.TRASH, "manage-sprechtag.menu.delete"),
+          event -> onDelete.accept(sprechtag));
     }
 
     return menu;

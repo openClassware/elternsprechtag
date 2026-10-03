@@ -8,6 +8,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.BuchungBereitsStorniert
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungNichtGefundenException;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungNochAktivException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagHatBuchungenException;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtLoeschbarException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.StatusuebergangException;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminBelegtException;
@@ -91,6 +92,9 @@ final class SprechtagMeldungen {
     }
     if (fehler instanceof SprechtagHatBuchungenException) {
       return Meldung.fehler("sprechtag.fehler.hat-buchungen");
+    }
+    if (fehler instanceof SprechtagNichtLoeschbarException) {
+      return Meldung.fehler("sprechtag.fehler.nicht-loeschbar");
     }
     if (fehler instanceof StatusuebergangException) {
       return Meldung.fehler("sprechtag.fehler.status-uebergang");

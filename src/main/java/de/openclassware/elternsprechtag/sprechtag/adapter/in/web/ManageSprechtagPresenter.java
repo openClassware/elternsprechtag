@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Absagen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Duplizieren;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Loeschen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
@@ -23,6 +24,7 @@ class ManageSprechtagPresenter {
   private final Absagen absagen;
   private final ZurueckAufEntwurf zurueckAufEntwurf;
   private final Duplizieren duplizieren;
+  private final Loeschen loeschen;
 
   List<SprechtagZeile> findAllSprechtage() {
     return uebersicht.alle();
@@ -79,5 +81,21 @@ class ManageSprechtagPresenter {
 
   UUID duplicate(UUID id) {
     return duplizieren.dupliziere(id);
+  }
+
+  /**
+   * Löscht den Entwurf. Wie beim Statuswechsel gilt: Dass das Menü den Eintrag anbietet, heißt
+   * nichts — ob der Sprechtag noch ein Entwurf ist, prüft das Aggregat beim Klick.
+   *
+   * @return leer, wenn gelöscht wurde (oder es nichts mehr zu löschen gab) — sonst die Begründung
+   *     der Weigerung
+   */
+  List<Meldung> loesche(UUID id) {
+    try {
+      loeschen.loesche(id);
+      return List.of();
+    } catch (RuntimeException fehler) {
+      return List.of(SprechtagMeldungen.zu(fehler));
+    }
   }
 }
