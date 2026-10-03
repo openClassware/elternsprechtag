@@ -6,10 +6,12 @@ import static org.assertj.core.api.Assertions.tuple;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.AusfallSlotZustand;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.AusfallZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.EntfalleneZeile;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten.TagesplanZeile;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchungsziel;
 import de.openclassware.elternsprechtag.sprechtag.domain.Familie;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrauftragId;
 import de.openclassware.elternsprechtag.sprechtag.domain.LehrkraftId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Notiz;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.domain.Zeitraum;
@@ -146,6 +148,42 @@ class TerminAnsichtenJdbcAdapterTest {
     termine.speichere(neuerTermin(BEGINN));
 
     assertThat(ausfallSlots.ausfallSlots(sprechtag, LehrkraftId.neu())).isEmpty();
+  }
+
+  /**
+   * Issue #120: Der Tagesplan zeigt jeden angebotenen Slot mit seiner geltenden Buchung oder als
+   * frei. Ein Slot, dessen Buchung storniert ist, gilt als frei; ein entfallener fehlt ganz.
+   */
+  @Test
+  void tagesplan_zeigtGebuchteUndFreieSlots_ohneEntfalleneUndOhneStornierte() {
+    Termin gebucht = neuerTermin(BEGINN);
+    gebucht.buche(familie("mueller"), ziel(), new Notiz("Bitte pünktlich"), BEGINN);
+    Termin frei = neuerTermin(BEGINN.plusMinutes(15));
+    Termin storniert = neuerTermin(BEGINN.plusMinutes(30));
+    storniert.storniere(storniert.buche(familie("schmidt"), ziel(), null, BEGINN));
+    Termin entfallen = neuerTermin(BEGINN.plusMinutes(45));
+    entfallen.lassEntfallen();
+    termine.speichereAlle(List.of(gebucht, frei, storniert, entfallen));
+
+    List<TagesplanZeile> zeilen = ausfallSlots.tagesplan(sprechtag);
+
+    assertThat(zeilen)
+        .extracting(TagesplanZeile::startzeit, TagesplanZeile::gebucht, TagesplanZeile::schuelerName)
+        .containsExactly(
+            tuple(LocalTime.of(14, 0), true, "Kind mueller"),
+            tuple(LocalTime.of(14, 15), false, null),
+            tuple(LocalTime.of(14, 30), false, null));
+    TagesplanZeile erste = zeilen.getFirst();
+    assertThat(erste.lehrkraftId()).isEqualTo(lehrkraft.wert());
+    assertThat(erste)
+        .extracting(
+            TagesplanZeile::lehrkraftName,
+            TagesplanZeile::lehrkraftKuerzel,
+            TagesplanZeile::klasse,
+            TagesplanZeile::fach,
+            TagesplanZeile::elternName,
+            TagesplanZeile::notiz)
+        .containsExactly("Anna Berg", "BER", "5a", "Deutsch", "Eltern mueller", "Bitte pünktlich");
   }
 
   /** Issue #126: Auch ein Slot, dessen einzige Buchung storniert ist, trägt Personenbezogenes. */

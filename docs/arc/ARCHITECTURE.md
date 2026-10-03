@@ -46,6 +46,7 @@ de.openclassware.elternsprechtag
 │       ├── in/web          Views, Presenter, gemeinsame UI-Bausteine
 │       ├── out/persistence Persistenzmodell, Mapper, Query-SQL
 │       ├── out/mail        Versand (Absage, Buchungsbestätigung)
+│       ├── out/pdf         Tagespläne der Lehrkräfte als PDF/ZIP (OpenPDF)
 │       ├── out/event       der einzige Ort, der `ApplicationEventPublisher` kennt
 │       └── out/schulorganisation  der Weg in den anderen Kontext
 └── schulorganisation
@@ -230,7 +231,7 @@ als eigene, saubere Entscheidung.
 
 ## Tests
 
-Die Tests verteilen sich auf drei Stellen, jede mit eigenem Zweck — **eine Regel, die ins Aggregat
+Die Tests verteilen sich auf vier Stellen, jede mit eigenem Zweck — **eine Regel, die ins Aggregat
 gehört, wird nicht auf Service-Ebene getestet**:
 
 - **Aggregat** (`TerminTest`, `SprechtagTest`, die Domänentests der Schulorganisation): plain
@@ -242,6 +243,9 @@ gehört, wird nicht auf Service-Ebene getestet**:
 - **Use Case** (`SprechtagUseCaseTest`, `BuchenUndAuswertenTest` und die Versand-Tests, alle über
   die gemeinsame Naht `@ServiceTest`): Rollback, Materialisierung, Ereignisse, die Zusammenführung
   zweier Ports. Gegen dieselbe Postgres, mit derselben Migrationskette.
+- **Ausgangsadapter ohne Datenbank** (`PdfTagesplandruckTest`): plain JUnit, der Adapter wird
+  direkt konstruiert und sein Ergebnis zurückgelesen — beim PDF über die Textextraktion von
+  OpenPDF. Geprüft wird der Inhalt, nicht das Layout.
 - **Die Architekturregeln stehen als Test im Build** (`ArchitekturTest`, ArchUnit): Die Domäne
   importiert nur JDK, kein View kennt ein Aggregat, Adapter kennen einander nicht, die Anwendung
   kennt keinen Adapter, in die Schulorganisation führt nur ihr `port/in`, und Innenleben bleibt

@@ -7,6 +7,8 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.AttachmentType;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -19,10 +21,13 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.NotFoundException;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.streams.DownloadHandler;
+import com.vaadin.flow.server.streams.DownloadResponse;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken.Datei;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.AuswertungPresenter.AusfallAusgang;
@@ -35,9 +40,11 @@ import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Stor
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.UmbuchenDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
+import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Organizer-Auswertung eines Sprechtags: Terminplan je Lehrkraft. Bewusst dumm — Lade- und
@@ -56,6 +63,8 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private final H2 headerTitle = new H2();
   private final Div headerMeta = new Div();
   private final Button headerNachtragenButton = new Button();
+  private final Anchor druckLink = new Anchor();
+  private final Button druckButton = new Button();
   private final Div anonymisiertHinweis = new Div();
   private final Paragraph anonymisiertText = new Paragraph();
   private final ComboBox<LehrkraftPlan> lehrkraftFilter = new ComboBox<>();
@@ -128,6 +137,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     nachtragenMoeglich = presenter.darfNachtragen(auswertung);
     ausfallMoeglich = presenter.darfAusfallErfassen(auswertung);
     headerNachtragenButton.setVisible(nachtragenMoeglich);
+    druckLink.setVisible(presenter.darfDrucken(auswertung));
     presenter
         .anonymisierungsHinweis(auswertung)
         .ifPresentOrElse(
@@ -222,12 +232,51 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
     Span eyebrow = new Span(getTranslation("auswertung.header.title"));
     eyebrow.addClassName("auswertung__eyebrow");
 
+    Div aktionen = new Div();
+    aktionen.addClassName("auswertung__header-aktionen");
+    aktionen.add(createDruckLink(), createNachtragenButton());
+
     Div titleRow = new Div();
     titleRow.addClassName("auswertung__title-row");
-    titleRow.add(headerTitle, createNachtragenButton());
+    titleRow.add(headerTitle, aktionen);
 
     header.add(eyebrow, titleRow, headerMeta);
     return header;
+  }
+
+  /**
+   * Download der Tagespläne (Issue #120): immer ein ZIP mit allen Lehrkräften, unabhängig von
+   * Filter und Suche. Die Datei entsteht erst beim Klick, frisch aus der Datenbank. Sichtbar setzt
+   * {@link #render(SprechtagAuswertung)}.
+   */
+  private Anchor createDruckLink() {
+    druckLink.addClassName("auswertung__druck-link");
+    druckLink.setHref(
+        DownloadHandler.fromInputStream(
+            event -> {
+              // Der Download läuft außerhalb der Sitzungssperre; die Id gehört der UI und wird
+              // unter ihrer Sperre gelesen, gedruckt wird danach ohne sie.
+              AtomicReference<UUID> id = new AtomicReference<>();
+              event.getUI().accessSynchronously(() -> id.set(sprechtagId));
+              Optional<Datei> gedruckt = presenter.drucke(id.get());
+              if (gedruckt.isEmpty()) {
+                return DownloadResponse.error(404);
+              }
+              Datei datei = gedruckt.get();
+              return new DownloadResponse(
+                  new ByteArrayInputStream(datei.inhalt()),
+                  datei.name(),
+                  datei.medientyp(),
+                  datei.inhalt().length);
+            }),
+        AttachmentType.DOWNLOAD);
+    druckButton.setText(getTranslation("auswertung.druck.plaene"));
+    druckButton.setIcon(VaadinIcon.DOWNLOAD_ALT.create());
+    // Der Link trägt Fokus und Klick; der Knopf darin ist nur seine Gestalt.
+    druckButton.setTabIndex(-1);
+    druckLink.add(druckButton);
+    druckLink.setVisible(false);
+    return druckLink;
   }
 
   /** Einstieg ins Nachtragen — nur an einem veröffentlichten Sprechtag sichtbar. */

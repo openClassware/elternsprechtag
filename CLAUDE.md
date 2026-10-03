@@ -17,7 +17,7 @@ Die Codebasis ist **hexagonal geschnitten**, mit DDD-Aggregaten und zwei Bounded
 abgeschlossen — es gibt **keine zweite, alte Struktur** und **keine JPA**.
 
 ```
-sprechtag/          domain | application/{port/in,port/out,service} | adapter/{in/web,out/{persistence,mail,event,schulorganisation}}
+sprechtag/          domain | application/{port/in,port/out,service} | adapter/{in/web,out/{persistence,mail,pdf,event,schulorganisation}}
 schulorganisation/  domain | application | adapter        (ohne in/web)
 config/, security/  Verdrahtung, sonst nichts
 ```
@@ -78,6 +78,8 @@ Alles Fachliche gehört in einen der beiden Kontexte. Die Grenze zwischen ihnen 
 - Views bleiben dumm und testfrei.
 - Ausnahme: Vaadin-freie UI-Modelle (z. B. `BookingSession`) tragen Entscheidungslogik und
   bekommen **plain-JUnit-Tests** ohne Spring-Kontext.
+- **Ausgangsadapter ohne Datenbank ⇒ plain JUnit** (z. B. der PDF-Druck in `adapter/out/pdf`): Er
+  wird direkt konstruiert, sein Ergebnis zurückgelesen — kein Spring-Kontext, keine Postgres.
 
 ## Views
 

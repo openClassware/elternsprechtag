@@ -5,6 +5,8 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken.Datei;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Ergebnis;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
@@ -32,6 +34,7 @@ class AuswertungPresenter {
   private final Umbuchen umbuchen;
   private final EntfallenLassen entfallenLassen;
   private final AngabenEntfernen angabenEntfernen;
+  private final Drucken drucken;
 
   Optional<SprechtagAuswertung> werteAus(UUID sprechtagId) {
     return auswerten.werteAus(sprechtagId);
@@ -275,4 +278,18 @@ class AuswertungPresenter {
    */
   record Planansicht(
       List<LehrkraftPlan> plaene, Optional<String> keinTrefferFuer, int verborgeneStornierte) {}
+
+  /**
+   * Ob die Ansicht den Download der Tagespläne anbietet (Issue #120): sobald der Sprechtag eine
+   * beteiligte Lehrkraft hat, in jedem Status. Filter und Suche spielen keine Rolle — gedruckt wird
+   * immer der vollständige Tag jeder Lehrkraft.
+   */
+  boolean darfDrucken(SprechtagAuswertung auswertung) {
+    return !auswertung.plaene().isEmpty();
+  }
+
+  /** Reicht den Druck an den Use Case durch — er lädt selbst, frisch aus der Datenbank. */
+  Optional<Datei> drucke(UUID sprechtagId) {
+    return drucken.druckePlaene(sprechtagId);
+  }
 }

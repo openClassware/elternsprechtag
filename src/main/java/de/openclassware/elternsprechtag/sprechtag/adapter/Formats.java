@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -19,6 +20,8 @@ public final class Formats {
   private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
   private static final DateTimeFormatter DATE_LONG =
       DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(LOCALE);
+  private static final DateTimeFormatter DATE_TIME_SHORT =
+      DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm", LOCALE);
   private static final DateTimeFormatter WEEKDAY_DATE_SHORT =
       DateTimeFormatter.ofPattern("EEE, dd.MM.", LOCALE);
 
@@ -30,6 +33,11 @@ public final class Formats {
   /** Ausführliches Datum, z. B. „20. Juli 2026". */
   public static String dateLong(LocalDate date) {
     return date.format(DATE_LONG);
+  }
+
+  /** Datum und Uhrzeit, z. B. „02.10.2026, 14:37" — der Stand auf einem gedruckten Blatt. */
+  public static String dateTimeShort(LocalDateTime dateTime) {
+    return dateTime.format(DATE_TIME_SHORT);
   }
 
   /** Kurzes Datum mit Wochentag, z. B. „Mo., 20.07.". */
