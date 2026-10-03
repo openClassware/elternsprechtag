@@ -23,6 +23,7 @@ import com.vaadin.flow.router.NotFoundException;
 import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.EmailWiederholung.Abgleich;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.NachtragenPresenter.SprechtagKopf;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.AuswahlZeile;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
@@ -70,6 +71,11 @@ public class NachtragenView extends Div implements HasUrlParameter<String> {
   private TextField elternName;
   private TextField schuelerName;
   private EmailField elternEmail;
+  private EmailField emailWiederholung;
+
+  /** Erst nach dem ersten Verlassen meldet das Wiederholungsfeld eine Abweichung am Feld. */
+  private boolean wiederholungBeruehrt;
+
   private Checkbox stellvertreterSchalter;
   private Select<KlasseOption> klasse;
 
@@ -169,7 +175,23 @@ public class NachtragenView extends Div implements HasUrlParameter<String> {
     elternEmail.setErrorMessage(getTranslation("elternsprechtag.angaben.email.error"));
     elternEmail.setClearButtonVisible(true);
     elternEmail.setValueChangeMode(ValueChangeMode.EAGER);
-    elternEmail.addValueChangeListener(event -> refreshFooter());
+    elternEmail.addValueChangeListener(event -> onEmailChanged());
+
+    wiederholungBeruehrt = false;
+    emailWiederholung =
+        new EmailField(getTranslation("elternsprechtag.angaben.email-wiederholung.label"));
+    emailWiederholung.setRequiredIndicatorVisible(true);
+    emailWiederholung.setErrorMessage(
+        getTranslation("elternsprechtag.angaben.email-wiederholung.error"));
+    emailWiederholung.setClearButtonVisible(true);
+    emailWiederholung.setManualValidation(true);
+    emailWiederholung.setValueChangeMode(ValueChangeMode.EAGER);
+    emailWiederholung.addValueChangeListener(event -> onEmailChanged());
+    emailWiederholung.addBlurListener(
+        event -> {
+          wiederholungBeruehrt = true;
+          onEmailChanged();
+        });
 
     klasse = new Select<>();
     klasse.setLabel(getTranslation("elternsprechtag.angaben.klasse.label"));
@@ -183,7 +205,7 @@ public class NachtragenView extends Div implements HasUrlParameter<String> {
     form.addClassName("elternsprechtag-view__form");
     form.setResponsiveSteps(
         new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("640px", 2));
-    form.add(elternName, schuelerName, elternEmail, klasse);
+    form.add(elternName, schuelerName, elternEmail, emailWiederholung, klasse);
 
     section.add(form);
     if (presenter.stellvertreteradresseVerfuegbar()) {
@@ -194,7 +216,8 @@ public class NachtragenView extends Div implements HasUrlParameter<String> {
 
   /**
    * Schalter für Familien ohne eigene E-Mail-Adresse: setzt die konfigurierte Stellvertreteradresse
-   * ein und sperrt das Feld, solange er aktiv ist. Ob er überhaupt erscheint, hat der Presenter
+   * ein und sperrt das Feld, solange er aktiv ist; die Wiederholung entfällt dann, denn eine
+   * konfigurierte Adresse kann sich nicht vertippen. Ob er überhaupt erscheint, hat der Presenter
    * bereits entschieden — die Ansicht fragt nur noch danach.
    */
   private Component createStellvertreterSchalter() {
@@ -207,6 +230,9 @@ public class NachtragenView extends Div implements HasUrlParameter<String> {
   }
 
   private void onStellvertreterChanged(boolean aktiv) {
+    wiederholungBeruehrt = false;
+    emailWiederholung.clear();
+    emailWiederholung.setVisible(!aktiv);
     if (aktiv) {
       elternEmail.setValue(presenter.stellvertreteradresse());
       elternEmail.setReadOnly(true);
@@ -214,7 +240,21 @@ public class NachtragenView extends Div implements HasUrlParameter<String> {
       elternEmail.setReadOnly(false);
       elternEmail.clear();
     }
+    onEmailChanged();
+  }
+
+  /** Eine Änderung an einem der beiden Felder prüft die Wiederholung neu. */
+  private void onEmailChanged() {
+    emailWiederholung.setInvalid(wiederholungBeruehrt && abgleich() == Abgleich.ABWEICHEND);
     refreshFooter();
+  }
+
+  /** Bei aktivem Stellvertreter-Schalter gibt es keine Wiederholung — sie gilt als erfüllt. */
+  private Abgleich abgleich() {
+    if (stellvertreterSchalter != null && stellvertreterSchalter.getValue()) {
+      return Abgleich.GLEICH;
+    }
+    return EmailWiederholung.vergleiche(elternEmail.getValue(), emailWiederholung.getValue());
   }
 
   private Component createBuchung(SprechtagKopf sprechtag) {
@@ -607,6 +647,12 @@ public class NachtragenView extends Div implements HasUrlParameter<String> {
     if (!emailValid()) {
       return selected + " — " + getTranslation("elternsprechtag.footer.blocker.email");
     }
+    if (abgleich() == Abgleich.LEER) {
+      return selected + " — " + getTranslation("elternsprechtag.footer.blocker.email-wiederholung");
+    }
+    if (abgleich() == Abgleich.ABWEICHEND) {
+      return selected + " — " + getTranslation("elternsprechtag.footer.blocker.email-abweichung");
+    }
     if (klasse.getValue() == null) {
       return selected + " — " + getTranslation("elternsprechtag.footer.blocker.klasse");
     }
@@ -614,7 +660,11 @@ public class NachtragenView extends Div implements HasUrlParameter<String> {
   }
 
   private boolean bookingValid() {
-    return session.hatAuswahl() && namesFilled() && emailValid() && klasse.getValue() != null;
+    return session.hatAuswahl()
+        && namesFilled()
+        && emailValid()
+        && abgleich() == Abgleich.GLEICH
+        && klasse.getValue() != null;
   }
 
   private boolean namesFilled() {

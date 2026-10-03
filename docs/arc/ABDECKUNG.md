@@ -254,7 +254,7 @@ in Phase 3.
 | Erinnerungszeitpunkt wählbar | Organizer | Auswahl fester Optionen am `Sprechtag`, auch nach dem Veröffentlichen änderbar | muss | **erfüllt** (#106) — `ErinnerungsVorlauf` (keine · 1 · 2 · 3 Tage vorher), Pflichtfeld im Formular; nicht Teil der Zeitstruktur, bleibt also nach dem Veröffentlichen änderbar und wirkt ab dem nächsten Lauf |
 | Keine Erinnerung für abgesagten Sprechtag oder stornierte Buchung | Eltern | Versand überspringt sie | muss | **erfüllt** — Kandidaten sind nur veröffentlichte Sprechtage mit gesetztem Vorlauf und deren aktive, noch nicht erinnerte Buchungen; am `Termin` wird vor dem Markieren erneut geprüft |
 | E-Mail-Versand schlägt fehl, niemand erfährt es | Organizer | Liste der nicht erreichten Familien in der Auswertung | muss | fehlt (#110) — best-effort mit `log.warn` je Adresse in allen vier Mailwegen (Absage, Ausfall, Bestätigung, Erinnerung), `@Async` nach Commit, die UI erfährt nichts |
-| Tippfehler in der Adresse beim Erfassen | Eltern | zweite Eingabe „E-Mail wiederholen" | muss | fehlt (#111); `EmailField` prüft nur das Format |
+| Tippfehler in der Adresse beim Erfassen | Eltern | zweite Eingabe „E-Mail wiederholen" | muss | **erfüllt** (#111) — in beiden Buchungsstrecken, Eltern wie Organizer: zweites Feld „E-Mail-Adresse wiederholen" neben der Adresse, verglichen nach `trim()` ohne Unterschied der Schreibung (`EmailWiederholung`, Vaadin-frei). Die Abweichung meldet das Feld nach dem ersten Verlassen, der Footer nennt sie sofort, gebucht wird erst bei Übereinstimmung. Paste bleibt erlaubt; der Stellvertreter-Schalter blendet die Wiederholung aus. Gespeichert wird nur die erste Eingabe |
 | Einzelnen Termin verschieben, Buchung behalten | Organizer | Umbuchen in einem Zug, neue Bestätigungsmail | muss | **erfüllt** (#104) — `Umbuchen` aus Phase 3; Familie, Notiz und Buchungsziel wandern in die neue Buchung, die Angaben der alten fallen. Genau eine Mail mit dem Anlass `UMBUCHUNG`, die die Änderung benennt |
 | Elternlink nach der Absage | Eltern | Hinweis „abgesagt" plus Datum und Schulkontakt, keine Buchungsauskunft | muss | **erfüllt** (#131) — `Zugangsstand.ABGESAGT` hat Vorrang vor allen anderen Ständen und bleibt auch nach dem Datum stehen: Ein abgesagter Sprechtag wird nie abgeschlossen. Die Seite „Dieser Elternsprechtag wurde abgesagt" hat denselben Aufbau wie „Anmeldung beendet" — Titel, Datum, Uhrzeit und der Schulkontakt als Hauptaussage, ohne Ort (`ElternsprechtagPresenter.Hinweisseite`) |
 | Absage-Dialog nennt die Zahl der Betroffenen | Organizer | Zahl vor dem Bestätigen | muss | **erfüllt** — `Absagen.zaehleBetroffeneEltern`, je Adresse einmal gezählt |
@@ -598,7 +598,6 @@ Issue.
 |---|---|
 | [#109](https://github.com/openClassware/elternsprechtag/issues/109) | Zugangs-Link in die Absage-Mail aufnehmen |
 | [#110](https://github.com/openClassware/elternsprechtag/issues/110) | Zustellzustand an der Buchung und Liste „nicht erreicht" |
-| [#111](https://github.com/openClassware/elternsprechtag/issues/111) | Zweite Eingabe „E-Mail wiederholen" |
 
 **Phase 6 — Nach dem Sprechtag**
 
