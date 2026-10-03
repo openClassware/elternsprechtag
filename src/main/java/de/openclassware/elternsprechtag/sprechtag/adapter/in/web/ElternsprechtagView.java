@@ -339,6 +339,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     return new LehrkraftKarte(
         lehrkraft,
         selected,
+        session.verfuegbarkeit(lehrkraft) != BookingSession.Verfuegbarkeit.FREI,
         chosen,
         () -> {
           session.setActive(lehrkraft);
@@ -351,6 +352,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     UUID lehrauftragId = lehrkraft.lehrauftragId();
     return new TerminRaster(
         lehrkraft.slots(),
+        verfuegbarkeitVon(lehrkraft),
         this::zustandVon,
         this::selectSlot,
         this::deselectSlot,
@@ -360,6 +362,14 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
           session.setNotiz(lehrauftragId, notizText);
           refreshSummary();
         });
+  }
+
+  private TerminRaster.Verfuegbarkeit verfuegbarkeitVon(LehrkraftOption lehrkraft) {
+    return switch (session.verfuegbarkeit(lehrkraft)) {
+      case FREI -> TerminRaster.Verfuegbarkeit.FREI;
+      case NICHTS_FREI -> TerminRaster.Verfuegbarkeit.NICHTS_FREI;
+      case KEINE_TERMINE -> TerminRaster.Verfuegbarkeit.KEINE_TERMINE;
+    };
   }
 
   private TerminRaster.SlotZustand zustandVon(SlotOption slot) {

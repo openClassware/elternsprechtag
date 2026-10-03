@@ -10,15 +10,25 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsop
 /**
  * Karte einer Lehrkraft in der Buchungsliste: Kürzel, Name, Fächer und, sofern schon gewählt, ihr
  * Termin als Pille. Ein Klick auf die Karte klappt sie auf ({@code onClick}); ob sie aufgeklappt
- * oder bereits gewählt ist, entscheidet der Aufrufer über {@code selected}.
+ * oder bereits gewählt ist, entscheidet der Aufrufer über {@code selected}. Hat die Lehrkraft
+ * keinen freien Termin ({@code nichtsFrei}), tritt die Karte zurück und sagt es als Pille in
+ * Worten — die Dämpfung allein wäre nur Farbe. Klickbar bleibt sie, damit der Hinweis im Raster
+ * erreichbar ist.
  */
 public class LehrkraftKarte extends Div {
 
   public LehrkraftKarte(
-      LehrkraftOption lehrkraft, boolean selected, SlotOption gewaehlterSlot, Runnable onClick) {
+      LehrkraftOption lehrkraft,
+      boolean selected,
+      boolean nichtsFrei,
+      SlotOption gewaehlterSlot,
+      Runnable onClick) {
     addClassName("elternsprechtag-view__lehrkraft");
     if (selected) {
       addClassName("elternsprechtag-view__lehrkraft--selected");
+    }
+    if (nichtsFrei) {
+      addClassName("elternsprechtag-view__lehrkraft--nichts-frei");
     }
 
     Span badge = new Span(lehrkraft.kuerzel());
@@ -40,6 +50,11 @@ public class LehrkraftKarte extends Div {
       Span pill = new Span();
       pill.addClassName("elternsprechtag-view__lehrkraft-pill");
       pill.add(VaadinIcon.CHECK.create(), new Span(Formats.time(gewaehlterSlot.zeit())));
+      add(pill);
+    } else if (nichtsFrei) {
+      Span pill = new Span(getTranslation("elternsprechtag.lehrkraft.nichts-frei"));
+      pill.addClassName("elternsprechtag-view__lehrkraft-pill");
+      pill.addClassName("elternsprechtag-view__lehrkraft-pill--nichts-frei");
       add(pill);
     }
 

@@ -169,7 +169,7 @@ Organizer selbst korrigierbar, bevor Schaden entsteht.
 | Familie hat keine E-Mail-Adresse | Organizer | Stellvertreteradresse der Schule eintragen | muss | **erfüllt** (#104) — Schalter „Familie hat keine eigene E-Mail-Adresse" im Nachtragen setzt die konfigurierte `elternsprechtag.stellvertreteradresse`; ohne konfigurierte Adresse fehlt der Schalter. Offen bleibt die letzte Meile: Die Absage an diese Adresse nennt die Familien nicht (#148, siehe unten) |
 | Gewählter Slot wird während des Absendens vergeben | Eltern | Meldung, übrige Auswahl bleibt, nur der verlorene Slot neu | muss | **erfüllt** — `TerminBelegtException` wird gefangen, Optionen neu geladen, ungültige Slots verworfen (`ElternsprechtagView:530`, `BookingSession.reload`) |
 | Vergangene Slots sind noch buchbar | Eltern | vergangene Slots nicht mehr wählbar | muss | **erfüllt** (#118) — keine Prüfung je Slot, sondern über den Anmeldeschluss: Er ist spätestens der Beginn des Sprechtags, bei Frist 0 genau dieser (`Anmeldefrist.anmeldeschlussFuer`). Solange der Elternlink annimmt, hat also kein Slot begonnen. Der Organizer-Nachtrag bleibt bewusst ohne Zeitprüfung — er trägt auch ein Gespräch nach, das schon stattgefunden hat |
-| Alle Slots einer Lehrkraft belegt | Eltern | sichtbar, dass nichts frei ist | muss | teilweise (#119) — belegte Slots werden als `BELEGT` gerendert (`BookingSession.slotState`), ein eigener Hinweistext fehlt |
+| Alle Slots einer Lehrkraft belegt | Eltern | sichtbar, dass nichts frei ist | muss | **erfüllt** (#119) — `BookingSession.verfuegbarkeit` unterscheidet „nichts frei" (Slots da, keiner buchbar) von „keine Termine"; die Karte tritt dann zurück und trägt die Pille „keine Termine frei", aufgeklappt ersetzt ein Hinweis Raster und Notizfeld. Neutral formuliert, weil „vergeben" und „entfällt" für die Eltern bewusst ununterscheidbar bleiben; ein Zeitkonflikt mit der eigenen Auswahl zählt nicht. Gilt ebenso im Nachtragen |
 | Buchungsschluss vor dem Sprechtag | Organizer | Anmeldeschluss am Sprechtag | muss | **erfüllt** — Anmeldefrist am `Sprechtag`, in Phase 5 erhoben und eingestuft; bei Frist 0 schließt der Elternlink mit dem Beginn des Sprechtags (#118) |
 | Eltern stornieren ihre Buchung selbst | Eltern | — | darf fehlen | fehlt; bräuchte ein Token je Buchung. Weg drumherum: Anruf, der Organizer storniert — der Weg drumherum ist gebaut |
 | Dieselbe Familie bucht zweimal | Eltern | — | darf fehlen | keine Dublettenprüfung in `buchen()`; heilbar, weil der Organizer eine der beiden Zeilen storniert |
@@ -595,7 +595,6 @@ Issue.
 
 | Issue | Fall |
 |---|---|
-| [#119](https://github.com/openClassware/elternsprechtag/issues/119) | Hinweistext, wenn bei einer Lehrkraft nichts mehr frei ist |
 | [#148](https://github.com/openClassware/elternsprechtag/issues/148) | Absage an die Stellvertreteradresse nennt die betroffenen Familien nicht |
 
 **Phase 4 — Kurz vor dem Termin**

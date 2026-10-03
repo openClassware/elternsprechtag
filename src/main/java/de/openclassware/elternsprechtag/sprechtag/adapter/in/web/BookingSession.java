@@ -11,8 +11,8 @@ import java.util.UUID;
 /**
  * Buchungs-„Warenkorb" der Eltern-View: hält die Lehrkraft-Optionen der gewählten Klasse, die
  * aktuell aufgeklappte Lehrkraft und je Lehrauftrag den gewählten Slot samt seiner Notiz — und
- * kapselt die Entscheidungslogik (Slot-Zustand inkl. Zeitkonflikt, Aufräumen nach Konflikt,
- * Anfrage-Bau).
+ * kapselt die Entscheidungslogik (Slot-Zustand inkl. Zeitkonflikt, Verfügbarkeit je Lehrkraft,
+ * Aufräumen nach Konflikt, Anfrage-Bau).
  *
  * <p>Bewusst <b>Vaadin-frei</b>, damit die Logik ohne UI unit-testbar ist. Der View hält eine
  * Instanz, ruft die Methoden und rendert nur das Ergebnis.
@@ -25,6 +25,17 @@ class BookingSession {
     BELEGT,
     GEWAEHLT,
     KONFLIKT
+  }
+
+  /**
+   * Was eine Lehrkraft überhaupt noch anbietet — unabhängig von der eigenen Auswahl. „Nichts frei"
+   * heißt: Slots gibt es, keiner ist buchbar; ob vergeben oder entfallen, unterscheidet die
+   * Eltern-Ansicht bewusst nicht.
+   */
+  enum Verfuegbarkeit {
+    FREI,
+    NICHTS_FREI,
+    KEINE_TERMINE
   }
 
   /** Lehrkraft-Auswahl der gewählten Klasse; erst nach Klassenwahl befüllt. */
@@ -140,6 +151,19 @@ class BookingSession {
 
   int auswahlAnzahl() {
     return selection.size();
+  }
+
+  /**
+   * Verfügbarkeit einer Lehrkraft. Ein Zeitkonflikt mit der eigenen Auswahl zählt nicht: Die
+   * Lehrkraft hat dann noch etwas frei, nur nicht zu dieser Uhrzeit.
+   */
+  Verfuegbarkeit verfuegbarkeit(LehrkraftOption lehrkraft) {
+    if (lehrkraft.slots().isEmpty()) {
+      return Verfuegbarkeit.KEINE_TERMINE;
+    }
+    return lehrkraft.slots().stream().anyMatch(SlotOption::buchbar)
+        ? Verfuegbarkeit.FREI
+        : Verfuegbarkeit.NICHTS_FREI;
   }
 
   /** Zustand eines Slots relativ zur aktiven Lehrkraft und zur bisherigen Auswahl. */

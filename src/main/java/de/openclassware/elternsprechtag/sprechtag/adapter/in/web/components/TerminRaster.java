@@ -12,8 +12,9 @@ import java.util.function.Function;
 
 /**
  * Terminraster der aufgeklappten Lehrkraft samt Notizfeld; sitzt in der Liste direkt hinter ihrer
- * Karte. Der Zustand je Slot (frei/belegt/gewählt/Konflikt) kommt vom Aufrufer — der Warenkorb,
- * der ihn kennt, bleibt Vaadin-frei und darf hier nicht importiert werden.
+ * Karte. Der Zustand je Slot (frei/belegt/gewählt/Konflikt) und die Verfügbarkeit der Lehrkraft
+ * kommen vom Aufrufer — der Warenkorb, der sie kennt, bleibt Vaadin-frei und darf hier nicht
+ * importiert werden. Ohne freien Termin steht statt Raster und Notizfeld nur ein Hinweis.
  */
 public class TerminRaster extends Div {
 
@@ -25,8 +26,16 @@ public class TerminRaster extends Div {
     KONFLIKT
   }
 
+  /** Was die Lehrkraft überhaupt noch anbietet, unabhängig von der Auswahl. */
+  public enum Verfuegbarkeit {
+    FREI,
+    NICHTS_FREI,
+    KEINE_TERMINE
+  }
+
   public TerminRaster(
       List<SlotOption> slots,
+      Verfuegbarkeit verfuegbarkeit,
       Function<SlotOption, SlotZustand> zustandOf,
       Consumer<SlotOption> onSelect,
       Runnable onDeselect,
@@ -35,18 +44,24 @@ public class TerminRaster extends Div {
       Consumer<String> onNotizChange) {
     addClassName("elternsprechtag-view__slot-panel");
 
-    if (slots.isEmpty()) {
-      Div placeholder = new Div();
-      placeholder.addClassName("elternsprechtag-view__placeholder");
-      placeholder.setText(getTranslation("elternsprechtag.termin.empty"));
-      add(placeholder);
-      return;
+    switch (verfuegbarkeit) {
+      case KEINE_TERMINE -> add(placeholder("elternsprechtag.termin.empty"));
+      case NICHTS_FREI -> add(placeholder("elternsprechtag.termin.nichts-frei"));
+      case FREI -> {
+        Div grid = new Div();
+        grid.addClassName("elternsprechtag-view__slot-grid");
+        slots.forEach(
+            slot -> grid.add(createSlot(slot, zustandOf.apply(slot), onSelect, onDeselect)));
+        add(grid, new NotizFeld(notiz, notizEnabled, onNotizChange));
+      }
     }
+  }
 
-    Div grid = new Div();
-    grid.addClassName("elternsprechtag-view__slot-grid");
-    slots.forEach(slot -> grid.add(createSlot(slot, zustandOf.apply(slot), onSelect, onDeselect)));
-    add(grid, new NotizFeld(notiz, notizEnabled, onNotizChange));
+  private Component placeholder(String translationKey) {
+    Div placeholder = new Div();
+    placeholder.addClassName("elternsprechtag-view__placeholder");
+    placeholder.setText(getTranslation(translationKey));
+    return placeholder;
   }
 
   private Component createSlot(

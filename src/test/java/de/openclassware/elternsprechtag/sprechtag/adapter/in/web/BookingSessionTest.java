@@ -6,6 +6,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.Buc
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.LehrkraftOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen.SlotOption;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.BookingSession.SlotState;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.BookingSession.Verfuegbarkeit;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +14,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit-Tests des Vaadin-freien Buchungs-„Warenkorbs". Deckt die aus dem View gezogene
- * Entscheidungslogik ab: Slot-Zustand inkl. Zeitkonflikt, Aufräumen nach Konflikt, Anfrage-Bau.
+ * Entscheidungslogik ab: Slot-Zustand inkl. Zeitkonflikt, Verfügbarkeit je Lehrkraft, Aufräumen
+ * nach Konflikt, Anfrage-Bau.
  */
 class BookingSessionTest {
 
@@ -277,6 +279,45 @@ class BookingSessionTest {
     assertThat(session.hatAuswahl()).isFalse();
     assertThat(session.active()).isNull();
     assertThat(session.hatOptionen()).isFalse();
+  }
+
+  @Test
+  void verfuegbarkeit_einBuchbarerSlot_istFrei() {
+    LehrkraftOption a =
+        lehrkraft("A", slot(LocalTime.of(14, 0), false), slot(LocalTime.of(14, 15), true));
+
+    assertThat(new BookingSession().verfuegbarkeit(a)).isEqualTo(Verfuegbarkeit.FREI);
+  }
+
+  @Test
+  void verfuegbarkeit_keinSlotBuchbar_istNichtsFrei() {
+    // Ob vergeben oder entfallen, sagt der Port nicht — beides ist „nicht buchbar".
+    LehrkraftOption a =
+        lehrkraft("A", slot(LocalTime.of(14, 0), false), slot(LocalTime.of(14, 15), false));
+
+    assertThat(new BookingSession().verfuegbarkeit(a)).isEqualTo(Verfuegbarkeit.NICHTS_FREI);
+  }
+
+  @Test
+  void verfuegbarkeit_ohneSlots_hatKeineTermine() {
+    LehrkraftOption a = lehrkraft("A");
+
+    assertThat(new BookingSession().verfuegbarkeit(a)).isEqualTo(Verfuegbarkeit.KEINE_TERMINE);
+  }
+
+  @Test
+  void verfuegbarkeit_konfliktMitEigenerAuswahl_bleibtFrei() {
+    // Die Aussage gilt der Lehrkraft, nicht dem Warenkorb: B ist frei, nur nicht um 14:00.
+    SlotOption aSlot = slot(LocalTime.of(14, 0), true);
+    LehrkraftOption a = lehrkraft("A", aSlot);
+    LehrkraftOption b = lehrkraft("B", slot(LocalTime.of(14, 0), true));
+    BookingSession session = new BookingSession();
+    session.reset(List.of(a, b));
+    session.setActive(a);
+    session.waehle(aSlot);
+    session.setActive(b);
+
+    assertThat(session.verfuegbarkeit(b)).isEqualTo(Verfuegbarkeit.FREI);
   }
 
   /** Erzeugt eine Lehrkraft mit derselben lehrauftragId wie {@code vorlage}, aber neuen Slots. */
