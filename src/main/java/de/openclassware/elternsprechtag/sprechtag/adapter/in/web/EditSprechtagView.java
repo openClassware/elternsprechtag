@@ -11,6 +11,8 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.formlayout.FormLayout.FormRow;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.AnchorTarget;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -79,6 +81,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private FormRow linkRow;
   private Paragraph linkHinweis;
   private TextField shareLink;
+  private Anchor openLink;
   private String origin;
 
   /** Namen zu Ids — das, was der Konverter zwischen Auswahl und Formular braucht. */
@@ -304,7 +307,7 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     shareLink.setHelperText(getTranslation("edit-sprechtag.field.link.helper"));
 
     linkRow = new FormRow();
-    linkRow.add(shareLink, 3);
+    linkRow.add(shareLink, 2);
     Button copyLinkButton = new Button();
     copyLinkButton.setIcon(VaadinIcon.COPY.create());
     copyLinkButton.setText(getTranslation("edit-sprechtag.button.copy-link"));
@@ -315,7 +318,24 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
                     ui ->
                         ui.getPage()
                             .executeJs("navigator.clipboard.writeText($0)", shareLink.getValue())));
-    linkRow.add(copyLinkButton, 1);
+
+    // Der Link trägt Fokus und Klick; der Knopf darin ist nur seine Gestalt — wie beim Druck in
+    // der Auswertung. Ein echter Link statt `window.open`, damit kein Popup-Blocker dazwischengeht.
+    Button openLinkButton = new Button();
+    openLinkButton.setIcon(VaadinIcon.EXTERNAL_LINK.create());
+    openLinkButton.setText(getTranslation("edit-sprechtag.button.open-link"));
+    openLinkButton.setTabIndex(-1);
+    openLink = new Anchor();
+    openLink.setTarget(AnchorTarget.BLANK);
+    openLink.setTitle(getTranslation("edit-sprechtag.button.open-link.title"));
+    openLink.addClassName("edit-sprechtag-view__eltern-link");
+    openLink.add(openLinkButton);
+
+    // Eine Spalte für beide Knöpfe: Je nach Breite hat das Formular drei oder vier Spalten, und
+    // einzeln umbräche der zweite Knopf allein in die nächste Zeile.
+    Div linkAktionen = new Div(copyLinkButton, openLink);
+    linkAktionen.addClassName("edit-sprechtag-view__link-aktionen");
+    linkRow.add(linkAktionen, 1);
 
     formLayout.add(linkHinweis, linkRow);
     zeigeLink(null);
@@ -326,6 +346,9 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     accessToken = token;
     linkHinweis.setVisible(token == null);
     linkRow.setVisible(token != null);
+    if (token != null) {
+      openLink.setHref("/" + ElternsprechtagView.ROUTE + "/" + token);
+    }
     updateShareLink();
   }
 
