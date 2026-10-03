@@ -126,6 +126,90 @@
     color: #5a6069;
 }
 
+/* Nicht erreichte Familien (#110): eine Arbeitsliste, also Warnung — das Bernstein von
+   __section-entfallen, nicht das Blau des Anonymisierungs-Hinweises. Gleiche Außenmaße wie dieser,
+   damit beide bündig übereinander stehen, wenn sie zugleich erscheinen. */
+.auswertung__nicht-erreicht {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 1rem 1.5rem 0;
+    padding: 14px 16px;
+    border: 1px solid #f3d9a4;
+    border-radius: 12px;
+    background: #fffaf0;
+}
+
+.auswertung__nicht-erreicht[hidden] {
+    display: none;
+}
+
+.auswertung__nicht-erreicht-icon {
+    display: flex;
+    flex-shrink: 0;
+}
+
+.auswertung__nicht-erreicht-icon vaadin-icon {
+    width: 20px;
+    height: 20px;
+    color: #b45309;
+}
+
+.auswertung__nicht-erreicht-texte {
+    flex: 1;
+    min-width: 0;
+}
+
+.auswertung__nicht-erreicht-titel {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2933;
+}
+
+.auswertung__nicht-erreicht-text {
+    margin: 4px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #5a6069;
+}
+
+.auswertung__nicht-erreicht-liste {
+    display: flex;
+    flex-direction: column;
+    margin-top: 10px;
+    border-top: 1px solid #f3d9a4;
+}
+
+/* Drei Spalten: wer, welche Adresse, welche Nachricht. Die Adresse darf umbrechen — eine lange
+   Adresse ist genau die, in der ein Tippfehler steckt, und muss ganz lesbar bleiben. */
+.auswertung__nicht-erreicht-eintrag {
+    display: grid;
+    grid-template-columns: 1.2fr 1.2fr 1fr;
+    gap: 4px 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3d9a4;
+    font-size: 14px;
+}
+
+.auswertung__nicht-erreicht-eintrag:last-child {
+    border-bottom: none;
+}
+
+.auswertung__nicht-erreicht-namen {
+    font-weight: 600;
+    color: #1f2933;
+}
+
+.auswertung__nicht-erreicht-adresse {
+    color: #1f2933;
+    overflow-wrap: anywhere;
+}
+
+.auswertung__nicht-erreicht-nachricht {
+    color: #5a6069;
+}
+
 .auswertung__filter {
     display: flex;
     flex-wrap: wrap;
@@ -348,9 +432,15 @@
         width: 100%;
     }
 
-    .auswertung__anonymisiert {
+    .auswertung__anonymisiert,
+    .auswertung__nicht-erreicht {
         margin-left: 1rem;
         margin-right: 1rem;
+    }
+
+    /* Am Telefon stapelt der Eintrag: Namen, darunter Adresse und Nachricht. */
+    .auswertung__nicht-erreicht-eintrag {
+        grid-template-columns: 1fr;
     }
 
     .auswertung__row--head {

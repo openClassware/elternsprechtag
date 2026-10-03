@@ -4,6 +4,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.AngabenEnt
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.NichtErreicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken.Datei;
@@ -15,6 +16,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.UmbuchAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.SprechtagMeldungen.Meldung;
+import de.openclassware.elternsprechtag.sprechtag.domain.Mailart;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -82,6 +84,24 @@ class AuswertungPresenter {
    */
   Optional<LocalDate> anonymisierungsHinweis(SprechtagAuswertung auswertung) {
     return Optional.ofNullable(auswertung.anonymisiertAm());
+  }
+
+  /**
+   * Die Arbeitsliste „Nicht erreicht" (Issue #110). Leer heißt: kein Block — auch dann nicht, wenn
+   * der Sprechtag schon anonymisiert ist; anonymisierte Buchungen führt die Liste ohnehin nicht.
+   */
+  List<NichtErreicht> nichtErreicht(SprechtagAuswertung auswertung) {
+    return auswertung.nichtErreicht();
+  }
+
+  /** Der i18n-Schlüssel, unter dem die Liste eine Nachrichtenart nennt. */
+  String nachrichtSchluessel(Mailart art) {
+    return switch (art) {
+      case BESTAETIGUNG -> "auswertung.nicht-erreicht.art.bestaetigung";
+      case ERINNERUNG -> "auswertung.nicht-erreicht.art.erinnerung";
+      case ABSAGE -> "auswertung.nicht-erreicht.art.absage";
+      case AUSFALL -> "auswertung.nicht-erreicht.art.ausfall";
+    };
   }
 
   /**

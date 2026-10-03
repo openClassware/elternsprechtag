@@ -79,6 +79,28 @@
     color: #8a909a;
 }
 
+/* Nicht zugestellte Nachrichten (#110): gebaut wie die Datenfrist, aber in Bernstein und als Link
+   in die Auswertung, wo die Liste zum Abtelefonieren steht. */
+.sprechtag-table__nicht-erreicht {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 13px;
+    color: #b45309;
+    text-decoration: none;
+}
+
+.sprechtag-table__nicht-erreicht:hover {
+    text-decoration: underline;
+}
+
+.sprechtag-table__nicht-erreicht vaadin-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-top: 2px;
+}
+
 .sprechtag-table__time {
     display: flex;
     align-items: center;

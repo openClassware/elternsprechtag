@@ -3,10 +3,12 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.out.persistence;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchungsstatus;
+import de.openclassware.elternsprechtag.sprechtag.domain.Mailart;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Verfuegbarkeit;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -59,7 +61,8 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
 
   private static final String BELEGE =
       """
-      select t.sprechtag_id    as sprechtag_id,
+      select b.id              as buchung_id,
+             t.sprechtag_id    as sprechtag_id,
              t.startzeit       as startzeit,
              b.lehrkraft_name  as lehrkraft_name,
              b.fach_name       as fach_name,
@@ -74,8 +77,10 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
        order by t.startzeit
       """;
 
-  private static final String AKTIVE_ADRESSEN =
-      "select distinct b.eltern_email" + AKTIVE_EINES_SPRECHTAGS;
+  private static final String AKTIVE_EMPFAENGER =
+      "select b.id as buchung_id, b.eltern_email as eltern_email"
+          + AKTIVE_EINES_SPRECHTAGS
+          + " order by b.eltern_email, b.erstellt_am";
 
   private static final String ANZAHL_AKTIVE_ADRESSEN =
       "select count(distinct b.eltern_email)" + AKTIVE_EINES_SPRECHTAGS;
@@ -84,6 +89,43 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
       "select b.id as buchung_id"
           + AKTIVE_EINES_SPRECHTAGS
           + "  and b.erinnerung_versendet_am is null";
+
+  /**
+   * „Diese Familie hat die Nachricht nicht bekommen, und das betrifft noch jemanden" (Issue #110) —
+   * dieselbe Regel für die Liste in der Auswertung und die Zahl in der Übersicht, einmal
+   * geschrieben. Eine Ausfall-Nachricht bleibt an ihrer stornierten Buchung stehen: Die ist eben
+   * dadurch entfallen. Jede andere fällt mit dem Storno weg, ebenso alles Anonymisierte.
+   */
+  private static final String NICHT_ERREICHT =
+      """
+        from zustellungen z
+        join buchungen b on b.id = z.buchung_id
+        join termin t on t.id = b.termin_id
+       where z.ergebnis = 'FEHLGESCHLAGEN'
+         and b.anonymisiert_am is null
+         and (b.status = 'ZUGESAGT' or z.art = 'AUSFALL')
+      """;
+
+  private static final String NICHT_ERREICHT_EINES_SPRECHTAGS =
+      """
+      select z.art           as art,
+             z.zeitpunkt     as zeitpunkt,
+             b.eltern_email  as eltern_email,
+             b.eltern_name   as eltern_name,
+             b.schueler_name as schueler_name
+      """
+          + NICHT_ERREICHT
+          + """
+         and t.sprechtag_id = :sprechtagId
+       order by z.zeitpunkt, b.eltern_email, z.art, t.startzeit
+      """;
+
+  /** Eine Nachricht ist eine Art an eine Adresse zu einem Zeitpunkt — alle ihre Buchungen teilen ihn. */
+  private static final String NICHT_ERREICHT_JE_SPRECHTAG =
+      "select t.sprechtag_id as sprechtag_id,"
+          + " count(distinct (z.art, b.eltern_email, z.zeitpunkt)) as anzahl"
+          + NICHT_ERREICHT
+          + " group by t.sprechtag_id";
 
   private final NamedParameterJdbcTemplate jdbc;
 
@@ -125,6 +167,7 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
         Map.of("ids", ids),
         (rs, zeile) ->
             new BelegZeile(
+                BuchungId.von(rs.getObject("buchung_id", UUID.class)),
                 rs.getObject("sprechtag_id", UUID.class),
                 rs.getTimestamp("startzeit").toLocalDateTime().toLocalTime(),
                 rs.getString("lehrkraft_name"),
@@ -137,9 +180,14 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
   }
 
   @Override
-  public List<String> aktiveElternAdressen(SprechtagId sprechtag) {
-    return jdbc.queryForList(
-        AKTIVE_ADRESSEN, Map.of("sprechtagId", sprechtag.wert()), String.class);
+  public List<Empfaenger> aktiveEmpfaenger(SprechtagId sprechtag) {
+    return jdbc.query(
+        AKTIVE_EMPFAENGER,
+        Map.of("sprechtagId", sprechtag.wert()),
+        (rs, zeile) ->
+            new Empfaenger(
+                BuchungId.von(rs.getObject("buchung_id", UUID.class)),
+                rs.getString("eltern_email")));
   }
 
   @Override
@@ -156,5 +204,31 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
         AKTIVE_UNERINNERTE_BUCHUNGEN,
         Map.of("sprechtagId", sprechtag.wert()),
         (rs, zeile) -> BuchungId.von(rs.getObject("buchung_id", UUID.class)));
+  }
+
+  @Override
+  public List<NichtErreichtZeile> nichtErreicht(SprechtagId sprechtag) {
+    return jdbc.query(
+        NICHT_ERREICHT_EINES_SPRECHTAGS,
+        Map.of("sprechtagId", sprechtag.wert()),
+        (rs, zeile) ->
+            new NichtErreichtZeile(
+                Mailart.valueOf(rs.getString("art")),
+                rs.getTimestamp("zeitpunkt").toLocalDateTime(),
+                rs.getString("eltern_email"),
+                rs.getString("eltern_name"),
+                rs.getString("schueler_name")));
+  }
+
+  @Override
+  public Map<UUID, Integer> nichtErreichtJeSprechtag() {
+    Map<UUID, Integer> anzahlen = new HashMap<>();
+    jdbc.query(
+        NICHT_ERREICHT_JE_SPRECHTAG,
+        Map.of(),
+        rs -> {
+          anzahlen.put(rs.getObject("sprechtag_id", UUID.class), rs.getInt("anzahl"));
+        });
+    return anzahlen;
   }
 }

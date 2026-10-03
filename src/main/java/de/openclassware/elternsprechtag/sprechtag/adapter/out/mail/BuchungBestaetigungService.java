@@ -4,12 +4,14 @@ import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
 import com.vaadin.flow.i18n.I18NProvider;
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
 import de.openclassware.elternsprechtag.sprechtag.adapter.out.mail.BenachrichtigungSender.Nachricht;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.Benachrichtigungen.Versand;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten.BelegZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.Anlass;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Zustellergebnis;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ import org.springframework.stereotype.Service;
  * {@link Nachricht} an den {@link BenachrichtigungSender}-Port — Spiegelbild zu
  * {@link AbsageBenachrichtigungService}. Die Mail ist ein reiner Beleg: Sie enthält keinerlei
  * Aktion, insbesondere keinen Storno-Link. Die Kernmethode ist synchron und ohne echtes SMTP
- * verifizierbar; ausgelöst wird sie nach Commit vom {@link BuchungBestaetigungListener}.
+ * verifizierbar; ausgelöst wird sie über {@link MailBenachrichtigungen}.
  */
 @RequiredArgsConstructor
 @Service
@@ -65,7 +67,9 @@ class BuchungBestaetigungService {
    * Bestätigt genau die Buchungen dieses Absendevorgangs mit <b>einer</b> Nachricht an die dort
    * hinterlegte Adresse. Eine leere Id-Liste oder durchweg unbekannte Ids führen zu keinem
    * Sende-Aufruf und zu keinem Fehler. Der Versand ist best-effort: scheitert der Sender, wird der
-   * Fehler per {@code log.warn} protokolliert — die Buchung bleibt gültig, es gibt kein Retry.
+   * Fehler per {@code log.warn} protokolliert und als {@link Zustellergebnis#FEHLGESCHLAGEN}
+   * gemeldet — die Buchung bleibt gültig, es gibt kein Retry. Ist der Sprechtag inzwischen
+   * verschwunden, entsteht gar keine Nachricht.
    * Betreff und Text stammen aus {@code vaadin-i18n/translations.properties} (direkt über den
    * {@link I18NProvider}, weil der Versand ohne Vaadin-{@code UI}-Kontext läuft), Datum und Uhrzeit
    * aus {@link Formats}.
@@ -80,22 +84,31 @@ class BuchungBestaetigungService {
    *
    * @param anlass wählt den Einstiegsbaustein — ein Umbuchen listet nur den einen geänderten
    *     Termin, nicht den vollständigen Vorgang, und der Standardtext würde hier in die Irre führen
+   * @return die eine Nachricht samt den Buchungen, die sie trug — oder nichts, wenn keine entstand
    */
-  public void bestaetige(List<BuchungId> buchungIds, Anlass anlass) {
+  public List<Versand> bestaetige(List<BuchungId> buchungIds, Anlass anlass) {
     if (buchungIds == null || buchungIds.isEmpty()) {
-      return;
+      return List.of();
     }
     // Die Query sortiert bereits nach Startzeit; die Mail listet damit chronologisch.
     List<BelegZeile> zeilen = buchungsAnsichten.belege(buchungIds);
     if (zeilen.isEmpty()) {
       // Unbekannte Ids (etwa nach zwischenzeitlicher Löschung): nichts zu bestätigen, kein Fehler.
-      return;
+      return List.of();
+    }
+    BelegZeile erste = zeilen.get(0);
+    Optional<SprechtagAnsichten.Kopf> kopf =
+        sprechtagAnsichten.kopf(SprechtagId.von(erste.sprechtagId()));
+    if (kopf.isEmpty()) {
+      log.warn(
+          "Buchungsbestätigung an {} übersprungen: Sprechtag nicht mehr gefunden",
+          erste.elternEmail());
+      return List.of();
     }
 
-    // Empfänger vorab, damit ein Fehler beim Formulieren die Adresse trotzdem protokollieren kann.
-    String empfaenger = zeilen.get(0).elternEmail();
+    List<BuchungId> buchungen = zeilen.stream().map(BelegZeile::buchung).toList();
     try {
-      Bestaetigung bestaetigung = zuBestaetigung(zeilen);
+      Bestaetigung bestaetigung = zuBestaetigung(zeilen, kopf.get());
       String betreff =
           i18n.getTranslation(
               "buchung.mail.subject",
@@ -103,11 +116,13 @@ class BuchungBestaetigungService {
               bestaetigung.sprechtagTitel(),
               Formats.dateLong(bestaetigung.datum()));
       sender.sende(new Nachricht(bestaetigung.empfaenger(), betreff, baueText(bestaetigung, anlass)));
+      return List.of(new Versand(buchungen, Zustellergebnis.ABGESCHICKT));
     } catch (RuntimeException e) {
       // Best-effort: Weder ein Zustellproblem noch ein Fehler beim Formulieren (fehlender
-      // Textbaustein, verschwundener Sprechtag) darf die festgeschriebene Buchung entwerten oder
-      // als unbehandelte Ausnahme aus dem @Async-Thread entkommen.
-      log.warn("Buchungsbestätigung an {} fehlgeschlagen: {}", empfaenger, e.getMessage());
+      // Textbaustein) darf die festgeschriebene Buchung entwerten oder als unbehandelte Ausnahme
+      // aus dem @Async-Thread entkommen. Die Familie hat die Bestätigung aber nicht bekommen.
+      log.warn("Buchungsbestätigung an {} fehlgeschlagen: {}", erste.elternEmail(), e.getMessage());
+      return List.of(new Versand(buchungen, Zustellergebnis.FEHLGESCHLAGEN));
     }
   }
 
@@ -116,14 +131,8 @@ class BuchungBestaetigungService {
    * Adresse, Kind und Sprechtag; abgeleitet werden sie aus der ersten Zeile. Der Kopf kommt aus
    * einem zweiten Port — kein Join über die Grenze der Aggregate.
    */
-  private Bestaetigung zuBestaetigung(List<BelegZeile> zeilen) {
+  private Bestaetigung zuBestaetigung(List<BelegZeile> zeilen, SprechtagAnsichten.Kopf kopf) {
     BelegZeile erste = zeilen.get(0);
-    Optional<SprechtagAnsichten.Kopf> kopf =
-        sprechtagAnsichten.kopf(SprechtagId.von(erste.sprechtagId()));
-    if (kopf.isEmpty()) {
-      throw new IllegalStateException("Sprechtag zur Buchung nicht gefunden: " + erste.sprechtagId());
-    }
-
     List<TerminPosition> termine = new ArrayList<>();
     for (BelegZeile zeile : zeilen) {
       termine.add(
@@ -132,10 +141,10 @@ class BuchungBestaetigungService {
 
     return new Bestaetigung(
         erste.elternEmail(),
-        kopf.get().titel(),
-        kopf.get().datum(),
-        kopf.get().ort(),
-        kopf.get().schulkontakt(),
+        kopf.titel(),
+        kopf.datum(),
+        kopf.ort(),
+        kopf.schulkontakt(),
         erste.schuelerName(),
         erste.klasse(),
         termine);

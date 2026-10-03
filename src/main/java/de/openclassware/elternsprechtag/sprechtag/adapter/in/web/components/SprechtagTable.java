@@ -8,6 +8,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.router.RouterLink;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.Datenfrist;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht.SprechtagZeile;
@@ -130,7 +131,26 @@ public class SprechtagTable extends Div {
       title.add(createDatenfrist(sprechtag.datenfrist()));
     }
 
+    if (sprechtag.nichtErreicht() > 0) {
+      title.add(createNichtErreicht(sprechtag));
+    }
+
     return title;
+  }
+
+  /**
+   * Der Hinweis auf Nachrichten, die ihre Familie nicht erreicht haben (Issue #110) — ruhig wie die
+   * Datenfrist, aber ein Link: Die Liste zum Abtelefonieren steht in der Auswertung.
+   */
+  private Component createNichtErreicht(SprechtagZeile sprechtag) {
+    String text =
+        sprechtag.nichtErreicht() == 1
+            ? getTranslation("manage-sprechtag.nicht-erreicht.one")
+            : getTranslation("manage-sprechtag.nicht-erreicht.other", sprechtag.nichtErreicht());
+    RouterLink link = new RouterLink(AuswertungView.class, sprechtag.id().toString());
+    link.addClassName("sprechtag-table__nicht-erreicht");
+    link.add(VaadinIcon.ENVELOPE_O.create(), new Span(text));
+    return link;
   }
 
   /**

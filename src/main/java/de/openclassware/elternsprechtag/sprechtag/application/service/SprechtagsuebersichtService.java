@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagsuebersicht;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Klassen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Klassen.KlasseDaten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 class SprechtagsuebersichtService implements Sprechtagsuebersicht {
 
   private final SprechtagAnsichten ansichten;
+  private final BuchungsAnsichten buchungsAnsichten;
   private final Klassen klassen;
   private final Aufbewahrungsfrist frist;
 
@@ -44,6 +46,8 @@ class SprechtagsuebersichtService implements Sprechtagsuebersicht {
     for (KlasseDaten klasse : klassen.alle()) {
       namen.put(klasse.id(), klasse.name());
     }
+
+    Map<UUID, Integer> nichtErreicht = buchungsAnsichten.nichtErreichtJeSprechtag();
 
     List<SprechtagZeile> zeilen = new ArrayList<>();
     for (SprechtagAnsichten.SprechtagZeile roh : ansichten.alle()) {
@@ -63,7 +67,8 @@ class SprechtagsuebersichtService implements Sprechtagsuebersicht {
                   .filter(eintrag -> roh.klasseIds().contains(eintrag.getKey()))
                   .map(Map.Entry::getValue)
                   .toList(),
-              datenfrist(roh)));
+              datenfrist(roh),
+              nichtErreicht.getOrDefault(roh.id(), 0)));
     }
     return zeilen;
   }

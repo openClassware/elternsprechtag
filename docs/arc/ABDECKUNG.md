@@ -253,13 +253,16 @@ in Phase 3.
 | Erinnerung vor dem Sprechtag | Eltern | automatischer Versand zum gewählten Vorlauf | muss | **erfüllt** (#105, #107) — Zweckerweiterung in [ADR 0006](../adr/0006-zweckerweiterung-eltern-email-erinnerung.md); `ErinnerungsScheduler` läuft täglich (`elternsprechtag.scheduler.erinnerung-cron`, Default 7 Uhr) und ruft `Erinnern.erinnere`. Verfallen statt nachholen (`ErinnerungsVorlauf.istFaelligAm`), ein Zeitstempel an der `Buchung` (V8) verhindert Doppelversand, jede Buchung wird in eigener Transaktion markiert |
 | Erinnerungszeitpunkt wählbar | Organizer | Auswahl fester Optionen am `Sprechtag`, auch nach dem Veröffentlichen änderbar | muss | **erfüllt** (#106) — `ErinnerungsVorlauf` (keine · 1 · 2 · 3 Tage vorher), Pflichtfeld im Formular; nicht Teil der Zeitstruktur, bleibt also nach dem Veröffentlichen änderbar und wirkt ab dem nächsten Lauf |
 | Keine Erinnerung für abgesagten Sprechtag oder stornierte Buchung | Eltern | Versand überspringt sie | muss | **erfüllt** — Kandidaten sind nur veröffentlichte Sprechtage mit gesetztem Vorlauf und deren aktive, noch nicht erinnerte Buchungen; am `Termin` wird vor dem Markieren erneut geprüft |
-| E-Mail-Versand schlägt fehl, niemand erfährt es | Organizer | Liste der nicht erreichten Familien in der Auswertung | muss | fehlt (#110) — best-effort mit `log.warn` je Adresse in allen vier Mailwegen (Absage, Ausfall, Bestätigung, Erinnerung), `@Async` nach Commit, die UI erfährt nichts |
+| E-Mail-Versand schlägt fehl, niemand erfährt es | Organizer | Liste der nicht erreichten Familien in der Auswertung | muss | **erfüllt** (#110) — alle vier Mailwege (Bestätigung, Erinnerung, Absage, Ausfall) melden je Nachricht die getragenen Buchungen und den Ausgang; der Use Case `Benachrichtigen` hält ihn als `Zustellung` zur Buchung fest (je Buchung und Art eine Zeile, V12). Block „Nicht erreicht (n)" oben in der Auswertung, je gescheiterter Nachricht ein Eintrag mit Kind(ern), Eltern, Adresse, Art und Zeitpunkt — unabhängig von „Stornierte anzeigen". Dazu ein Hinweis „n Nachrichten nicht zugestellt" in der Sprechtag-Liste, der in die Auswertung führt. Sichtbar ist ein Fehlschlag an einer aktiven Buchung oder als Ausfall-Nachricht, nie an einer anonymisierten |
+| Fehlschlag, der nie einen Ausgang bekommt | Organizer | — | darf fehlen | Ein Neustart zwischen Commit und Versand hinterlässt keine `Zustellung`; die Familie fehlt dann in der Liste. Das Fenster ist Sekunden lang. Ein vorab geschriebenes „ausstehend" schriebe in jeder auslösenden Transaktion ein zweites Aggregat mit ([ADR 0005](../adr/0005-eltern-submit-bricht-eine-transaktion-ein-aggregat.md)) |
+| Eintrag „nicht erreicht" als erledigt abhaken | Organizer | — | darf fehlen | Die Liste leitet sich ab und ist kurz; das Sekretariat arbeitet sie in einem Zug ab. Neu bewerten, wenn sie in der Praxis lang wird |
+| Gescheiterte Nachricht erneut senden | Organizer | — | darf fehlen | weder Knopf noch automatischer Wiederholversuch. Ein zweiter Versandweg aus gespeicherten Buchungen hätte eigene Fragen (Verfall der Erinnerung, Neuaufbau der Ausfall-Mail) |
 | Tippfehler in der Adresse beim Erfassen | Eltern | zweite Eingabe „E-Mail wiederholen" | muss | **erfüllt** (#111) — in beiden Buchungsstrecken, Eltern wie Organizer: zweites Feld „E-Mail-Adresse wiederholen" neben der Adresse, verglichen nach `trim()` ohne Unterschied der Schreibung (`EmailWiederholung`, Vaadin-frei). Die Abweichung meldet das Feld nach dem ersten Verlassen, der Footer nennt sie sofort, gebucht wird erst bei Übereinstimmung. Paste bleibt erlaubt; der Stellvertreter-Schalter blendet die Wiederholung aus. Gespeichert wird nur die erste Eingabe |
 | Einzelnen Termin verschieben, Buchung behalten | Organizer | Umbuchen in einem Zug, neue Bestätigungsmail | muss | **erfüllt** (#104) — `Umbuchen` aus Phase 3; Familie, Notiz und Buchungsziel wandern in die neue Buchung, die Angaben der alten fallen. Genau eine Mail mit dem Anlass `UMBUCHUNG`, die die Änderung benennt |
 | Elternlink nach der Absage | Eltern | Hinweis „abgesagt" plus Datum und Schulkontakt, keine Buchungsauskunft | muss | **erfüllt** (#131) — `Zugangsstand.ABGESAGT` hat Vorrang vor allen anderen Ständen und bleibt auch nach dem Datum stehen: Ein abgesagter Sprechtag wird nie abgeschlossen. Die Seite „Dieser Elternsprechtag wurde abgesagt" hat denselben Aufbau wie „Anmeldung beendet" — Titel, Datum, Uhrzeit und der Schulkontakt als Hauptaussage, ohne Ort (`ElternsprechtagPresenter.Hinweisseite`) |
 | Absage-Dialog nennt die Zahl der Betroffenen | Organizer | Zahl vor dem Bestätigen | muss | **erfüllt** — `Absagen.zaehleBetroffeneEltern`, je Adresse einmal gezählt |
 | Absage ohne jede Buchung | Organizer | kein Versand, kein Fehler | muss | **erfüllt** — `benachrichtige` steigt bei leerer Adressliste aus |
-| Versand rollt die Absage zurück | Organizer | kann nicht passieren | muss | **erfüllt** — `AFTER_COMMIT` im `AbsageBenachrichtigungListener` |
+| Versand rollt die Absage zurück | Organizer | kann nicht passieren | muss | **erfüllt** — `AFTER_COMMIT` im `BenachrichtigungListener` (`adapter/in/event`) |
 | Sprechtag wird verschoben statt abgesagt | Organizer | — | darf fehlen | kein Weg; `startDate`/`startTime` nach Phase 2 gesperrt. Weg drumherum: absagen → `duplicate` → neu veröffentlichen |
 | Bounce der Absage- oder Bestätigungsmail auswerten | Organizer | — | darf fehlen | fehlt; `JavaMailSender.send` meldet nur die sofortige SMTP-Ablehnung |
 | Ort ändert sich kurzfristig | Eltern | — | darf fehlen | `location` bleibt änderbar; die Buchungsseite zeigt den aktuellen Stand, eine Nachricht geht nicht raus |
@@ -311,11 +314,22 @@ Phase 2, gehört fachlich aber hierher.
 einer Logdatei steht, dass 3 von 20 Familien nichts erfahren haben. Phase 3 hat die Kette zusätzlich
 belastet: Familien ohne eigene Adresse bekommen die Stellvertreteradresse der Schule — diese letzte
 Meile kann das Sekretariat nur gehen, wenn es weiß, wen es anrufen muss. Also ein **Zustellzustand
-an der `Buchung`** und eine Liste „nicht erreicht" in der Auswertung. Der Weg drumherum (Blick ins
+zur `Buchung`** und eine Liste „nicht erreicht" in der Auswertung. Der Weg drumherum (Blick ins
 Log) scheidet aus, weil er den Betreiber voraussetzt, nicht die Schule. Preis: Das ist der erste
-Fall, in dem der Versand **zurückschreibt** — der Lauf ist heute `readOnly`, die Naht „nach Commit,
-asynchron" braucht eine eigene Transaktion. Derselbe Zustand trägt zugleich die Einzelabsage und den
-Zeitstempel der Erinnerung.
+Fall, in dem der Versand **zurückschreibt** — die Naht „nach Commit, asynchron" braucht eine eigene
+Transaktion.
+
+Umgesetzt (#110) als **eigenes Aggregat `Zustellung`**, nicht als Feld im `Termin`: Der Vermerk
+kommt asynchron, genau dann, wenn der Organizer am selben Termin weiterarbeitet; im Termin hübe er
+dessen Version und kostete im Konfliktfall die Aktion oder den Vermerk — für einen Stand ohne
+Invariante. Aus demselben Grund hat die Tabelle **keinen Fremdschlüssel** auf `buchungen`: Spring
+Data JDBC schreibt die Buchungen bei jedem Speichern des Termins neu, ein Kaskadenlöschen nähme die
+Zustellungen jedes Mal mit. Die Erinnerung behält ihren Zeitstempel an der `Buchung` — er ist die
+*Vormerkung* gegen Doppelversand, gesetzt vor dem Versand; ihr Ausgang steht in der `Zustellung`. Die
+Liste gliedert je Nachricht und Adresse, nicht je Lehrkraft, und nennt die Adresse — nur hier und nur
+für Gescheiterte, weil ein Tippfehler darin der häufigste Grund ist. Mehrere Familien an der
+Stellvertreteradresse erscheinen als ein Eintrag mit allen Namen; sie in der Mail selbst zu nennen,
+bleibt #148.
 
 **Adressprüfung, dreifach gestaffelt.** Technische Vorbemerkung: `JavaMailSender.send` meldet nur die
 **sofortige SMTP-Ablehnung**; der typische Fehlschlag kommt als Bounce Minuten später an den Absender

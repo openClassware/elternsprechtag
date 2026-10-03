@@ -1,10 +1,12 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.out;
 
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Mailart;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -28,12 +30,13 @@ public interface BuchungsAnsichten {
   List<BelegZeile> belege(List<BuchungId> buchungen);
 
   /**
-   * Die (deduplizierten) Eltern-Adressen mit aktiver Buchung an diesem Sprechtag — die Empfänger
-   * einer Absage.
+   * Die aktiven Buchungen dieses Sprechtags mit ihrer Eltern-Adresse — die Empfänger einer Absage.
+   * Je Buchung eine Zeile, nicht je Adresse: Der Versand bündelt selbst und muss wissen, welche
+   * Buchungen eine Nachricht trägt (Issue #110).
    */
-  List<String> aktiveElternAdressen(SprechtagId sprechtag);
+  List<Empfaenger> aktiveEmpfaenger(SprechtagId sprechtag);
 
-  /** Wie viele Adressen {@link #aktiveElternAdressen(SprechtagId)} liefern würde. */
+  /** Wie viele verschiedene Adressen {@link #aktiveEmpfaenger(SprechtagId)} liefern würde. */
   long zaehleAktiveElternAdressen(SprechtagId sprechtag);
 
   /**
@@ -43,6 +46,20 @@ public interface BuchungsAnsichten {
    * Aggregat über {@code Termin.erinnereBuchung}.
    */
   List<BuchungId> aktiveUnerinnerteBuchungen(SprechtagId sprechtag);
+
+  /**
+   * Die Buchungen dieses Sprechtags, deren Familie eine Nachricht nicht bekommen hat (Issue #110) —
+   * je Buchung und Art eine Zeile, nach Zeitpunkt sortiert. Zur Liste gehört eine fehlgeschlagene
+   * Zustellung nur, solange sie noch jemanden betrifft: an einer aktiven Buchung oder als
+   * Ausfall-Nachricht (deren Buchung eben dadurch entfallen ist), und nie an einer anonymisierten.
+   */
+  List<NichtErreichtZeile> nichtErreicht(SprechtagId sprechtag);
+
+  /**
+   * Je Sprechtag, wie viele Nachrichten {@link #nichtErreicht(SprechtagId)} umfasst — gezählt je
+   * Nachricht, nicht je Buchung. Sprechtage ohne solche Nachricht fehlen in der Map.
+   */
+  Map<UUID, Integer> nichtErreichtJeSprechtag();
 
   /**
    * Eine Zeile des Terminplans einer Lehrkraft. {@code notiz} und {@code anonymisiertAm} dürfen
@@ -72,9 +89,11 @@ public interface BuchungsAnsichten {
 
   /**
    * Eine Zeile für den Buchungsbeleg. Trägt die Sprechtag-Id mit, damit der Versand die Kopfdaten
-   * über den Sprechtag-Port holt statt über einen Join. {@code notiz} darf {@code null} sein.
+   * über den Sprechtag-Port holt statt über einen Join, und die Buchungs-Id, damit er melden kann,
+   * welche Buchungen eine Nachricht trug. {@code notiz} darf {@code null} sein.
    */
   record BelegZeile(
+      BuchungId buchung,
       UUID sprechtagId,
       LocalTime zeit,
       String lehrkraftName,
@@ -84,4 +103,18 @@ public interface BuchungsAnsichten {
       String schuelerName,
       String elternEmail,
       String klasse) {}
+
+  /** Eine aktive Buchung und die Adresse, an die ihre Absage geht. */
+  record Empfaenger(BuchungId buchung, String elternEmail) {}
+
+  /**
+   * Eine Buchung, deren Familie die Nachricht dieser Art nicht bekommen hat. Alle Buchungen einer
+   * Nachricht teilen Art, Zeitpunkt und Adresse.
+   */
+  record NichtErreichtZeile(
+      Mailart art,
+      LocalDateTime zeitpunkt,
+      String elternEmail,
+      String elternName,
+      String schuelerName) {}
 }
