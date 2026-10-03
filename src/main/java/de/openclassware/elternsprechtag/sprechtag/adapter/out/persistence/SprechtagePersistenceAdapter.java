@@ -31,4 +31,11 @@ class SprechtagePersistenceAdapter implements Sprechtage {
     // Organizer-Fenster, die denselben Sprechtag gleichzeitig geändert haben.
     zeilen.save(SprechtagMapper.zuZeile(sprechtag));
   }
+
+  @Override
+  public void entferne(Sprechtag sprechtag) {
+    // delete(entity) statt deleteById: Nur so prüft Spring Data JDBC die Version mit und wirft
+    // OptimisticLockingFailureException, wenn der Sprechtag inzwischen veröffentlicht wurde.
+    zeilen.delete(SprechtagMapper.zuZeile(sprechtag));
+  }
 }

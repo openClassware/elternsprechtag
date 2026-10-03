@@ -16,6 +16,8 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtags
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagAbgesagt;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagHatBuchungenException;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtLoeschbarException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagVeroeffentlicht;
 import de.openclassware.elternsprechtag.sprechtag.domain.StatusuebergangException;
@@ -370,6 +372,66 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
     assertThatThrownBy(() -> zurueckAufEntwurf.nimmZurueck(id))
         .isInstanceOf(SprechtagHatBuchungenException.class);
+  }
+
+  // --- Löschen (#132) -------------------------------------------------------------------------
+
+  @Test
+  void loeschen_entferntDenEntwurf() {
+    UUID klasse = persistKlasse("5a");
+    UUID id = anlegen.lege(formular("Fehlgriff", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse));
+
+    loeschen.loesche(id);
+
+    assertThat(sprechtage.lade(SprechtagId.von(id))).isEmpty();
+    assertThat(sprechtagsuebersicht.alle()).isEmpty();
+  }
+
+  /** Der Rückweg zum Entwurf hat die Termine schon verworfen — nichts hält das Löschen auf. */
+  @Test
+  void loeschen_einesZurueckgenommenenEntwurfs_gelingt() {
+    UUID klasse = klasseMitLehrkraft("5a");
+    Sprechtag sprechtag =
+        persistSprechtag(
+            "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatus.ENTWURF, klasse);
+    UUID id = sprechtag.id().wert();
+    veroeffentlichen.veroeffentliche(id);
+    zurueckAufEntwurf.nimmZurueck(id);
+
+    loeschen.loesche(id);
+
+    assertThat(sprechtage.lade(sprechtag.id())).isEmpty();
+  }
+
+  /** Ein veröffentlichter Sprechtag wird abgesagt, nicht gelöscht — Termine und Status bleiben. */
+  @Test
+  void loeschen_einesVeroeffentlichten_wirdAbgewiesen() {
+    UUID klasse = klasseMitLehrkraft("5a");
+    Sprechtag sprechtag =
+        persistSprechtag(
+            "Frühling", DATUM, LocalTime.of(14, 0), LocalTime.of(15, 0), 15,
+            SprechtagStatus.ENTWURF, klasse);
+    UUID id = sprechtag.id().wert();
+    veroeffentlichen.veroeffentliche(id);
+
+    assertThatThrownBy(() -> loeschen.loesche(id))
+        .isInstanceOf(SprechtagNichtLoeschbarException.class);
+
+    assertThat(ladeSprechtag(id).status()).isEqualTo(SprechtagStatus.VEROEFFENTLICHT);
+    assertThat(alleTermine()).as("nichts verworfen").hasSize(4);
+  }
+
+  /** Doppelklick oder zweiter Tab: Was schon weg ist, ist kein Fehler. */
+  @Test
+  void loeschen_einesUnbekanntenSprechtags_istKeinFehler() {
+    UUID klasse = persistKlasse("5a");
+    UUID id = anlegen.lege(formular("Fehlgriff", LocalTime.of(14, 0), LocalTime.of(15, 0), 15, klasse));
+    loeschen.loesche(id);
+
+    loeschen.loesche(id);
+
+    assertThat(sprechtage.lade(SprechtagId.von(id))).isEmpty();
   }
 
   // --- Duplizieren und Read-Modelle -----------------------------------------------------------

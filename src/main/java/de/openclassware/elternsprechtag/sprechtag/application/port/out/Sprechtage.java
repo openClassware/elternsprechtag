@@ -31,4 +31,14 @@ public interface Sprechtage {
    *     Laden verändert wurde
    */
   void speichere(Sprechtag sprechtag);
+
+  /**
+   * Entfernt das ganze Aggregat — nur für den Entwurf, ob er einer ist, entscheidet vorher das
+   * Aggregat. Wie {@link #speichere} gegen die geladene Version geprüft: Was seit dem Laden
+   * veröffentlicht oder geändert wurde, bleibt stehen.
+   *
+   * @throws org.springframework.dao.OptimisticLockingFailureException wenn der Sprechtag seit dem
+   *     Laden verändert oder entfernt wurde
+   */
+  void entferne(Sprechtag sprechtag);
 }

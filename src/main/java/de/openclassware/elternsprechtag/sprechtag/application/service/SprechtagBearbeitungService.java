@@ -3,19 +3,23 @@ package de.openclassware.elternsprechtag.sprechtag.application.service;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Anlegen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Bearbeiten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Duplizieren;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Loeschen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.SprechtagFormular;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Veroeffentlichen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Sprechtage;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtLoeschbarException;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Anlegen, Bearbeiten und Duplizieren eines Sprechtags — die Schreibseite des Bearbeiten-Formulars.
+ * Anlegen, Bearbeiten und Duplizieren eines Sprechtags — die Schreibseite des Bearbeiten-Formulars
+ * —, dazu das Löschen, mit dem ein versehentlich angelegter Entwurf wieder verschwindet (#132).
  *
  * <p>Hier steht <b>keine</b> Regel darüber, was sich noch ändern lässt: Der Service reicht das
  * Formular an das Aggregat weiter und lässt es entscheiden. Genau daran lag es, dass Zeitfenster,
@@ -28,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @RequiredArgsConstructor
 @Service
-class SprechtagBearbeitungService implements Anlegen, Bearbeiten, Duplizieren {
+class SprechtagBearbeitungService implements Anlegen, Bearbeiten, Duplizieren, Loeschen {
 
   private final Sprechtage sprechtage;
   private final Veroeffentlichen veroeffentlichen;
@@ -89,6 +93,27 @@ class SprechtagBearbeitungService implements Anlegen, Bearbeiten, Duplizieren {
     Sprechtag kopie = lade(id).dupliziere();
     sprechtage.speichere(kopie);
     return kopie.id().wert();
+  }
+
+  @Override
+  @Transactional
+  public void loesche(UUID id) {
+    Optional<Sprechtag> geladen = sprechtage.lade(SprechtagId.von(id));
+    if (geladen.isEmpty()) {
+      // Ein zweiter Tab oder ein Doppelklick war schneller — der Entwurf ist weg, wie gewollt.
+      return;
+    }
+    Sprechtag sprechtag = geladen.get();
+    sprechtag.verlangeLoeschbar();
+    try {
+      sprechtage.entferne(sprechtag);
+    } catch (OptimisticLockingFailureException konflikt) {
+      // Zwischen Laden und Entfernen hat ein anderes Fenster den Sprechtag verändert — vielleicht
+      // veröffentlicht. Fachlich derselbe Fall wie der veraltete Menüeintrag, nur einen Takt später
+      // bemerkt; gelöscht wird nichts, was der Organizer so nicht vor Augen hatte.
+      throw new SprechtagNichtLoeschbarException(
+          "Sprechtag wurde soeben von anderer Stelle verändert: " + id);
+    }
   }
 
   private Sprechtag lade(UUID id) {

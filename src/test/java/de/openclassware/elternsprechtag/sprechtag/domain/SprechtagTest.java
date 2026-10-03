@@ -729,6 +729,46 @@ class SprechtagTest {
     }
   }
 
+  /** `ABDECKUNG.md`, Phase 6 — Löschen räumt Fehlgriffe auf, es lässt keine Belege verschwinden. */
+  @Nested
+  class Loeschen {
+
+    @Test
+    void einEntwurfLaesstSichLoeschen() {
+      assertThatCode(() -> entwurf().verlangeLoeschbar()).doesNotThrowAnyException();
+    }
+
+    /** Der Rückweg gelingt nur ohne Buchung — danach ist er ein Entwurf wie jeder andere. */
+    @Test
+    void einZurueckgenommenerEntwurfLaesstSichLoeschen() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.nimmVeroeffentlichungZurueck(false);
+
+      assertThatCode(sprechtag::verlangeLoeschbar).doesNotThrowAnyException();
+    }
+
+    @Test
+    void einVeroeffentlichterSprechtagWirdNichtGeloescht() {
+      assertThatThrownBy(() -> veroeffentlicht().verlangeLoeschbar())
+          .isInstanceOf(SprechtagNichtLoeschbarException.class);
+    }
+
+    @Test
+    void einAbgesagterSprechtagWirdNichtGeloescht() {
+      Sprechtag sprechtag = veroeffentlicht();
+      sprechtag.sageAb();
+
+      assertThatThrownBy(sprechtag::verlangeLoeschbar)
+          .isInstanceOf(SprechtagNichtLoeschbarException.class);
+    }
+
+    @Test
+    void einAbgeschlossenerSprechtagWirdNichtGeloescht() {
+      assertThatThrownBy(() -> abgeschlossen().verlangeLoeschbar())
+          .isInstanceOf(SprechtagNichtLoeschbarException.class);
+    }
+  }
+
   @Nested
   class Werte {
 

@@ -14,6 +14,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtags
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Breadcrumb;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.CancelSprechtagDialog;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.DeleteSprechtagDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.ShareLinkDialog;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.SprechtagFilterBar;
 import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.SprechtagTable;
@@ -43,7 +44,8 @@ public class ManageSprechtagView extends Div {
     this.sprechtage = presenter.findAllSprechtage();
     addClassName("manage-sprechtag-view");
     this.table =
-        new SprechtagTable(sprechtage, this::onStatusChange, this::onDuplicate, this::onShare);
+        new SprechtagTable(
+            sprechtage, this::onStatusChange, this::onDuplicate, this::onShare, this::onDelete);
     this.search = createSearch();
     this.filterBar = new SprechtagFilterBar(sprechtage, statusFilter, this::onStatusSelected);
     this.filterRow = createFilterRow();
@@ -118,6 +120,15 @@ public class ManageSprechtagView extends Div {
   private void onDuplicate(SprechtagZeile sprechtag) {
     UUID copyId = presenter.duplicate(sprechtag.id());
     getUI().ifPresent(ui -> ui.navigate(EditSprechtagView.ROUTE + "/" + copyId));
+  }
+
+  private void onDelete(SprechtagZeile sprechtag) {
+    new DeleteSprechtagDialog(sprechtag.titel(), () -> applyDelete(sprechtag)).open();
+  }
+
+  private void applyDelete(SprechtagZeile sprechtag) {
+    presenter.loesche(sprechtag.id()).forEach(meldung -> SprechtagMeldungen.zeige(this, meldung));
+    reload();
   }
 
   private void onShare(SprechtagZeile sprechtag) {

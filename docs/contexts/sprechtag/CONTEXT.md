@@ -56,6 +56,10 @@ vom Aufrufer:
 | `ABGESCHLOSSEN`  | Vorbei — festgestellt vom Tagesjob nach der Endzeit, nie von Hand; Endzustand |
 | `ABGESAGT`       | Findet nicht statt; Endzustand, löst die Absage-Benachrichtigung aus       |
 
+**Gelöscht** wird nur ein Entwurf — eine Aufräumfunktion für Fehlgriffe, kein Status (#132). Ein
+Entwurf trägt nie Termine und nie Buchungen; alles ab `VEROEFFENTLICHT` wird abgesagt oder
+abgeschlossen und bleibt als Auslastung stehen.
+
 Sprachgebrauch: **Sprechtag** ist der Fachbegriff im Modell, **Elternsprechtag** der Produktname
 (und der Name der Eltern-Ansicht). Im Code und in Issues bitte **Sprechtag**.
 
@@ -120,7 +124,8 @@ Nicht „Deadline".
   oder, nach dem Lauf, der Tag von `anonymisiertAm`. Das Datum stimmt, weil der Lauf **nachts**
   läuft, vor der Uhrzeit, zu der ein Sprechtag endet.
 
-Sprachgebrauch: **anonymisieren**, nicht „löschen" — es verschwindet kein Datensatz.
+Sprachgebrauch: **anonymisieren**, nicht „löschen" — es verschwindet kein Datensatz. „Löschen"
+heißt allein das Entfernen eines Entwurfs (siehe Sprechtag).
 
 ### Schulkontakt
 
