@@ -16,6 +16,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffen
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
 import de.openclassware.elternsprechtag.sprechtag.domain.TerminId;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -49,20 +50,27 @@ class EntfallenLassenService implements EntfallenLassen {
 
   @Override
   @Transactional(readOnly = true)
-  public List<SlotZeile> slots(UUID sprechtagId, UUID lehrkraftId) {
-    return terminAnsichten
-        .ausfallSlots(SprechtagId.von(sprechtagId), LehrkraftId.von(lehrkraftId))
-        .stream()
-        .map(
-            zeile ->
-                new SlotZeile(
-                    zeile.terminId(),
-                    zeile.zeit(),
-                    zuSlotZustand(zeile.zustand()),
-                    zeile.schuelerName(),
-                    zeile.elternName(),
-                    zeile.familienSchluessel()))
-        .toList();
+  public Angebot angebot(UUID sprechtagId, UUID lehrkraftId) {
+    SprechtagId id = SprechtagId.von(sprechtagId);
+    List<SlotZeile> slots =
+        terminAnsichten.ausfallSlots(id, LehrkraftId.von(lehrkraftId)).stream()
+            .map(
+                zeile ->
+                    new SlotZeile(
+                        zeile.terminId(),
+                        zeile.zeit(),
+                        zuSlotZustand(zeile.zustand()),
+                        zeile.schuelerName(),
+                        zeile.elternName(),
+                        zeile.familienSchluessel()))
+            .toList();
+    // Dieselbe Frage wie beim Entfallenlassen, nur als Vorschau: Sie darf bis zum Klick veralten.
+    boolean nachbuchbar =
+        sprechtage
+            .lade(id)
+            .map(sprechtag -> sprechtag.nimmtElternbuchungenAn(LocalDateTime.now()))
+            .orElse(false);
+    return new Angebot(slots, nachbuchbar);
   }
 
   private static SlotZustand zuSlotZustand(TerminAnsichten.AusfallSlotZustand zustand) {
@@ -100,6 +108,9 @@ class EntfallenLassenService implements EntfallenLassen {
       throw new SprechtagNichtVeroeffentlichtException(
           "Ausfall nur an einem veröffentlichten Sprechtag, nicht bei " + sprechtag.status());
     }
+    // Entschieden beim Schreiben, nicht beim Versand: Ob die Mail den Elternlink trägt, hängt am
+    // Stand im Moment des Ausfalls (Issue #109). Die Regel selbst kennt allein das Aggregat.
+    boolean nachbuchbar = sprechtag.nimmtElternbuchungenAn(LocalDateTime.now());
 
     int entfalleneTermine = 0;
     List<BuchungId> stornierteBuchungen = new ArrayList<>();
@@ -123,7 +134,7 @@ class EntfallenLassenService implements EntfallenLassen {
                   .map(BelegZeile::elternEmail)
                   .distinct()
                   .count();
-      ereignisse.veroeffentliche(new AusfallErfasst(stornierteBuchungen));
+      ereignisse.veroeffentliche(new AusfallErfasst(stornierteBuchungen, nachbuchbar));
     }
     return new Ergebnis(entfalleneTermine, benachrichtigteAdressen);
   }

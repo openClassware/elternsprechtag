@@ -8,6 +8,7 @@ import de.openclassware.elternsprechtag.sprechtag.ServiceTest;
 import de.openclassware.elternsprechtag.sprechtag.adapter.out.mail.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
+import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
@@ -103,6 +104,44 @@ class AusfallVersandIntegrationTest extends AbstractServiceTest {
     assertThat(nachricht.betreff()).contains("Frühling");
     assertThat(nachricht.text())
         .contains("14:00", "Anna Berg", "Deutsch", "Karl Kind", "5a", "Gesamtschule Lindenhof");
+  }
+
+  /** Issue #109: Vor dem Anmeldeschluss führt die Mail über den Elternlink zurück in die Buchung. */
+  @Test
+  void vorDemAnmeldeschluss_traegtDieMailDenElternlink() {
+    Fixture f = veroeffentlichterSprechtag();
+    Termin termin = alleTermine().get(0);
+    buche(f.lehrauftrag(), "eltern@example.com", termin);
+    sender.reset();
+
+    entfallenLassen.entfallenLassen(List.of(termin.id().wert()));
+
+    String link =
+        "https://elternsprechtag.test/elternsprechtag/" + f.sprechtag().accessToken().wert();
+    assertThat(sender.empfangen.get(0).text())
+        .contains("selbst einen neuen Termin buchen:\n" + link + "\n\n")
+        .contains(SCHULKONTAKT);
+  }
+
+  /**
+   * Issue #109: Nach dem Anmeldeschluss führte der Link auf „Anmeldung beendet" — die Mail bleibt
+   * beim Verweis auf die Schule.
+   */
+  @Test
+  void nachDemAnmeldeschluss_bleibtDieMailOhneLink() {
+    Fixture f = veroeffentlichterSprechtag();
+    Termin termin = alleTermine().get(0);
+    buche(f.lehrauftrag(), "eltern@example.com", termin);
+    Sprechtag geladen = ladeSprechtag(f.sprechtag().id().wert());
+    geladen.aendereAnmeldefrist(Anmeldefrist.vonTagen(Anmeldefrist.HOECHSTENS_TAGE));
+    sprechtage.speichere(geladen);
+    sender.reset();
+
+    entfallenLassen.entfallenLassen(List.of(termin.id().wert()));
+
+    assertThat(sender.empfangen.get(0).text())
+        .doesNotContain("https://elternsprechtag.test", "neuen Termin buchen")
+        .contains(SCHULKONTAKT);
   }
 
   @Test

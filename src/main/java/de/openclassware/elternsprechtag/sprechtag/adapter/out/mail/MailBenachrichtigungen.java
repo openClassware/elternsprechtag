@@ -38,7 +38,7 @@ class MailBenachrichtigungen implements Benachrichtigungen {
   }
 
   @Override
-  public List<Versand> meldeAusfall(List<BuchungId> buchungen) {
-    return ausfall.benachrichtige(buchungen);
+  public List<Versand> meldeAusfall(List<BuchungId> buchungen, boolean nachbuchbar) {
+    return ausfall.benachrichtige(buchungen, nachbuchbar);
   }
 }

@@ -12,7 +12,11 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.Buc
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Ergebnis;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZustand;
+import de.openclassware.elternsprechtag.sprechtag.domain.Anmeldefrist;
+import de.openclassware.elternsprechtag.sprechtag.domain.AusfallErfasst;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
+import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagNichtVeroeffentlichtException;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
@@ -22,7 +26,10 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 
 /**
  * Die Sammelaktion „Lehrkraft fällt aus" (Issue #156) gegen eine echte Datenbank: Das Angebot kommt
@@ -32,7 +39,10 @@ import org.springframework.context.annotation.Import;
  */
 @ServiceTest
 @Import(SprechtagKontextTestConfig.class)
+@RecordApplicationEvents
 class EntfallenLassenTest extends AbstractServiceTest {
+
+  @Autowired private ApplicationEvents events;
 
   private record Fixture(UUID sprechtag, UUID lehrkraft, UUID lehrauftrag) {}
 
@@ -73,7 +83,7 @@ class EntfallenLassenTest extends AbstractServiceTest {
     buche(f.lehrauftrag(), slots.get(0));
     entfallenLassen.entfallenLassen(List.of(slots.get(1).id().wert()));
 
-    List<SlotZeile> zeilen = entfallenLassen.slots(f.sprechtag(), f.lehrkraft());
+    List<SlotZeile> zeilen = entfallenLassen.angebot(f.sprechtag(), f.lehrkraft()).slots();
 
     assertThat(zeilen).hasSize(slots.size());
     assertThat(zeilen.get(0).zustand()).isEqualTo(SlotZustand.GEBUCHT);
@@ -81,6 +91,59 @@ class EntfallenLassenTest extends AbstractServiceTest {
     assertThat(zeilen.get(1).zustand()).isEqualTo(SlotZustand.ENTFALLEN);
     assertThat(zeilen.get(2).zustand()).isEqualTo(SlotZustand.FREI);
   }
+
+  /** Lässt die Anmeldung des Sprechtags enden — eine Woche vorher mit der längsten Frist. */
+  private void schliesseAnmeldung(UUID sprechtagId) {
+    Sprechtag geladen = ladeSprechtag(sprechtagId);
+    geladen.aendereAnmeldefrist(Anmeldefrist.vonTagen(Anmeldefrist.HOECHSTENS_TAGE));
+    sprechtage.speichere(geladen);
+  }
+
+  // --- Nachbuchbar (Issue #109) -----------------------------------------------------------
+
+  @Test
+  void angebot_vorDemAnmeldeschluss_istNachbuchbar() {
+    Fixture f = veroeffentlichterSprechtag(SprechtagStatus.VEROEFFENTLICHT);
+
+    assertThat(entfallenLassen.angebot(f.sprechtag(), f.lehrkraft()).nachbuchbar()).isTrue();
+  }
+
+  @Test
+  void angebot_nachDemAnmeldeschluss_istNichtNachbuchbar() {
+    Fixture f = veroeffentlichterSprechtag(SprechtagStatus.VEROEFFENTLICHT);
+    schliesseAnmeldung(f.sprechtag());
+
+    assertThat(entfallenLassen.angebot(f.sprechtag(), f.lehrkraft()).nachbuchbar()).isFalse();
+  }
+
+  @Test
+  void entfallenLassen_vorDemAnmeldeschluss_meldetDenAusfallAlsNachbuchbar() {
+    Fixture f = veroeffentlichterSprechtag(SprechtagStatus.VEROEFFENTLICHT);
+    Termin termin = alleTermine().get(0);
+    UUID buchung = buche(f.lehrauftrag(), termin);
+
+    entfallenLassen.entfallenLassen(List.of(termin.id().wert()));
+
+    assertThat(events.stream(AusfallErfasst.class))
+        .singleElement()
+        .isEqualTo(new AusfallErfasst(List.of(BuchungId.von(buchung)), true));
+  }
+
+  @Test
+  void entfallenLassen_nachDemAnmeldeschluss_meldetDenAusfallAlsNichtNachbuchbar() {
+    Fixture f = veroeffentlichterSprechtag(SprechtagStatus.VEROEFFENTLICHT);
+    Termin termin = alleTermine().get(0);
+    UUID buchung = buche(f.lehrauftrag(), termin);
+    schliesseAnmeldung(f.sprechtag());
+
+    entfallenLassen.entfallenLassen(List.of(termin.id().wert()));
+
+    assertThat(events.stream(AusfallErfasst.class))
+        .singleElement()
+        .isEqualTo(new AusfallErfasst(List.of(BuchungId.von(buchung)), false));
+  }
+
+  // --- Entfallen lassen -------------------------------------------------------------------
 
   @Test
   void entfallenLassen_ohneBuchung_setztVerfuegbarkeitUndZaehltKeineAdresse() {

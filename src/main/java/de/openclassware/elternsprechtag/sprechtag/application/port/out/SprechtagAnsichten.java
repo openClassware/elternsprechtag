@@ -76,6 +76,8 @@ public interface SprechtagAnsichten {
    *
    * <p>{@code anonymisiertAm} ist {@code null}, solange der Anonymisierungs-Lauf den Sprechtag nicht
    * vollständig erledigt hat (Issue #126); die Auswertung erklärt damit die Pseudonyme (#127).
+   *
+   * <p>{@code accessToken} braucht die Ausfall-Mail für den Elternlink (Issue #109).
    */
   record Kopf(
       SprechtagId id,
@@ -84,6 +86,7 @@ public interface SprechtagAnsichten {
       String ort,
       String schulkontakt,
       SprechtagStatus status,
+      String accessToken,
       List<UUID> klasseIds,
       LocalDateTime anonymisiertAm) {}
 

@@ -37,7 +37,7 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
 
   private static final String KOPF =
       """
-      select id, titel, start_date, location, schulkontakt, status, anonymisiert_am
+      select id, titel, start_date, location, schulkontakt, status, access_token, anonymisiert_am
         from sprechtage
        where id = :id
       """;
@@ -131,6 +131,7 @@ class SprechtagAnsichtenJdbcAdapter implements SprechtagAnsichten {
                     rs.getString("location"),
                     rs.getString("schulkontakt"),
                     SprechtagStatus.valueOf(rs.getString("status")),
+                    rs.getString("access_token"),
                     klasseIds,
                     rs.getObject("anonymisiert_am", LocalDateTime.class)))
         .stream()

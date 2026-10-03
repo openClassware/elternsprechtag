@@ -60,7 +60,7 @@ public class FakeBenachrichtigungen implements Benachrichtigungen {
   }
 
   @Override
-  public List<Versand> meldeAusfall(List<BuchungId> buchungen) {
+  public List<Versand> meldeAusfall(List<BuchungId> buchungen, boolean nachbuchbar) {
     return jeAdresse(buchungen);
   }
 
