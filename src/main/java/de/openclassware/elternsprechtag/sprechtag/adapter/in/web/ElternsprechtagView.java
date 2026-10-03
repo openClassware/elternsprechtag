@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
 
 import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.EmailWiederholung.Abgleich;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -55,6 +56,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   private TextField elternName;
   private TextField schuelerName;
   private EmailField elternEmail;
+  private EmailField emailWiederholung;
+
+  /** Erst nach dem ersten Verlassen meldet das Wiederholungsfeld eine Abweichung am Feld. */
+  private boolean wiederholungBeruehrt;
+
   private Select<KlasseOption> klasse;
 
   private Div footerStatus;
@@ -223,7 +229,23 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     elternEmail.setErrorMessage(getTranslation("elternsprechtag.angaben.email.error"));
     elternEmail.setClearButtonVisible(true);
     elternEmail.setValueChangeMode(ValueChangeMode.EAGER);
-    elternEmail.addValueChangeListener(event -> refreshFooter());
+    elternEmail.addValueChangeListener(event -> onEmailChanged());
+
+    wiederholungBeruehrt = false;
+    emailWiederholung =
+        new EmailField(getTranslation("elternsprechtag.angaben.email-wiederholung.label"));
+    emailWiederholung.setRequiredIndicatorVisible(true);
+    emailWiederholung.setErrorMessage(
+        getTranslation("elternsprechtag.angaben.email-wiederholung.error"));
+    emailWiederholung.setClearButtonVisible(true);
+    emailWiederholung.setManualValidation(true);
+    emailWiederholung.setValueChangeMode(ValueChangeMode.EAGER);
+    emailWiederholung.addValueChangeListener(event -> onEmailChanged());
+    emailWiederholung.addBlurListener(
+        event -> {
+          wiederholungBeruehrt = true;
+          onEmailChanged();
+        });
 
     klasse = new Select<>();
     klasse.setLabel(getTranslation("elternsprechtag.angaben.klasse.label"));
@@ -237,10 +259,20 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     form.addClassName("elternsprechtag-view__form");
     form.setResponsiveSteps(
         new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("640px", 2));
-    form.add(elternName, schuelerName, elternEmail, klasse);
+    form.add(elternName, schuelerName, elternEmail, emailWiederholung, klasse);
 
     section.add(form);
     return section;
+  }
+
+  /** Eine Änderung an einem der beiden Felder prüft die Wiederholung neu. */
+  private void onEmailChanged() {
+    emailWiederholung.setInvalid(wiederholungBeruehrt && abgleich() == Abgleich.ABWEICHEND);
+    refreshFooter();
+  }
+
+  private Abgleich abgleich() {
+    return EmailWiederholung.vergleiche(elternEmail.getValue(), emailWiederholung.getValue());
   }
 
   /**
@@ -620,6 +652,12 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
     if (!emailValid()) {
       return selected + " — " + getTranslation("elternsprechtag.footer.blocker.email");
     }
+    if (abgleich() == Abgleich.LEER) {
+      return selected + " — " + getTranslation("elternsprechtag.footer.blocker.email-wiederholung");
+    }
+    if (abgleich() == Abgleich.ABWEICHEND) {
+      return selected + " — " + getTranslation("elternsprechtag.footer.blocker.email-abweichung");
+    }
     if (klasse.getValue() == null) {
       return selected + " — " + getTranslation("elternsprechtag.footer.blocker.klasse");
     }
@@ -627,7 +665,11 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
   }
 
   private boolean bookingValid() {
-    return session.hatAuswahl() && namesFilled() && emailValid() && klasse.getValue() != null;
+    return session.hatAuswahl()
+        && namesFilled()
+        && emailValid()
+        && abgleich() == Abgleich.GLEICH
+        && klasse.getValue() != null;
   }
 
   private boolean namesFilled() {

@@ -41,7 +41,8 @@ await shot("1-start");
 // Schritt 1: Angaben ausfüllen und Klasse wählen — erst danach kennt die View die Lehrkräfte.
 await page.locator("vaadin-text-field input").first().fill("Anna Müller");
 await page.locator("vaadin-text-field input").nth(1).fill("Lukas Müller");
-await page.locator("vaadin-email-field input").fill("anna.mueller@example.com");
+await page.locator("vaadin-email-field input").first().fill("anna.mueller@example.com");
+await page.locator("vaadin-email-field input").nth(1).fill("anna.mueller@example.com");
 await page.locator("vaadin-select").click();
 await page.waitForTimeout(400);
 const klasse = page.locator("vaadin-select-item").first();
