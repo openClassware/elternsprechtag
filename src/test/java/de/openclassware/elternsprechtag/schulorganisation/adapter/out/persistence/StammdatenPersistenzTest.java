@@ -46,6 +46,7 @@ class StammdatenPersistenzTest {
 
   @BeforeEach
   void leereStammdaten() {
+    jdbc.update("delete from zustellungen");
     jdbc.update("delete from buchungen");
     jdbc.update("delete from termin");
     jdbc.update("delete from sprechtage_klassen");

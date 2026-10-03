@@ -22,6 +22,10 @@ public interface Sprechtagsuebersicht {
    * Eine Zeile der Übersicht — genau das, was Tabelle und Karten rendern. {@code ort} darf
    * {@code null} sein; {@code klassen} sind die Namen, alphabetisch. {@code datenfrist} ist
    * {@code null}, wo der Anonymisierungs-Lauf nie hinkommt: bei Entwürfen und Veröffentlichten.
+   *
+   * <p>{@code nichtErreicht} zählt die Nachrichten, die ihre Familie nicht erreicht haben (Issue
+   * #110) — nach derselben Regel und in derselben Einheit wie die Liste in der Auswertung, auf die
+   * der Hinweis führt. {@code 0}: kein Hinweis.
    */
   record SprechtagZeile(
       UUID id,
@@ -33,7 +37,8 @@ public interface Sprechtagsuebersicht {
       SprechtagStatus status,
       String accessToken,
       List<String> klassen,
-      Datenfrist datenfrist) {}
+      Datenfrist datenfrist,
+      int nichtErreicht) {}
 
   /**
    * Die Vorwarnung vor der Anonymisierung (Issue #128): bis wann die personenbezogenen Angaben

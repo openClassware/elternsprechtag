@@ -1,7 +1,9 @@
 package de.openclassware.elternsprechtag.sprechtag.application.port.in;
 
+import de.openclassware.elternsprechtag.sprechtag.domain.Mailart;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,13 +29,32 @@ public interface Auswerten {
    * <p>{@code anonymisiertAm} ist der Tag, an dem der Anonymisierungs-Lauf die personenbezogenen
    * Angaben ersetzt hat, oder {@code null}, solange das nicht geschehen ist (Issue #127). Nur der
    * Tag: Die nächtliche Uhrzeit des Laufs sagt dem Organizer nichts.
+   *
+   * <p>{@code nichtErreicht} ist die Arbeitsliste fürs Telefon (Issue #110): je Nachricht, die eine
+   * Familie nicht bekommen hat, ein Eintrag, nach Zeitpunkt sortiert. Leer, wenn alles rausging.
    */
   record SprechtagAuswertung(
       String titel,
       LocalDate datum,
       SprechtagStatus status,
       LocalDate anonymisiertAm,
-      List<LehrkraftPlan> plaene) {}
+      List<LehrkraftPlan> plaene,
+      List<NichtErreicht> nichtErreicht) {}
+
+  /**
+   * Eine Nachricht, die ihre Familie nicht erreicht hat. Gegliedert, wie das Sekretariat arbeitet: je
+   * Adresse und Nachricht, nicht je Lehrkraft. Die Namen sind die verschiedenen Kinder und Eltern
+   * aller Buchungen, die sie trug — mehrere, wenn sich Geschwister oder Familien die Adresse teilen.
+   *
+   * <p>Die Adresse steht nur hier und nur für Gescheiterte: Ein Tippfehler darin ist der häufigste
+   * Grund, und das Sekretariat soll ihn sehen können.
+   */
+  record NichtErreicht(
+      Mailart art,
+      LocalDateTime zeitpunkt,
+      String email,
+      List<String> schuelerNamen,
+      List<String> elternNamen) {}
 
   /**
    * Terminplan einer Lehrkraft: Anzeigename/Kürzel, Anzahl aktiver Buchungen und die Zeilen in

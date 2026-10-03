@@ -44,8 +44,10 @@ de.openclassware.elternsprechtag
 │   └── adapter
 │       ├── Formats         geteilte Datums-/Zeit-Formatierung (Oberfläche wie Mailtext)
 │       ├── in/web          Views, Presenter, gemeinsame UI-Bausteine
+│       ├── in/scheduler    die täglichen Läufe (Erinnerung, Abschluss, Anonymisierung)
+│       ├── in/event        Vorgangs-Ereignisse nach dem Commit → Use Case `Benachrichtigen`
 │       ├── out/persistence Persistenzmodell, Mapper, Query-SQL
-│       ├── out/mail        Versand (Absage, Buchungsbestätigung)
+│       ├── out/mail        Versand (Bestätigung, Erinnerung, Absage, Ausfall), meldet den Ausgang
 │       ├── out/pdf         Tagespläne der Lehrkräfte als PDF/ZIP (OpenPDF)
 │       ├── out/event       der einzige Ort, der `ApplicationEventPublisher` kennt
 │       └── out/schulorganisation  der Weg in den anderen Kontext
@@ -174,6 +176,11 @@ Dieser Bereich gilt als solide und ist **bewusst** so gebaut:
   eine Mail und nicht vier, und die Absage-Mails hängen an `SprechtagAbgesagt`. Veröffentlicht wird
   über den `Ereignisse`-Port; dessen Adapter ist die einzige Stelle, die `ApplicationEventPublisher`
   kennt. Semantik unverändert: `@TransactionalEventListener(AFTER_COMMIT)` plus `@Async`.
+- **Versand schreibt zurück** (#110): Die Ereignisse nimmt ein Eingangs-Adapter (`adapter/in/event`)
+  entgegen und ruft den Use Case `Benachrichtigen`. Der versendet über den Port `Benachrichtigungen`,
+  bekommt je Nachricht die getragenen Buchungen samt Ausgang zurück und hält ihn als eigenes
+  Aggregat `Zustellung` fest — in eigener Transaktion (`REQUIRES_NEW`), ohne die Version des
+  Termins zu berühren. Der Mail-Adapter kennt keine Persistenz.
 - **Stabile Kind-Ids**: Spring Data JDBC schreibt die Buchungszeilen beim Speichern neu
   (Delete-and-Insert). Weil die Domäne ihre Ids selbst vergibt, bleiben sie stabil — Voraussetzung
   dafür, dass der `@Async`-Listener sie nach dem Commit noch findet. Bewiesen in

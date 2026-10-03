@@ -26,6 +26,7 @@ import com.vaadin.flow.server.streams.DownloadResponse;
 import de.openclassware.elternsprechtag.security.Roles;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.NichtErreicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken.Datei;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
@@ -67,6 +68,9 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
   private final Button druckButton = new Button();
   private final Div anonymisiertHinweis = new Div();
   private final Paragraph anonymisiertText = new Paragraph();
+  private final Div nichtErreichtBlock = new Div();
+  private final Span nichtErreichtTitel = new Span();
+  private final Div nichtErreichtListe = new Div();
   private final ComboBox<LehrkraftPlan> lehrkraftFilter = new ComboBox<>();
   private final Checkbox stornierteSchalter = new Checkbox();
   private final TextField suchfeld = new TextField();
@@ -96,6 +100,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
         createBreadcrumb(),
         createHeader(),
         createAnonymisiertHinweis(),
+        createNichtErreicht(),
         createFilter(),
         createSuchhinweis(),
         sections);
@@ -147,6 +152,7 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
               anonymisiertHinweis.setVisible(true);
             },
             () -> anonymisiertHinweis.setVisible(false));
+    renderNichtErreicht(presenter.nichtErreicht(auswertung));
     // Die Filterauswahl ist Per-View-Zustand und soll ein Storno überleben: gemerkt, die Items
     // getauscht, dieselbe Lehrkraft wieder gesetzt. Steht sie nicht mehr im Plan, bleibt „alle".
     UUID gewaehlt = filterLehrkraft;
@@ -314,6 +320,68 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
 
     anonymisiertHinweis.add(icon, texte);
     return anonymisiertHinweis;
+  }
+
+  /**
+   * Die Arbeitsliste fürs Telefon (Issue #110): je Nachricht, die ihre Familie nicht erreicht hat,
+   * ein Eintrag — unabhängig von Filter, Suche und „Stornierte anzeigen". Sichtbar setzt
+   * {@link #renderNichtErreicht(List)}.
+   */
+  private Component createNichtErreicht() {
+    nichtErreichtBlock.addClassName("auswertung__nicht-erreicht");
+    nichtErreichtBlock.getElement().setAttribute("role", "region");
+    nichtErreichtBlock
+        .getElement()
+        .setAttribute("aria-label", getTranslation("auswertung.nicht-erreicht.label"));
+    nichtErreichtBlock.setVisible(false);
+
+    Span icon = new Span(VaadinIcon.ENVELOPE_O.create());
+    icon.addClassName("auswertung__nicht-erreicht-icon");
+
+    Div texte = new Div();
+    texte.addClassName("auswertung__nicht-erreicht-texte");
+    nichtErreichtTitel.addClassName("auswertung__nicht-erreicht-titel");
+    Paragraph erklaerung = new Paragraph(getTranslation("auswertung.nicht-erreicht.text"));
+    erklaerung.addClassName("auswertung__nicht-erreicht-text");
+    nichtErreichtListe.addClassName("auswertung__nicht-erreicht-liste");
+    texte.add(nichtErreichtTitel, erklaerung, nichtErreichtListe);
+
+    nichtErreichtBlock.add(icon, texte);
+    return nichtErreichtBlock;
+  }
+
+  private void renderNichtErreicht(List<NichtErreicht> eintraege) {
+    nichtErreichtBlock.setVisible(!eintraege.isEmpty());
+    nichtErreichtTitel.setText(getTranslation("auswertung.nicht-erreicht.titel", eintraege.size()));
+    nichtErreichtListe.removeAll();
+    eintraege.stream().map(this::createNichtErreichtEintrag).forEach(nichtErreichtListe::add);
+  }
+
+  private Component createNichtErreichtEintrag(NichtErreicht eintrag) {
+    Div zeile = new Div();
+    zeile.addClassName("auswertung__nicht-erreicht-eintrag");
+
+    Span namen =
+        new Span(
+            getTranslation(
+                "auswertung.nicht-erreicht.namen",
+                String.join(", ", eintrag.schuelerNamen()),
+                String.join(", ", eintrag.elternNamen())));
+    namen.addClassName("auswertung__nicht-erreicht-namen");
+
+    Span adresse = new Span(eintrag.email());
+    adresse.addClassName("auswertung__nicht-erreicht-adresse");
+
+    Span nachricht =
+        new Span(
+            getTranslation(
+                "auswertung.nicht-erreicht.nachricht",
+                getTranslation(presenter.nachrichtSchluessel(eintrag.art())),
+                Formats.dateTimeShort(eintrag.zeitpunkt())));
+    nachricht.addClassName("auswertung__nicht-erreicht-nachricht");
+
+    zeile.add(namen, adresse, nachricht);
+    return zeile;
   }
 
   private Component createFilter() {

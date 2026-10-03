@@ -4,11 +4,13 @@ import com.vaadin.flow.i18n.I18NProvider;
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
 import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
 import de.openclassware.elternsprechtag.sprechtag.adapter.out.mail.BenachrichtigungSender.Nachricht;
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.Benachrichtigungen.Versand;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten.BelegZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
+import de.openclassware.elternsprechtag.sprechtag.domain.Zustellergebnis;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -24,8 +26,7 @@ import org.springframework.stereotype.Service;
 /**
  * Formuliert die Ausfall-Mail der Sammelaktion „Lehrkraft fällt aus" (Issue #156) und übergibt sie
  * als fertige {@link Nachricht} an den {@link BenachrichtigungSender}-Port — Spiegelbild von
- * {@link ErinnerungBenachrichtigungService}. Ausgelöst wird sie nach Commit vom
- * {@link AusfallBenachrichtigungListener}.
+ * {@link ErinnerungBenachrichtigungService}. Ausgelöst wird sie über {@link MailBenachrichtigungen}.
  *
  * <p>Eine Sammelaktion trifft typischerweise mehrere Familien; die stornierten Buchungen werden
  * deshalb nach Sprechtag und Eltern-Adresse gruppiert — eine Familie mit zwei betroffenen Terminen
@@ -53,16 +54,19 @@ class AusfallBenachrichtigungService {
   /**
    * Benachrichtigt die Familien genau dieser stornierten Buchungen — je Sprechtag und Adresse eine
    * Nachricht. Eine leere Id-Liste oder durchweg unbekannte Ids führen zu keinem Sende-Aufruf und
-   * zu keinem Fehler. Best-effort: Scheitert der Sender oder fehlt der Sprechtag inzwischen, wird
-   * der Fehler protokolliert und mit den übrigen Gruppen fortgefahren.
+   * zu keinem Fehler. Best-effort: Scheitert der Sender, wird der Fehler protokolliert, als
+   * {@link Zustellergebnis#FEHLGESCHLAGEN} gemeldet und mit den übrigen Gruppen fortgefahren; fehlt
+   * der Sprechtag inzwischen, entsteht für die Gruppe gar keine Nachricht.
+   *
+   * @return je verschickter oder gescheiterter Nachricht die Buchungen, die sie trug
    */
-  public void benachrichtige(List<BuchungId> buchungIds) {
+  public List<Versand> benachrichtige(List<BuchungId> buchungIds) {
     if (buchungIds == null || buchungIds.isEmpty()) {
-      return;
+      return List.of();
     }
     List<BelegZeile> zeilen = buchungsAnsichten.belege(buchungIds);
     if (zeilen.isEmpty()) {
-      return;
+      return List.of();
     }
 
     Map<Empfaenger, List<BelegZeile>> gruppen = new LinkedHashMap<>();
@@ -76,30 +80,35 @@ class AusfallBenachrichtigungService {
     // Je Sprechtag genau einmal geladen: Eine Sammelaktion betrifft typischerweise viele Familien
     // desselben Sprechtags, und der Kopf ändert sich nicht zwischen zwei Gruppen.
     Map<UUID, Optional<SprechtagAnsichten.Kopf>> koepfe = new LinkedHashMap<>();
+    List<Versand> versand = new ArrayList<>();
     for (Map.Entry<Empfaenger, List<BelegZeile>> gruppe : gruppen.entrySet()) {
       Optional<SprechtagAnsichten.Kopf> kopf =
           koepfe.computeIfAbsent(
               gruppe.getKey().sprechtagId(),
               id -> sprechtagAnsichten.kopf(SprechtagId.von(id)));
-      sendeFuerFamilie(gruppe.getKey(), gruppe.getValue(), kopf);
+      sendeFuerFamilie(gruppe.getKey(), gruppe.getValue(), kopf).ifPresent(versand::add);
     }
+    return versand;
   }
 
-  private void sendeFuerFamilie(
+  private Optional<Versand> sendeFuerFamilie(
       Empfaenger empfaenger, List<BelegZeile> zeilen, Optional<SprechtagAnsichten.Kopf> kopf) {
     if (kopf.isEmpty()) {
       log.warn(
           "Ausfall-Benachrichtigung an {} übersprungen: Sprechtag nicht mehr gefunden",
           empfaenger.elternEmail());
-      return;
+      return Optional.empty();
     }
+    List<BuchungId> buchungen = zeilen.stream().map(BelegZeile::buchung).toList();
     try {
       String datum = Formats.dateLong(kopf.get().datum());
       String betreff = i18n.getTranslation("ausfall.mail.subject", LOCALE, kopf.get().titel(), datum);
       String text = baueText(kopf.get(), datum, zeilen.get(0), positionen(zeilen));
       sender.sende(new Nachricht(empfaenger.elternEmail(), betreff, text));
+      return Optional.of(new Versand(buchungen, Zustellergebnis.ABGESCHICKT));
     } catch (RuntimeException e) {
       log.warn("Ausfall-Benachrichtigung an {} fehlgeschlagen: {}", empfaenger.elternEmail(), e.getMessage());
+      return Optional.of(new Versand(buchungen, Zustellergebnis.FEHLGESCHLAGEN));
     }
   }
 

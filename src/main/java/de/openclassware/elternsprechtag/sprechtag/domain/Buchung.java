@@ -19,6 +19,12 @@ public final class Buchung {
   private final Buchungsziel ziel;
   private Notiz notiz;
   private Buchungsstatus status;
+
+  /**
+   * Wann die Erinnerung <em>vorgemerkt</em> wurde — gesetzt vor dem Versand, als Schutz gegen einen
+   * zweiten. Ob sie die Familie erreicht hat, steht nicht hier, sondern in der {@link Zustellung}
+   * der Art {@link Mailart#ERINNERUNG} (Issue #110). Der Name ist älter als diese Unterscheidung.
+   */
   private LocalDateTime erinnerungVersendetAm;
 
   /** Wann Familie und Notiz einem Pseudonym gewichen sind; {@code null} heißt: noch nicht. */
@@ -60,7 +66,7 @@ public final class Buchung {
    *
    * @param notiz darf {@code null} sein
    * @param erinnerungVersendetAm darf {@code null} sein — dann ist noch keine Erinnerung
-   *     verschickt worden
+   *     vorgemerkt worden
    * @param anonymisiertAm darf {@code null} sein — dann trägt die Buchung noch die Angaben der
    *     Familie
    */
@@ -87,8 +93,9 @@ public final class Buchung {
   }
 
   /**
-   * Markiert die Erinnerung als versendet; gibt zurück, ob sich dadurch etwas geändert hat. Nur für
-   * {@link Termin} — er ist die einzige Stelle, die eine Buchung ändert.
+   * Merkt die Erinnerung vor; gibt zurück, ob sich dadurch etwas geändert hat. Nur für
+   * {@link Termin} — er ist die einzige Stelle, die eine Buchung ändert. Verschickt wird erst nach
+   * dem Commit; den Ausgang hält die {@link Zustellung} fest.
    *
    * <p>Kein Versand für eine bereits erinnerte oder eine stornierte Buchung (Issue #107,
    * `ABDECKUNG.md` Z. 250): Beides meldet {@code false}, ohne den Zeitstempel zu berühren.

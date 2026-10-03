@@ -119,6 +119,8 @@ public abstract class AbstractServiceTest {
     // nur ein Entwurf verschwindet, einzeln (#132).
     // Die Tabellen werden hier als das geleert, was sie sind, und das bleibt auf den Testaufbau
     // beschränkt.
+    // Zustellungen haben bewusst keinen Fremdschlüssel (V12) — sie fielen sonst nie mit weg.
+    jdbc.update("delete from zustellungen");
     jdbc.update("delete from buchungen");
     jdbc.update("delete from termin");
     jdbc.update("delete from sprechtage_klassen");

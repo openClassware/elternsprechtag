@@ -33,13 +33,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @ServiceTest
 @Import({
-
-  SprechtagKontextTestConfig.class,
-
-  AbsageBenachrichtigungService.class,
-  AbsageBenachrichtigungListener.class,
-  FakeBenachrichtigungSender.class,
-  BenachrichtigungTextConfig.class,
+  SprechtagKontextTestConfig.Kern.class,
+  SprechtagKontextTestConfig.Ereigniseingang.class,
+  MailVersandTestConfig.class,
   AbsageVersandIntegrationTest.SyncAsyncConfig.class
 })
 class AbsageVersandIntegrationTest extends AbstractServiceTest {
@@ -93,6 +89,8 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), slots.get(0), "a@example.com");
     book(f.lehrauftrag(), slots.get(1), "b@example.com");
+    // Die Bestätigungsmails der Buchungen sind nicht Gegenstand dieses Tests.
+    sender.reset();
 
     absagen.sageAb(f.sprechtag().id().wert());
 
@@ -127,6 +125,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
     List<Termin> slots = alleTermine();
     book(f.lehrauftrag(), slots.get(0), "fehlerhaft@example.com");
     book(f.lehrauftrag(), slots.get(1), "ok@example.com");
+    sender.reset();
     sender.scheitertFuer.add("fehlerhaft@example.com");
 
     absagen.sageAb(f.sprechtag().id().wert());
@@ -143,6 +142,7 @@ class AbsageVersandIntegrationTest extends AbstractServiceTest {
   void abschlussDurchDenTageslauf_triggersNoSend() {
     Fixture f = publishedSprechtag();
     book(f.lehrauftrag(), alleTermine().get(0), "eltern@example.com");
+    sender.reset();
 
     abschliessen.schliesseVorbeiAb();
 

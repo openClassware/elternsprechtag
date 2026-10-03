@@ -36,11 +36,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @ServiceTest
 @Import({
-  SprechtagKontextTestConfig.class,
-  ErinnerungBenachrichtigungService.class,
-  ErinnerungBenachrichtigungListener.class,
-  FakeBenachrichtigungSender.class,
-  BenachrichtigungTextConfig.class,
+  SprechtagKontextTestConfig.Kern.class,
+  SprechtagKontextTestConfig.Ereigniseingang.class,
+  MailVersandTestConfig.class,
   ErinnerungVersandIntegrationTest.SyncAsyncConfig.class
 })
 class ErinnerungVersandIntegrationTest extends AbstractServiceTest {

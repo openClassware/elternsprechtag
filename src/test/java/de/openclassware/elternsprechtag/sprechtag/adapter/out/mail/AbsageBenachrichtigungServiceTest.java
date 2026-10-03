@@ -5,10 +5,16 @@ import de.openclassware.elternsprechtag.sprechtag.ServiceTest;
 import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.tuple;
 
+import de.openclassware.elternsprechtag.sprechtag.application.port.out.Benachrichtigungen.Versand;
+import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
+import de.openclassware.elternsprechtag.sprechtag.domain.BuchungId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Sprechtag;
+import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagStatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Termin;
+import de.openclassware.elternsprechtag.sprechtag.domain.Zustellergebnis;
 import de.openclassware.elternsprechtag.sprechtag.adapter.out.mail.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsWunsch;
@@ -22,14 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
 @ServiceTest
-@Import({
-
-  SprechtagKontextTestConfig.class,
-
-  AbsageBenachrichtigungService.class,
-  FakeBenachrichtigungSender.class,
-  BenachrichtigungTextConfig.class
-})
+@Import({SprechtagKontextTestConfig.Kern.class, MailVersandTestConfig.class})
 class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
 
   // In der Zukunft: Der Elternlink bucht nur bis zum Anmeldeschluss (Issue #122).
@@ -76,7 +75,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     book(f.lehrauftrag(), slots.get(0), "a@example.com");
     book(f.lehrauftrag(), slots.get(1), "b@example.com");
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id());
 
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
@@ -97,11 +96,19 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
                 new BuchungsWunsch(f.lehrauftrag(), slots.get(0).id().wert(), "n"),
                 new BuchungsWunsch(f.lehrauftrag(), slots.get(1).id().wert(), "n"))));
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
+    List<Versand> versand = absageBenachrichtigungService.benachrichtige(f.sprechtag().id());
 
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
         .containsExactly("mueller@example.com");
+    // Issue #110: Die eine Nachricht trägt beide Buchungen — ihr Ergebnis gilt für jede davon.
+    assertThat(versand).singleElement().satisfies(
+        nachricht -> {
+          assertThat(nachricht.buchungen())
+              .containsExactlyInAnyOrderElementsOf(
+                  alleBuchungen().stream().map(Buchung::id).toList());
+          assertThat(nachricht.ergebnis()).isEqualTo(Zustellergebnis.ABGESCHICKT);
+        });
   }
 
   @Test
@@ -112,7 +119,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     book(f.lehrauftrag(), slots.get(1), "storniert@example.com");
     storniere(b -> b.familie().email().equals("storniert@example.com"));
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id());
 
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
@@ -124,7 +131,7 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     Fixture f = publishedSprechtag();
     book(f.lehrauftrag(), alleTermine().get(0), "eltern@example.com");
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id());
 
     assertThat(sender.empfangen).hasSize(1);
     Nachricht nachricht = sender.empfangen.get(0);
@@ -153,14 +160,14 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   void benachrichtige_sprechtagWithoutActiveBooking_sendsNothing() {
     Fixture f = publishedSprechtag();
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
+    absageBenachrichtigungService.benachrichtige(f.sprechtag().id());
 
     assertThat(sender.empfangen).isEmpty();
   }
 
   @Test
   void benachrichtige_unknownSprechtag_sendsNothingAndDoesNotThrow() {
-    assertThatCode(() -> absageBenachrichtigungService.benachrichtige(UUID.randomUUID()))
+    assertThatCode(() -> absageBenachrichtigungService.benachrichtige(SprechtagId.neu()))
         .doesNotThrowAnyException();
     assertThat(sender.empfangen).isEmpty();
   }
@@ -173,11 +180,25 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     book(f.lehrauftrag(), slots.get(1), "ok@example.com");
     sender.scheitertFuer.add("fehlerhaft@example.com");
 
-    absageBenachrichtigungService.benachrichtige(f.sprechtag().id().wert());
+    List<Versand> versand = absageBenachrichtigungService.benachrichtige(f.sprechtag().id());
 
     // Der Fehler bei der ersten Adresse stoppt den Versand an die übrigen nicht.
     assertThat(sender.empfangen)
         .extracting(Nachricht::empfaenger)
         .containsExactly("ok@example.com");
+    // Issue #110: Der Fehlschlag bleibt nicht im Log, er kommt als Ergebnis zurück.
+    assertThat(versand)
+        .extracting(Versand::buchungen, Versand::ergebnis)
+        .containsExactlyInAnyOrder(
+            tuple(List.of(buchungVon("fehlerhaft@example.com")), Zustellergebnis.FEHLGESCHLAGEN),
+            tuple(List.of(buchungVon("ok@example.com")), Zustellergebnis.ABGESCHICKT));
+  }
+
+  private BuchungId buchungVon(String email) {
+    return alleBuchungen().stream()
+        .filter(b -> b.familie().email().equals(email))
+        .map(Buchung::id)
+        .findFirst()
+        .orElseThrow();
   }
 }
