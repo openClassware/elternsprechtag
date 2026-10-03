@@ -206,6 +206,20 @@
     height: 12px;
 }
 
+/* Lehrkraft ohne freien Termin: tritt zurück, bleibt aber klickbar. Gedämpft wird nur der Inhalt,
+   nicht die Karte — aufgeklappt behält sie den Rahmen, der sie mit ihrem Raster verbindet. Die
+   Aussage selbst trägt die Pille in Worten. */
+.elternsprechtag-view__lehrkraft--nichts-frei .elternsprechtag-view__lehrkraft-badge,
+.elternsprechtag-view__lehrkraft--nichts-frei .elternsprechtag-view__lehrkraft-info {
+    opacity: 0.55;
+}
+
+.elternsprechtag-view__lehrkraft-pill--nichts-frei {
+    background-color: #eef1f5;
+    color: #4b5563;
+    font-weight: 500;
+}
+
 .elternsprechtag-view__legend {
     display: flex;
     gap: 16px;
