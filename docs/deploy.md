@@ -213,8 +213,9 @@ docker compose logs -f caddy   # bei TLS-/ACME-Problemen
 
 Die Anwender-Doku aus [`site/`](../site) liegt nicht auf dem VPS, sondern auf GitHub Pages unter
 <https://docs.openclassware.de>. [`.github/workflows/docs.yml`](../.github/workflows/docs.yml)
-baut sie bei jedem Push auf `main`, der `site/` oder den Workflow berührt, und per
-`workflow_dispatch`, und deployt das Pages-Artefakt.
+baut sie bei jedem Push auf `main`, der `site/`, `src/main/`, `pom.xml` oder den Workflow berührt, und per
+`workflow_dispatch`, und deployt das Pages-Artefakt. Vor dem Build startet er die App mit Profil
+`demo` und erzeugt daraus die Screenshots — im Repo liegt kein Bild der Site.
 
 Einmalig von Hand:
 

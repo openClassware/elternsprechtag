@@ -1,0 +1,97 @@
+# Baut die Anwender-Doku samt Screenshots, wie es `ci.yml` (Job `doku`) und `docs.yml` brauchen:
+#
+#   Postgres -> Production-JAR -> App mit Profil `demo` -> Prüfregeln -> Screenshots -> Site bauen
+#
+# Die Screenshots kommen aus der Demo-Instanz, die hier frisch auf dem Demo-Seed hochfährt. Ein
+# Modul, dessen Selektor nicht mehr greift, lässt den Lauf scheitern — so wird ein PR rot, der
+# einen fotografierten Dialog ändert, ohne das Modul mitzuziehen.
+#
+# Postgres startet per `docker run` statt als Service-Container: Ein Service hinge am ganzen Job
+# und liefe auch dann, wenn der Job `doku` gar nichts zu bauen hat.
+name: Doku-Site bauen
+description: Startet die Demo-Instanz, erzeugt die Screenshots und baut die Site nach site/dist.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: '25'
+        cache: maven
+
+    - uses: actions/setup-node@v7
+      with:
+        node-version: '24'
+        cache: npm
+        cache-dependency-path: site/package-lock.json
+
+    - name: Postgres starten
+      shell: bash
+      run: |
+        docker run -d --name doku-db -p 5432:5432 \
+          -e POSTGRES_DB=elternsprechtag -e POSTGRES_USER=myuser -e POSTGRES_PASSWORD=mysecret \
+          postgres:17
+        for _ in $(seq 1 30); do
+          docker exec doku-db pg_isready -U myuser -d elternsprechtag && exit 0
+          sleep 2
+        done
+        echo "Postgres kam nicht hoch." >&2
+        exit 1
+
+    - name: Production-JAR bauen
+      shell: bash
+      run: ./mvnw -B -Pproduction package -DskipTests
+
+    # Ein Wegwerf-Passwort je Lauf, nur in der Umgebung dieses Jobs: Die App bekommt den Hash,
+    # das Screenshot-Skript das Passwort. Kein Secret, nichts davon landet im Log.
+    - name: Organisator-Zugang erzeugen
+      shell: bash
+      run: |
+        command -v htpasswd >/dev/null || sudo apt-get install -y -qq apache2-utils
+        passwort=$(openssl rand -base64 24 | tr -d '/+=')
+        echo "::add-mask::$passwort"
+        echo "ORGANIZER_PASSWORD=$passwort" >> "$GITHUB_ENV"
+        echo "ORGANIZER_PASSWORD_HASH=$(htpasswd -nbBC 10 '' "$passwort" | cut -d: -f2)" >> "$GITHUB_ENV"
+
+    - name: App mit Profil demo starten
+      shell: bash
+      env:
+        SPRING_PROFILES_ACTIVE: demo
+        SPRING_DOCKER_COMPOSE_ENABLED: 'false'
+        ELTERNSPRECHTAG_OEFFENTLICHE_URL: http://localhost:8080
+      run: |
+        jar=$(ls target/*.jar | head -n 1)
+        nohup java -jar "$jar" > "$RUNNER_TEMP/app.log" 2>&1 &
+        for _ in $(seq 1 60); do
+          curl -fsS -o /dev/null http://localhost:8080/login && exit 0
+          sleep 2
+        done
+        echo "Die App kam nicht hoch:" >&2
+        cat "$RUNNER_TEMP/app.log" >&2
+        exit 1
+
+    - name: Abhängigkeiten installieren
+      shell: bash
+      working-directory: site
+      run: npm ci
+
+    - name: Prüfregeln testen
+      shell: bash
+      working-directory: site
+      run: npm test
+
+    - name: Screenshots erzeugen
+      shell: bash
+      working-directory: site
+      run: npm run screenshots
+
+    - name: Site bauen
+      shell: bash
+      working-directory: site
+      run: npm run build
+
+    - name: App-Log bei Fehler
+      if: failure()
+      shell: bash
+      run: cat "$RUNNER_TEMP/app.log" 2>/dev/null || true

@@ -65,9 +65,18 @@ ist das bewusst andersherum.
 
 ### Job `doku`
 
-Daneben baut ein zweiter Job **`doku`** die Anwender-Doku aus `site/` — derselbe Build wie im
-Pages-Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Deploy. Ein toter interner
-Link macht ihn rot. Berührt der PR `site/` nicht, überspringt der Job seine Schritte und ist grün.
+Daneben baut ein zweiter Job **`doku`** die Anwender-Doku aus `site/` — derselbe Ablauf wie im
+Pages-Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Deploy. Beide teilen ihn
+über die Composite-Action [`.github/actions/doku-site`](../.github/actions/doku-site/action.yml):
+Postgres und das Production-JAR mit Profil `demo` starten, die Prüfregeln testen, die Screenshots
+erzeugen und die Site bauen. Rot wird er bei einer verletzten Fallseiten-Vorlage, einem Bild ohne
+Alt-Text, einem toten internen Link und einem Screenshot-Modul, dessen Selektor nicht mehr greift.
+Deshalb läuft er auch bei Änderungen an `src/main/` und `pom.xml`: Ändert ein PR einen
+fotografierten Dialog oder hebt Vaadin, fällt das hier auf und nicht erst auf `main`. Berührt der
+PR nichts davon, überspringt der Job seine Schritte und ist grün. Ein betroffener PR kostet etwa 3–5 Minuten mehr.
+
+Den Organisator-Zugang erzeugt der Lauf selbst: ein Wegwerf-Passwort, maskiert, die App bekommt
+nur den bcrypt-Hash. Ein Secret braucht der Job nicht.
 
 `doku` ist neben `Test-Gate` **Pflichtprüfung** (siehe [Branch Protection](#branch-protection-auf-main)).
 Ein roter Site-Build auf `main` würde jeden folgenden Pages-Deploy scheitern lassen, bis jemand
@@ -76,7 +85,7 @@ Dependabot. Deshalb sitzt der Filter im Job und nicht als `paths` am Trigger: Ei
 gar nicht startet, meldet keine Prüfung, und die Branch Protection würde auf jedem PR ohne
 Änderung an `site/` ewig auf `doku` warten.
 
-Die Node-Version steht in beiden Workflows und wird gemeinsam gehoben.
+Node- und Java-Version für die Doku stehen nur in der Composite-Action.
 
 Wie die Site veröffentlicht wird und was dafür von Hand eingestellt ist, steht in
 [`deploy.md`](deploy.md#doku-site).
