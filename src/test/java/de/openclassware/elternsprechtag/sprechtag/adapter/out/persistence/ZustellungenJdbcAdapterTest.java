@@ -19,6 +19,7 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Zustellung;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,10 +101,15 @@ class ZustellungenJdbcAdapterTest {
 
   /** Ein neuer Termin im nächsten freien Slot, gebucht von dieser Familie. */
   private Termin gebucht(String name) {
+    return gebucht("Eltern " + name, "Kind " + name, name + "@example.com");
+  }
+
+  /** Wie {@link #gebucht(String)}, mit freier Adresse — für Geschwister an einer Adresse. */
+  private Termin gebucht(String eltern, String kind, String email) {
     LocalDateTime start = BEGINN.plusMinutes(15L * slot++);
     Termin termin = Termin.neu(sprechtag, lehrkraft, new Zeitraum(start, start.plusMinutes(15)));
     termin.buche(
-        new Familie("Eltern " + name, "Kind " + name, name + "@example.com"),
+        new Familie(eltern, kind, email),
         new Buchungsziel(lehrauftrag, lehrkraft, "Anna Berg", "BER", "5a", "Deutsch"),
         null,
         start);
@@ -131,8 +137,9 @@ class ZustellungenJdbcAdapterTest {
                 Mailart.BESTAETIGUNG,
                 VERSAND,
                 "mueller@example.com",
-                "Eltern mueller",
-                "Kind mueller"));
+                "Kind mueller",
+                "5a",
+                List.of("Eltern mueller")));
   }
 
   @Test
@@ -224,22 +231,56 @@ class ZustellungenJdbcAdapterTest {
     assertThat(ansichten.nichtErreicht(sprechtag)).isEmpty();
   }
 
+  private void vermerkeAbsage(Termin... termine) {
+    List<Zustellung> vermerke = new ArrayList<>();
+    for (Termin termin : termine) {
+      vermerke.add(
+          Zustellung.vermerke(
+              buchungVon(termin), Mailart.ABSAGE, Zustellergebnis.FEHLGESCHLAGEN, VERSAND));
+    }
+    zustellungen.speichere(vermerke);
+  }
+
   @Test
-  void zahlJeSprechtag_zaehltNachrichten_nichtBuchungen() {
-    // Zwei Buchungen an derselben Adresse in einer Nachricht, eine dritte an einer anderen.
+  void zweiBuchungenEinesKindes_sindEineNachricht() {
+    // Dasselbe Kind bei zwei Lehrkräften: eine Nachricht, die beide Buchungen trug.
     Termin erste = gebucht("mueller");
     Termin zweite = gebucht("mueller");
     Termin dritte = gebucht("schmidt");
-    zustellungen.speichere(
-        List.of(
-            Zustellung.vermerke(
-                buchungVon(erste), Mailart.ABSAGE, Zustellergebnis.FEHLGESCHLAGEN, VERSAND),
-            Zustellung.vermerke(
-                buchungVon(zweite), Mailart.ABSAGE, Zustellergebnis.FEHLGESCHLAGEN, VERSAND),
-            Zustellung.vermerke(
-                buchungVon(dritte), Mailart.ABSAGE, Zustellergebnis.FEHLGESCHLAGEN, VERSAND)));
+    vermerkeAbsage(erste, zweite, dritte);
 
     assertThat(ansichten.nichtErreichtJeSprechtag()).containsEntry(sprechtag.wert(), 2);
-    assertThat(ansichten.nichtErreicht(sprechtag)).hasSize(3);
+    assertThat(ansichten.nichtErreicht(sprechtag))
+        .extracting(NichtErreichtZeile::schuelerName)
+        .containsExactly("Kind mueller", "Kind schmidt");
+  }
+
+  /** ADR 0007: Geschwister und Stellvertreterfamilien an einer Adresse sind je eine Nachricht. */
+  @Test
+  void zweiKinderAnEinerAdresse_sindZweiNachrichten() {
+    Termin lena = gebucht("Eltern Müller", "Lena Müller", "sekretariat@schule.example");
+    Termin ben = gebucht("Eltern Yilmaz", "Ben Yilmaz", "sekretariat@schule.example");
+    vermerkeAbsage(lena, ben);
+
+    assertThat(ansichten.nichtErreichtJeSprechtag()).containsEntry(sprechtag.wert(), 2);
+    assertThat(ansichten.nichtErreicht(sprechtag))
+        .extracting(NichtErreichtZeile::schuelerName, NichtErreichtZeile::elternNamen)
+        .containsExactly(
+            tuple("Ben Yilmaz", List.of("Eltern Yilmaz")),
+            tuple("Lena Müller", List.of("Eltern Müller")));
+  }
+
+  @Test
+  void abweichendeElternnamenDesselbenKindes_bleibenBeideSichtbar() {
+    Termin erste = gebucht("Petra Müller", "Lena Müller", "mueller@example.com");
+    Termin zweite = gebucht("P. Müller", "Lena Müller", "mueller@example.com");
+    vermerkeAbsage(erste, zweite);
+
+    assertThat(ansichten.nichtErreicht(sprechtag))
+        .singleElement()
+        .satisfies(
+            zeile ->
+                assertThat(zeile.elternNamen())
+                    .containsExactlyInAnyOrder("P. Müller", "Petra Müller"));
   }
 }

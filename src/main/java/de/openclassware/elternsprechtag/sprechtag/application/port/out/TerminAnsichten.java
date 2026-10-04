@@ -45,9 +45,9 @@ public interface TerminAnsichten {
 
   /**
    * Ein Slot im Ausfall-Dialog. {@code schuelerName}, {@code elternName} und
-   * {@code familienSchluessel} sind nur bei {@link AusfallSlotZustand#GEBUCHT} gesetzt, sonst
-   * {@code null}. Der Familien-Schlüssel ist die Eltern-Adresse — sie wird im Dialog nicht
-   * angezeigt, sondern dient nur der lokalen Zählung betroffener Familien.
+   * {@code empfaengerSchluessel} sind nur bei {@link AusfallSlotZustand#GEBUCHT} gesetzt, sonst
+   * {@code null}. Der Empfänger-Schlüssel steht für Adresse und Kind (ADR 0007) — er wird im Dialog
+   * nicht angezeigt, sondern dient nur der lokalen Zählung betroffener Kinder.
    */
   record AusfallZeile(
       UUID terminId,
@@ -55,7 +55,7 @@ public interface TerminAnsichten {
       AusfallSlotZustand zustand,
       String schuelerName,
       String elternName,
-      String familienSchluessel) {}
+      String empfaengerSchluessel) {}
 
   /**
    * Anzahl entfallener Termine je Lehrkraft an diesem Sprechtag — die dritte Quelle der

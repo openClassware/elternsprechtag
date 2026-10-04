@@ -3,23 +3,18 @@ package de.openclassware.elternsprechtag.sprechtag.application.service;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten.AuswertungsZeile;
-import de.openclassware.elternsprechtag.sprechtag.application.port.out.BuchungsAnsichten.NichtErreichtZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Lehrauftraege.LehrauftragDaten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.SprechtagAnsichten;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.TerminAnsichten;
-import de.openclassware.elternsprechtag.sprechtag.domain.Mailart;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -128,29 +123,18 @@ class AuswertenService implements Auswerten {
             kopf.titel(), kopf.datum(), kopf.status(), anonymisiertAm, plaene, nichtErreicht(id)));
   }
 
-  /**
-   * Fasst die Zeilen je Nachricht zusammen. Eine Nachricht ist eine Art an eine Adresse zu einem
-   * Zeitpunkt — alle ihre Buchungen teilen ihn, weil der Versand sie in einem Zug vermerkt.
-   */
+  /** Die Query liefert bereits je Nachricht eine Zeile — hier wird nur übersetzt. */
   private List<NichtErreicht> nichtErreicht(SprechtagId id) {
-    record Nachricht(Mailart art, LocalDateTime zeitpunkt, String email) {}
-    Map<Nachricht, Set<String>> schueler = new LinkedHashMap<>();
-    Map<Nachricht, Set<String>> eltern = new LinkedHashMap<>();
-    for (NichtErreichtZeile zeile : buchungsAnsichten.nichtErreicht(id)) {
-      Nachricht nachricht = new Nachricht(zeile.art(), zeile.zeitpunkt(), zeile.elternEmail());
-      schueler.computeIfAbsent(nachricht, k -> new LinkedHashSet<>()).add(zeile.schuelerName());
-      eltern.computeIfAbsent(nachricht, k -> new LinkedHashSet<>()).add(zeile.elternName());
-    }
-    List<NichtErreicht> liste = new ArrayList<>();
-    for (Nachricht nachricht : schueler.keySet()) {
-      liste.add(
-          new NichtErreicht(
-              nachricht.art(),
-              nachricht.zeitpunkt(),
-              nachricht.email(),
-              List.copyOf(schueler.get(nachricht)),
-              List.copyOf(eltern.get(nachricht))));
-    }
-    return liste;
+    return buchungsAnsichten.nichtErreicht(id).stream()
+        .map(
+            zeile ->
+                new NichtErreicht(
+                    zeile.art(),
+                    zeile.zeitpunkt(),
+                    zeile.elternEmail(),
+                    zeile.schuelerName(),
+                    zeile.klasse(),
+                    zeile.elternNamen()))
+        .toList();
   }
 }

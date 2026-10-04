@@ -45,9 +45,9 @@ public interface EntfallenLassen {
 
   /**
    * Ein Slot im Ausfall-Dialog. {@code schuelerName}, {@code elternName} und
-   * {@code familienSchluessel} sind nur bei {@link SlotZustand#GEBUCHT} gesetzt, sonst
-   * {@code null}. Der Familien-Schlüssel ist die Eltern-Adresse und wird nicht angezeigt — er
-   * dient nur der lokalen Zählung betroffener Familien im Auswahl-Modell des Dialogs.
+   * {@code empfaengerSchluessel} sind nur bei {@link SlotZustand#GEBUCHT} gesetzt, sonst
+   * {@code null}. Der Empfänger-Schlüssel steht für Adresse und Kind (ADR 0007) und wird nicht angezeigt — er
+   * dient nur der lokalen Zählung betroffener Kinder im Auswahl-Modell des Dialogs.
    */
   record SlotZeile(
       UUID terminId,
@@ -55,7 +55,7 @@ public interface EntfallenLassen {
       SlotZustand zustand,
       String schuelerName,
       String elternName,
-      String familienSchluessel) {}
+      String empfaengerSchluessel) {}
 
   /**
    * Was der Ausfall-Dialog zeigt. {@code nachbuchbar} heißt: Der Sprechtag nimmt jetzt noch

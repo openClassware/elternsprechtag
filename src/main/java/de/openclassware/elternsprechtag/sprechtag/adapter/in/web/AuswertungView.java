@@ -365,7 +365,8 @@ public class AuswertungView extends Div implements HasUrlParameter<String> {
         new Span(
             getTranslation(
                 "auswertung.nicht-erreicht.namen",
-                String.join(", ", eintrag.schuelerNamen()),
+                eintrag.schuelerName(),
+                eintrag.klasse(),
                 String.join(", ", eintrag.elternNamen())));
     namen.addClassName("auswertung__nicht-erreicht-namen");
 

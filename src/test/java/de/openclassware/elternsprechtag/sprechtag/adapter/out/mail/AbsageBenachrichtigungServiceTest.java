@@ -58,12 +58,17 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
     return new Fixture(sprechtag, lehrauftrag, lehrkraft);
   }
 
-  /** Bucht einen Slot mit gegebener Eltern-E-Mail und liefert die erzeugte Buchung. */
+  /** Bucht einen Slot mit gegebener Eltern-E-Mail. */
   private void book(UUID auftrag, Termin termin, String email) {
+    bookFuer(auftrag, termin, "Kind " + email, email);
+  }
+
+  /** Bucht einen Slot für dieses Kind an dieser Adresse. */
+  private void bookFuer(UUID auftrag, Termin termin, String kind, String email) {
     buchen.buchen(
         new BuchungsAnfrage(
             "Eltern " + email,
-            "Kind " + email,
+            kind,
             email,
             List.of(new BuchungsWunsch(auftrag, termin.id().wert(), "n"))));
   }
@@ -83,10 +88,10 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
   }
 
   @Test
-  void benachrichtige_sameParentMultipleBookings_dedupedToOne() {
+  void benachrichtige_sameChildMultipleBookings_dedupedToOne() {
     Fixture f = publishedSprechtag();
     List<Termin> slots = alleTermine();
-    // Dieselbe Adresse an zwei Slots — darf nur eine Benachrichtigung erzeugen.
+    // Dasselbe Kind an zwei Slots — darf nur eine Benachrichtigung erzeugen.
     buchen.buchen(
         new BuchungsAnfrage(
             "Eltern Müller",
@@ -109,6 +114,46 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
                   alleBuchungen().stream().map(Buchung::id).toList());
           assertThat(nachricht.ergebnis()).isEqualTo(Zustellergebnis.ABGESCHICKT);
         });
+  }
+
+  /**
+   * Issue #148, ADR 0007: Drei Familien ohne eigene Adresse an der Stellvertreteradresse — das
+   * Sekretariat bekommt je Kind eine Absage mit Name, Klasse und Terminen und kann einzeln anrufen.
+   */
+  @Test
+  void benachrichtige_stellvertreteradresse_jeKindEineAbsageMitNamenUndTerminen() {
+    Fixture f = publishedSprechtag();
+    List<Termin> slots = alleTermine();
+    String sekretariat = "sekretariat@schule.example";
+    bookFuer(f.lehrauftrag(), slots.get(0), "Lena Müller", sekretariat);
+    bookFuer(f.lehrauftrag(), slots.get(1), "Ben Yilmaz", sekretariat);
+    bookFuer(f.lehrauftrag(), slots.get(2), "Clara Nowak", sekretariat);
+
+    List<Versand> versand = absageBenachrichtigungService.benachrichtige(f.sprechtag().id());
+
+    assertThat(sender.empfangen)
+        .extracting(Nachricht::empfaenger)
+        .containsOnly(sekretariat)
+        .hasSize(3);
+    assertThat(sender.empfangen)
+        .extracting(Nachricht::text)
+        .anySatisfy(
+            text ->
+                assertThat(text)
+                    .contains("Kind: Lena Müller (Klasse 5a)", "- 14:00 Uhr, Anna Berg (Deutsch)")
+                    .doesNotContain("Ben Yilmaz", "Clara Nowak"))
+        .anySatisfy(
+            text ->
+                assertThat(text)
+                    .contains("Kind: Ben Yilmaz (Klasse 5a)", "- 14:15 Uhr")
+                    .doesNotContain("Lena Müller", "Clara Nowak"))
+        .anySatisfy(
+            text ->
+                assertThat(text)
+                    .contains("Kind: Clara Nowak (Klasse 5a)", "- 14:30 Uhr")
+                    .doesNotContain("Lena Müller", "Ben Yilmaz"));
+    // Issue #110: Jede Nachricht trägt genau die Buchung ihres Kindes.
+    assertThat(versand).hasSize(3).allSatisfy(n -> assertThat(n.buchungen()).hasSize(1));
   }
 
   @Test
@@ -145,8 +190,10 @@ class AbsageBenachrichtigungServiceTest extends AbstractServiceTest {
 
             der Sprechtag „Frühling“ am 20. Juli 2099 muss leider abgesagt werden.
 
-            Ihr bereits gebuchter Termin entfällt damit. Bei Fragen wenden Sie sich bitte an die \
-            Schule.
+            Kind: Kind eltern@example.com (Klasse 5a)
+
+            Entfallende Termine:
+            - 14:00 Uhr, Anna Berg (Deutsch)
 
             So erreichen Sie die Schule:
             Sekretariat, Tel. 0123 456789

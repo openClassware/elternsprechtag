@@ -122,7 +122,31 @@ class TerminAnsichtenJdbcAdapterTest {
     AusfallZeile gebuchteZeile = zeilen.get(1);
     assertThat(gebuchteZeile.schuelerName()).isEqualTo("Kind mueller");
     assertThat(gebuchteZeile.elternName()).isEqualTo("Eltern mueller");
-    assertThat(gebuchteZeile.familienSchluessel()).isEqualTo("mueller@example.com");
+    assertThat(gebuchteZeile.empfaengerSchluessel()).isNotNull();
+    assertThat(zeilen.get(0).empfaengerSchluessel()).isNull();
+  }
+
+  /** ADR 0007: Der Schlüssel unterscheidet Kinder an einer Adresse, nicht Termine eines Kindes. */
+  @Test
+  void ausfallSlots_empfaengerSchluessel_giltJeAdresseUndKind() {
+    Termin lena1 = neuerTermin(BEGINN);
+    Termin lena2 = neuerTermin(BEGINN.plusMinutes(15));
+    Termin ben = neuerTermin(BEGINN.plusMinutes(30));
+    Familie lena = new Familie("Eltern Müller", "Lena Müller", "sekretariat@schule.example");
+    lena1.buche(lena, ziel(), null, BEGINN);
+    lena2.buche(lena, ziel(), null, BEGINN);
+    ben.buche(
+        new Familie("Eltern Yilmaz", "Ben Yilmaz", "sekretariat@schule.example"),
+        ziel(),
+        null,
+        BEGINN);
+    termine.speichereAlle(List.of(lena1, lena2, ben));
+
+    List<AusfallZeile> zeilen = ausfallSlots.ausfallSlots(sprechtag, lehrkraft);
+
+    assertThat(zeilen.get(0).empfaengerSchluessel())
+        .isEqualTo(zeilen.get(1).empfaengerSchluessel())
+        .isNotEqualTo(zeilen.get(2).empfaengerSchluessel());
   }
 
   @Test

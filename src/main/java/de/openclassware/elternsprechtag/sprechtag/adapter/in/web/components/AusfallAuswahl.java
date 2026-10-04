@@ -10,10 +10,10 @@ import java.util.UUID;
 /**
  * Auswahl-Modell des {@link AusfallDialog} (Sammelaktion „Lehrkraft fällt aus", Issue #156): hält
  * die Slot-Liste einer Lehrkraft und die aktuelle Auswahl, leitet daraus „N Termine, etwa M
- * Familien" lokal ab — keine Query je Checkbox-Klick.
+ * Kinder" lokal ab — keine Query je Checkbox-Klick.
  *
  * <p>Bewusst <b>Vaadin-frei</b>, damit die Auswahl-Logik ohne UI unit-testbar ist. Der Dialog hält
- * eine Instanz, ruft die Methoden und rendert nur das Ergebnis. Die Vorschauzahl der Familien ist
+ * eine Instanz, ruft die Methoden und rendert nur das Ergebnis. Die Vorschauzahl der Kinder ist
  * eine Schätzung auf dem Read-Modell, mit dem der Dialog geöffnet wurde; verbindlich entschieden
  * wird beim Bestätigen erneut am Aggregat.
  */
@@ -70,17 +70,17 @@ class AusfallAuswahl {
   }
 
   /**
-   * Geschätzte Anzahl betroffener Familien: eine Familie mit zwei ausgewählten Slots zählt einmal.
-   * Freie Slots ohne Familien-Schlüssel zählen nicht mit.
+   * Geschätzte Anzahl betroffener Kinder — je Adresse und Kind, wie der Versand (ADR 0007): ein Kind
+   * mit zwei ausgewählten Slots zählt einmal. Freie Slots ohne Empfänger-Schlüssel zählen nicht mit.
    */
-  int anzahlFamilien() {
-    Set<String> familien = new LinkedHashSet<>();
+  int anzahlKinder() {
+    Set<String> empfaenger = new LinkedHashSet<>();
     for (SlotZeile slot : slots) {
-      if (ausgewaehlt.contains(slot.terminId()) && slot.familienSchluessel() != null) {
-        familien.add(slot.familienSchluessel());
+      if (ausgewaehlt.contains(slot.terminId()) && slot.empfaengerSchluessel() != null) {
+        empfaenger.add(slot.empfaengerSchluessel());
       }
     }
-    return familien.size();
+    return empfaenger.size();
   }
 
   List<UUID> gewaehlteTerminIds() {

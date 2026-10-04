@@ -283,7 +283,9 @@ Benutzerkonto.
 
 **Es gibt kein Eltern-Aggregat und kein Familien-Aggregat.** Eine Familie ist kein eigener Datensatz,
 den man verwalten könnte, sondern schlicht die Angaben an einer Buchung. Zwei Buchungen derselben
-Familie wissen nichts voneinander; erkannt wird sie höchstens an der E-Mail-Adresse.
+Familie wissen nichts voneinander. Auch die E-Mail-Adresse erkennt sie nicht verlässlich — an der
+Stellvertreteradresse teilen sich fremde Familien eine; benachrichtigt wird deshalb je Kind an einer
+Adresse (siehe **Benachrichtigungen**).
 
 Sprachgebrauch: **Familie** für die buchende Seite. Nicht **Anmeldung** — das Wort ist im Projekt
 doppelt vergeben (das Organizer-Login heißt so, und der **Anmeldeschluss** meint den Buchungsschluss
@@ -324,7 +326,7 @@ Gesprächen — die Liste, die am Sprechtag tatsächlich benutzt wird.
 
 ### Benachrichtigungen
 
-Zwei E-Mails an die bei der Buchung hinterlegte Adresse:
+E-Mails an die bei der Buchung hinterlegte Adresse:
 
 - **Absage-Benachrichtigung** — der Organizer sagt einen veröffentlichten Sprechtag ab, alle
   Eltern mit zugesagten Buchungen werden informiert
@@ -332,9 +334,18 @@ Zwei E-Mails an die bei der Buchung hinterlegte Adresse:
 - **Buchungsbestätigung** — direkt nach erfolgreicher Buchung, als Beleg über Datum, Uhrzeiten
   und Lehrkräfte
   ([ADR 0002](../../adr/0002-zweckerweiterung-eltern-email-buchungsbestaetigung.md)).
+- **Erinnerung** — zum gewählten Vorlauf vor dem Sprechtag
+  ([ADR 0006](../../adr/0006-zweckerweiterung-eltern-email-erinnerung.md)).
+- **Ausfall** — eine Lehrkraft fällt aus, ihre gebuchten Termine entfallen.
 
-Die E-Mail-Adresse ist **zweckgebunden** auf genau diese beiden Fälle; eine weitere Nutzung wäre
-eine neue Entscheidung und braucht einen ADR.
+Die E-Mail-Adresse ist **zweckgebunden** auf genau diese Fälle; eine weitere Nutzung wäre eine neue
+Entscheidung und braucht einen ADR.
+
+**Empfänger** einer Benachrichtigung ist **ein Kind an einer Adresse**
+([ADR 0007](../../adr/0007-benachrichtigung-je-kind-statt-je-adresse.md)): Die Termine eines Kindes
+bei mehreren Lehrkräften stehen in einer Mail, Geschwister und Familien an der Stellvertreteradresse
+bekommen je eine eigene. Jede Zahl „wie viele werden benachrichtigt" zählt Kinder, nicht Familien —
+eine Familie kennt das Modell nicht.
 
 ## Begriffe, die wir nicht benutzen
 

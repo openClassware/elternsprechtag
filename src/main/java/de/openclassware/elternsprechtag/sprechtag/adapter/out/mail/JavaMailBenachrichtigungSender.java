@@ -13,7 +13,7 @@ import org.springframework.mail.javamail.JavaMailSender;
  * LoggingBenachrichtigungSender Log-Attrappe} — siehe {@link BenachrichtigungConfig}.
  *
  * <p>Ein Zustellfehler wirft eine {@link org.springframework.mail.MailException}
- * (RuntimeException); die aufrufende Kernlogik fängt sie je Adresse ab und versendet best-effort
+ * (RuntimeException); die aufrufende Kernlogik fängt sie je Nachricht ab und versendet best-effort
  * weiter.
  */
 @Slf4j
