@@ -167,7 +167,7 @@ Organizer selbst korrigierbar, bevor Schaden entsteht.
 |---|---|---|---|---|
 | Buchung stornieren, Slot wird wieder frei | Organizer | Storno in der Auswertung, Termin geht auf `FREI` zurück | muss | **erfüllt** — Storno-Aktion je Zeile mit Bestätigungsdialog, `Stornieren`-Use-Case setzt die Buchung auf `STORNIERT` und gibt den Slot frei; ohne Mail, nur bei `VEROEFFENTLICHT` |
 | Organizer bucht im Namen einer Familie (Nachtragen, Umbuchen) | Organizer | eigene Buchungsstrecke mit denselben Regeln | muss | **erfüllt** (#104) — eigene Route `NachtragenView` aus der Auswertung mit eigenem Port `Nachtragen`: dieselben Regeln wie der Eltern-Submit (alles oder nichts, kein Zeitkonflikt), nur an einem veröffentlichten Sprechtag, ohne Anmeldeschluss. Umbuchen je Zeile über den `UmbuchenDialog` (`Umbuchen`): Neubuchung und Storno in einem Zug, der alte Slot wird erst frei, wenn der neue steht — nur auf einen freien Slot derselben Lehrkraft |
-| Familie hat keine E-Mail-Adresse | Organizer | Stellvertreteradresse der Schule eintragen | muss | **erfüllt** (#104) — Schalter „Familie hat keine eigene E-Mail-Adresse" im Nachtragen setzt die konfigurierte `elternsprechtag.stellvertreteradresse`; ohne konfigurierte Adresse fehlt der Schalter. Offen bleibt die letzte Meile: Die Absage an diese Adresse nennt die Familien nicht (#148, siehe unten) |
+| Familie hat keine E-Mail-Adresse | Organizer | Stellvertreteradresse der Schule eintragen | muss | **erfüllt** (#104) — Schalter „Familie hat keine eigene E-Mail-Adresse" im Nachtragen setzt die konfigurierte `elternsprechtag.stellvertreteradresse`; ohne konfigurierte Adresse fehlt der Schalter. Das Sekretariat bekommt je Kind eine eigene Absage mit Name, Klasse und Terminen (#148, [ADR 0007](../adr/0007-benachrichtigung-je-kind-statt-je-adresse.md)) |
 | Gewählter Slot wird während des Absendens vergeben | Eltern | Meldung, übrige Auswahl bleibt, nur der verlorene Slot neu | muss | **erfüllt** — `TerminBelegtException` wird gefangen, Optionen neu geladen, ungültige Slots verworfen (`ElternsprechtagView:530`, `BookingSession.reload`) |
 | Vergangene Slots sind noch buchbar | Eltern | vergangene Slots nicht mehr wählbar | muss | **erfüllt** (#118) — keine Prüfung je Slot, sondern über den Anmeldeschluss: Er ist spätestens der Beginn des Sprechtags, bei Frist 0 genau dieser (`Anmeldefrist.anmeldeschlussFuer`). Solange der Elternlink annimmt, hat also kein Slot begonnen. Der Organizer-Nachtrag bleibt bewusst ohne Zeitprüfung — er trägt auch ein Gespräch nach, das schon stattgefunden hat |
 | Alle Slots einer Lehrkraft belegt | Eltern | sichtbar, dass nichts frei ist | muss | **erfüllt** (#119) — `BookingSession.verfuegbarkeit` unterscheidet „nichts frei" (Slots da, keiner buchbar) von „keine Termine"; die Karte tritt dann zurück und trägt die Pille „keine Termine frei", aufgeklappt ersetzt ein Hinweis Raster und Notizfeld. Neutral formuliert, weil „vergeben" und „entfällt" für die Eltern bewusst ununterscheidbar bleiben; ein Zeitkonflikt mit der eigenen Auswahl zählt nicht. Gilt ebenso im Nachtragen |
@@ -212,13 +212,16 @@ Familie anzurufen: Die letzte Meile ist menschlich.
 Seine Absicht ist, dass niemand zu spät von einer Absage erfährt; hier wird der Empfänger bewusst
 zur Schule verlegt, statt die Pflicht aufzuweichen.
 
-**Diese Meile kann das Sekretariat heute nicht gehen — die Kette reißt am Ende.** Der Satz „formal
-intakt" stand hier und war falsch. Die Empfänger werden per `distinct` auf der Adresse ermittelt,
-also entsteht für drei Familien an derselben Stellvertreteradresse **eine** Mail; ihr Text nennt
-keinen Familiennamen; und die Auswertung führt die E-Mail-Adresse gar nicht, sodass auch kein
-Nachschlagen hilft. Das Sekretariat erfährt, dass der Sprechtag ausfällt, aber nicht, wen es
-anrufen muss — und niemand bemerkt die Lücke. Erhoben als [#148](https://github.com/openClassware/elternsprechtag/issues/148);
-der allgemeine Fall steht als Zustellzustand in Phase 4.
+**Diese Meile konnte das Sekretariat zuerst nicht gehen — die Kette riss am Ende.** Der Satz
+„formal intakt" stand hier und war falsch. Benachrichtigt wurde je Adresse, also entstand für drei
+Familien an derselben Stellvertreteradresse **eine** Absage ohne Namen; Erinnerung und Ausfall
+nannten nur das erste Kind über den Terminen aller. Gelöst mit
+[#148](https://github.com/openClassware/elternsprechtag/issues/148) durch
+[ADR 0007](../adr/0007-benachrichtigung-je-kind-statt-je-adresse.md): **Empfänger ist ein Kind an
+einer Adresse.** Das Sekretariat bekommt je Kind eine eigene Mail mit Name, Klasse und Terminen —
+ohne dass der Versand die Stellvertreteradresse erkennen müsste. Grenze: Zwei gleichnamige Kinder
+derselben Klasse an derselben Adresse fallen in eine Mail. Der allgemeine Fall steht als
+Zustellzustand in Phase 4.
 
 **Der Konfliktfall ist bereits fertig.** Er war der Musterfall für Härtegrad 3 beim Aufstellen des
 Rasters und ist genau so gebaut: Meldung, Neuladen, gezieltes Verwerfen nur der ungültig gewordenen
@@ -261,7 +264,7 @@ in Phase 3.
 | Tippfehler in der Adresse beim Erfassen | Eltern | zweite Eingabe „E-Mail wiederholen" | muss | **erfüllt** (#111) — in beiden Buchungsstrecken, Eltern wie Organizer: zweites Feld „E-Mail-Adresse wiederholen" neben der Adresse, verglichen nach `trim()` ohne Unterschied der Schreibung (`EmailWiederholung`, Vaadin-frei). Die Abweichung meldet das Feld nach dem ersten Verlassen, der Footer nennt sie sofort, gebucht wird erst bei Übereinstimmung. Paste bleibt erlaubt; der Stellvertreter-Schalter blendet die Wiederholung aus. Gespeichert wird nur die erste Eingabe |
 | Einzelnen Termin verschieben, Buchung behalten | Organizer | Umbuchen in einem Zug, neue Bestätigungsmail | muss | **erfüllt** (#104) — `Umbuchen` aus Phase 3; Familie, Notiz und Buchungsziel wandern in die neue Buchung, die Angaben der alten fallen. Genau eine Mail mit dem Anlass `UMBUCHUNG`, die die Änderung benennt |
 | Elternlink nach der Absage | Eltern | Hinweis „abgesagt" plus Datum und Schulkontakt, keine Buchungsauskunft | muss | **erfüllt** (#131) — `Zugangsstand.ABGESAGT` hat Vorrang vor allen anderen Ständen und bleibt auch nach dem Datum stehen: Ein abgesagter Sprechtag wird nie abgeschlossen. Die Seite „Dieser Elternsprechtag wurde abgesagt" hat denselben Aufbau wie „Anmeldung beendet" — Titel, Datum, Uhrzeit und der Schulkontakt als Hauptaussage, ohne Ort (`ElternsprechtagPresenter.Hinweisseite`) |
-| Absage-Dialog nennt die Zahl der Betroffenen | Organizer | Zahl vor dem Bestätigen | muss | **erfüllt** — `Absagen.zaehleBetroffeneEltern`, je Adresse einmal gezählt |
+| Absage-Dialog nennt die Zahl der Betroffenen | Organizer | Zahl vor dem Bestätigen | muss | **erfüllt** — `Absagen.zaehleBetroffeneKinder`, je Adresse und Kind einmal gezählt (ADR 0007) |
 | Absage ohne jede Buchung | Organizer | kein Versand, kein Fehler | muss | **erfüllt** — `benachrichtige` steigt bei leerer Adressliste aus |
 | Versand rollt die Absage zurück | Organizer | kann nicht passieren | muss | **erfüllt** — `AFTER_COMMIT` im `BenachrichtigungListener` (`adapter/in/event`) |
 | Sprechtag wird verschoben statt abgesagt | Organizer | — | darf fehlen | kein Weg; `startDate`/`startTime` nach Phase 2 gesperrt. Weg drumherum: absagen → `duplicate` → neu veröffentlichen |
@@ -327,10 +330,10 @@ Invariante. Aus demselben Grund hat die Tabelle **keinen Fremdschlüssel** auf `
 Data JDBC schreibt die Buchungen bei jedem Speichern des Termins neu, ein Kaskadenlöschen nähme die
 Zustellungen jedes Mal mit. Die Erinnerung behält ihren Zeitstempel an der `Buchung` — er ist die
 *Vormerkung* gegen Doppelversand, gesetzt vor dem Versand; ihr Ausgang steht in der `Zustellung`. Die
-Liste gliedert je Nachricht und Adresse, nicht je Lehrkraft, und nennt die Adresse — nur hier und nur
-für Gescheiterte, weil ein Tippfehler darin der häufigste Grund ist. Mehrere Familien an der
-Stellvertreteradresse erscheinen als ein Eintrag mit allen Namen; sie in der Mail selbst zu nennen,
-bleibt #148.
+Liste gliedert je Nachricht — ein Kind an einer Adresse (ADR 0007) —, nicht je Lehrkraft, und nennt
+Kind, Klasse und Adresse — die Adresse nur hier und nur für Gescheiterte, weil ein Tippfehler darin
+der häufigste Grund ist. Mehrere Familien an der Stellvertreteradresse erscheinen als je ein Eintrag
+(#148).
 
 **Adressprüfung, dreifach gestaffelt.** Technische Vorbemerkung: `JavaMailSender.send` meldet nur die
 **sofortige SMTP-Ablehnung**; der typische Fehlschlag kommt als Bounce Minuten später an den Absender
@@ -600,12 +603,6 @@ hier ist der Ort dafür.
 Für jeden Fall der Stufe `muss`, der heute fehlt, liegt ein Issue im Tracker. Hier stehen nur die
 **offenen**; erledigte Issues sind herausgenommen, die erfüllten Zeilen in den Tabellen nennen ihr
 Issue.
-
-**Phase 3 — Buchungsphase**
-
-| Issue | Fall |
-|---|---|
-| [#148](https://github.com/openClassware/elternsprechtag/issues/148) | Absage an die Stellvertreteradresse nennt die betroffenen Familien nicht |
 
 **Phase 4 — Kurz vor dem Termin**
 

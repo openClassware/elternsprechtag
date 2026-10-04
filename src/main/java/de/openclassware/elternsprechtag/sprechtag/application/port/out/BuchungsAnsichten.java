@@ -30,14 +30,17 @@ public interface BuchungsAnsichten {
   List<BelegZeile> belege(List<BuchungId> buchungen);
 
   /**
-   * Die aktiven Buchungen dieses Sprechtags mit ihrer Eltern-Adresse — die Empfänger einer Absage.
-   * Je Buchung eine Zeile, nicht je Adresse: Der Versand bündelt selbst und muss wissen, welche
-   * Buchungen eine Nachricht trägt (Issue #110).
+   * Die Belege der aktiven Buchungen dieses Sprechtags — die Grundlage einer Absage. Je Buchung
+   * eine Zeile, nach Empfänger und Uhrzeit sortiert: Der Versand bündelt selbst je Adresse und Kind
+   * (ADR 0007) und muss wissen, welche Buchungen eine Nachricht trägt (Issue #110).
    */
-  List<Empfaenger> aktiveEmpfaenger(SprechtagId sprechtag);
+  List<BelegZeile> aktiveBelege(SprechtagId sprechtag);
 
-  /** Wie viele verschiedene Adressen {@link #aktiveEmpfaenger(SprechtagId)} liefern würde. */
-  long zaehleAktiveElternAdressen(SprechtagId sprechtag);
+  /**
+   * Wie viele Empfänger — je Adresse und Kind (ADR 0007) — {@link #aktiveBelege(SprechtagId)}
+   * umfasst, also wie viele Absagen hinausgehen würden.
+   */
+  long zaehleAktiveEmpfaenger(SprechtagId sprechtag);
 
   /**
    * Die Ids der aktiven, noch nicht erinnerten Buchungen dieses Sprechtags — die Kandidaten eines
@@ -48,8 +51,9 @@ public interface BuchungsAnsichten {
   List<BuchungId> aktiveUnerinnerteBuchungen(SprechtagId sprechtag);
 
   /**
-   * Die Buchungen dieses Sprechtags, deren Familie eine Nachricht nicht bekommen hat (Issue #110) —
-   * je Buchung und Art eine Zeile, nach Zeitpunkt sortiert. Zur Liste gehört eine fehlgeschlagene
+   * Die Nachrichten dieses Sprechtags, die ihre Familie nicht erreicht haben (Issue #110) — je
+   * Nachricht eine Zeile, nach Zeitpunkt sortiert. Eine Nachricht ist eine Art an einen Empfänger
+   * (Adresse und Kind, ADR 0007) zu einem Zeitpunkt. Zur Liste gehört eine fehlgeschlagene
    * Zustellung nur, solange sie noch jemanden betrifft: an einer aktiven Buchung oder als
    * Ausfall-Nachricht (deren Buchung eben dadurch entfallen ist), und nie an einer anonymisierten.
    */
@@ -104,17 +108,16 @@ public interface BuchungsAnsichten {
       String elternEmail,
       String klasse) {}
 
-  /** Eine aktive Buchung und die Adresse, an die ihre Absage geht. */
-  record Empfaenger(BuchungId buchung, String elternEmail) {}
-
   /**
-   * Eine Buchung, deren Familie die Nachricht dieser Art nicht bekommen hat. Alle Buchungen einer
-   * Nachricht teilen Art, Zeitpunkt und Adresse.
+   * Eine Nachricht, die ihre Familie nicht erreicht hat. {@code elternNamen} sind die
+   * verschiedenen Schreibweisen aller Buchungen, die sie trug — ein Nachtrag für dasselbe Kind kann
+   * den Namen anders schreiben.
    */
   record NichtErreichtZeile(
       Mailart art,
       LocalDateTime zeitpunkt,
       String elternEmail,
-      String elternName,
-      String schuelerName) {}
+      String schuelerName,
+      String klasse,
+      List<String> elternNamen) {}
 }

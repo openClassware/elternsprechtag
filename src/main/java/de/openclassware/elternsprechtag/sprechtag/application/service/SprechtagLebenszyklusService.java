@@ -72,8 +72,8 @@ class SprechtagLebenszyklusService
 
   @Override
   @Transactional(readOnly = true)
-  public long zaehleBetroffeneEltern(UUID id) {
-    return buchungsAnsichten.zaehleAktiveElternAdressen(SprechtagId.von(id));
+  public long zaehleBetroffeneKinder(UUID id) {
+    return buchungsAnsichten.zaehleAktiveEmpfaenger(SprechtagId.von(id));
   }
 
   /**

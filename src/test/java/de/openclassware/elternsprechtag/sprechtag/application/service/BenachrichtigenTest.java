@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import de.openclassware.elternsprechtag.SprechtagKontextTestConfig;
 import de.openclassware.elternsprechtag.sprechtag.AbstractServiceTest;
@@ -29,8 +30,8 @@ import org.springframework.context.annotation.Import;
  * Ereignis stößt nach dem Commit den Versand an, der Use Case hält den Ausgang fest — und Auswertung
  * wie Übersicht zeigen, wen die Nachricht nicht erreicht hat.
  *
- * <p>Der Versand selbst ist die {@link FakeBenachrichtigungen Attrappe}: Sie bündelt je Adresse wie
- * der echte und lässt einzelne Adressen scheitern. Formuliert wird hier nichts; das prüfen die
+ * <p>Der Versand selbst ist die {@link FakeBenachrichtigungen Attrappe}: Sie bündelt je Adresse und
+ * Kind wie der echte und lässt einzelne Adressen scheitern. Formuliert wird hier nichts; das prüfen die
  * Versand-Tests unter {@code adapter.out.mail}. Die feineren Regeln der Liste (Storno, Anonymisierung,
  * Ersetzen) stehen im Persistenztest der Leseseite.
  */
@@ -107,7 +108,8 @@ class BenachrichtigenTest extends AbstractServiceTest {
             eintrag -> {
               assertThat(eintrag.art()).isEqualTo(Mailart.BESTAETIGUNG);
               assertThat(eintrag.email()).isEqualTo("mueler@exmaple.com");
-              assertThat(eintrag.schuelerNamen()).containsExactly("Lena Müller");
+              assertThat(eintrag.schuelerName()).isEqualTo("Lena Müller");
+              assertThat(eintrag.klasse()).isEqualTo("5a");
               assertThat(eintrag.elternNamen()).containsExactly("Eltern Lena Müller");
             });
     assertThat(hinweisInDerUebersicht(f)).isEqualTo(1);
@@ -124,7 +126,7 @@ class BenachrichtigenTest extends AbstractServiceTest {
   }
 
   @Test
-  void gescheiterteAbsage_anGeteilteAdresse_isteinEintragMitBeidenKindern() {
+  void gescheiterteAbsage_anGeteilteAdresse_istJeKindEinEintrag() {
     Fixture f = veroeffentlichterSprechtag();
     List<Termin> slots = alleTermine();
     buche(f.lehrauftrag(), slots.get(0), "Lena Müller", "mueller@example.com");
@@ -135,13 +137,10 @@ class BenachrichtigenTest extends AbstractServiceTest {
     absagen.sageAb(f.sprechtag().id().wert());
 
     assertThat(nichtErreicht(f))
-        .singleElement()
-        .satisfies(
-            eintrag -> {
-              assertThat(eintrag.art()).isEqualTo(Mailart.ABSAGE);
-              assertThat(eintrag.schuelerNamen()).containsExactly("Lena Müller", "Tom Müller");
-            });
-    assertThat(hinweisInDerUebersicht(f)).isEqualTo(1);
+        .extracting(NichtErreicht::art, NichtErreicht::schuelerName)
+        .containsExactly(
+            tuple(Mailart.ABSAGE, "Lena Müller"), tuple(Mailart.ABSAGE, "Tom Müller"));
+    assertThat(hinweisInDerUebersicht(f)).isEqualTo(2);
   }
 
   @Test

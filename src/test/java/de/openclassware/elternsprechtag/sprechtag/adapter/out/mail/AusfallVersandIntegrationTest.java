@@ -79,10 +79,14 @@ class AusfallVersandIntegrationTest extends AbstractServiceTest {
   }
 
   private void buche(UUID lehrauftrag, String email, Termin... termine) {
+    buche(lehrauftrag, "Karl Kind", email, termine);
+  }
+
+  private void buche(UUID lehrauftrag, String kind, String email, Termin... termine) {
     buchen.buchen(
         new BuchungsAnfrage(
             "Elke Elternteil",
-            "Karl Kind",
+            kind,
             email,
             Arrays.stream(termine)
                 .map(t -> new BuchungsWunsch(lehrauftrag, t.id().wert(), null))
@@ -155,6 +159,26 @@ class AusfallVersandIntegrationTest extends AbstractServiceTest {
 
     assertThat(sender.empfangen).hasSize(1);
     assertThat(sender.empfangen.get(0).text()).contains("14:00", "14:15");
+  }
+
+  /** ADR 0007: Geschwister oder Familien an der Stellvertreteradresse bekommen je eine eigene Mail. */
+  @Test
+  void zweiKinderAnEinerAdresse_ergebenJeKindEineAusfallMail() {
+    Fixture f = veroeffentlichterSprechtag();
+    List<Termin> slots = alleTermine();
+    buche(f.lehrauftrag(), "Lena Müller", "sekretariat@schule.example", slots.get(0));
+    buche(f.lehrauftrag(), "Ben Yilmaz", "sekretariat@schule.example", slots.get(1));
+    sender.reset();
+
+    entfallenLassen.entfallenLassen(List.of(slots.get(0).id().wert(), slots.get(1).id().wert()));
+
+    assertThat(sender.empfangen).hasSize(2);
+    assertThat(sender.empfangen.get(0).text())
+        .contains("Kind: Lena Müller (Klasse 5a)", "14:00")
+        .doesNotContain("Ben Yilmaz", "14:15");
+    assertThat(sender.empfangen.get(1).text())
+        .contains("Kind: Ben Yilmaz (Klasse 5a)", "14:15")
+        .doesNotContain("Lena Müller", "14:00");
   }
 
   @Test

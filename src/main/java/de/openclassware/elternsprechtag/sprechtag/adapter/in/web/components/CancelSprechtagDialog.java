@@ -8,7 +8,7 @@ import com.vaadin.flow.component.html.Div;
 
 /**
  * Bestätigungsdialog vor der Absage eines Sprechtags. Nennt den Titel des Sprechtags und die Anzahl
- * der betroffenen Eltern (aktive Buchungen, je E-Mail-Adresse einmal) und ruft bei Bestätigung den
+ * der betroffenen Kinder (aktive Buchungen, je Adresse und Kind einmal) und ruft bei Bestätigung den
  * übergebenen Callback auf. Bleibt eine reine Anzeige-Komponente: Zähl-/Entscheidungslogik liegt im
  * Presenter/Service, hier kommen nur die fertigen Werte an.
  */

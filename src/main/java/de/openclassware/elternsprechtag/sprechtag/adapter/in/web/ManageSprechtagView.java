@@ -101,7 +101,7 @@ public class ManageSprechtagView extends Div {
 
   private void onStatusChange(SprechtagZeile sprechtag, SprechtagStatus newStatus) {
     if (newStatus == SprechtagStatus.ABGESAGT) {
-      long betroffene = presenter.zaehleBetroffeneEltern(sprechtag.id());
+      long betroffene = presenter.zaehleBetroffeneKinder(sprechtag.id());
       new CancelSprechtagDialog(
               sprechtag.titel(), betroffene, () -> applyStatusChange(sprechtag, newStatus))
           .open();

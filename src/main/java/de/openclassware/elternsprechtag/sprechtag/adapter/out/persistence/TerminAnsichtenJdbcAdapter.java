@@ -37,6 +37,7 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
        order by t.startzeit
       """;
 
+  /** Ohne Buchung kein Schlüssel — sonst zählte jeder freie Slot als „[null,null,null]" mit. */
   private static final String AUSFALL_SLOTS =
       """
       select t.id              as termin_id,
@@ -44,13 +45,15 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
              t.verfuegbarkeit   as verfuegbarkeit,
              b.schueler_name    as schueler_name,
              b.eltern_name      as eltern_name,
-             b.eltern_email     as eltern_email
+             b.eltern_email     as eltern_email,
+             case when b.id is null then null else %s end as empfaenger_schluessel
         from termin t
         left join buchungen b on b.termin_id = t.id and b.status = 'ZUGESAGT'
        where t.sprechtag_id = :sprechtagId
          and t.lehrer_id = :lehrkraftId
        order by t.startzeit
-      """;
+      """
+          .formatted(Empfaengerschluessel.ALS_TEXT);
 
   private static final String ENTFALLENE_JE_LEHRKRAFT =
       """
@@ -127,7 +130,7 @@ class TerminAnsichtenJdbcAdapter implements TerminAnsichten {
               zustand,
               rs.getString("schueler_name"),
               rs.getString("eltern_name"),
-              elternEmail);
+              rs.getString("empfaenger_schluessel"));
         });
   }
 

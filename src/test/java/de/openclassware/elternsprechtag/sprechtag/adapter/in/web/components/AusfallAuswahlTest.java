@@ -35,7 +35,7 @@ class AusfallAuswahlTest {
 
     assertThat(auswahl.hatAuswahl()).isFalse();
     assertThat(auswahl.anzahlTermine()).isZero();
-    assertThat(auswahl.anzahlFamilien()).isZero();
+    assertThat(auswahl.anzahlKinder()).isZero();
   }
 
   @Test
@@ -90,7 +90,7 @@ class AusfallAuswahlTest {
   }
 
   @Test
-  void anzahlFamilien_zweiSlotsDerselbenFamilie_zaehlenAlsEine() {
+  void anzahlKinder_zweiSlotsDerselbenFamilie_zaehlenAlsEine() {
     SlotZeile ersterSlot = gebucht(LocalTime.of(14, 0), "mueller@example.com");
     SlotZeile zweiterSlot = gebucht(LocalTime.of(14, 15), "mueller@example.com");
     SlotZeile andereFamilie = gebucht(LocalTime.of(14, 30), "schmidt@example.com");
@@ -101,18 +101,18 @@ class AusfallAuswahlTest {
     auswahl.toggle(zweiterSlot);
 
     assertThat(auswahl.anzahlTermine()).isEqualTo(2);
-    assertThat(auswahl.anzahlFamilien()).isEqualTo(1);
+    assertThat(auswahl.anzahlKinder()).isEqualTo(1);
   }
 
   @Test
-  void anzahlFamilien_freierSlotOhneFamilienSchluessel_zaehltNicht() {
+  void anzahlKinder_freierSlotOhneEmpfaengerSchluessel_zaehltNicht() {
     SlotZeile slot = frei(LocalTime.of(14, 0));
     AusfallAuswahl auswahl = new AusfallAuswahl(List.of(slot));
 
     auswahl.toggle(slot);
 
     assertThat(auswahl.anzahlTermine()).isEqualTo(1);
-    assertThat(auswahl.anzahlFamilien()).isZero();
+    assertThat(auswahl.anzahlKinder()).isZero();
   }
 
   @Test

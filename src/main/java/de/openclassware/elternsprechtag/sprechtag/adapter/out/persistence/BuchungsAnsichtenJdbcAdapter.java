@@ -6,6 +6,8 @@ import de.openclassware.elternsprechtag.sprechtag.domain.Buchungsstatus;
 import de.openclassware.elternsprechtag.sprechtag.domain.Mailart;
 import de.openclassware.elternsprechtag.sprechtag.domain.SprechtagId;
 import de.openclassware.elternsprechtag.sprechtag.domain.Verfuegbarkeit;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -59,7 +61,8 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
        order by t.startzeit, b.erstellt_am
       """;
 
-  private static final String BELEGE =
+  /** Die Spalten eines Belegs — für die Belege eines Vorgangs wie für die eines ganzen Sprechtags. */
+  private static final String BELEG_SPALTEN =
       """
       select b.id              as buchung_id,
              t.sprechtag_id    as sprechtag_id,
@@ -71,19 +74,26 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
              b.schueler_name   as schueler_name,
              b.eltern_email    as eltern_email,
              b.klasse_name     as klasse_name
+      """;
+
+  private static final String BELEGE =
+      BELEG_SPALTEN
+          + """
         from buchungen b
         join termin t on t.id = b.termin_id
        where b.id in (:ids)
        order by t.startzeit
       """;
 
-  private static final String AKTIVE_EMPFAENGER =
-      "select b.id as buchung_id, b.eltern_email as eltern_email"
+  private static final String AKTIVE_BELEGE =
+      BELEG_SPALTEN
           + AKTIVE_EINES_SPRECHTAGS
-          + " order by b.eltern_email, b.erstellt_am";
+          + " order by "
+          + Empfaengerschluessel.SPALTEN
+          + ", t.startzeit";
 
-  private static final String ANZAHL_AKTIVE_ADRESSEN =
-      "select count(distinct b.eltern_email)" + AKTIVE_EINES_SPRECHTAGS;
+  private static final String ANZAHL_AKTIVE_EMPFAENGER =
+      "select count(distinct (" + Empfaengerschluessel.SPALTEN + "))" + AKTIVE_EINES_SPRECHTAGS;
 
   private static final String AKTIVE_UNERINNERTE_BUCHUNGEN =
       "select b.id as buchung_id"
@@ -106,24 +116,33 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
          and (b.status = 'ZUGESAGT' or z.art = 'AUSFALL')
       """;
 
+  /**
+   * Je Nachricht eine Zeile. Eine Nachricht ist eine Art an einen Empfänger zu einem Zeitpunkt —
+   * alle ihre Buchungen teilen ihn, weil der Versand sie in einem Zug vermerkt. Die Elternnamen
+   * bleiben eine Liste: Ein Nachtrag für dasselbe Kind kann sie anders schreiben.
+   */
   private static final String NICHT_ERREICHT_EINES_SPRECHTAGS =
       """
-      select z.art           as art,
-             z.zeitpunkt     as zeitpunkt,
-             b.eltern_email  as eltern_email,
-             b.eltern_name   as eltern_name,
-             b.schueler_name as schueler_name
+      select z.art                                            as art,
+             z.zeitpunkt                                      as zeitpunkt,
+             b.eltern_email                                   as eltern_email,
+             b.schueler_name                                  as schueler_name,
+             b.klasse_name                                    as klasse_name,
+             array_agg(distinct b.eltern_name order by b.eltern_name) as eltern_namen
       """
           + NICHT_ERREICHT
-          + """
-         and t.sprechtag_id = :sprechtagId
-       order by z.zeitpunkt, b.eltern_email, z.art, t.startzeit
-      """;
+          + " and t.sprechtag_id = :sprechtagId"
+          + " group by z.art, z.zeitpunkt, "
+          + Empfaengerschluessel.SPALTEN
+          + " order by z.zeitpunkt, "
+          + Empfaengerschluessel.SPALTEN
+          + ", z.art";
 
-  /** Eine Nachricht ist eine Art an eine Adresse zu einem Zeitpunkt — alle ihre Buchungen teilen ihn. */
   private static final String NICHT_ERREICHT_JE_SPRECHTAG =
       "select t.sprechtag_id as sprechtag_id,"
-          + " count(distinct (z.art, b.eltern_email, z.zeitpunkt)) as anzahl"
+          + " count(distinct (z.art, z.zeitpunkt, "
+          + Empfaengerschluessel.SPALTEN
+          + ")) as anzahl"
           + NICHT_ERREICHT
           + " group by t.sprechtag_id";
 
@@ -162,39 +181,34 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
       return List.of();
     }
     List<UUID> ids = buchungen.stream().map(BuchungId::wert).toList();
-    return jdbc.query(
-        BELEGE,
-        Map.of("ids", ids),
-        (rs, zeile) ->
-            new BelegZeile(
-                BuchungId.von(rs.getObject("buchung_id", UUID.class)),
-                rs.getObject("sprechtag_id", UUID.class),
-                rs.getTimestamp("startzeit").toLocalDateTime().toLocalTime(),
-                rs.getString("lehrkraft_name"),
-                rs.getString("fach_name"),
-                rs.getString("notiz"),
-                rs.getString("eltern_name"),
-                rs.getString("schueler_name"),
-                rs.getString("eltern_email"),
-                rs.getString("klasse_name")));
+    return jdbc.query(BELEGE, Map.of("ids", ids), BuchungsAnsichtenJdbcAdapter::beleg);
   }
 
   @Override
-  public List<Empfaenger> aktiveEmpfaenger(SprechtagId sprechtag) {
+  public List<BelegZeile> aktiveBelege(SprechtagId sprechtag) {
     return jdbc.query(
-        AKTIVE_EMPFAENGER,
-        Map.of("sprechtagId", sprechtag.wert()),
-        (rs, zeile) ->
-            new Empfaenger(
-                BuchungId.von(rs.getObject("buchung_id", UUID.class)),
-                rs.getString("eltern_email")));
+        AKTIVE_BELEGE, Map.of("sprechtagId", sprechtag.wert()), BuchungsAnsichtenJdbcAdapter::beleg);
+  }
+
+  private static BelegZeile beleg(ResultSet rs, int zeile) throws SQLException {
+    return new BelegZeile(
+        BuchungId.von(rs.getObject("buchung_id", UUID.class)),
+        rs.getObject("sprechtag_id", UUID.class),
+        rs.getTimestamp("startzeit").toLocalDateTime().toLocalTime(),
+        rs.getString("lehrkraft_name"),
+        rs.getString("fach_name"),
+        rs.getString("notiz"),
+        rs.getString("eltern_name"),
+        rs.getString("schueler_name"),
+        rs.getString("eltern_email"),
+        rs.getString("klasse_name"));
   }
 
   @Override
-  public long zaehleAktiveElternAdressen(SprechtagId sprechtag) {
+  public long zaehleAktiveEmpfaenger(SprechtagId sprechtag) {
     Long anzahl =
         jdbc.queryForObject(
-            ANZAHL_AKTIVE_ADRESSEN, Map.of("sprechtagId", sprechtag.wert()), Long.class);
+            ANZAHL_AKTIVE_EMPFAENGER, Map.of("sprechtagId", sprechtag.wert()), Long.class);
     return anzahl == null ? 0L : anzahl;
   }
 
@@ -216,8 +230,9 @@ class BuchungsAnsichtenJdbcAdapter implements BuchungsAnsichten {
                 Mailart.valueOf(rs.getString("art")),
                 rs.getTimestamp("zeitpunkt").toLocalDateTime(),
                 rs.getString("eltern_email"),
-                rs.getString("eltern_name"),
-                rs.getString("schueler_name")));
+                rs.getString("schueler_name"),
+                rs.getString("klasse_name"),
+                List.of((String[]) rs.getArray("eltern_namen").getArray())));
   }
 
   @Override

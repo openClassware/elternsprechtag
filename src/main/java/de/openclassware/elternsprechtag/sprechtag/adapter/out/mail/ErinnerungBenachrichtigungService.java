@@ -31,8 +31,9 @@ import org.springframework.stereotype.Service;
  * Scheduler-Laufs veröffentlicht.
  *
  * <p>Ein Lauf erinnert typischerweise mehrere Familien an mehreren Sprechtagen in einem Zug; die
- * Buchungen werden deshalb erst nach Sprechtag und Eltern-Adresse gruppiert — eine Familie mit
- * mehreren Terminen am selben Sprechtag bekommt eine Mail, keine je Termin.
+ * Buchungen werden deshalb erst je {@link Empfaenger} gruppiert — ein Kind mit mehreren Terminen am
+ * selben Sprechtag bekommt eine Mail, keine je Termin; Geschwister an derselben Adresse je eine
+ * eigene (ADR 0007).
  */
 @RequiredArgsConstructor
 @Service
@@ -47,15 +48,13 @@ class ErinnerungBenachrichtigungService {
   private final I18NProvider i18n;
   private final ElternsprechtagProperties properties;
 
-  private record Empfaenger(UUID sprechtagId, String elternEmail) {}
-
-  /** Ein erinnerter Termin dieser Familie an diesem Sprechtag. */
+  /** Ein erinnerter Termin dieses Kindes an diesem Sprechtag. */
   private record ErinnerungsPosition(LocalTime zeit, String lehrkraft, String fach) {}
 
   /**
-   * Erinnert die Familien genau dieser Buchungen — je Sprechtag und Adresse eine Nachricht. Eine
-   * leere Id-Liste oder durchweg unbekannte Ids führen zu keinem Sende-Aufruf und zu keinem Fehler.
-   * Der Versand ist best-effort: Scheitert der Sender, wird der Fehler protokolliert, als
+   * Erinnert die Familien genau dieser Buchungen — je Sprechtag, Adresse und Kind eine Nachricht.
+   * Eine leere Id-Liste oder durchweg unbekannte Ids führen zu keinem Sende-Aufruf und zu keinem
+   * Fehler. Der Versand ist best-effort: Scheitert der Sender, wird der Fehler protokolliert, als
    * {@link Zustellergebnis#FEHLGESCHLAGEN} gemeldet und mit den übrigen Gruppen fortgefahren; fehlt
    * der Sprechtag inzwischen, entsteht für die Gruppe gar keine Nachricht.
    *
@@ -70,12 +69,7 @@ class ErinnerungBenachrichtigungService {
       return List.of();
     }
 
-    Map<Empfaenger, List<BelegZeile>> gruppen = new LinkedHashMap<>();
-    for (BelegZeile zeile : zeilen) {
-      gruppen
-          .computeIfAbsent(new Empfaenger(zeile.sprechtagId(), zeile.elternEmail()), k -> new ArrayList<>())
-          .add(zeile);
-    }
+    Map<Empfaenger, List<BelegZeile>> gruppen = Empfaenger.gruppiere(zeilen);
 
     // Je Sprechtag genau einmal geladen: Ein Lauf erinnert typischerweise viele Familien
     // desselben Sprechtags, und der Kopf ändert sich nicht zwischen zwei Gruppen.
@@ -86,12 +80,12 @@ class ErinnerungBenachrichtigungService {
           koepfe.computeIfAbsent(
               gruppe.getKey().sprechtagId(),
               id -> sprechtagAnsichten.kopf(SprechtagId.von(id)));
-      sendeFuerFamilie(gruppe.getKey(), gruppe.getValue(), kopf).ifPresent(versand::add);
+      sendeAn(gruppe.getKey(), gruppe.getValue(), kopf).ifPresent(versand::add);
     }
     return versand;
   }
 
-  private Optional<Versand> sendeFuerFamilie(
+  private Optional<Versand> sendeAn(
       Empfaenger empfaenger, List<BelegZeile> zeilen, Optional<SprechtagAnsichten.Kopf> kopf) {
     if (kopf.isEmpty()) {
       log.warn("Erinnerung an {} übersprungen: Sprechtag nicht mehr gefunden", empfaenger.elternEmail());
@@ -101,7 +95,7 @@ class ErinnerungBenachrichtigungService {
     try {
       String datum = Formats.dateLong(kopf.get().datum());
       String betreff = i18n.getTranslation("erinnerung.mail.subject", LOCALE, kopf.get().titel(), datum);
-      String text = baueText(kopf.get(), datum, zeilen.get(0), positionen(zeilen));
+      String text = baueText(kopf.get(), datum, empfaenger, positionen(zeilen));
       sender.sende(new Nachricht(empfaenger.elternEmail(), betreff, text));
       return Optional.of(new Versand(buchungen, Zustellergebnis.ABGESCHICKT));
     } catch (RuntimeException e) {
@@ -124,7 +118,10 @@ class ErinnerungBenachrichtigungService {
    * was bereits bestätigt ist.
    */
   private String baueText(
-      SprechtagAnsichten.Kopf sprechtag, String datum, BelegZeile erste, List<ErinnerungsPosition> termine) {
+      SprechtagAnsichten.Kopf sprechtag,
+      String datum,
+      Empfaenger empfaenger,
+      List<ErinnerungsPosition> termine) {
     List<String> absaetze = new ArrayList<>();
     absaetze.add(i18n.getTranslation("erinnerung.mail.greeting", LOCALE));
     absaetze.add(i18n.getTranslation("erinnerung.mail.intro", LOCALE, sprechtag.titel(), datum));
@@ -134,7 +131,9 @@ class ErinnerungBenachrichtigungService {
     if (hatInhalt(sprechtag.ort())) {
       kopf.add(i18n.getTranslation("erinnerung.mail.ort", LOCALE, sprechtag.ort().trim()));
     }
-    kopf.add(i18n.getTranslation("erinnerung.mail.kind", LOCALE, erste.schuelerName(), erste.klasse()));
+    kopf.add(
+        i18n.getTranslation(
+            "erinnerung.mail.kind", LOCALE, empfaenger.schuelerName(), empfaenger.klasse()));
     absaetze.add(String.join("\n", kopf));
 
     List<String> liste = new ArrayList<>();

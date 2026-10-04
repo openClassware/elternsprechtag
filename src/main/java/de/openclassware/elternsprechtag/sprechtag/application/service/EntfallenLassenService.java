@@ -62,7 +62,7 @@ class EntfallenLassenService implements EntfallenLassen {
                         zuSlotZustand(zeile.zustand()),
                         zeile.schuelerName(),
                         zeile.elternName(),
-                        zeile.familienSchluessel()))
+                        zeile.empfaengerSchluessel()))
             .toList();
     // Dieselbe Frage wie beim Entfallenlassen, nur als Vorschau: Sie darf bis zum Klick veralten.
     boolean nachbuchbar =

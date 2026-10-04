@@ -507,11 +507,11 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
 
   /**
    * Die Zahl im Bestätigungsdialog muss dieselbe Menge meinen wie der spätere Versand: aktive
-   * Buchungen, je E-Mail-Adresse einmal. Zwei Termine derselben Familie sind eine Mail und damit
-   * ein Betroffener; eine stornierte Buchung ist keiner.
+   * Buchungen, je Adresse und Kind einmal (ADR 0007). Zwei Termine desselben Kindes sind eine Mail
+   * und damit ein Betroffener; eine stornierte Buchung ist keiner.
    */
   @Test
-  void betroffeneEltern_werdenJeAdresseEinmalGezaehlt_ohneStornierte() {
+  void betroffeneKinder_werdenJeAdresseUndKindEinmalGezaehlt_ohneStornierte() {
     UUID sprechtag = veroeffentlichterSprechtagMitVierSlots();
     List<Termin> slots = alleTermine();
     UUID lehrauftrag = jdbc.queryForObject("select id from lehrauftrag limit 1", UUID.class);
@@ -520,12 +520,24 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
     buche(lehrauftrag, slots.get(2), "b@example.com");
     storniere(buchung -> buchung.familie().email().equals("b@example.com"));
 
-    assertThat(absagen.zaehleBetroffeneEltern(sprechtag)).isEqualTo(1);
+    assertThat(absagen.zaehleBetroffeneKinder(sprechtag)).isEqualTo(1);
+  }
+
+  /** Geschwister — oder Familien an der Stellvertreteradresse — bekommen je eine eigene Absage. */
+  @Test
+  void betroffeneKinder_anEinerAdresse_zaehlenJeKind() {
+    UUID sprechtag = veroeffentlichterSprechtagMitVierSlots();
+    List<Termin> slots = alleTermine();
+    UUID lehrauftrag = jdbc.queryForObject("select id from lehrauftrag limit 1", UUID.class);
+    buche(lehrauftrag, slots.get(0), "Lena Müller", "sekretariat@schule.example");
+    buche(lehrauftrag, slots.get(1), "Ben Yilmaz", "sekretariat@schule.example");
+
+    assertThat(absagen.zaehleBetroffeneKinder(sprechtag)).isEqualTo(2);
   }
 
   @Test
-  void betroffeneEltern_ohneAktiveBuchung_sindKeine() {
-    assertThat(absagen.zaehleBetroffeneEltern(veroeffentlichterSprechtagMitVierSlots())).isZero();
+  void betroffeneKinder_ohneAktiveBuchung_sindKeine() {
+    assertThat(absagen.zaehleBetroffeneKinder(veroeffentlichterSprechtagMitVierSlots())).isZero();
   }
 
   // --- Hilfen ---------------------------------------------------------------------------------
@@ -544,10 +556,14 @@ class SprechtagUseCaseTest extends AbstractServiceTest {
   }
 
   private void buche(UUID lehrauftrag, Termin termin, String email) {
+    buche(lehrauftrag, termin, "Kind " + email, email);
+  }
+
+  private void buche(UUID lehrauftrag, Termin termin, String kind, String email) {
     buchen.buchen(
         new BuchungsAnfrage(
             "Eltern " + email,
-            "Kind " + email,
+            kind,
             email,
             List.of(new BuchungsWunsch(lehrauftrag, termin.id().wert(), null))));
   }

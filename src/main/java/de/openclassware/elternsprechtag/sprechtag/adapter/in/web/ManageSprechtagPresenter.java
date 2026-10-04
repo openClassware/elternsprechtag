@@ -79,11 +79,11 @@ class ManageSprechtagPresenter {
   }
 
   /**
-   * Anzahl der von einer Absage betroffenen Eltern (aktive Buchungen, je E-Mail-Adresse einmal) —
+   * Anzahl der von einer Absage betroffenen Kinder (aktive Buchungen, je Adresse und Kind einmal) —
    * für den Bestätigungsdialog vor dem Absagen.
    */
-  long zaehleBetroffeneEltern(UUID id) {
-    return absagen.zaehleBetroffeneEltern(id);
+  long zaehleBetroffeneKinder(UUID id) {
+    return absagen.zaehleBetroffeneKinder(id);
   }
 
   UUID duplicate(UUID id) {

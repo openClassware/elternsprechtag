@@ -43,8 +43,9 @@ public interface Auswerten {
 
   /**
    * Eine Nachricht, die ihre Familie nicht erreicht hat. Gegliedert, wie das Sekretariat arbeitet: je
-   * Adresse und Nachricht, nicht je Lehrkraft. Die Namen sind die verschiedenen Kinder und Eltern
-   * aller Buchungen, die sie trug — mehrere, wenn sich Geschwister oder Familien die Adresse teilen.
+   * Nachricht, nicht je Lehrkraft. Eine Nachricht gilt einem Kind an einer Adresse (ADR 0007); Kind
+   * und Klasse genügen, um die Familie in der Schulverwaltung nachzuschlagen. {@code elternNamen}
+   * bleibt eine Liste, weil ein Nachtrag für dasselbe Kind den Namen anders schreiben kann.
    *
    * <p>Die Adresse steht nur hier und nur für Gescheiterte: Ein Tippfehler darin ist der häufigste
    * Grund, und das Sekretariat soll ihn sehen können.
@@ -53,7 +54,8 @@ public interface Auswerten {
       Mailart art,
       LocalDateTime zeitpunkt,
       String email,
-      List<String> schuelerNamen,
+      String schuelerName,
+      String klasse,
       List<String> elternNamen) {}
 
   /**

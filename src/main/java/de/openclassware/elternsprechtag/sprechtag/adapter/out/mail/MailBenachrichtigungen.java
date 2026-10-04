@@ -10,8 +10,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Erfüllt den {@link Benachrichtigungen}-Port per E-Mail. Reicht nur durch: Jede Mailart hat ihren
- * eigenen Fachservice, der formuliert, je Adresse bündelt, versendet und den Ausgang meldet. Was
- * davon festgehalten wird, entscheidet der Use Case — dieser Adapter kennt keine Persistenz.
+ * eigenen Fachservice, der formuliert, je Kind an einer Adresse bündelt, versendet und den Ausgang
+ * meldet. Was davon festgehalten wird, entscheidet der Use Case — dieser Adapter kennt keine
+ * Persistenz.
  */
 @RequiredArgsConstructor
 @Component

@@ -19,7 +19,7 @@ import java.util.function.Consumer;
  * Dialog der Sammelaktion „Lehrkraft fällt aus" (Issue #156): zeigt alle Slots der Lehrkraft an
  * diesem Sprechtag — frei, gebucht oder bereits entfallen —, lässt eine Teilmenge oder per
  * „alle auswählen" den Ganztagsfall wählen und zeigt vor dem Bestätigen, wie viele Termine und
- * (geschätzt) wie viele Familien betroffen sind.
+ * (geschätzt) wie viele Kinder betroffen sind.
  *
  * <p>Die Auswahl-Entscheidung selbst liegt im Vaadin-freien {@link AusfallAuswahl}-Modell, das
  * dieser Dialog hält; er rendert nur, was es liefert. Fertige Slots herein, die gewählten
@@ -113,7 +113,7 @@ public class AusfallDialog extends Dialog {
     summary.setText(
         getTranslation("auswertung.ausfall.summary.termine", auswahl.anzahlTermine())
             + " · "
-            + getTranslation("auswertung.ausfall.summary.familien", auswahl.anzahlFamilien()));
+            + getTranslation("auswertung.ausfall.summary.kinder", auswahl.anzahlKinder()));
     confirm.setEnabled(auswahl.hatAuswahl());
   }
 
