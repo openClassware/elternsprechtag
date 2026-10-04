@@ -1,0 +1,80 @@
+---
+title: Einen Sprechtag veröffentlichen
+description: Einen Entwurf freigeben; die Termine entstehen, und die Eltern können über den Zugangs-Link buchen.
+phase: vorbereiten
+order: 4
+wer: organisator
+wann: Vorbereiten — der Entwurf ist fertig, die Buchung soll beginnen
+voraussetzung: Der Sprechtag ist ein Entwurf (Status Entwurf)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Einen fertigen Entwurf für die Eltern freigeben. Die Termine entstehen, und über den Zugangs-Link
+lässt sich ab jetzt buchen.
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**. Mit dem Filter **Entwürfe** sehen Sie nur die
+   Entwürfe.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Aktiv setzen**.
+
+3. Der Status wechselt auf *Aktiv*. Erscheint unten eine Meldung, lesen Sie sie — siehe
+   *Wenn …* unten.
+
+4. Geben Sie den Zugangs-Link an die Eltern weiter:
+   [Den Zugangs-Link an die Eltern weitergeben](/anwendungsfaelle/den-zugangs-link-an-die-eltern-weitergeben/).
+
+</Steps>
+
+Beim Anlegen geht es auch in einem Zug: Der Knopf **Sprechtag anlegen** im Formular legt an und
+veröffentlicht sofort.
+
+## Was danach passiert
+
+- **Die Termine entstehen**: je Lehrkraft, die in einer der gewählten Klassen unterrichtet, ein
+  Termin pro Slot im Zeitfenster.
+- **Der Zugangs-Link** führt jetzt zur Buchungsseite. Dort wählen die Eltern Klasse, Lehrkraft und
+  einen freien Termin. Bis zum Anmeldeschluss können sie selbst buchen.
+- **Die Familien bekommen keine E-Mail.** Die Anwendung kennt vor der ersten Buchung keine
+  Adresse; den Link verteilen Sie selbst.
+- **Lehrkräfte** bekommen keine Nachricht von der Anwendung.
+- In der Liste kommen für den Sprechtag die Einträge **Auswerten** und **Link kopieren** dazu.
+- **Datum, Zeiten, Slot-Länge und Klassen liegen ab jetzt fest.** Titel, Ort, Beschreibung,
+  Schulkontakt, Erinnerung und Anmeldefrist bleiben änderbar.
+
+## Regeln
+
+- **Nur ein Entwurf lässt sich veröffentlichen.** Ein abgesagter oder abgeschlossener Sprechtag
+  bleibt, wie er ist; für einen neuen Termin duplizieren Sie ihn.
+- **Mit dem Veröffentlichen liegt die Zeitstruktur fest.** Die Termine sind aus Datum, Zeiten,
+  Slot-Länge und Klassen entstanden; eine spätere Änderung würfe gebuchte Termine durcheinander.
+
+## Wenn …
+
+### … die Meldung kommt, dass keine Termine erzeugt wurden
+
+*Der Sprechtag ist veröffentlicht, aber es wurden keine Termine erzeugt — entweder hat keine der
+gewählten Klassen einen Lehrauftrag, oder das Zeitfenster ist kürzer als eine Slot-Dauer.*
+Die Eltern finden über den Link nichts zum Buchen. Nehmen Sie das Veröffentlichen zurück, korrigieren
+Sie Klassen oder Zeiten und veröffentlichen Sie erneut:
+[Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/). Fehlt
+einer Klasse die Lehrkraft, muss die Schul-IT das in den Stammdaten nachtragen.
+
+### … die Meldung kommt, dass der Anmeldeschluss schon vorbei ist
+
+*Der Sprechtag ist veröffentlicht, aber der Anmeldeschluss ist schon vorbei — Eltern können über den
+Link nicht buchen. Die Anmeldefrist lässt sich im Formular anpassen; nachtragen können Sie
+jederzeit.* Die Eltern sehen über den Link nur *Die Anmeldung ist beendet* und den Schulkontakt. Setzen Sie die Anmeldefrist im
+Formular kleiner — über **Bearbeiten**, das geht auch nach dem Veröffentlichen. Familien nachtragen
+können Sie auch ohne offene Anmeldung.
+
+## Verwandte Fälle
+
+- [Den Zugangs-Link an die Eltern weitergeben](/anwendungsfaelle/den-zugangs-link-an-die-eltern-weitergeben/) — der nächste Schritt nach dem Veröffentlichen
+- [Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/) — wenn Sie zu früh veröffentlicht haben
+- [Einen Sprechtag bearbeiten](/anwendungsfaelle/einen-sprechtag-bearbeiten/) — wenn sich ein Text oder eine Frist ändern soll

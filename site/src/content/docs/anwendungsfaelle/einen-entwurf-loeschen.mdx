@@ -1,0 +1,73 @@
+---
+title: Einen Entwurf löschen
+description: Einen nicht mehr gebrauchten Entwurf endgültig entfernen; veröffentlichte Sprechtage lassen sich nicht löschen.
+phase: vorbereiten
+order: 7
+wer: organisator
+wann: Vorbereiten — ein Entwurf wurde versehentlich angelegt oder wird nicht mehr gebraucht
+voraussetzung: Der Sprechtag ist ein Entwurf (Status Entwurf)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Einen Entwurf, den Sie nicht mehr brauchen, endgültig entfernen — etwa eine versehentliche Kopie.
+Veröffentlichte Sprechtage lassen sich nicht löschen.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Der Sprechtag ist ein *Entwurf* | **Löschen** — diese Seite |
+| Er ist veröffentlicht, und noch niemand hat gebucht | Erst [Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/), dann diese Seite |
+| Er ist veröffentlicht, und es gibt Buchungen | [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**. Mit dem Filter **Entwürfe** sehen Sie nur die
+   Entwürfe.
+
+2. Öffnen Sie in der Zeile des Entwurfs das Menü **⋮** und wählen Sie **Löschen**.
+
+3. Prüfen Sie im Dialog den Titel — er nennt den Entwurf, der gelöscht wird.
+
+   ![Dialog „Entwurf löschen“: Er fragt, ob der genannte Entwurf wirklich gelöscht werden soll, weist darauf hin, dass er endgültig entfernt wird, und bietet „Abbrechen“ und „Löschen“ an.](../../../assets/screenshots/einen-entwurf-loeschen/dialog.png)
+
+4. Bestätigen Sie mit **Löschen**. Der Entwurf verschwindet aus der Liste.
+
+</Steps>
+
+## Was danach passiert
+
+- **Der Entwurf ist endgültig weg**, mit allen seinen Angaben. Wiederherstellen lässt er sich nicht.
+- **Niemand wird benachrichtigt.** Ein Entwurf war für die Eltern nie sichtbar, und es gab keine
+  Termine und keine Buchungen.
+- **Sein Zugangs-Link** zeigt weiter *Nicht verfügbar*, wie schon im Entwurf.
+
+## Regeln
+
+- **Löschen geht nur im Entwurf.** Ein Entwurf hatte nie Termine und nie Buchungen, es geht also
+  nichts verloren, was jemand in der Hand hält. Ein veröffentlichter Sprechtag dagegen ist schon
+  bei den Eltern angekommen; ihn nimmt nur die Absage zurück, die die Familien benachrichtigt.
+- **Abgesagte und abgeschlossene Sprechtage lassen sich nicht löschen.** Sie bleiben in der Liste;
+  die personenbezogenen Angaben entfernt die Anwendung nach Ablauf der Aufbewahrungsfrist von
+  selbst.
+
+## Wenn …
+
+### … die Meldung kommt, dass der Sprechtag kein Entwurf mehr ist
+
+*Dieser Sprechtag ist kein Entwurf mehr oder wurde soeben von anderer Stelle geändert.* Er wurde
+inzwischen veröffentlicht, etwa in einem zweiten Fenster. Gelöscht ist nichts. Laden Sie die Liste
+neu und prüfen Sie den Status.
+
+### … im Menü kein Eintrag Löschen steht
+
+Der Sprechtag ist kein Entwurf. Den Weg für seinen Status zeigt *Ist das der richtige Fall?* oben.
+
+## Verwandte Fälle
+
+- [Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/) — wenn der Sprechtag veröffentlicht ist und noch niemand gebucht hat
+- [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) — wenn schon gebucht wurde

@@ -1,0 +1,114 @@
+---
+title: Einen Sprechtag anlegen
+description: Einen neuen Sprechtag mit Datum, Zeitfenster, Slot-Länge und Klassen anlegen — als Entwurf oder gleich veröffentlicht.
+phase: vorbereiten
+order: 1
+wer: organisator
+wann: Vorbereiten — einige Wochen vor dem Sprechtag
+voraussetzung: Klassen, Lehrkräfte und ihre Lehraufträge sind in der Anwendung angelegt
+dauer: etwa fünf Minuten
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Einen neuen Sprechtag anlegen: wann er stattfindet, wie lang ein Gespräch dauert, welche Klassen
+teilnehmen und wie die Eltern die Schule erreichen. Sie speichern ihn als Entwurf oder
+veröffentlichen ihn gleich.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Sie planen einen Sprechtag zum ersten Mal oder ganz neu | **Neuer Sprechtag** — diese Seite |
+| Ein früherer Sprechtag passt fast, nur Datum oder Titel sind anders | [Einen früheren Sprechtag als Vorlage nutzen](/anwendungsfaelle/einen-frueheren-sprechtag-als-vorlage-nutzen/) |
+| Der Sprechtag existiert schon und soll geändert werden | [Einen Sprechtag bearbeiten](/anwendungsfaelle/einen-sprechtag-bearbeiten/) |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten** und klicken Sie auf **Neuer Sprechtag**. Von der
+   Übersicht aus führt die Karte **Neuen Elternsprechtag anlegen** an dieselbe Stelle.
+
+2. Füllen Sie den Block **Allgemein** aus:
+   - **Titel** — so steht der Sprechtag in der Liste und in jeder E-Mail an die Eltern.
+   - **Ort** und **Beschreibung** — freiwillig. Die Beschreibung ist ein Hinweis für die Eltern,
+     etwa zu Anfahrt oder Ablauf.
+   - **Schulkontakt** — wie die Eltern die Schule erreichen, wenn sie einen Termin ändern
+     möchten: Name, Telefon mit Sprechzeiten, E-Mail. Mehrere Zeilen sind möglich.
+
+3. Füllen Sie den Block **Termin & Zeiten** aus:
+   - **Datum**, **Startzeit** und **Endzeit** — das Zeitfenster, in dem Gespräche stattfinden.
+   - **Slot-Länge** — wie lang ein Gespräch dauert, zwischen 5 und 30 Minuten.
+   - **Erinnerung (Tage vor dem Sprechtag)** — 1 bis 3 Tage vorher bekommt jede Familie mit
+     Termin eine Erinnerungsmail; 0 heißt keine Erinnerung.
+   - **Anmeldefrist (Tage vor dem Sprechtag)** — bis wann die Eltern selbst buchen können.
+     Vorgeschlagen ist 1, also bis zum Vortag; 0 heißt bis zum Beginn des Sprechtags.
+
+   Unter Erinnerung und Anmeldefrist steht, welcher Tag sich daraus ergibt.
+
+   ![Block „Termin & Zeiten“ im Formular: Datum, Slot-Länge, Start- und Endzeit, darunter Erinnerung und Anmeldefrist in Tagen vor dem Sprechtag. Unter beiden Feldern steht das errechnete Datum, etwa „Anmeldung bis …“.](../../../assets/screenshots/einen-sprechtag-anlegen/termin-und-zeiten.png)
+
+4. Kreuzen Sie unter **Klassen** jede Klasse an, die teilnimmt.
+
+5. Speichern Sie:
+   - **Als Entwurf speichern**, wenn Sie den Sprechtag noch prüfen oder später freigeben wollen.
+   - **Sprechtag anlegen**, wenn er sofort für die Eltern buchbar sein soll. Das legt an und
+     veröffentlicht in einem Zug.
+
+   Die Anwendung kehrt zur **Übersicht** zurück.
+
+</Steps>
+
+## Was danach passiert
+
+- **Als Entwurf** steht der Sprechtag in **Elternsprechtage verwalten** mit dem Status *Entwurf*.
+  Die Eltern sehen nichts: Der Zugangs-Link zeigt *Nicht verfügbar*. Sie können alles weiter
+  ändern.
+- Mit **Sprechtag anlegen** ist er sofort *Aktiv*. Was dabei geschieht, steht unter
+  [Einen Sprechtag veröffentlichen](/anwendungsfaelle/einen-sprechtag-veroeffentlichen/).
+- **Der Zugangs-Link** entsteht beim ersten Speichern. Sie finden ihn danach im Formular unter
+  **Zugang** und in der Liste unter **Link kopieren**. Er bleibt für diesen Sprechtag immer derselbe.
+- **Die Termine** entstehen erst beim Veröffentlichen, nicht beim Anlegen: je Lehrkraft, die in
+  einer der gewählten Klassen unterrichtet, ein Termin pro Slot.
+- Die Anwendung **verschickt beim Anlegen keine E-Mail** — weder an Eltern noch an Lehrkräfte.
+
+## Regeln
+
+- **Titel, Schulkontakt, Datum, Start- und Endzeit, Slot-Länge und mindestens eine Klasse sind
+  Pflicht.** Ohne sie lässt sich nicht speichern; das Formular markiert das fehlende Feld.
+- **Der Schulkontakt ist Pflicht, schon im Entwurf.** Er steht in der Bestätigungs-, Erinnerungs-
+  und Absagemail und auf den Seiten, die die Eltern nach dem Anmeldeschluss sehen. Wer etwas ändern
+  will, ruft dort an. Ohne ihn wüssten die Eltern nicht, an wen sie sich wenden.
+- **Die Endzeit muss nach der Startzeit liegen.**
+- **Die Anmeldefrist liegt zwischen 0 und 28 Tagen, die Erinnerung zwischen 0 und 3 Tagen.** Die
+  Grenze fängt Tippfehler ab: 40 statt 4 Tage schlösse die Anmeldung unbemerkt Wochen vorher.
+
+## Wenn …
+
+### … sich das Formular nicht speichern lässt
+
+Ein Pflichtfeld ist leer oder ein Wert liegt außerhalb seines Bereichs. Das Feld ist rot markiert
+und nennt darunter den Grund, etwa **Schulkontakt ist erforderlich** oder **Endzeit muss nach der
+Startzeit liegen**.
+
+### … Sie versehentlich einen Entwurf zu viel angelegt haben
+
+Löschen Sie ihn: [Einen Entwurf löschen](/anwendungsfaelle/einen-entwurf-loeschen/).
+
+## Wege drumherum
+
+- **Das Zeitfenster geht nicht glatt in Slots auf.** Ein Rest am Ende, der kürzer als ein Slot
+  ist, wird kein Termin — 14:00 bis 18:10 Uhr mit 15 Minuten endet mit dem Termin um 17:45 Uhr.
+  Wählen Sie die Endzeit so, dass das Zeitfenster ein Vielfaches der Slot-Länge ist.
+- **Das Datum liegt versehentlich in der Vergangenheit.** Die Anwendung prüft das nicht. Prüfen Sie
+  vor dem Veröffentlichen die Daten unter Erinnerung und Anmeldefrist; im Entwurf lässt sich das
+  Datum ändern.
+- **Zwei Sprechtage liegen am selben Tag oder überschneiden sich.** Auch das prüft die Anwendung
+  nicht. Ein Blick in **Elternsprechtage verwalten** zeigt alle Sprechtage mit Datum und Zeit.
+
+## Verwandte Fälle
+
+- [Einen früheren Sprechtag als Vorlage nutzen](/anwendungsfaelle/einen-frueheren-sprechtag-als-vorlage-nutzen/) — wenn ein früherer Sprechtag fast passt
+- [Einen Sprechtag veröffentlichen](/anwendungsfaelle/einen-sprechtag-veroeffentlichen/) — wenn der Entwurf fertig ist
+- [Einen Sprechtag bearbeiten](/anwendungsfaelle/einen-sprechtag-bearbeiten/) — wenn Sie nach dem Speichern etwas ändern wollen

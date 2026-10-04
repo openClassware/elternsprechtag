@@ -1,0 +1,75 @@
+---
+title: Einen früheren Sprechtag als Vorlage nutzen
+description: Einen bestehenden Sprechtag duplizieren; die Kopie ist ein neuer Entwurf mit allen Einstellungen, aber ohne Buchungen.
+phase: vorbereiten
+order: 2
+wer: organisator
+wann: Vorbereiten — der neue Sprechtag gleicht einem früheren
+voraussetzung: Es gibt einen Sprechtag, gleich in welchem Status
+dauer: zwei Minuten
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Einen früheren Sprechtag als Vorlage nehmen, statt alles neu einzugeben. Die Kopie ist ein neuer
+Entwurf mit denselben Einstellungen und einem eigenen Zugangs-Link; Buchungen gehen nicht mit.
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags, der als Vorlage dienen soll, das Menü **⋮** und wählen
+   Sie **Duplizieren**. Das geht in jedem Status, auch bei einem abgesagten oder abgeschlossenen
+   Sprechtag.
+
+3. Die Kopie ist damit schon angelegt, und ihr Formular **Sprechtag bearbeiten** öffnet sich.
+   Ändern Sie mindestens das **Datum**, meist auch den **Titel** — beides ist zunächst dasselbe
+   wie bei der Vorlage.
+
+4. Prüfen Sie die übrigen Angaben, vor allem **Klassen** und **Schulkontakt**, und klicken Sie auf
+   **Speichern**.
+
+5. Ist die Kopie fertig, veröffentlichen Sie sie:
+   [Einen Sprechtag veröffentlichen](/anwendungsfaelle/einen-sprechtag-veroeffentlichen/).
+
+</Steps>
+
+## Was danach passiert
+
+- **In der Liste** steht die Kopie als eigener Sprechtag im Status *Entwurf*. Die Vorlage bleibt
+  unverändert.
+- **Übernommen** werden Titel, Ort, Beschreibung, Schulkontakt, Datum, Start- und Endzeit,
+  Slot-Länge, Klassen, Erinnerung und Anmeldefrist.
+- **Nicht übernommen** werden Termine, Buchungen und Notizen der Eltern. Die Kopie beginnt leer.
+- **Der Zugangs-Link der Kopie ist neu.** Der alte Link führt weiter zur Vorlage. Verteilen Sie
+  für den neuen Sprechtag den neuen Link.
+- Die Anmeldefrist geht als Zahl von Tagen mit. Sie passt deshalb zu jedem neuen Datum, ohne dass
+  Sie sie anfassen.
+- Die Anwendung **verschickt keine E-Mail**.
+
+## Regeln
+
+- **Die Kopie bekommt immer einen neuen Zugangs-Link.** Zwei Sprechtage hinter demselben Link wären
+  für die Eltern einer; sie könnten nicht erkennen, für welchen Tag sie buchen.
+
+## Wenn …
+
+### … Sie das Formular der Kopie mit Abbrechen verlassen
+
+Die Kopie existiert trotzdem — sie entsteht schon mit dem Klick auf **Duplizieren**. Sie steht als
+*Entwurf* in der Liste, mit dem Titel der Vorlage. Brauchen Sie sie nicht, löschen Sie sie:
+[Einen Entwurf löschen](/anwendungsfaelle/einen-entwurf-loeschen/).
+
+### … in der Liste zwei Sprechtage mit gleichem Titel stehen
+
+Sie haben den Titel der Kopie nicht geändert. Die Kopie erkennen Sie am Status *Entwurf* und am
+Datum, falls Sie es schon geändert haben. Öffnen Sie sie mit **Bearbeiten** und geben Sie ihr
+einen eigenen Titel — er steht auch im Betreff jeder E-Mail an die Eltern.
+
+## Verwandte Fälle
+
+- [Einen Sprechtag anlegen](/anwendungsfaelle/einen-sprechtag-anlegen/) — wenn es keinen passenden früheren Sprechtag gibt
+- [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) — wenn ein Sprechtag an einem anderen Tag stattfinden soll: absagen, dann duplizieren
+- [Einen Sprechtag veröffentlichen](/anwendungsfaelle/einen-sprechtag-veroeffentlichen/) — wenn die Kopie fertig ist
