@@ -6,8 +6,8 @@
 # Fork-Lauf dieselbe Umgebung sieht wie der Lauf vor einem Deploy und rote wie grüne
 # Ergebnisse vergleichbar bleiben.
 #
-# Der Job `Test-Gate` ist die Pflichtprüfung der Branch Protection auf `main` (siehe
-# `docs/ci.md`). Wird er umbenannt, muss die
+# Die Jobs `Test-Gate` und `doku` sind die Pflichtprüfungen der Branch Protection auf
+# `main` (siehe `docs/ci.md`). Wird einer umbenannt, muss die
 # Repository-Einstellung mit umbenannt werden, sonst blockiert eine nie startende
 # Prüfung jeden Merge.
 name: CI
@@ -75,7 +75,8 @@ jobs:
   # Baut die Anwender-Doku aus `site/` ohne Deploy — derselbe Build wie in `docs.yml`, also mit
   # der Prüfung auf tote interne Links. Berührt der PR `site/` nicht, bleiben die Schritte
   # übersprungen und der Job ist grün. Bewusst ein Filter im Job statt `paths` am Trigger: der
-  # gälte für den ganzen Workflow und damit auch für das Test-Gate.
+  # gälte für den ganzen Workflow und damit auch für das Test-Gate, und eine Pflichtprüfung,
+  # die nie startet, ließe jeden PR ohne Änderung an `site/` ewig warten.
   doku:
     name: doku
     runs-on: ubuntu-latest
