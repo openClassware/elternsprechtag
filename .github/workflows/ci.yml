@@ -6,7 +6,7 @@
 # Fork-Lauf dieselbe Umgebung sieht wie der Lauf vor einem Deploy und rote wie grüne
 # Ergebnisse vergleichbar bleiben.
 #
-# Dieser Job ist die Pflichtprüfung der Branch Protection auf `main` (siehe
+# Der Job `Test-Gate` ist die Pflichtprüfung der Branch Protection auf `main` (siehe
 # `docs/ci.md`). Wird er umbenannt, muss die
 # Repository-Einstellung mit umbenannt werden, sonst blockiert eine nie startende
 # Prüfung jeden Merge.
@@ -71,3 +71,39 @@ jobs:
 
       - name: mvn verify
         run: ./mvnw -B verify
+
+  # Baut die Anwender-Doku aus `site/` ohne Deploy — derselbe Build wie in `docs.yml`, also mit
+  # der Prüfung auf tote interne Links. Berührt der PR `site/` nicht, bleiben die Schritte
+  # übersprungen und der Job ist grün. Bewusst ein Filter im Job statt `paths` am Trigger: der
+  # gälte für den ganzen Workflow und damit auch für das Test-Gate.
+  doku:
+    name: doku
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Berührt der PR site/?
+        id: aenderung
+        run: |
+          if git diff --quiet "${{ github.event.pull_request.base.sha }}" HEAD -- site/; then
+            echo "site=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.aenderung.outputs.site == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - if: steps.aenderung.outputs.site == 'true'
+        working-directory: site
+        run: npm ci
+
+      - if: steps.aenderung.outputs.site == 'true'
+        working-directory: site
+        run: npm run build

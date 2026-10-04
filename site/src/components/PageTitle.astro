@@ -1,0 +1,16 @@
+---
+// Starlight-Override: Unter jedem Seitentitel steht, dass die Seite den aktuellen Stand
+// beschreibt. Es gibt nur eine Fassung der Doku — die von `main`.
+import Default from '@astrojs/starlight/components/PageTitle.astro';
+---
+
+<Default />
+<p class="stand-hinweis">Diese Seite beschreibt den aktuellen Stand der Anwendung.</p>
+
+<style>
+	.stand-hinweis {
+		margin-top: 0.5rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+</style>

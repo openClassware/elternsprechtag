@@ -1,0 +1,66 @@
+# Veröffentlicht die Anwender-Doku aus `site/` auf GitHub Pages (https://docs.openclassware.de).
+#
+#   Site bauen (Astro Starlight) -> Pages-Artefakt hochladen -> Pages deployt
+#
+# Der Build prüft dabei tote interne Links und bricht ab, bevor etwas veröffentlicht wird.
+# Den gleichen Build ohne Deploy fährt der Job `doku` in `ci.yml` auf jedem Pull Request, der
+# `site/` berührt.
+#
+# Einmalig von Hand (Repository-Einstellungen, nicht versioniert): Settings → Pages → Source auf
+# „GitHub Actions“, Custom Domain `docs.openclassware.de`; beim DNS ein CNAME auf
+# `openclassware.github.io`.
+name: Doku-Site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+# Ein laufendes Pages-Deployment wird nicht abgebrochen, der nächste Lauf reiht sich ein.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Site bauen
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/dist
+
+  deploy:
+    name: Auf Pages veröffentlichen
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

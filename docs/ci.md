@@ -63,6 +63,19 @@ ihn nicht erreichbar.
 Ein neuer Push auf denselben PR bricht den vorigen Lauf ab (`cancel-in-progress`). Im Deploy
 ist das bewusst andersherum.
 
+### Job `doku`
+
+Daneben baut ein zweiter Job **`doku`** die Anwender-Doku aus `site/` — derselbe Build wie im
+Pages-Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Deploy. Ein toter interner
+Link macht ihn rot. Berührt der PR `site/` nicht, überspringt der Job seine Schritte und ist grün;
+der Filter sitzt im Job und nicht am Trigger, weil `paths` am Trigger auch das Test-Gate
+abschalten würde. Pflichtprüfung ist er nicht.
+
+Veröffentlicht wird die Site bei jedem Push auf `main`, der `site/` oder `docs.yml` berührt, und
+per `workflow_dispatch`. Einmalig von Hand eingestellt (nicht versioniert): *Settings → Pages →
+Source* auf **GitHub Actions**, Custom Domain `docs.openclassware.de`, beim DNS ein `CNAME` auf
+`openclassware.github.io`.
+
 ## Branch Protection auf `main`
 
 **Voraussetzung**: Branch Protection und Rulesets gibt es auf dem Free-Plan nur für
