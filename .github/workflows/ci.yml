@@ -72,11 +72,14 @@ jobs:
       - name: mvn verify
         run: ./mvnw -B verify
 
-  # Baut die Anwender-Doku aus `site/` ohne Deploy — derselbe Build wie in `docs.yml`, also mit
-  # der Prüfung auf tote interne Links. Berührt der PR `site/` nicht, bleiben die Schritte
-  # übersprungen und der Job ist grün. Bewusst ein Filter im Job statt `paths` am Trigger: der
-  # gälte für den ganzen Workflow und damit auch für das Test-Gate, und eine Pflichtprüfung,
-  # die nie startet, ließe jeden PR ohne Änderung an `site/` ewig warten.
+  # Baut die Anwender-Doku aus `site/` ohne Deploy — derselbe Ablauf wie in `docs.yml`
+  # (`.github/actions/doku-site`): Demo-Instanz starten, Screenshots erzeugen, Site bauen, samt
+  # Prüfung auf Vorlage, Alt-Texte und tote interne Links. Mit `src/main/` und `pom.xml` zählt
+  # auch eine Änderung an der App oder ihren Abhängigkeiten (etwa ein Vaadin-Upgrade): Greift ein
+  # Screenshot-Selektor nicht mehr, wird der PR hier rot und nicht erst `main`. Berührt der PR keins von beiden, bleiben die Schritte übersprungen und der Job ist
+  # grün. Bewusst ein Filter im Job statt `paths` am Trigger: der gälte für den ganzen Workflow und
+  # damit auch für das Test-Gate, und eine Pflichtprüfung, die nie startet, ließe jeden PR ohne
+  # passende Änderung ewig warten.
   doku:
     name: doku
     runs-on: ubuntu-latest
@@ -85,33 +88,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Berührt der PR site/?
-        id: site_geaendert
+      - name: Berührt der PR die Doku oder die App?
+        id: doku_betroffen
         run: |
-          if git diff --quiet HEAD^1 HEAD -- site/; then
-            echo "site=false" >> "$GITHUB_OUTPUT"
+          if git diff --quiet HEAD^1 HEAD -- site/ src/main/ pom.xml .github/actions/doku-site/; then
+            echo "doku=false" >> "$GITHUB_OUTPUT"
           else
-            echo "site=true" >> "$GITHUB_OUTPUT"
+            echo "doku=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - if: steps.site_geaendert.outputs.site == 'true'
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-
-      - name: Abhängigkeiten installieren
-        if: steps.site_geaendert.outputs.site == 'true'
-        working-directory: site
-        run: npm ci
-
-      - name: Prüfregeln der Vorlage testen
-        if: steps.site_geaendert.outputs.site == 'true'
-        working-directory: site
-        run: npm test
-
-      - name: Site bauen
-        if: steps.site_geaendert.outputs.site == 'true'
-        working-directory: site
-        run: npm run build
+      - if: steps.doku_betroffen.outputs.doku == 'true'
+        uses: ./.github/actions/doku-site
