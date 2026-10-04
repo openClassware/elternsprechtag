@@ -1,6 +1,6 @@
 # Abdeckung der wesentlichen Anwendungsfälle
 
-**Stand: 2026-10-02.** Dieser Maßstab bezieht sich auf den *realen Ablauf eines Elternsprechtags
+**Stand: 2026-10-04.** Dieser Maßstab bezieht sich auf den *realen Ablauf eines Elternsprechtags
 an einer Schule* — nicht auf die dokumentierte Domäne und nicht auf den vorhandenen Code. Er
 listet für die Phasen 2–6 dieses Ablaufs die Fälle jenseits des Happy Path auf und stuft jeden
 ein.
@@ -600,27 +600,18 @@ hier ist der Ort dafür.
 
 ## Lücken-Issues
 
-Für jeden Fall der Stufe `muss`, der heute fehlt, liegt ein Issue im Tracker. Hier stehen nur die
+Für jeden Fall der Stufe `muss`, der fehlt, liegt ein Issue im Tracker. Hier stehen nur die
 **offenen**; erledigte Issues sind herausgenommen, die erfüllten Zeilen in den Tabellen nennen ihr
 Issue.
 
-**Phase 4 — Kurz vor dem Termin**
-
-| Issue | Fall |
-|---|---|
-| [#110](https://github.com/openClassware/elternsprechtag/issues/110) | Zustellzustand an der Buchung und Liste „nicht erreicht" |
-
-**Phase 6 — Nach dem Sprechtag**
-
-| Issue | Fall |
-|---|---|
-| [#132](https://github.com/openClassware/elternsprechtag/issues/132) | Buchungsfreie Entwürfe löschen können |
-
-[#130](https://github.com/openClassware/elternsprechtag/issues/130) (`duplicate` mit den neuen
-Pflichtfeldern) ist noch offen, aber gegenstandslos: `Sprechtag.dupliziere` führt alle drei Felder
-mit, die Anmeldefrist relativ zum Datum.
+**Derzeit ist keines offen.** Jeder Fall der Stufe `muss` in den Phasen 2–6 ist erfüllt. Die
+letzten beiden Lücken — der Zustellzustand mit der Liste „nicht erreicht"
+([#110](https://github.com/openClassware/elternsprechtag/issues/110)) und das Löschen
+buchungsfreier Entwürfe ([#132](https://github.com/openClassware/elternsprechtag/issues/132)) —
+sind geschlossen, [#130](https://github.com/openClassware/elternsprechtag/issues/130) (`duplicate`
+mit den neuen Pflichtfeldern) als gegenstandslos ebenso.
 
 Der tägliche Scheduler — der tiefste Abhängigkeitsstrang über ADR 0006, Erinnerung, automatischen
-Abschluss und Anonymisierung — steht vollständig. Die offenen Issues hängen nicht mehr
-voneinander ab; die öffentliche Basis-URL, die früher als Voraussetzung außerhalb der Liste stand,
-hat #109 mitgebracht (`elternsprechtag.oeffentliche-url`).
+Abschluss und Anonymisierung — steht vollständig; die öffentliche Basis-URL, die früher als
+Voraussetzung außerhalb der Liste stand, hat #109 mitgebracht (`elternsprechtag.oeffentliche-url`).
+Bringt eine Revision dieses Maßstabs einen neuen `muss`-Fall, bekommt er hier sein Issue.
