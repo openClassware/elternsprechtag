@@ -66,6 +66,8 @@ class SprechtagszugangService implements Sprechtagszugang {
         sprechtag.slotdauer().minuten(),
         stand(sprechtag, LocalDateTime.now()),
         sprechtag.schulkontakt().text(),
+        sprechtag.anmeldefrist().letzterTagFuer(sprechtag.datum()),
+        sprechtag.anmeldefrist().schliesstMitBeginn(),
         auswahl);
   }
 
