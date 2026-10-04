@@ -28,9 +28,10 @@ Zwei Mechanismen greifen dabei nebeneinander:
   `spring.mail.host`, `ELTERNSPRECHTAG_SCHOOLNAME` → `elternsprechtag.schoolname`. So sind auch
   Werte überschreibbar, für die unten keine eigene Variable in der Tabelle steht.
 
-Die Defaults in `application.properties` sind **Entwicklungswerte**. Ohne gesetzte Variablen
-startet die Anwendung lokal unverändert — für eine echte Instanz müssen mindestens
-Datenbankverbindung und Organizer-Zugang gesetzt werden.
+Die Defaults in `application.properties` sind **Entwicklungswerte**. Für eine echte Instanz müssen
+mindestens Datenbankverbindung und Organizer-Zugang gesetzt werden. Eine Ausnahme ohne jeden
+Default ist die [öffentliche Adresse](#öffentliche-adresse): Ohne sie startet die Anwendung gar
+nicht, auch lokal nicht.
 
 ## Datenbank
 
@@ -146,6 +147,27 @@ Beleg, den Eltern über ihre Termine erhalten.
 
 Der Wert hat in `application.properties` keinen Platzhalter — er wird über Relaxed Binding
 gesetzt und ist der einzige Wert, den eine Schule zwingend an sich anpassen will.
+
+## Öffentliche Adresse
+
+Die Adresse, unter der die **Eltern** die Anwendung erreichen. Aus ihr und dem Zugangs-Token
+entsteht der Elternlink — im Teilen-Dialog der Sprechtag-Liste, im Bearbeiten-Formular und in der
+Ausfall-Mail („Lehrkraft fällt aus"), die vor dem Anmeldeschluss zurück in die Buchung führt.
+
+| Umgebungsvariable                    | Default           | Bedeutung                                                                                   |
+|---------------------------------------|-------------------|-----------------------------------------------------------------------------------------------|
+| `ELTERNSPRECHTAG_OEFFENTLICHE_URL`    | *(keiner — Pflicht)* | Absolute `http(s)`-Adresse, z. B. `https://elternsprechtag.schule.de`; ein Unterpfad ist erlaubt, ein abschließender `/` egal. |
+
+### Fallstrick: ohne Adresse startet die Anwendung nicht
+
+Fehlt der Wert oder ist er keine absolute `http(s)`-Adresse, bricht der Start mit einer Meldung zu
+`elternsprechtag.oeffentliche-url` ab. Das ist Absicht: Ein Beispiel-Default verschickte von einer
+unkonfigurierten Instanz still Links ins Leere.
+
+Die Adresse kommt bewusst **nicht** aus der Adresszeile des Organizers. Das Sekretariat arbeitet
+womöglich im internen Netz unter einer anderen Adresse (`http://elternsprechtag.intern:8080`) als
+die Eltern — und hätte diese sonst in den Elternbrief kopiert. Für die lokale Entwicklung gehört
+`elternsprechtag.oeffentliche-url=http://localhost:8080` in die `application-local.properties`.
 
 ## Nachtragen
 

@@ -31,6 +31,9 @@ services:
       # TLS endet bei Caddy; ohne Auswertung der X-Forwarded-*-Header baut die App
       # ihre Redirects auf http:// und den internen Port statt auf die öffentliche URL.
       SERVER_FORWARD_HEADERS_STRATEGY: framework
+      # Öffentliche Adresse für den Elternlink (Teilen-Dialog, Ausfall-Mail) — dieselbe Domain,
+      # unter der Caddy ausliefert. Pflicht: ohne sie startet die App nicht.
+      ELTERNSPRECHTAG_OEFFENTLICHE_URL: https://${DEMO_DOMAIN:?DEMO_DOMAIN fehlt in .env}
       SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:?POSTGRES_DB fehlt in .env}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER fehlt in .env}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}

@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.out.mail;
 
 import com.vaadin.flow.i18n.I18NProvider;
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
+import de.openclassware.elternsprechtag.sprechtag.adapter.Elternlink;
 import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
 import de.openclassware.elternsprechtag.sprechtag.adapter.out.mail.BenachrichtigungSender.Nachricht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.out.Benachrichtigungen.Versand;
@@ -45,6 +46,7 @@ class AusfallBenachrichtigungService {
   private final BenachrichtigungSender sender;
   private final I18NProvider i18n;
   private final ElternsprechtagProperties properties;
+  private final Elternlink elternlink;
 
   private record Empfaenger(UUID sprechtagId, String elternEmail) {}
 
@@ -60,7 +62,7 @@ class AusfallBenachrichtigungService {
    *
    * @return je verschickter oder gescheiterter Nachricht die Buchungen, die sie trug
    */
-  public List<Versand> benachrichtige(List<BuchungId> buchungIds) {
+  public List<Versand> benachrichtige(List<BuchungId> buchungIds, boolean nachbuchbar) {
     if (buchungIds == null || buchungIds.isEmpty()) {
       return List.of();
     }
@@ -86,13 +88,16 @@ class AusfallBenachrichtigungService {
           koepfe.computeIfAbsent(
               gruppe.getKey().sprechtagId(),
               id -> sprechtagAnsichten.kopf(SprechtagId.von(id)));
-      sendeFuerFamilie(gruppe.getKey(), gruppe.getValue(), kopf).ifPresent(versand::add);
+      sendeFuerFamilie(gruppe.getKey(), gruppe.getValue(), kopf, nachbuchbar).ifPresent(versand::add);
     }
     return versand;
   }
 
   private Optional<Versand> sendeFuerFamilie(
-      Empfaenger empfaenger, List<BelegZeile> zeilen, Optional<SprechtagAnsichten.Kopf> kopf) {
+      Empfaenger empfaenger,
+      List<BelegZeile> zeilen,
+      Optional<SprechtagAnsichten.Kopf> kopf,
+      boolean nachbuchbar) {
     if (kopf.isEmpty()) {
       log.warn(
           "Ausfall-Benachrichtigung an {} übersprungen: Sprechtag nicht mehr gefunden",
@@ -103,7 +108,7 @@ class AusfallBenachrichtigungService {
     try {
       String datum = Formats.dateLong(kopf.get().datum());
       String betreff = i18n.getTranslation("ausfall.mail.subject", LOCALE, kopf.get().titel(), datum);
-      String text = baueText(kopf.get(), datum, zeilen.get(0), positionen(zeilen));
+      String text = baueText(kopf.get(), datum, zeilen.get(0), positionen(zeilen), nachbuchbar);
       sender.sende(new Nachricht(empfaenger.elternEmail(), betreff, text));
       return Optional.of(new Versand(buchungen, Zustellergebnis.ABGESCHICKT));
     } catch (RuntimeException e) {
@@ -122,11 +127,18 @@ class AusfallBenachrichtigungService {
 
   /**
    * Setzt den Fließtext aus den i18n-Bausteinen zusammen — Spiegelbild von
-   * {@code ErinnerungBenachrichtigungService.baueText}, ohne Ort und ohne Notiz: Wie die
-   * Absage-Mail verweist die Ausfall-Mail an die Schule, statt eine Aktion zu nennen.
+   * {@code ErinnerungBenachrichtigungService.baueText}, ohne Ort und ohne Notiz. Nimmt der
+   * Sprechtag noch Elternbuchungen an, führt ein eigener Absatz mit dem Elternlink zurück in die
+   * Buchung (Issue #109) — der Link allein auf einer Zeile, damit jedes Mailprogramm ihn klickbar
+   * macht. Sonst verweist die Mail wie bisher nur an die Schule; der Schulkontakt steht in beiden
+   * Fällen.
    */
   private String baueText(
-      SprechtagAnsichten.Kopf sprechtag, String datum, BelegZeile erste, List<AusfallPosition> termine) {
+      SprechtagAnsichten.Kopf sprechtag,
+      String datum,
+      BelegZeile erste,
+      List<AusfallPosition> termine,
+      boolean nachbuchbar) {
     List<String> absaetze = new ArrayList<>();
     absaetze.add(i18n.getTranslation("ausfall.mail.greeting", LOCALE));
     absaetze.add(i18n.getTranslation("ausfall.mail.intro", LOCALE, sprechtag.titel(), datum));
@@ -140,6 +152,12 @@ class AusfallBenachrichtigungService {
               "ausfall.mail.termin", LOCALE, Formats.time(termin.zeit()), termin.lehrkraft(), termin.fach()));
     }
     absaetze.add(String.join("\n", liste));
+
+    if (nachbuchbar) {
+      absaetze.add(
+          i18n.getTranslation(
+              "ausfall.mail.nachbuchen", LOCALE, elternlink.zu(sprechtag.accessToken())));
+    }
 
     absaetze.add(
         i18n.getTranslation("ausfall.mail.schulkontakt", LOCALE, sprechtag.schulkontakt().trim()));

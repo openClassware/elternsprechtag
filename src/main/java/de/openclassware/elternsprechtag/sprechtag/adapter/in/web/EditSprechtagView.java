@@ -1,6 +1,5 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
-import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -75,14 +74,11 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
   private CheckboxGroup<KlasseOption> klassen;
   private IntegerField erinnerungsVorlauf;
   private IntegerField anmeldefrist;
-  /** Das Token des geladenen Sprechtags; {@code null}, solange er noch nicht gespeichert ist. */
-  private String accessToken;
 
   private FormRow linkRow;
   private Paragraph linkHinweis;
   private TextField shareLink;
   private Anchor openLink;
-  private String origin;
 
   /** Namen zu Ids — das, was der Konverter zwischen Auswahl und Formular braucht. */
   private final Map<UUID, KlasseOption> klassenById = new LinkedHashMap<>();
@@ -342,33 +338,17 @@ public class EditSprechtagView extends Div implements HasUrlParameter<String> {
     return panel;
   }
 
+  /**
+   * Der Teilen-Link kommt aus der konfigurierten öffentlichen Adresse, nicht aus der Adresszeile des
+   * Organizers — die kann eine interne sein (Issue #109). „Öffnen" bleibt relativ: Es ist der Blick
+   * des Organizers aus seinem eigenen Netz.
+   */
   private void zeigeLink(String token) {
-    accessToken = token;
     linkHinweis.setVisible(token == null);
     linkRow.setVisible(token != null);
     if (token != null) {
       openLink.setHref("/" + ElternsprechtagView.ROUTE + "/" + token);
-    }
-    updateShareLink();
-  }
-
-  @Override
-  protected void onAttach(AttachEvent attachEvent) {
-    attachEvent
-        .getUI()
-        .getPage()
-        .executeJs("return window.location.origin")
-        .then(
-            String.class,
-            fetchedOrigin -> {
-              this.origin = fetchedOrigin;
-              updateShareLink();
-            });
-  }
-
-  private void updateShareLink() {
-    if (origin != null && accessToken != null) {
-      shareLink.setValue(origin + "/" + ElternsprechtagView.ROUTE + "/" + accessToken);
+      shareLink.setValue(presenter.elternlink(token));
     }
   }
 

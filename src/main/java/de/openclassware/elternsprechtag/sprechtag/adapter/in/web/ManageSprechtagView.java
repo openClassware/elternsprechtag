@@ -132,21 +132,7 @@ public class ManageSprechtagView extends Div {
   }
 
   private void onShare(SprechtagZeile sprechtag) {
-    getUI()
-        .ifPresent(
-            ui ->
-                ui.getPage()
-                    .executeJs("return window.location.origin")
-                    .then(
-                        String.class,
-                        origin ->
-                            new ShareLinkDialog(
-                                    origin
-                                        + "/"
-                                        + ElternsprechtagView.ROUTE
-                                        + "/"
-                                        + sprechtag.accessToken())
-                                .open()));
+    new ShareLinkDialog(presenter.elternlink(sprechtag.accessToken())).open();
   }
 
   private void reload() {

@@ -74,21 +74,22 @@ Voraussetzungen: **JDK 25** und **Docker** (für die Datenbank).
 ```bash
 git clone https://github.com/openClassware/elternsprechtag.git
 cd elternsprechtag
-./mvnw spring-boot:run
+ELTERNSPRECHTAG_OEFFENTLICHE_URL=http://localhost:8080 ./mvnw spring-boot:run
 ```
 
 Die Anwendung startet die PostgreSQL-Datenbank aus [`compose.yaml`](compose.yaml) selbst und ist
-danach unter <http://localhost:8080> erreichbar. Ohne gesetzte Umgebungsvariablen gelten die
-Entwicklungs-Defaults aus [`application.properties`](src/main/resources/application.properties),
-inklusive eines für jeden nachlesbaren Organizer-Zugangs — für eine erreichbare Instanz müssen
-Datenbankverbindung und Organizer-Zugang gesetzt werden (siehe
-[Konfiguration](docs/konfiguration.md)).
+danach unter <http://localhost:8080> erreichbar. Die öffentliche Adresse ist der einzige Wert ohne
+Default: Aus ihr entsteht der Elternlink, und ohne sie startet die Anwendung nicht. Für alles andere
+gelten ohne gesetzte Umgebungsvariablen die Entwicklungs-Defaults aus
+[`application.properties`](src/main/resources/application.properties), inklusive eines für jeden
+nachlesbaren Organizer-Zugangs — für eine erreichbare Instanz müssen Datenbankverbindung und
+Organizer-Zugang gesetzt werden (siehe [Konfiguration](docs/konfiguration.md)).
 
 Eine frische Datenbank ist leer. Mit dem `demo`-Profil kommen Beispiel-Stammdaten (Lehrkräfte,
 Klassen, Fächer, Lehraufträge) dazu:
 
 ```bash
-SPRING_PROFILES_ACTIVE=demo ./mvnw spring-boot:run
+SPRING_PROFILES_ACTIVE=demo ELTERNSPRECHTAG_OEFFENTLICHE_URL=http://localhost:8080 ./mvnw spring-boot:run
 ```
 
 ### Datenbankschema

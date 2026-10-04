@@ -8,6 +8,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Angebot;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZustand;
 import java.util.List;
@@ -32,8 +33,8 @@ public class AusfallDialog extends Dialog {
   private final Span summary = new Span();
   private final Button confirm = new Button();
 
-  public AusfallDialog(
-      String lehrkraftName, List<SlotZeile> slots, Consumer<List<UUID>> onConfirm) {
+  public AusfallDialog(String lehrkraftName, Angebot angebot, Consumer<List<UUID>> onConfirm) {
+    List<SlotZeile> slots = angebot.slots();
     this.auswahl = new AusfallAuswahl(slots);
     setHeaderTitle(getTranslation("auswertung.ausfall.title"));
     addClassName("ausfall-dialog");
@@ -75,6 +76,17 @@ public class AusfallDialog extends Dialog {
 
     summary.addClassName("ausfall-dialog__summary");
     add(summary);
+
+    // Was die Familien mit der Mail bekommen, bevor das Sekretariat bestätigt (Issue #109): Nach dem
+    // Anmeldeschluss können sie nicht selbst neu buchen, und die Anrufe kommen in der Schule an.
+    Div nachbuchen = new Div();
+    nachbuchen.addClassName("ausfall-dialog__nachbuchen");
+    nachbuchen.setText(
+        getTranslation(
+            angebot.nachbuchbar()
+                ? "auswertung.ausfall.nachbuchbar"
+                : "auswertung.ausfall.nicht-nachbuchbar"));
+    add(nachbuchen);
 
     Div warning = new Div();
     warning.addClassName("ausfall-dialog__warning");

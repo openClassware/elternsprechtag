@@ -10,7 +10,7 @@ import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Drucken.Datei;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Ergebnis;
-import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.SlotZeile;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.EntfallenLassen.Angebot;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Stornieren;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Umbuchen.SlotOption;
@@ -234,12 +234,12 @@ class AuswertungPresenter {
   }
 
   /**
-   * Die Slots dieser Lehrkraft an diesem Sprechtag — das Angebot des Ausfall-Dialogs. Reicht nur
-   * durch: Die Auswahl trifft der Dialog, verbindlich entschieden wird in
-   * {@link #entfalleLassen(List)}.
+   * Die Slots dieser Lehrkraft an diesem Sprechtag und ob die Familien danach selbst neu buchen
+   * können — das Angebot des Ausfall-Dialogs. Reicht nur durch: Die Auswahl trifft der Dialog,
+   * verbindlich entschieden wird in {@link #entfalleLassen(List)}.
    */
-  List<SlotZeile> ausfallSlots(UUID sprechtagId, UUID lehrkraftId) {
-    return entfallenLassen.slots(sprechtagId, lehrkraftId);
+  Angebot ausfallAngebot(UUID sprechtagId, UUID lehrkraftId) {
+    return entfallenLassen.angebot(sprechtagId, lehrkraftId);
   }
 
   /**
