@@ -1,0 +1,60 @@
+---
+title: Einen Sprechtag absagen
+description: Den ganzen Sprechtag absagen; alle Familien mit Termin werden per E-Mail benachrichtigt.
+---
+
+import { Steps, Aside, Badge } from '@astrojs/starlight/components';
+import PrototypeSwitcher from '../../../components/PrototypeSwitcher.astro';
+import liste from '../../../assets/organizer-sprechtage.png';
+
+<PrototypeSwitcher current="B" />
+
+<Badge text="Organisator" variant="note" /> <Badge text="Kurz vor dem Termin" variant="default" />
+
+Kann ein veröffentlichter Sprechtag nicht stattfinden, sagen Sie ihn ab. Die Anwendung benachrichtigt
+alle Familien mit Termin selbst.
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten** und suchen Sie den Sprechtag. Er muss den Status
+   *Aktiv* haben.
+
+   <img src={liste.src} alt="Liste der Elternsprechtage mit Status und Menü je Zeile" />
+
+   <Aside type="tip">
+   Steht dort *Entwurf*, haben die Eltern ihn nie gesehen — dann **löschen** Sie ihn statt abzusagen.
+   </Aside>
+
+2. Wählen Sie im Menü **⋮** der Zeile **Absagen**.
+
+   <Aside type="note" title="Nur eine Lehrkraft fehlt?">
+   Dann sagen Sie nicht den ganzen Tag ab, sondern lassen ihre Termine entfallen:
+   [Eine Lehrkraft fällt aus](#).
+   </Aside>
+
+3. Der Dialog nennt die **Zahl der Kinder** mit aktiver Buchung. So viele Benachrichtigungen gehen
+   gleich hinaus.
+
+   > *Bild: Dialog „Sprechtag absagen“ — Platzhalter*
+
+   <Aside type="caution" title="Nicht rückgängig zu machen">
+   Eine Absage lässt sich nicht zurücknehmen: Die Familien haben gelesen, dass der Termin entfällt, und
+   anders geplant. Wollen Sie eigentlich **verschieben**, sagen Sie ab und setzen den Sprechtag neu an —
+   siehe [Einen Sprechtag verschieben](#).
+   </Aside>
+
+4. Bestätigen Sie mit **Absagen**.
+
+</Steps>
+
+## Danach
+
+Der Status steht auf *Abgesagt*. Jede Familie mit Termin hat eine E-Mail mit den entfallenden Terminen
+und Ihrem Schulkontakt — je Kind eine. Der Zugangs-Link zeigt nur noch, dass der Sprechtag abgesagt
+ist. Ihre **Lehrkräfte** informiert die Anwendung nicht.
+
+Ist eine E-Mail nicht angekommen, sehen Sie das in der Liste (*1 Nachricht nicht zugestellt*) und in
+der Auswertung unter **Nicht erreicht**. Die Absage gilt trotzdem.
+
+**Siehe auch:** [Nicht erreichte Familien nachfassen](#) · [Eine Buchung stornieren](#) ·
+[Welche E-Mails Eltern bekommen](#)

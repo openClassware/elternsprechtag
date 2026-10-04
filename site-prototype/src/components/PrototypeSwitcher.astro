@@ -1,0 +1,36 @@
+---
+// PROTOTYP — Umschalter zwischen den Fassungen. Nicht Teil der Site.
+const varianten = [
+	{ key: 'A', name: 'Steckbrief', href: '/anwendungsfaelle/einen-sprechtag-absagen-a/' },
+	{ key: 'B', name: 'Anleitung zuerst', href: '/anwendungsfaelle/einen-sprechtag-absagen-b/' },
+	{ key: 'C', name: 'Erst prüfen, dann handeln', href: '/anwendungsfaelle/einen-sprechtag-absagen-c/' },
+];
+const { current } = Astro.props;
+const i = varianten.findIndex((v) => v.key === current);
+const prev = varianten[(i + varianten.length - 1) % varianten.length];
+const next = varianten[(i + 1) % varianten.length];
+---
+<nav class="proto-switcher" data-prev={prev.href} data-next={next.href}>
+	<a href={prev.href} aria-label="Vorige Fassung">←</a>
+	<span>{varianten[i].key} — {varianten[i].name}</span>
+	<a href={next.href} aria-label="Nächste Fassung">→</a>
+</nav>
+<script>
+	document.addEventListener('keydown', (e) => {
+		const t = e.target as HTMLElement;
+		if (t.closest('input, textarea, [contenteditable]')) return;
+		const nav = document.querySelector<HTMLElement>('.proto-switcher');
+		if (!nav) return;
+		if (e.key === 'ArrowLeft') location.href = nav.dataset.prev!;
+		if (e.key === 'ArrowRight') location.href = nav.dataset.next!;
+	});
+</script>
+<style>
+	.proto-switcher {
+		position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 1000;
+		display: flex; gap: 1rem; align-items: center; padding: 0.5rem 1rem;
+		background: #111; color: #fff; border: 2px dashed #f0c000; border-radius: 999px;
+		font: 600 0.9rem system-ui, sans-serif; box-shadow: 0 4px 16px rgb(0 0 0 / 0.35);
+	}
+	.proto-switcher a { color: #f0c000; text-decoration: none; font-size: 1.2rem; }
+</style>

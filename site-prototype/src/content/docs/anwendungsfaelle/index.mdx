@@ -1,0 +1,62 @@
+---
+title: Anwendungsfälle
+description: Was Sie mit der Anwendung erledigen — eine Seite je Aufgabe, geordnet nach dem Ablauf eines Sprechtags.
+---
+
+import { LinkCard, CardGrid, Badge, Aside } from '@astrojs/starlight/components';
+
+<Aside type="caution" title="Prototyp">
+Ausschnitt des Katalogs: zwei Phasen, in **zwei Kartenformen** zum Vergleich. Nur „Einen Sprechtag
+absagen“ führt auf eine ausgearbeitete Seite.
+</Aside>
+
+Jede Seite beschreibt **eine** Aufgabe, vom Anlass bis zu dem, was danach passiert. Wenn nicht anders
+gekennzeichnet, erledigt sie der **Organisator** — in der Regel das Sekretariat.
+
+## Kartenform 1 — Titel und ein Satz
+
+### Kurz vor dem Termin
+
+<CardGrid>
+	<LinkCard title="Eine Lehrkraft fällt aus" href="#" description="Termine einer Lehrkraft ganz oder ab einer Uhrzeit entfallen lassen; die betroffenen Familien bekommen eine E-Mail." />
+	<LinkCard title="Einen Sprechtag absagen" href="/anwendungsfaelle/einen-sprechtag-absagen/" description="Den ganzen Sprechtag absagen; alle Familien mit Termin werden per E-Mail benachrichtigt." />
+	<LinkCard title="Einen Sprechtag verschieben" href="#" description="Den Sprechtag an einem anderen Tag neu ansetzen — die Familien buchen dort neu." />
+	<LinkCard title="Nicht erreichte Familien nachfassen" href="#" description="Herausfinden, wessen E-Mail nicht angekommen ist, und die Familie auf anderem Weg erreichen." />
+</CardGrid>
+
+### Am Tag
+
+<CardGrid>
+	<LinkCard title="Die Tagespläne drucken" href="#" description="Für jede Lehrkraft ein Blatt mit ihren Terminen des Tages, alle in einem Download." />
+	<LinkCard title="Das Tagesplan-Blatt lesen (Lehrkraft)" href="#" description="Was auf Ihrem Blatt steht: Termine, freie Zeiten, Stand des Ausdrucks." />
+	<LinkCard title="Einen Termin am Telefon nachschlagen" href="#" description="Eine Familie ruft an und fragt nach ihrem Termin — per Namenssuche in Sekunden gefunden." />
+</CardGrid>
+
+## Kartenform 2 — mit Kennzeichen für den Akteur
+
+Das Kennzeichen erscheint nur, wo nicht der Organisator handelt.
+
+### Am Tag
+
+<div class="katalog">
+	<a class="katalog__karte" href="#">
+		<span class="katalog__titel">Die Tagespläne drucken</span>
+		<span class="katalog__satz">Für jede Lehrkraft ein Blatt mit ihren Terminen des Tages, alle in einem Download.</span>
+	</a>
+	<a class="katalog__karte" href="#">
+		<span class="katalog__titel">Das Tagesplan-Blatt lesen <Badge text="Lehrkraft" variant="tip" /></span>
+		<span class="katalog__satz">Was auf Ihrem Blatt steht: Termine, freie Zeiten, Stand des Ausdrucks.</span>
+	</a>
+	<a class="katalog__karte" href="#">
+		<span class="katalog__titel">Einen Termin am Telefon nachschlagen</span>
+		<span class="katalog__satz">Eine Familie ruft an und fragt nach ihrem Termin — per Namenssuche in Sekunden gefunden.</span>
+	</a>
+</div>
+
+<style>{`
+.katalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1rem; }
+.katalog__karte { display: flex; flex-direction: column; gap: .4rem; padding: 1rem; border: 1px solid var(--sl-color-gray-5); text-decoration: none; color: inherit; }
+.katalog__karte:hover { border-color: var(--sl-color-accent); }
+.katalog__titel { font-weight: 600; color: var(--sl-color-white); }
+.katalog__satz { color: var(--sl-color-gray-2); font-size: var(--sl-text-sm); }
+`}</style>

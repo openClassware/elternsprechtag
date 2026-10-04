@@ -1,0 +1,65 @@
+---
+title: Einen Sprechtag absagen
+description: Den ganzen Sprechtag absagen; alle Familien mit Termin werden per E-Mail benachrichtigt.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+import PrototypeSwitcher from '../../../components/PrototypeSwitcher.astro';
+import liste from '../../../assets/organizer-sprechtage.png';
+
+<PrototypeSwitcher current="C" />
+
+**Für den Organisator.** Eine Absage ist endgültig und benachrichtigt sofort alle Familien mit
+Termin. Prüfen Sie deshalb zuerst, ob sie der richtige Weg ist.
+
+## Ist Absagen das Richtige?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Der ganze Sprechtag fällt aus | **Absagen** — weiter unten |
+| Der Sprechtag soll an einem anderen Tag stattfinden | [Einen Sprechtag verschieben](#) — absagen und neu ansetzen |
+| Eine Lehrkraft fehlt, ganz oder ab einer Uhrzeit | [Eine Lehrkraft fällt aus](#) |
+| Eine einzelne Familie kommt nicht | [Eine Buchung stornieren](#) |
+| Der Sprechtag ist noch *Entwurf* | [Einen Entwurf löschen](#) |
+| Veröffentlicht, aber noch nie gebucht, und Sie wollen ändern | [Ein Veröffentlichen zurücknehmen](#) |
+
+## So sagen Sie ab
+
+<Steps>
+
+1. **Elternsprechtage verwalten** öffnen. Der Sprechtag hat den Status *Aktiv*.
+
+   <img src={liste.src} alt="Liste der Elternsprechtage mit Status und Menü je Zeile" />
+
+2. Im Menü **⋮** der Zeile **Absagen** wählen.
+
+3. Im Dialog die **Zahl der betroffenen Kinder** prüfen und mit **Absagen** bestätigen.
+
+   > *Bild: Dialog „Sprechtag absagen“ — Platzhalter*
+
+</Steps>
+
+## Was danach bei wem passiert
+
+| Wer | Was |
+|---|---|
+| **Eltern mit Termin** | Eine E-Mail je Kind: Name, Klasse, entfallende Termine, Ihr Schulkontakt. Kein Link. |
+| **Eltern ohne eigene Adresse** | Die E-Mail geht an die Stellvertreteradresse der Schule — das Sekretariat gibt sie weiter. |
+| **Wer den Zugangs-Link öffnet** | Sieht *Dieser Elternsprechtag wurde abgesagt* und den Schulkontakt. Buchen geht nicht mehr. |
+| **Lehrkräfte** | Nichts — die Anwendung schreibt ihnen nicht. Informieren Sie sie selbst. |
+| **Sie** | Status *Abgesagt*, Filter *Abgesagt* in der Liste. Die Auswertung bleibt lesbar. |
+
+<Aside type="caution" title="Warum es kein Zurück gibt">
+Die Familien haben gelesen, dass der Termin entfällt, und anders geplant. Ein Zurücknehmen stellte
+einen Termin wieder her, an den niemand mehr glaubt. Deshalb nennt der Dialog vorher die Zahl der
+Betroffenen.
+</Aside>
+
+## Wenn etwas nicht klappt
+
+| Problem | Was Sie tun |
+|---|---|
+| Im Menü fehlt **Absagen** | Der Sprechtag ist *Entwurf*, *Abgeschlossen* oder schon *Abgesagt*. Nur *Aktiv* lässt sich absagen. |
+| Meldung *Dieser Schritt ist von hier aus nicht möglich* | Jemand hat den Sprechtag in einem anderen Fenster geändert. Liste neu laden und prüfen. |
+| Liste zeigt *1 Nachricht nicht zugestellt* | Die Absage gilt trotzdem. Die Familie steht in der Auswertung unter **Nicht erreicht**: [Nicht erreichte Familien nachfassen](#). |
+| Der Dialog nennt 0 Kinder | Niemand hat gebucht; es geht keine E-Mail hinaus. |
