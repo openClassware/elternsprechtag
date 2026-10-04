@@ -34,7 +34,13 @@ public interface Sprechtagszugang {
     NICHT_VERFUEGBAR
   }
 
-  /** Was die Eltern-Ansicht zeigt. {@code schulkontakt} ist der Weg zur Schule, als Text. */
+  /**
+   * Was die Eltern-Ansicht zeigt. {@code schulkontakt} ist der Weg zur Schule, als Text.
+   *
+   * <p>Der Anmeldeschluss kommt als letzter Buchungstag (Issue #177): Ab einem Tag Frist zählt er
+   * ganz, bei {@code anmeldungBisBeginn} nur bis zum {@code beginn}. Gerechnet ist er in der Domäne
+   * — die Ansicht leitet aus einem Zeitpunkt nichts zurück.
+   */
   record OeffentlicherSprechtag(
       UUID id,
       String titel,
@@ -46,5 +52,7 @@ public interface Sprechtagszugang {
       int slotInMinuten,
       Zugangsstand stand,
       String schulkontakt,
+      LocalDate letzterBuchungstag,
+      boolean anmeldungBisBeginn,
       List<KlasseOption> klassen) {}
 }

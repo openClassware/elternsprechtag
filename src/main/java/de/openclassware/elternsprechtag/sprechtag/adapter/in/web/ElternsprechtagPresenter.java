@@ -1,6 +1,7 @@
 package de.openclassware.elternsprechtag.sprechtag.adapter.in.web;
 
 import de.openclassware.elternsprechtag.config.ElternsprechtagProperties;
+import de.openclassware.elternsprechtag.sprechtag.adapter.Formats;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchungsoptionen;
@@ -69,6 +70,24 @@ class ElternsprechtagPresenter {
         Zugang.HINWEISSEITE,
         sprechtag,
         new Hinweisseite(prefix + ".title", prefix + ".hinweis", prefix + ".kontakt"));
+  }
+
+  /** Ein Text als i18n-Schlüssel samt Parametern — übersetzt wird am View. */
+  record Text(String schluessel, Object... parameter) {}
+
+  /**
+   * Der Anmeldeschluss im Kopf der Buchungsseite (Issue #177). Ab einem Tag Frist zählt der letzte
+   * Buchungstag ganz — „bis einschließlich" nimmt Eltern die Frage, ob er noch gilt. Bei Frist 0
+   * schließt die Anmeldung mit dem Beginn (#118), der Text nennt dann die Uhrzeit, damit niemand
+   * „bis zum Sprechtag" als „den ganzen Tag" liest.
+   */
+  Text anmeldeschluss(OeffentlicherSprechtag sprechtag) {
+    String tag = Formats.dateLong(sprechtag.letzterBuchungstag());
+    if (sprechtag.anmeldungBisBeginn()) {
+      return new Text(
+          "elternsprechtag.anmeldeschluss.bis-beginn", tag, Formats.time(sprechtag.beginn()));
+    }
+    return new Text("elternsprechtag.anmeldeschluss.bis-einschliesslich", tag);
   }
 
   List<LehrkraftOption> ladeLehrkraftOptionen(UUID sprechtagId, UUID klasseId) {

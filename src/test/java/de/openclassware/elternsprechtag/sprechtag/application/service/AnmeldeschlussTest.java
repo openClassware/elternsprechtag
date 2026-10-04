@@ -126,6 +126,24 @@ class AnmeldeschlussTest extends AbstractServiceTest {
     assertThat(stand(veroeffentlicht(1))).isEqualTo(Zugangsstand.BUCHBAR);
   }
 
+  /** Issue #177 — die Buchungsseite nennt den Anmeldeschluss, ab einem Tag als ganzen Tag. */
+  @Test
+  void zugang_nenntDenLetztenBuchungstag() {
+    OeffentlicherSprechtag geoeffnet = oeffne(veroeffentlicht(1));
+
+    assertThat(geoeffnet.letzterBuchungstag()).isEqualTo(MORGEN.minusDays(1));
+    assertThat(geoeffnet.anmeldungBisBeginn()).isFalse();
+  }
+
+  /** Issue #177 — bei Frist 0 schließt die Anmeldung mit dem Beginn, nicht um Mitternacht. */
+  @Test
+  void zugang_beiFristNull_nenntDenSprechtagBisZumBeginn() {
+    OeffentlicherSprechtag geoeffnet = oeffne(veroeffentlicht(0));
+
+    assertThat(geoeffnet.letzterBuchungstag()).isEqualTo(MORGEN);
+    assertThat(geoeffnet.anmeldungBisBeginn()).isTrue();
+  }
+
   /** Issue #123 — die Seite „Anmeldung beendet" nennt den Kontakt, den der Organizer gepflegt hat. */
   @Test
   void zugang_nachDemAnmeldeschluss_istBeendetMitDemGepflegtenSchulkontakt() {

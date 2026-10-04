@@ -176,7 +176,7 @@ Organizer selbst korrigierbar, bevor Schaden entsteht.
 | Dieselbe Familie bucht zweimal | Eltern | — | darf fehlen | keine Dublettenprüfung in `buchen()`; heilbar, weil der Organizer eine der beiden Zeilen storniert |
 | Geschwisterkinder in zwei Klassen | Eltern | — | darf fehlen | ein Kind je Buchungsvorgang; die Zeitkonfliktprüfung greift nur innerhalb eines Vorgangs |
 | Eltern wollen ihre Buchung später einsehen | Eltern | — | darf fehlen | die Bestätigungsmail ist der Beleg; sonst Anruf |
-| Eltern sehen den Anmeldeschluss nicht | Eltern | — | darf fehlen | fehlt (#177) — weder Buchungsseite noch Mail nennen ihn; Eltern merken ihn erst, wenn er verstrichen ist. Weg drumherum: Der Organizer schreibt ihn in die Beschreibung, deren Platzhalter ihn schon als Beispiel nennt; wer zu spät kommt, ruft an |
+| Eltern sehen den Anmeldeschluss nicht | Eltern | Anmeldeschluss im Kopf der Buchungsseite | darf fehlen | **erfüllt** (#177) — die Meta-Zeile nennt ihn neben Datum, Uhrzeit und Ort: ab einem Tag Frist „Anmeldung bis einschließlich <Tag>", bei Frist 0 mit der Uhrzeit des Beginns, damit „bis zum Sprechtag" nicht als „den ganzen Tag" gelesen wird. Gerechnet wird mit der `Anmeldefrist` des Aggregats. Nur beim Buchen, nicht auf Bestätigungs- und Hinweisseite und nicht in der Mail — wer sie sieht, hat schon gebucht. Der Platzhalter der Beschreibung nennt den Anmeldeschluss nicht mehr als Beispiel |
 | Tippfehler in der E-Mail, Bestätigung kommt nie an | Eltern | — | darf fehlen | `EmailField` prüft nur das Format; die Buchung steht, die Bestätigungsseite hat sie gezeigt |
 
 ### Anmerkungen

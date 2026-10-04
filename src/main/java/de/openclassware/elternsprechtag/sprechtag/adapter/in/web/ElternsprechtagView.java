@@ -167,7 +167,7 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
 
   /**
    * Sprechtag-Kopf (Titel + Meta), geteilt von Buchungs-, Bestätigungs- und Hinweisseite. Nur beim
-   * Buchen kommen die Intro-Zeile und die Beschreibung dazu. Den Ort braucht nur, wer noch hingeht —
+   * Buchen kommen der Anmeldeschluss (#177), die Intro-Zeile und die Beschreibung dazu. Den Ort braucht nur, wer noch hingeht —
    * die Hinweisseite lässt ihn weg (#131).
    */
   private Div createKopf(
@@ -188,6 +188,12 @@ public class ElternsprechtagView extends Div implements HasUrlParameter<String> 
             Formats.time(sprechtag.beginn()) + "–" + Formats.time(sprechtag.ende())));
     if (mitOrt && sprechtag.ort() != null && !sprechtag.ort().isBlank()) {
       meta.add(metaItem(VaadinIcon.MAP_MARKER, sprechtag.ort()));
+    }
+    if (withBookingText) {
+      ElternsprechtagPresenter.Text schluss = presenter.anmeldeschluss(sprechtag);
+      meta.add(
+          metaItem(
+              VaadinIcon.HOURGLASS, getTranslation(schluss.schluessel(), schluss.parameter())));
     }
     kopf.add(meta);
 
