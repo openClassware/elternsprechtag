@@ -3,7 +3,8 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator';
 
-// Ohne Basis-Pfad: die Site liegt auf eigener Subdomain (siehe public/CNAME).
+// Ohne Basis-Pfad: die Site liegt auf eigener Subdomain. Beim Deploy über Actions wirkt die
+// Custom Domain aus den Pages-Einstellungen; public/CNAME hält sie nur im Repo fest.
 export default defineConfig({
 	site: 'https://docs.openclassware.de',
 	integrations: [

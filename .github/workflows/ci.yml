@@ -85,25 +85,27 @@ jobs:
           fetch-depth: 0
 
       - name: Berührt der PR site/?
-        id: aenderung
+        id: site_geaendert
         run: |
-          if git diff --quiet "${{ github.event.pull_request.base.sha }}" HEAD -- site/; then
+          if git diff --quiet HEAD^1 HEAD -- site/; then
             echo "site=false" >> "$GITHUB_OUTPUT"
           else
             echo "site=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - if: steps.aenderung.outputs.site == 'true'
+      - if: steps.site_geaendert.outputs.site == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
           cache-dependency-path: site/package-lock.json
 
-      - if: steps.aenderung.outputs.site == 'true'
+      - name: Abhängigkeiten installieren
+        if: steps.site_geaendert.outputs.site == 'true'
         working-directory: site
         run: npm ci
 
-      - if: steps.aenderung.outputs.site == 'true'
+      - name: Site bauen
+        if: steps.site_geaendert.outputs.site == 'true'
         working-directory: site
         run: npm run build

@@ -208,3 +208,22 @@ docker compose ps
 docker compose logs -f app
 docker compose logs -f caddy   # bei TLS-/ACME-Problemen
 ```
+
+## Doku-Site
+
+Die Anwender-Doku aus [`site/`](../site) liegt nicht auf dem VPS, sondern auf GitHub Pages unter
+<https://docs.openclassware.de>. [`.github/workflows/docs.yml`](../.github/workflows/docs.yml)
+baut sie bei jedem Push auf `main`, der `site/` oder den Workflow berührt, und per
+`workflow_dispatch`, und deployt das Pages-Artefakt.
+
+Einmalig von Hand:
+
+- *Settings → Pages → Build and deployment → Source* auf **GitHub Actions**.
+- *Settings → Pages → Custom domain* auf `docs.openclassware.de`, danach **Enforce HTTPS**.
+  Beim Deploy über Actions wirkt nur diese Einstellung; `site/public/CNAME` hält die Domain
+  lediglich im Repo fest.
+- Beim Domain-Anbieter:
+
+  ```
+  docs.openclassware.de.   CNAME   openclassware.github.io.
+  ```

@@ -28,4 +28,4 @@ Der Build bricht bei einem toten internen Link ab.
 ## Versionen
 
 Starlight steht vor 1.0. Die Versionen in `package.json` sind deshalb exakt gepinnt; Upgrades
-werden gesammelt gehoben, nicht einzeln.
+werden gesammelt gehoben, nicht einzeln — monatlich als ein Dependabot-Pull-Request.

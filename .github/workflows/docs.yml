@@ -4,11 +4,10 @@
 #
 # Der Build prüft dabei tote interne Links und bricht ab, bevor etwas veröffentlicht wird.
 # Den gleichen Build ohne Deploy fährt der Job `doku` in `ci.yml` auf jedem Pull Request, der
-# `site/` berührt.
+# `site/` berührt; die Node-Version dort wird mit dieser gemeinsam gehoben.
 #
-# Einmalig von Hand (Repository-Einstellungen, nicht versioniert): Settings → Pages → Source auf
-# „GitHub Actions“, Custom Domain `docs.openclassware.de`; beim DNS ein CNAME auf
-# `openclassware.github.io`.
+# Was einmalig von Hand eingestellt ist (Pages-Quelle, Custom Domain, DNS), steht in
+# `docs/deploy.md` unter „Doku-Site“.
 name: Doku-Site
 
 on:
@@ -43,9 +42,11 @@ jobs:
           cache: npm
           cache-dependency-path: site/package-lock.json
 
-      - run: npm ci
+      - name: Abhängigkeiten installieren
+        run: npm ci
 
-      - run: npm run build
+      - name: Site bauen
+        run: npm run build
 
       - uses: actions/upload-pages-artifact@v5
         with:

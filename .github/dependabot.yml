@@ -7,9 +7,10 @@
 # braucht keine Secrets und nur `contents: read` — das reicht auch für das eingeschränkte
 # Token eines Dependabot-Pull-Requests.
 #
-# Zwei Ökosysteme, weil beide veralten können: die Maven-Abhängigkeiten der Anwendung und
-# die im Repository verwendeten GitHub-Actions. Bliebe das zweite außen vor, würde
-# ausgerechnet die Pipeline, die alles andere prüft, selbst nicht aktuell gehalten.
+# Drei Ökosysteme, weil alle veralten können: die Maven-Abhängigkeiten der Anwendung, die
+# im Repository verwendeten GitHub-Actions und die npm-Abhängigkeiten der Doku-Site in
+# `site/`. Blieben die Actions außen vor, würde ausgerechnet die Pipeline, die alles andere
+# prüft, selbst nicht aktuell gehalten.
 version: 2
 updates:
   # Anwendung: `pom.xml` im Repo-Root (Spring Boot, Vaadin, …).
@@ -32,5 +33,17 @@ updates:
       interval: monthly
     groups:
       github-actions:
+        patterns:
+          - "*"
+
+  # Doku-Site: `site/package.json` (Astro Starlight). Die Versionen sind exakt gepinnt, weil
+  # Starlight vor 1.0 steht; der gebündelte Pull Request ist das gesammelte Upgrade, und der
+  # Job `doku` in `ci.yml` baut die Site dafür.
+  - package-ecosystem: npm
+    directory: /site
+    schedule:
+      interval: monthly
+    groups:
+      doku-site:
         patterns:
           - "*"

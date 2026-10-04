@@ -69,12 +69,11 @@ Daneben baut ein zweiter Job **`doku`** die Anwender-Doku aus `site/` — dersel
 Pages-Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Deploy. Ein toter interner
 Link macht ihn rot. Berührt der PR `site/` nicht, überspringt der Job seine Schritte und ist grün;
 der Filter sitzt im Job und nicht am Trigger, weil `paths` am Trigger auch das Test-Gate
-abschalten würde. Pflichtprüfung ist er nicht.
+abschalten würde. Pflichtprüfung ist er nicht. Die Node-Version steht in beiden Workflows und
+wird gemeinsam gehoben.
 
-Veröffentlicht wird die Site bei jedem Push auf `main`, der `site/` oder `docs.yml` berührt, und
-per `workflow_dispatch`. Einmalig von Hand eingestellt (nicht versioniert): *Settings → Pages →
-Source* auf **GitHub Actions**, Custom Domain `docs.openclassware.de`, beim DNS ein `CNAME` auf
-`openclassware.github.io`.
+Wie die Site veröffentlicht wird und was dafür von Hand eingestellt ist, steht in
+[`deploy.md`](deploy.md#doku-site).
 
 ## Branch Protection auf `main`
 
@@ -143,10 +142,12 @@ gh api repos/openClassware/elternsprechtag/branches/main/protection
 ## Abhängigkeits-Aktualisierungen
 
 [`.github/dependabot.yml`](../.github/dependabot.yml) lässt Dependabot **monatlich** nach
-Aktualisierungen suchen — für die Maven-Abhängigkeiten der Anwendung und für die im
-Repository verwendeten GitHub-Actions. Beide Ökosysteme bekommen je einen gebündelten Pull
-Request (`groups`) statt eines pro Abhängigkeit: ein Maven-Build dauert hier Minuten, und
-Spring-Boot- wie Vaadin-Artefakte wandern ohnehin im Verbund.
+Aktualisierungen suchen — für die Maven-Abhängigkeiten der Anwendung, für die im
+Repository verwendeten GitHub-Actions und für die npm-Abhängigkeiten der Doku-Site in `site/`.
+Jedes Ökosystem bekommt einen gebündelten Pull Request (`groups`) statt eines pro Abhängigkeit:
+ein Maven-Build dauert hier Minuten, und Spring-Boot- wie Vaadin-Artefakte wandern ohnehin im
+Verbund. Bei der Doku-Site ist der gebündelte Pull Request das gesammelte Upgrade der gepinnten
+Starlight-Version; geprüft wird er vom Job [`doku`](#job-doku).
 
 Der Weg über einen Pull Request ist der Punkt. Jede Aktualisierung läuft durch das
 **`Test-Gate`** oben, und der Maintainer entscheidet am Prüfergebnis, ob sie gefahrlos
