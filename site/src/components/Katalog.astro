@@ -1,0 +1,37 @@
+---
+// Der Katalog der Anwendungsfälle wird aus den Fallseiten erzeugt, nicht von Hand gepflegt: je
+// Phase ein Block mit Anker, darin eine Karte je Fall, geordnet nach `order`. Leere Phasen entfallen.
+import { getCollection } from 'astro:content';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { AKTEURE, PHASEN } from '../vorlage/schema.mjs';
+
+const faelle = await getCollection('anwendungsfaelle');
+const bloecke = PHASEN.map((phase) => ({
+	...phase,
+	faelle: faelle
+		.filter((fall) => fall.data.phase === phase.id)
+		.sort((a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title, 'de')),
+})).filter((block) => block.faelle.length > 0);
+
+/** Nur was nicht der Organisator erledigt, trägt einen Zusatz. */
+function kartentitel({ title, wer }: { title: string; wer: keyof typeof AKTEURE }) {
+	return wer === 'organisator' ? title : `${title} (${AKTEURE[wer]})`;
+}
+---
+
+{
+	bloecke.map((block) => (
+		<section class="katalog__phase">
+			<h2 id={block.id}>{block.titel}</h2>
+			<CardGrid>
+				{block.faelle.map((fall) => (
+					<LinkCard
+						title={kartentitel(fall.data)}
+						description={fall.data.description}
+						href={`/anwendungsfaelle/${fall.id}/`}
+					/>
+				))}
+			</CardGrid>
+		</section>
+	))
+}

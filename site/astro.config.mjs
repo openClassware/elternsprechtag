@@ -2,11 +2,18 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator';
+import { satteri } from '@astrojs/markdown-satteri';
+import { vorlagenPruefung, vorlagenPruefungMarkdown } from './src/vorlage/pruefung.mjs';
 
 // Ohne Basis-Pfad: die Site liegt auf eigener Subdomain. Beim Deploy über Actions wirkt die
 // Custom Domain aus den Pages-Einstellungen; public/CNAME hält sie nur im Repo fest.
 export default defineConfig({
 	site: 'https://docs.openclassware.de',
+	// Die Vorlage der Fallseiten und die Alt-Texte der ganzen Site als Build-Prüfung: Ein Verstoß
+	// lässt den Build scheitern. Starlight hängt seine eigenen Plugins an denselben Prozessor an.
+	markdown: {
+		processor: satteri({ mdastPlugins: [vorlagenPruefung()] }),
+	},
 	integrations: [
 		starlight({
 			title: 'Elternsprechtag',
@@ -35,5 +42,6 @@ export default defineConfig({
 			// Ein toter interner Link lässt den Build scheitern, lokal wie in CI.
 			plugins: [starlightLinksValidator()],
 		}),
+		vorlagenPruefungMarkdown(),
 	],
 });

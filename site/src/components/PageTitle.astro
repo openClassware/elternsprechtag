@@ -1,11 +1,19 @@
 ---
 // Starlight-Override: Unter jedem Seitentitel steht, dass die Seite den aktuellen Stand
-// beschreibt. Es gibt nur eine Fassung der Doku — die von `main`.
+// beschreibt. Es gibt nur eine Fassung der Doku — die von `main`. Fallseiten bekommen darunter
+// ihren Steckbrief.
+import { getEntry } from 'astro:content';
 import Default from '@astrojs/starlight/components/PageTitle.astro';
+import Steckbrief from './Steckbrief.astro';
+
+const FALLSEITEN = 'anwendungsfaelle/';
+const { id } = Astro.locals.starlightRoute;
+const fall = id.startsWith(FALLSEITEN) ? await getEntry('anwendungsfaelle', id.slice(FALLSEITEN.length)) : undefined;
 ---
 
 <Default />
 <p class="stand-hinweis">Diese Seite beschreibt den aktuellen Stand der Anwendung.</p>
+{fall && <Steckbrief fall={fall.data} />}
 
 <style>
 	.stand-hinweis {

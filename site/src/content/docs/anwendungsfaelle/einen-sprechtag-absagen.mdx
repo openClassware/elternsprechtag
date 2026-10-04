@@ -1,0 +1,85 @@
+---
+title: Einen Sprechtag absagen
+description: Den ganzen Sprechtag absagen; alle Familien mit Termin werden per E-Mail benachrichtigt.
+phase: kurz-vor-dem-termin
+order: 2
+wer: organisator
+wann: Kurz vor dem Termin — oder jederzeit, solange der Sprechtag aktiv ist
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Den ganzen Sprechtag absagen, weil er so nicht stattfinden kann. Alle Familien mit Termin werden per
+E-Mail benachrichtigt.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Der ganze Sprechtag fällt aus | **Absagen** — diese Seite |
+| Der Sprechtag soll an einem anderen Tag stattfinden | Einen Sprechtag verschieben |
+| Eine Lehrkraft fehlt, ganz oder ab einer Uhrzeit | Eine Lehrkraft fällt aus |
+| Eine einzelne Familie kommt nicht | Eine Buchung stornieren |
+| Der Sprechtag ist noch *Entwurf* | Einen Entwurf löschen |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Absagen**.
+
+3. Lesen Sie den Dialog. Er nennt, **wie viele Kinder** eine aktive Buchung haben — deren Eltern
+   bekommen eine E-Mail.
+
+4. Bestätigen Sie mit **Absagen**. Der Status wechselt auf *Abgesagt*.
+
+</Steps>
+
+## Was danach passiert
+
+- **Jede Familie mit Termin bekommt eine E-Mail** — je Kind eine, mit Name, Klasse, den entfallenden
+  Terminen und Ihrem Schulkontakt. Betreff: *Sprechtag „…“ am … abgesagt*.
+- **Der Zugangs-Link** zeigt nur noch *Dieser Elternsprechtag wurde abgesagt* und den Schulkontakt.
+  Buchen ist nicht mehr möglich.
+- **Familien ohne eigene E-Mail-Adresse**: Die Nachricht geht an die Stellvertreteradresse der Schule,
+  je Kind eine. Das Sekretariat gibt sie weiter.
+- **Lehrkräfte** bekommen keine Nachricht von der Anwendung. Informieren Sie sie auf dem üblichen Weg.
+- In der Liste bleibt der Sprechtag stehen, Filter *Abgesagt*. Die Auswertung bleibt lesbar.
+
+## Regeln
+
+- **Eine Absage lässt sich nicht zurücknehmen.** Die Familien haben bereits gelesen, dass der Termin
+  entfällt, und anders geplant. Ein Zurücknehmen würde einen Termin wiederherstellen, an den niemand
+  mehr glaubt.
+- **Die Absage gilt, auch wenn eine E-Mail nicht ankommt.** Der Versand läuft erst nach der Absage;
+  scheitert er, bleibt der Sprechtag abgesagt.
+- **Die E-Mail enthält keinen Link.** Über den Zugangs-Link gibt es nichts mehr zu buchen.
+
+## Wenn …
+
+### … noch niemand gebucht hat
+
+Die Absage verschickt dann keine E-Mail. Wollen Sie den Sprechtag nur überarbeiten, ist
+*Ein Veröffentlichen zurücknehmen* der passendere Weg.
+
+### … eine E-Mail nicht angekommen ist
+
+Die Auswertung des Sprechtags zeigt oben den Block **Nicht erreicht**, die Liste den Hinweis
+*1 Nachricht nicht zugestellt*. Siehe *Nicht erreichte Familien nachfassen*.
+
+## Wege drumherum
+
+- **Sie wollen den Sprechtag verschieben.** Ein Verschieben gibt es nicht — die Termine passen am
+  neuen Tag nicht mehr. Sagen Sie ab, duplizieren Sie den Sprechtag und veröffentlichen Sie ihn neu:
+  *Einen Sprechtag verschieben*.
+
+## Verwandte Fälle
+
+- *Eine Lehrkraft fällt aus* — wenn nur eine Lehrkraft fehlt, nicht der ganze Tag
+- *Eine Buchung stornieren* — wenn nur eine Familie nicht kommt
+- *Ein Veröffentlichen zurücknehmen* — solange noch niemand gebucht hat
+- Referenz: *Welche E-Mails Eltern bekommen*

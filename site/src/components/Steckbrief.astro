@@ -1,0 +1,43 @@
+---
+// Steckbrief einer Fallseite direkt unter dem Titel: Wer · Wann · Voraussetzung · (Dauer), aus
+// dem Frontmatter. So weiß der Leser sofort, ob er auf der richtigen Seite ist.
+import type { CollectionEntry } from 'astro:content';
+import { AKTEURE } from '../vorlage/schema.mjs';
+
+interface Props {
+	fall: CollectionEntry<'anwendungsfaelle'>['data'];
+}
+
+const { fall } = Astro.props;
+const zeilen = [
+	['Wer', AKTEURE[fall.wer]],
+	['Wann', fall.wann],
+	['Voraussetzung', fall.voraussetzung],
+	['Dauer', fall.dauer],
+].filter(([, wert]) => wert);
+---
+
+<table class="steckbrief">
+	<tbody>
+		{
+			zeilen.map(([feld, wert]) => (
+				<tr class="steckbrief__zeile">
+					<th class="steckbrief__feld" scope="row">{feld}</th>
+					<td class="steckbrief__wert">{wert}</td>
+				</tr>
+			))
+		}
+	</tbody>
+</table>
+
+<style>
+	.steckbrief {
+		margin-top: 1rem;
+		font-size: var(--sl-text-sm);
+	}
+	.steckbrief__feld {
+		padding-inline-end: 1.5rem;
+		text-align: start;
+		white-space: nowrap;
+	}
+</style>
