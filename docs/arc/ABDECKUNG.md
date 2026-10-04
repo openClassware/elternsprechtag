@@ -8,6 +8,9 @@ ein.
 **Was dieses Dokument ist:** ein *Maßstab*, kein Bauauftrag. Es sagt, was dieses Produkt an
 Nicht-Happy-Path abdecken muss, damit künftige Features sich daran messen lassen. Ein Feature ist
 fertig, wenn die Fälle seiner Phase, die auf `muss` stehen, sich verhalten wie hier beschrieben.
+Wer eine Einstufung ändert oder einen Fall auf **erfüllt** setzt, prüft die Fallseiten dieser Phase
+in der [Anwender-Doku](https://docs.openclassware.de/anwendungsfaelle/); die Phasen 2–6 verlinken
+unten ihren Block im Katalog.
 
 **Was dieses Dokument nicht ist:** eine Liste überwachter Bedingungen. Es ist eine
 **Momentaufnahme**. Es gibt genau **einen Revisionsanlass** für die gesamte Stufe `darf fehlen`:
@@ -81,6 +84,8 @@ Organizer einen Sprechtag anlegt.
 ---
 
 ## Phase 2 — Sprechtag vorbereiten und veröffentlichen
+
+Anwender-Doku: [Anwendungsfälle › Vorbereiten & veröffentlichen](https://docs.openclassware.de/anwendungsfaelle/#vorbereiten)
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
@@ -163,6 +168,8 @@ Organizer selbst korrigierbar, bevor Schaden entsteht.
 
 ## Phase 3 — Buchungsphase
 
+Anwender-Doku: [Anwendungsfälle › Buchungsphase](https://docs.openclassware.de/anwendungsfaelle/#buchungsphase)
+
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
 | Buchung stornieren, Slot wird wieder frei | Organizer | Storno in der Auswertung, Termin geht auf `FREI` zurück | muss | **erfüllt** — Storno-Aktion je Zeile mit Bestätigungsdialog, `Stornieren`-Use-Case setzt die Buchung auf `STORNIERT` und gibt den Slot frei; ohne Mail, nur bei `VEROEFFENTLICHT` |
@@ -243,6 +250,8 @@ Organizer sieht die doppelte Zeile in der Auswertung und nimmt eine zurück. Ohn
 ---
 
 ## Phase 4 — Kurz vor dem Termin
+
+Anwender-Doku: [Anwendungsfälle › Kurz vor dem Termin](https://docs.openclassware.de/anwendungsfaelle/#kurz-vor-dem-termin)
 
 Abgrenzung der Phase: nicht zeitlich, sondern nach Anlass — alles, was den *geplanten Ablauf
 nachträglich verändert*, nachdem Buchungen existieren, bis zum Vorabend. Das Buchen selbst bleibt
@@ -389,6 +398,8 @@ Aulatür.
 
 ## Phase 5 — Am Tag des Sprechtags
 
+Anwender-Doku: [Anwendungsfälle › Am Tag](https://docs.openclassware.de/anwendungsfaelle/#am-tag)
+
 Grundhaltung: Die App ist **Planungswerkzeug, nicht Tagesprotokoll**. Am Nachmittag arbeitet die
 Lehrkraft auf Papier, der Organizer am Rechner. Es entsteht **kein zweiter Zugangsweg** — die
 Lehrkraft bekommt ihren Plan als Datei, nicht als Login.
@@ -470,6 +481,8 @@ Sprechtag-Pflege; er wurde in Phase 2 noch nicht erhoben und ist hier nachgetrag
 ---
 
 ## Phase 6 — Nach dem Sprechtag
+
+Anwender-Doku: [Anwendungsfälle › Danach](https://docs.openclassware.de/anwendungsfaelle/#danach)
 
 | Fall | Akteur | Erwartet | Stufe | Heute |
 |---|---|---|---|---|
