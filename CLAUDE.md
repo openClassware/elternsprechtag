@@ -6,7 +6,7 @@ Kurzregeln für die Arbeit an diesem Projekt. Architektur-Details und Begründun
 **Bevor ein Feature als fertig gilt:** [`docs/arc/ABDECKUNG.md`](docs/arc/ABDECKUNG.md) ist der
 Maßstab für die Fälle jenseits des Happy Path. Es stuft je Phase des Schulablaufs ein, was das
 Produkt abdecken **muss**, was **fehlen darf** und was **bewusst nein** ist — Letzteres nicht ohne
-ADR ändern.
+ADR ändern. Dazu gehört die **Anwender-Doku** im selben PR, siehe [unten](#anwender-doku).
 
 ## Zwei Kontexte, eine Struktur
 
@@ -100,6 +100,22 @@ Alles Fachliche gehört in einen der beiden Kontexte. Die Grenze zwischen ihnen 
 - **Tabellen-Karten-Muster**: Unterhalb von 640 px wird die Kopfzeile ausgeblendet und die
   Zeile zur gestapelten Karte — die erste Spalte bleibt fest als Scan-Anker, der Rest stapelt
   daneben. Vorlage ist die Auswertungsansicht (`styles/auswertung-view.css`).
+
+## Anwender-Doku
+
+Die Doku-Site unter `docs.openclassware.de` entsteht aus [`site/`](site/). Wie man dort schreibt,
+steht in [`site/README.md`](site/README.md).
+
+- **Definition of Done, im selben PR, für die ganze Site:** Ändert ein PR etwas, das ein Anwender
+  sieht oder erlebt, zieht er die betroffene Seite im selben PR nach. Das gilt für einen Schritt,
+  eine Meldung, eine E-Mail, eine Regel und einen Weg drumherum, der wegfällt. Ein neues Ziel wird
+  eine neue Fallseite, eine Variante ein neuer Abschnitt. Ausdrücklich gehören dazu:
+  - neue oder geänderte Konfigurations-Property → *Betrieb › Konfiguration*;
+  - neue Einstufung „bewusst nein“ in `ABDECKUNG.md` → *Was die Anwendung kann – und was nicht*.
+
+  Ausgenommen sind Refactorings und Infrastruktur ohne sichtbare Wirkung.
+- **Seite geändert → Screenshot-Modul mitziehen** (`site/screenshots/faelle/<slug>.mjs`).
+- Die Vorlage steht als Build-Prüfung in `site/`. Wer sie ändert, ändert dort mit.
 
 ## Agent skills
 
