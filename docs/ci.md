@@ -63,6 +63,24 @@ ihn nicht erreichbar.
 Ein neuer Push auf denselben PR bricht den vorigen Lauf ab (`cancel-in-progress`). Im Deploy
 ist das bewusst andersherum.
 
+### Job `doku`
+
+Daneben baut ein zweiter Job **`doku`** die Anwender-Doku aus `site/` — derselbe Build wie im
+Pages-Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Deploy. Ein toter interner
+Link macht ihn rot. Berührt der PR `site/` nicht, überspringt der Job seine Schritte und ist grün.
+
+`doku` ist neben `Test-Gate` **Pflichtprüfung** (siehe [Branch Protection](#branch-protection-auf-main)).
+Ein roter Site-Build auf `main` würde jeden folgenden Pages-Deploy scheitern lassen, bis jemand
+ihn repariert — das gehört vor den Merge, gerade bei den gesammelten Starlight-Upgrades von
+Dependabot. Deshalb sitzt der Filter im Job und nicht als `paths` am Trigger: Ein Workflow, der
+gar nicht startet, meldet keine Prüfung, und die Branch Protection würde auf jedem PR ohne
+Änderung an `site/` ewig auf `doku` warten.
+
+Die Node-Version steht in beiden Workflows und wird gemeinsam gehoben.
+
+Wie die Site veröffentlicht wird und was dafür von Hand eingestellt ist, steht in
+[`deploy.md`](deploy.md#doku-site).
+
 ## Branch Protection auf `main`
 
 **Voraussetzung**: Branch Protection und Rulesets gibt es auf dem Free-Plan nur für
@@ -78,7 +96,7 @@ erfüllt; würde es je wieder privat gestellt, fiele die Regel ersatzlos weg.
 | ↳ Require approvals                                            | aus (Solo-Repo)            |
 | Require status checks to pass before merging                   | an                         |
 | ↳ Require branches to be up to date before merging             | an                         |
-| ↳ Erforderliche Prüfung                                        | **`Test-Gate`**            |
+| ↳ Erforderliche Prüfungen                                      | **`Test-Gate`**, **`doku`** |
 | Require conversation resolution before merging                 | an                         |
 | Allow force pushes                                             | aus                        |
 | Allow deletions                                                | aus                        |
@@ -92,9 +110,10 @@ Zu zwei Punkten die Begründung, weil sie sonst wie Nachlässigkeit aussehen:
   kaputtes Token) selbst entsperren können, ohne die Regel löschen zu müssen. Die Regel
   schützt vor Versehen, nicht vor dem Maintainer.
 
-Der Name der erforderlichen Prüfung ist der **Job-Name** aus `ci.yml`, nicht der Workflow-Name.
-Wird der Job umbenannt, wartet die Branch Protection auf eine Prüfung, die nie startet, und
-kein Merge geht mehr durch — beides muss zusammen geändert werden.
+Die Namen der erforderlichen Prüfungen sind die **Job-Namen** aus `ci.yml`, nicht der
+Workflow-Name. Wird einer der Jobs umbenannt, wartet die Branch Protection auf eine Prüfung, die
+nie startet, und kein Merge geht mehr durch — beides muss zusammen geändert werden. Zur Auswahl
+in den Einstellungen steht eine Prüfung erst, nachdem der Job einmal gelaufen ist.
 
 ### Rekonstruktion
 
@@ -107,7 +126,7 @@ gh api -X PUT repos/openClassware/elternsprechtag/branches/main/protection \
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["Test-Gate"]
+    "contexts": ["Test-Gate", "doku"]
   },
   "required_pull_request_reviews": {
     "required_approving_review_count": 0
@@ -130,10 +149,12 @@ gh api repos/openClassware/elternsprechtag/branches/main/protection
 ## Abhängigkeits-Aktualisierungen
 
 [`.github/dependabot.yml`](../.github/dependabot.yml) lässt Dependabot **monatlich** nach
-Aktualisierungen suchen — für die Maven-Abhängigkeiten der Anwendung und für die im
-Repository verwendeten GitHub-Actions. Beide Ökosysteme bekommen je einen gebündelten Pull
-Request (`groups`) statt eines pro Abhängigkeit: ein Maven-Build dauert hier Minuten, und
-Spring-Boot- wie Vaadin-Artefakte wandern ohnehin im Verbund.
+Aktualisierungen suchen — für die Maven-Abhängigkeiten der Anwendung, für die im
+Repository verwendeten GitHub-Actions und für die npm-Abhängigkeiten der Doku-Site in `site/`.
+Jedes Ökosystem bekommt einen gebündelten Pull Request (`groups`) statt eines pro Abhängigkeit:
+ein Maven-Build dauert hier Minuten, und Spring-Boot- wie Vaadin-Artefakte wandern ohnehin im
+Verbund. Bei der Doku-Site ist der gebündelte Pull Request das gesammelte Upgrade der gepinnten
+Starlight-Version; geprüft wird er vom Job [`doku`](#job-doku).
 
 Der Weg über einen Pull Request ist der Punkt. Jede Aktualisierung läuft durch das
 **`Test-Gate`** oben, und der Maintainer entscheidet am Prüfergebnis, ob sie gefahrlos

@@ -1,0 +1,19 @@
+{
+  "name": "elternsprechtag-doku",
+  "private": true,
+  "type": "module",
+  "description": "Anwender-Doku unter docs.openclassware.de. Eigenes package.json wie tools/screenshots: das Root-package.json wird von Vaadin generiert und ist gitignored.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.42.5",
+    "astro": "7.3.5",
+    "starlight-links-validator": "0.26.0"
+  }
+}
