@@ -1,0 +1,78 @@
+---
+title: Ein Veröffentlichen zurücknehmen
+description: Einen zu früh veröffentlichten Sprechtag zurück auf Entwurf setzen; das geht nur, solange niemand gebucht hat.
+phase: vorbereiten
+order: 6
+wer: organisator
+wann: Vorbereiten — zu früh veröffentlicht oder ein Fehler in Datum, Zeiten oder Klassen
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv), und es wurde noch nie gebucht
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Einen veröffentlichten Sprechtag wieder zum Entwurf machen, etwa weil er zu früh freigegeben wurde
+oder Datum, Zeiten oder Klassen nicht stimmen. Das geht nur, solange noch niemand gebucht hat.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Veröffentlicht, aber noch niemand hat gebucht | **Zurück auf Entwurf** — diese Seite |
+| Nur Titel, Ort, Beschreibung, Schulkontakt oder eine Frist sind falsch | [Einen Sprechtag bearbeiten](/anwendungsfaelle/einen-sprechtag-bearbeiten/) — ohne Zurücknehmen |
+| Es gibt schon Buchungen | [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Zurück auf Entwurf**.
+   Eine Rückfrage gibt es nicht.
+
+3. Der Status wechselt auf *Entwurf*. Kommt stattdessen eine Meldung, wurde schon gebucht — siehe
+   *Wenn …* unten.
+
+4. Korrigieren Sie über **Bearbeiten**, was nicht stimmt; jetzt sind auch Datum, Zeiten,
+   Slot-Länge und Klassen wieder änderbar.
+
+5. Veröffentlichen Sie erneut mit **Aktiv setzen**:
+   [Einen Sprechtag veröffentlichen](/anwendungsfaelle/einen-sprechtag-veroeffentlichen/).
+
+</Steps>
+
+## Was danach passiert
+
+- **Die Termine werden verworfen.** Beim nächsten Veröffentlichen entstehen sie neu, passend zu
+  Ihren korrigierten Angaben.
+- **Der Zugangs-Link** zeigt bis zum erneuten Veröffentlichen *Nicht verfügbar*. Danach führt
+  derselbe Link wieder zur Buchungsseite — einen schon verteilten Link müssen Sie nicht ersetzen.
+- **Niemand bekommt eine E-Mail.** Gebucht hatte ja noch niemand.
+
+## Regeln
+
+- **Zurück auf Entwurf geht nur, solange nie gebucht wurde.** Auch eine inzwischen stornierte
+  Buchung zählt, denn die Familie hat eine Bestätigung bekommen. Nach der ersten Buchung hält
+  jemand eine Zusage in der Hand; ein stiller Rückweg würde sie ohne Nachricht verfallen lassen.
+  Dann bleibt nur die Absage, bei der die Familien benachrichtigt werden.
+
+## Wenn …
+
+### … die Meldung kommt, dass bereits gebucht wurde
+
+*An diesem Sprechtag wurde bereits gebucht. Er lässt sich nicht mehr auf Entwurf zurücksetzen.* Der
+Sprechtag bleibt *Aktiv*, nichts hat sich geändert. Was nur Text ist, ändern Sie über
+**Bearbeiten**. Müssen Datum, Zeiten oder Klassen anders werden, sagen Sie ab und legen neu an —
+am schnellsten mit **Duplizieren**.
+
+### … Sie den Sprechtag gar nicht mehr brauchen
+
+Nehmen Sie ihn zurück und löschen Sie den Entwurf danach:
+[Einen Entwurf löschen](/anwendungsfaelle/einen-entwurf-loeschen/).
+
+## Verwandte Fälle
+
+- [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) — wenn schon gebucht wurde
+- [Einen Sprechtag bearbeiten](/anwendungsfaelle/einen-sprechtag-bearbeiten/) — wenn sich nur Text oder Fristen ändern sollen
+- [Einen Entwurf löschen](/anwendungsfaelle/einen-entwurf-loeschen/) — wenn der Sprechtag ganz weg soll

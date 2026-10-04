@@ -1,0 +1,86 @@
+---
+title: Einen Sprechtag bearbeiten
+description: Angaben eines Sprechtags ändern; nach dem Veröffentlichen liegen Datum, Zeiten, Slot-Länge und Klassen fest.
+phase: vorbereiten
+order: 3
+wer: organisator
+wann: Vorbereiten oder Buchungsphase — eine Angabe stimmt nicht mehr
+voraussetzung: Der Sprechtag ist Entwurf oder veröffentlicht (Status Entwurf oder Aktiv)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Die Angaben eines Sprechtags ändern. Im Entwurf geht alles; nach dem Veröffentlichen nur noch, was
+keine Termine berührt.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Titel, Ort, Beschreibung, Schulkontakt, Erinnerung oder Anmeldefrist ändern | **Bearbeiten** — diese Seite |
+| Datum, Zeiten oder Klassen ändern, und noch niemand hat gebucht | [Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/), dann diese Seite |
+| Datum, Zeiten oder Klassen ändern, und es gibt schon Buchungen | [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) und neu anlegen |
+| Die Anmeldung soll länger offen bleiben oder wieder öffnen | *Die Anmeldung verlängern oder wieder öffnen* |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Bearbeiten**. Das
+   Formular **Sprechtag bearbeiten** öffnet sich.
+
+3. Ändern Sie die Angaben. Ist der Sprechtag schon veröffentlicht, sind **Datum**,
+   **Slot-Länge**, **Startzeit**, **Endzeit** und **Klassen** ausgegraut; darunter steht der Grund.
+
+   ![Block „Termin & Zeiten“ eines veröffentlichten Sprechtags: Datum, Slot-Länge, Start- und Endzeit sind schreibgeschützt, unter dem Datum steht „Liegt seit dem Veröffentlichen fest — die Termine sind daraus entstanden.“ Erinnerung und Anmeldefrist bleiben änderbar.](../../../assets/screenshots/einen-sprechtag-bearbeiten/gesperrte-zeiten.png)
+
+4. Klicken Sie auf **Speichern**. Die Anwendung kehrt zur **Übersicht** zurück.
+
+</Steps>
+
+## Was danach passiert
+
+- **Der Status bleibt, wie er war.** Speichern veröffentlicht nicht und nimmt nichts zurück.
+- **Die Elternseite** hinter dem Zugangs-Link zeigt sofort den neuen Stand, etwa einen geänderten
+  Ort oder Hinweis.
+- **Die Eltern bekommen keine E-Mail** über die Änderung. Bestätigungsmails, die schon verschickt
+  sind, bleiben wie sie sind. Ist eine Änderung wichtig, etwa ein anderer Raum, informieren Sie die
+  Familien auf dem üblichen Weg der Schule.
+- **Erinnerungsmails**, die erst noch verschickt werden, enthalten schon den neuen Stand. Eine
+  geänderte Erinnerung gilt ab dem nächsten Versandlauf am Morgen.
+- **Der Zugangs-Link** ändert sich durch Bearbeiten nie.
+
+## Regeln
+
+- **Datum, Zeiten, Slot-Länge und Klassen liegen ab dem Veröffentlichen fest.** Aus ihnen sind die
+  Termine entstanden, und Familien buchen auf genau diese Termine. Eine spätere Änderung müsste
+  Buchungen verschieben oder streichen, ohne dass die Familien es merken. Das gilt auch für das
+  Hinzufügen oder Entfernen einer Klasse.
+- **Was nur Text ist, bleibt änderbar:** Titel, Ort, Beschreibung und Schulkontakt. Dazu Erinnerung
+  und Anmeldefrist — sie erzeugen keinen Termin und machen keine Buchung ungültig.
+- **Ein abgesagter oder abgeschlossener Sprechtag lässt sich nicht mehr ändern.** Er ist
+  endgültig; Speichern bringt ihn nicht zurück. Das Formular öffnet sich zwar, aber **Speichern**
+  wird mit der Meldung *Dieser Schritt ist von hier aus nicht möglich.* abgewiesen.
+
+## Wenn …
+
+### … beim Speichern die Meldung kommt, dass Datum, Zeit und Klassen festliegen
+
+Der Sprechtag wurde veröffentlicht, während Ihr Formular offen war. Laden Sie die Seite neu; die
+Felder sind dann gesperrt. Wie Sie trotzdem an Datum oder Klassen kommen, steht unter
+*Ist das der richtige Fall?* oben.
+
+### … Sie nur eine Klasse vergessen haben
+
+Auch das ist eine Änderung an den Klassen. Ohne Buchungen nehmen Sie das Veröffentlichen zurück,
+ergänzen die Klasse und veröffentlichen erneut. Mit Buchungen bleibt nur, abzusagen und neu
+anzulegen.
+
+## Verwandte Fälle
+
+- [Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/) — wenn Datum, Zeiten oder Klassen falsch sind und noch niemand gebucht hat
+- [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) — wenn sie falsch sind und schon gebucht wurde
+- [Einen früheren Sprechtag als Vorlage nutzen](/anwendungsfaelle/einen-frueheren-sprechtag-als-vorlage-nutzen/) — um nach einer Absage schnell neu anzulegen

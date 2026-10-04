@@ -1,0 +1,80 @@
+---
+title: Den Zugangs-Link an die Eltern weitergeben
+description: Den Link zur Buchungsseite kopieren und über die üblichen Wege der Schule an alle Familien verteilen.
+phase: vorbereiten
+order: 5
+wer: organisator
+wann: Vorbereiten — gleich nach dem Veröffentlichen, oder wenn eine Familie den Link nicht mehr hat
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Den Zugangs-Link holen und an die Eltern verteilen. Über diesen einen Link buchen alle Familien
+ihre Termine — ein Konto oder Passwort brauchen sie nicht.
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Link kopieren**. Der
+   Dialog **Link teilen** zeigt den Link.
+
+   ![Dialog „Link teilen“: Er zeigt den vollständigen Zugangs-Link des Sprechtags und bietet „Schließen“ und „Kopieren“ an.](../../../assets/screenshots/den-zugangs-link-an-die-eltern-weitergeben/dialog.png)
+
+3. Klicken Sie auf **Kopieren**. Die Meldung **Link kopiert** bestätigt es; der Link liegt in der
+   Zwischenablage.
+
+4. Fügen Sie den Link in Ihre Nachricht an die Eltern ein — Elternbrief, E-Mail-Verteiler oder
+   Schul-App, wie an Ihrer Schule üblich. Nennen Sie darin den Sprechtag und bis wann gebucht
+   werden kann.
+
+</Steps>
+
+Den Link finden Sie auch im Formular des Sprechtags unter **Zugang**, mit **Kopieren** und
+**Öffnen**. **Öffnen** zeigt die Seite in einem neuen Tab so, wie die Eltern sie sehen.
+
+## Was danach passiert
+
+- **Die Eltern** öffnen den Link und sehen die Buchungsseite: Titel, Datum, Ort, Ihren Hinweis und
+  bis wann die Anmeldung läuft. Dort wählen sie Klasse, Lehrkraft und Termin.
+- **Nach dem Buchen** bekommt jede Familie eine Bestätigungsmail mit ihren Terminen und Ihrem
+  Schulkontakt.
+- **Nach dem Anmeldeschluss** zeigt der Link *Die Anmeldung ist beendet* und den Schulkontakt,
+  nach dem Sprechtag *Der Elternsprechtag ist vorbei*, nach einer Absage *Dieser Elternsprechtag
+  wurde abgesagt*.
+- Die Anwendung **verschickt den Link nicht selbst**. Sie kennt die Adressen der Eltern erst,
+  wenn diese gebucht haben.
+
+## Regeln
+
+- **Der Link ist für alle Familien derselbe und ändert sich nie.** Sie können ihn jederzeit erneut
+  weitergeben, er führt immer zum selben Sprechtag. Neu ausstellen lässt er sich bewusst nicht:
+  Alle schon verteilten Links liefen sonst ins Leere, ohne dass die Eltern erfahren, warum.
+- **Wer den Link hat, kann buchen.** Er ist der ganze Zugangsschutz; geben Sie ihn nur an die
+  Eltern der teilnehmenden Klassen. Namen oder Buchungen anderer Familien zeigt die Buchungsseite
+  nicht.
+- **Vor dem Veröffentlichen zeigt der Link nur *Nicht verfügbar*.** Im Entwurf gibt es deshalb
+  **Link kopieren** in der Liste noch nicht.
+
+## Wenn …
+
+### … eine Familie nicht online buchen kann
+
+Dann tragen Sie die Familie selbst ein — das geht auch ohne E-Mail-Adresse und auch nach dem
+Anmeldeschluss: *Eine Familie nachtragen*.
+
+## Wege drumherum
+
+- **Eine Familie hat den Link verloren.** Die Anwendung stellt ihn nicht von sich aus erneut zu.
+  Die Familie meldet sich über den Schulkontakt; Sie holen den Link über **Link kopieren** und
+  schicken ihn ihr noch einmal — er ist für alle derselbe. Oder Sie buchen am Telefon für sie.
+
+## Verwandte Fälle
+
+- [Einen Sprechtag veröffentlichen](/anwendungsfaelle/einen-sprechtag-veroeffentlichen/) — wenn der Sprechtag noch ein Entwurf ist und der Link deshalb nicht funktioniert
+- *Eine Familie nachtragen* — wenn eine Familie nicht selbst buchen kann
+- Referenz: *Was Eltern über den Zugangs-Link sehen*
