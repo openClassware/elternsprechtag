@@ -201,7 +201,9 @@ ON CONFLICT (id) DO NOTHING;
 -- Schalter „Stornierte anzeigen“, den die Anwender-Doku zeigt (Issue #206). Am Sprechtag mit
 -- beendeter Anmeldung hat der Ausfall von Thomas Wagner eine Buchung mitstorniert (Issue #207). Anna
 -- Krause hat dort drei Termine, einer mit Notiz, und freie dazwischen: Ihr Blatt ist das
--- Beispielblatt der Anwender-Doku (Issue #208).
+-- Beispielblatt der Anwender-Doku (Issue #208). Am abgeschlossenen Sprechtag hat Familie Wolf
+-- neben drei Terminen einen stornierten: Die Auskunft, die die Anwender-Doku zeigt, findet ihn erst
+-- über „Stornierte anzeigen“ (Issue #209).
 -- ---------------------------------------------------------------------------
 INSERT INTO buchungen (id, erstellt_am, status, schueler_name, eltern_name, eltern_email, notiz,
                        lehrauftrag_id, termin_id, lehrkraft_id, lehrkraft_name, lehrkraft_kuerzel,
@@ -234,13 +236,38 @@ SELECT md5('demo-buchung:' || s.id || ':' || la.id || ':' || b.slot)::uuid,
     ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000016', 1, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15', 'ZUGESAGT'),
     ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000019', 3, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     'Nachprüfung im Frühjahr?',       CURRENT_DATE - 33 + time '12:15', 'ZUGESAGT'),
     ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000017', 5, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15', 'ZUGESAGT'),
-    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000002', 4, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   NULL,                             CURRENT_DATE - 30 + time '21:02', 'ZUGESAGT')
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000002', 4, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   NULL,                             CURRENT_DATE - 30 + time '21:02', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000018', 0, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15', 'STORNIERT')
   ) AS b(sprechtag_id, lehrauftrag_id, slot, kind, eltern, email, notiz, erstellt_am, status)
   JOIN sprechtage s   ON s.id  = b.sprechtag_id::uuid
   JOIN lehrauftrag la ON la.id = b.lehrauftrag_id::uuid
   JOIN lehrer l       ON l.id  = la.lehrer_id
   JOIN klassen k      ON k.id  = la.klasse_id
   JOIN faecher f      ON f.id  = la.fach_id
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Eine Buchung, deren Angaben schon entfernt sind (Issue #209): So sieht die Zeile nach einem
+-- Löschverlangen aus — Platzhalter wie aus einem Lauf, die Ersatzadresse als E-Mail, keine Notiz
+-- und der Vermerk „Angaben entfernt am …“, den `anonymisiert_am` trägt. Die Zusage bleibt stehen
+-- und zählt weiter. Der Sprechtag selbst ist noch nicht anonymisiert, seine Frist läuft noch.
+-- ---------------------------------------------------------------------------
+INSERT INTO buchungen (id, erstellt_am, status, schueler_name, eltern_name, eltern_email, notiz,
+                       lehrauftrag_id, termin_id, lehrkraft_id, lehrkraft_name, lehrkraft_kuerzel,
+                       klasse_name, fach_name, anonymisiert_am)
+SELECT md5('demo-buchung:' || s.id || ':' || la.id || ':' || 2)::uuid,
+       CURRENT_DATE - 34 + time '18:26', 'ZUGESAGT',
+       'Schueler-7c1e4a90-001', 'Eltern-7c1e4a90-001', 'noreply@openclassware.de', NULL,
+       la.id,
+       md5('demo-termin:' || s.id || ':' || la.lehrer_id || ':' || 2)::uuid,
+       l.id, l.vorname || ' ' || l.nachname, l.kuerzel, k.name, f.name,
+       CURRENT_DATE - 3 + time '10:12'
+  FROM sprechtage s
+  JOIN lehrauftrag la ON la.id = '00000000-0000-0000-0004-000000000001'
+  JOIN lehrer l       ON l.id  = la.lehrer_id
+  JOIN klassen k      ON k.id  = la.klasse_id
+  JOIN faecher f      ON f.id  = la.fach_id
+ WHERE s.id = '00000000-0000-0000-0005-000000000003'
 ON CONFLICT (id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
