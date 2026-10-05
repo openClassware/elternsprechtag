@@ -164,6 +164,38 @@ class DemoSeedMigrationTest {
         .hasSize(2);
   }
 
+  /**
+   * Issue #209 — die Anwender-Doku zeigt am abgeschlossenen Sprechtag eine Buchung, deren Angaben
+   * schon entfernt sind, und beantwortet eine Auskunft über Familie Wolf, die neben drei geltenden
+   * Terminen eine stornierte Buchung hat. Geprüft über die Auswertung: Der Vermerk „Angaben entfernt
+   * am …“ hängt an einer Spalte, die der Seed eigens setzen muss.
+   */
+  @Test
+  void derAbgeschlosseneSprechtagZeigtEntfernteAngabenUndEineStornierteBuchung() {
+    SprechtagAuswertung auswertung =
+        auswerten.werteAus(UUID.fromString("00000000-0000-0000-0005-000000000003")).orElseThrow();
+
+    assertThat(auswertung.anonymisiertAm()).isNull();
+    assertThat(auswertung.plaene())
+        .flatExtracting(LehrkraftPlan::zeilen)
+        .filteredOn(zeile -> zeile.anonymisiertAm() != null)
+        .singleElement()
+        .satisfies(
+            zeile -> {
+              assertThat(zeile.schuelerName()).startsWith("Schueler-");
+              assertThat(zeile.notiz()).isNull();
+            });
+
+    assertThat(auswertung.plaene())
+        .flatExtracting(LehrkraftPlan::stornierte)
+        .singleElement()
+        .satisfies(
+            zeile -> {
+              assertThat(zeile.schuelerName()).isEqualTo("Jonas Wolf");
+              assertThat(zeile.entfallen()).isFalse();
+            });
+  }
+
   private Integer count(String tabelle) {
     return jdbcTemplate.queryForObject("select count(*) from " + tabelle, Integer.class);
   }

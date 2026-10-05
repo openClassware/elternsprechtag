@@ -1,0 +1,121 @@
+---
+title: Ein Auskunftsverlangen beantworten
+description: Einer Familie sagen, was die Anwendung über sie gespeichert hat — mit der Namenssuche in der Auswertung, stornierte Buchungen eingeschlossen.
+phase: danach
+order: 2
+wer: organisator
+wann: Jederzeit, meist nach dem Sprechtag — eine Familie will wissen, welche Daten über sie gespeichert sind
+voraussetzung: Die Familie hat gebucht; der Sprechtag ist Aktiv, Abgeschlossen oder Abgesagt
+dauer: wenige Minuten
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Eine Familie will wissen, welche Daten die Schule über sie in der Anwendung gespeichert hat. Sie
+suchen in der Auswertung jedes Sprechtags nach ihrem Namen, auch unter den stornierten Buchungen,
+und lesen ihr vor, was dort steht.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Die Familie will wissen, was über sie gespeichert ist | **Auskunft geben** — diese Seite |
+| Die Familie will nur wissen, wann sie ihre Termine hat | [Einen Termin am Telefon nachschlagen](/anwendungsfaelle/einen-termin-am-telefon-nachschlagen/) |
+| Die Familie verlangt, dass ihre Daten gelöscht werden | [Einem Löschverlangen nachkommen](/anwendungsfaelle/einem-loeschverlangen-nachkommen/) |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**. Öffnen Sie in der Zeile des Sprechtags das Menü
+   **⋮** und wählen Sie **Auswerten**.
+
+2. Tippen Sie den Namen des Kindes oder der Eltern in das Feld **Name**. Ein Teil genügt, etwa nur
+   der Nachname.
+
+3. Steht unter der Suche ein Hinweis wie *1 stornierte Buchung passt ebenfalls.*, klicken Sie
+   daneben auf **Stornierte anzeigen**. Auch eine stornierte Buchung trägt die Angaben der Familie
+   und gehört zur Auskunft.
+
+   ![Hinweis unter der Suche nach „Wolf“: „1 stornierte Buchung passt ebenfalls.“, daneben der Knopf „Stornierte anzeigen“.](../../../assets/screenshots/ein-auskunftsverlangen-beantworten/hinweis.png)
+
+4. Lesen Sie der Familie jede Zeile vor: **Zeit** und Lehrkraft, **Schüler/in**, **Klasse**,
+   **Fach**, **Eltern** und die **Notiz**. Eine Zeile mit dem Vermerk **storniert** oder
+   **entfallen** unter der Uhrzeit ist ein Termin, der nicht mehr gilt; die Angaben dazu sind
+   trotzdem gespeichert.
+
+   ![Ergebnis der Suche nach „Wolf“ mit eingeschalteten stornierten Buchungen: vier Blöcke von Lehrkräften, in jedem eine Zeile für Jonas Wolf aus der 7a mit den Eltern Martina Wolf. Die erste, Englisch um 14:00 Uhr, trägt unter der Uhrzeit den Vermerk „storniert“; ihr Block zählt „keine Buchungen“. Die Physik-Zeile hat die Notiz „Nachprüfung im Frühjahr?“.](../../../assets/screenshots/ein-auskunftsverlangen-beantworten/treffer.png)
+
+5. Nennen Sie dazu, was die Auswertung nicht zeigt: Zu jeder Buchung sind auch die E-Mail-Adresse
+   gespeichert, an die die Bestätigung ging, der Zeitpunkt der Buchung und welche Nachrichten die
+   Anwendung an die Familie geschickt hat.
+
+6. Wiederholen Sie die Suche in der Auswertung jedes anderen Sprechtags, an dem die Familie
+   gebucht haben kann.
+
+</Steps>
+
+## Was danach passiert
+
+- **Nichts ändert sich.** Die Suche bucht, storniert und verschickt nichts.
+- **Die Familie bekommt keine E-Mail.** Die Auskunft geben Sie selbst, am Telefon oder schriftlich.
+- **Der Name bleibt nirgends stehen.** Die Suche steht nicht in der Adresse der Seite und damit
+  auch nicht im Verlauf Ihres Browsers. Verlassen Sie die Auswertung, ist sie weg.
+
+## Regeln
+
+- **Gespeichert wird nur, was die Familie beim Buchen angegeben hat,** dazu der gebuchte Termin.
+  Je Buchung sind das die Namen von Eltern und Kind, die E-Mail-Adresse, die Klasse, die Notiz, die
+  Lehrkraft mit Fach und Uhrzeit und der Zeitpunkt der Buchung. Wurde eine Buchung storniert, ist
+  auch das vermerkt. Zu jeder Nachricht an die Familie, also Bestätigung, Erinnerung, Absage oder
+  Ausfall einer Lehrkraft, ist gespeichert, wann sie abging und ob der Mailserver sie angenommen
+  hat. Davon zeigt die Auswertung nur die abgelehnten, oben im Block **Nicht erreicht (…)**.
+- **Stornierte Buchungen gehören dazu.** Die Suche blendet sie aus, solange **Stornierte
+  anzeigen** aus ist, sagt aber, wenn eine passt.
+- **Ein gewählter Lehrkraft-Filter gilt mit.** Steht in der Auswahl **Lehrkraft** ein Name, sucht
+  die Auswertung nur in deren Block. Leeren Sie die Auswahl, um über alle zu suchen.
+- **Nach Ablauf der Aufbewahrungsfrist ist nichts Persönliches mehr gespeichert.** Üblicherweise
+  30 Tage nach dem Ende des Sprechtags ersetzt die Anwendung die Namen und die E-Mail-Adresse
+  aller Buchungen durch Platzhalter und löscht die Notizen. Die Auswertung zeigt dann den Hinweis
+  **Personenbezogene Angaben entfernt**, die Liste **Personenbezogene Angaben entfernt am …**.
+- **Einen dauerhaften Beleg, wer mit wem gesprochen hat, führt die Anwendung bewusst nicht.** Auch
+  über alte Sprechtage gibt sie deshalb keine Auskunft mit Namen.
+- **Wer anruft, prüft die Anwendung nicht.** Wem die Schule am Telefon Auskunft gibt, entscheidet
+  sie selbst.
+
+## Wenn …
+
+### … die Suche nichts findet
+
+Die Auswertung meldet *Keine Buchung passt zu „…“.* Versuchen Sie einen Teil des Namens, etwa nur
+den Nachnamen, oder den Namen des anderen Elternteils; Eltern schreiben Namen beim Buchen nicht
+immer gleich. Findet sich auch dann nichts, ist über die Familie an diesem Sprechtag nichts
+gespeichert.
+
+### … der Sprechtag abgesagt ist
+
+Im Status *Abgesagt* steht im Menü **⋮** kein **Auswerten**. In die Auswertung führt dann nur der
+Hinweis **… Nachricht nicht zugestellt** unter dem Titel, falls die Absage eine Familie nicht
+erreicht hat. Fehlt er, können Sie die Buchungen dieses Sprechtags nicht einsehen. Ihre Angaben
+entfernt die Anwendung mit Ablauf der Frist, am Datum hinter **Personenbezogene Angaben bis …**.
+
+### … die Familie nach der Auskunft die Löschung verlangt
+
+Entfernen Sie die Angaben jeder gefundenen Zeile:
+[Einem Löschverlangen nachkommen](/anwendungsfaelle/einem-loeschverlangen-nachkommen/).
+
+## Wege drumherum
+
+- **Die Familie will die Auskunft schriftlich.** Einen eigenen Ausdruck dafür hat die Anwendung
+  nicht. Übertragen Sie die gefundenen Zeilen in ein Schreiben der Schule. Geben Sie dafür keinen
+  Tagesplan heraus: Auf ihm stehen auch die anderen Familien der Lehrkraft.
+- **Die Familie will ihre Termine selbst sehen.** Eine eigene Ansicht haben Eltern nicht: Der
+  Zugangs-Link gehört dem ganzen Sprechtag, nicht einer Familie, und zeigt keine Namen. Ihr Beleg
+  ist die Bestätigungsmail vom Buchen. Ist sie nicht mehr da, geben Sie die Auskunft wie auf dieser
+  Seite.
+
+## Verwandte Fälle
+
+- [Einem Löschverlangen nachkommen](/anwendungsfaelle/einem-loeschverlangen-nachkommen/) — wenn die Familie verlangt, dass ihre Daten gelöscht werden
+- [Einen Termin am Telefon nachschlagen](/anwendungsfaelle/einen-termin-am-telefon-nachschlagen/) — wenn die Familie nur wissen will, wann sie dran ist
+- [Die Buchungen eines Sprechtags einsehen](/anwendungsfaelle/die-buchungen-eines-sprechtags-einsehen/) — was die Auswertung sonst zeigt
