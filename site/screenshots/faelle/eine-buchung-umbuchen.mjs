@@ -22,7 +22,8 @@ export default async function ({ page, basis, foto, bereit }) {
 
 	const dialog = page.locator('vaadin-dialog.umbuchen-dialog');
 	await dialog.locator('.umbuchen-dialog__auswahl').waitFor();
-	await foto(dialog.locator('[part="overlay"]'), 'dialog');
+	// Die Auswahl „Neuer Termin“ hat ein eigenes Overlay; das erste ist das des Dialogs.
+	await foto(dialog.locator('[part="overlay"]').first(), 'dialog');
 
 	await dialog.getByRole('button', { name: 'Abbrechen' }).click();
 }
