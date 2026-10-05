@@ -1,0 +1,97 @@
+---
+title: Das Tagesplan-Blatt lesen
+description: Das Blatt, das Lehrkräfte für den Elternsprechtag bekommen — wer wann kommt, welche Termine frei sind und wo Platz für Notizen ist.
+phase: am-tag
+order: 2
+wer: lehrkraft
+wann: Am Tag des Elternsprechtags oder kurz davor
+voraussetzung: Sie haben Ihren Tagesplan vom Sekretariat bekommen, gedruckt oder als PDF
+dauer: ein paar Minuten
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import beispielBlatt from '../../../assets/screenshots/das-tagesplan-blatt-lesen/tagesplan-beispiel.pdf?url';
+
+Ihr Tagesplan für den Elternsprechtag: ein Blatt mit allen Ihren Gesprächsterminen, in der
+Reihenfolge des Tages. Sie bekommen es vom Sekretariat, das den Sprechtag organisiert. Eine
+Anmeldung oder ein eigenes Konto brauchen Sie nicht.
+
+## Schritte
+
+<Steps>
+
+1. Prüfen Sie den Kopf des Blatts. Oben stehen Ihr Name und Ihr Kürzel, darunter der Titel des
+   Sprechtags, das Datum und der Ort, etwa **Ort: Neubau, 1. Obergeschoss**.
+
+2. Sehen Sie auf **Stand:** mit Datum und Uhrzeit. Zu diesem Zeitpunkt hat das Sekretariat das
+   Blatt erstellt. Was danach gebucht oder abgesagt wurde, steht nicht darauf.
+
+3. Lesen Sie die Termine. Jede Zeile ist ein Termin, von früh nach spät. Belegte Termine tragen
+   die Uhrzeit fett und nennen **Schüler/in**, **Klasse**, **Fach** und **Eltern**. Unter
+   **Notiz** steht, was die Eltern beim Buchen als Anliegen geschrieben haben, falls sie etwas
+   geschrieben haben.
+
+4. Beachten Sie die freien Termine. Sie tragen den Vermerk **frei**, die übrigen Zellen sind leer.
+   Kommt am Tag selbst noch eine Familie dazu, schreiben Sie ihren Namen in die Zeile.
+
+5. Nutzen Sie die rechte Spalte **Eigene Notizen** für Ihre Mitschrift im Gespräch. Sie ist
+   absichtlich leer und breit.
+
+6. Unten auf jeder Seite stehen Ihr Name, der Stand und die Seitenzahl, etwa **Seite 1 von 2**. So
+   bleibt auch ein loses zweites Blatt zuzuordnen. Auf jeder Folgeseite wiederholt sich die
+   Kopfzeile der Tabelle.
+
+   ![Tagesplan-Blatt von Anna Krause, A4 quer: Kopf mit Name und Kürzel, Sprechtag, Datum, Ort und Stand. Darunter die Tabelle mit den Spalten Zeit, Schüler/in, Klasse, Fach, Eltern, Notiz und einer breiten leeren Spalte „Eigene Notizen“. Drei Zeilen sind belegt, eine davon mit einer Notiz der Eltern; die übrigen Termine tragen den Vermerk „frei“. Unten die Fußzeile mit Name, Stand und Seitenzahl.](../../../assets/screenshots/das-tagesplan-blatt-lesen/blatt.png)
+
+   Ein Beispiel zum Ansehen in Originalgröße: <a href={beispielBlatt} download="tagesplan-beispiel.pdf">Beispielblatt herunterladen (PDF)</a>.
+
+</Steps>
+
+## Was danach passiert
+
+- **Ihre Notizen bleiben auf dem Papier.** Die Anwendung erfährt nicht, wer gekommen ist und was
+  besprochen wurde.
+- **Ändert sich etwas,** sagt Ihnen das Sekretariat Bescheid oder gibt Ihnen ein neues Blatt.
+  Welches Blatt neuer ist, zeigt der **Stand:**.
+- **Die Eltern** sehen Ihr Blatt nicht. Sie kennen nur ihre eigenen Termine aus ihrer
+  Bestätigungsmail.
+
+## Regeln
+
+- **Das Blatt zeigt, wer kommt.** Abgesagte Termine und Termine, die wegen eines Ausfalls entfallen
+  sind, stehen nicht darauf.
+- **E-Mail-Adressen der Eltern stehen nicht auf dem Blatt.** Es liegt im Klassenzimmer, oft offen;
+  Kontaktdaten gehören dort nicht hin. Braucht es eine Rückmeldung an eine Familie, geht sie über
+  das Sekretariat.
+- **Lehrkräfte haben keinen eigenen Zugang zur Anwendung.** Das Blatt ist Ihr Plan; deshalb kommt
+  es vom Sekretariat.
+- **Wer erschienen ist, wird nicht erfasst,** auch keine Verspätung und kein spontaner Besuch. Dafür
+  ist die Spalte **Eigene Notizen** da.
+
+## Wenn …
+
+### … eine Familie kommt, die nicht auf dem Blatt steht
+
+Vielleicht hat das Sekretariat sie nach dem **Stand:** Ihres Blatts nachgetragen. Fragen Sie im
+Sekretariat nach, oder nehmen Sie die Familie in einem freien Termin dran und schreiben Sie sie in
+die Zeile.
+
+### … eine Familie auf dem Blatt steht, aber nicht kommt
+
+Vielleicht hat sie nach dem **Stand:** Ihres Blatts abgesagt. Das Sekretariat weiß es; auf dem
+Blatt ändert sich nichts mehr.
+
+### … in der Tabelle nur „Keine Termine“ steht
+
+Sie haben an diesem Sprechtag keinen Termin, etwa weil alle Ihre Termine entfallen sind. Fragen Sie
+im Sekretariat nach, wenn Sie das nicht erwartet haben.
+
+### … statt Namen Platzhalter auf dem Blatt stehen
+
+Das Blatt wurde nach dem Sprechtag erstellt, als die Angaben der Familien schon entfernt waren. Der
+Kopf sagt es dazu: *Personenbezogene Angaben am … entfernt — die Namen sind Platzhalter.*
+
+## Verwandte Fälle
+
+- [Die Tagespläne drucken](/anwendungsfaelle/die-tagesplaene-drucken/) — wie das Sekretariat die Blätter erstellt
+- [Eine Lehrkraft fällt aus](/anwendungsfaelle/eine-lehrkraft-faellt-aus/) — wenn Sie selbst nicht kommen können; das Sekretariat lässt Ihre Termine entfallen

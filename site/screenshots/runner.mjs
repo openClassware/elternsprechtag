@@ -19,7 +19,7 @@ import { readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { waehleModule } from './auswahl.mjs';
-import { FENSTER, anmelden, aufnahme, bereit, rahmen } from './werkzeug.mjs';
+import { FENSTER, ablage, anmelden, aufnahme, bereit, rahmen } from './werkzeug.mjs';
 
 const SITE = path.resolve(import.meta.dirname, '..');
 const MODULE = path.join(import.meta.dirname, 'faelle');
@@ -64,7 +64,7 @@ try {
 			const page = await kontext.newPage();
 			await anmelden(page, { basis, benutzer, passwort });
 			const { default: modul } = await import(pathToFileURL(path.join(MODULE, `${slug}.mjs`)).href);
-			await modul({ page, basis, foto: aufnahme(ziel), rahmen, bereit });
+			await modul({ page, basis, foto: aufnahme(ziel), ablegen: ablage(ziel), rahmen, bereit });
 			console.log(`✔ ${slug}`);
 		} catch (fehler) {
 			gescheitert++;

@@ -21,6 +21,8 @@
     "starlight-links-validator": "0.26.0"
   },
   "devDependencies": {
+    "fflate": "0.8.3",
+    "pdfjs-dist": "6.4.299",
     "playwright-core": "1.62.1"
   }
 }
