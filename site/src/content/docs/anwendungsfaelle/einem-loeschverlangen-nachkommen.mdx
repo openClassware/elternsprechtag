@@ -5,7 +5,7 @@ phase: danach
 order: 1
 wer: organisator
 wann: Jederzeit, meist nach dem Sprechtag — eine Familie verlangt, dass ihre Daten gelöscht werden
-voraussetzung: Die Familie hat an einem veröffentlichten oder abgeschlossenen Sprechtag gebucht
+voraussetzung: Die Familie hat gebucht; der Sprechtag ist Aktiv, Abgeschlossen oder Abgesagt
 dauer: wenige Minuten
 ---
 
@@ -19,8 +19,7 @@ wird gelöscht. Uhrzeit, Lehrkraft, Klasse und Fach bleiben stehen.
 
 | Ihre Lage | Ihr Weg |
 |---|---|
-| Die Familie verlangt die Löschung ihrer Daten, der Sprechtag ist vorbei | **Angaben entfernen** — diese Seite |
-| Die Familie verlangt die Löschung, der Sprechtag steht noch bevor | diese Seite: **Buchung stornieren** mit **Angaben der Familie entfernen** |
+| Die Familie verlangt die Löschung ihrer Daten | **Angaben entfernen** — diese Seite, im Status *Aktiv* zusammen mit dem Storno |
 | Die Familie will nur einen Termin absagen, ihre Daten dürfen bleiben | [Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/) |
 | Die Familie will wissen, was über sie gespeichert ist | [Ein Auskunftsverlangen beantworten](/anwendungsfaelle/ein-auskunftsverlangen-beantworten/) |
 
@@ -31,18 +30,20 @@ wird gelöscht. Uhrzeit, Lehrkraft, Klasse und Fach bleiben stehen.
 1. Öffnen Sie **Elternsprechtage verwalten**. Öffnen Sie in der Zeile des Sprechtags das Menü
    **⋮** und wählen Sie **Auswerten**.
 
-2. Tippen Sie den Namen des Kindes oder der Eltern in das Feld **Name**. Schalten Sie
-   **Stornierte anzeigen** ein: Auch längst stornierte Buchungen tragen noch die Angaben der
-   Familie.
+2. Tippen Sie den Namen des Kindes oder der Eltern in das Feld **Name**. Hat der Sprechtag
+   stornierte Buchungen, steht daneben der Schalter **Stornierte anzeigen**; schalten Sie ihn ein.
+   Auch längst stornierte Buchungen tragen noch die Angaben der Familie.
 
-3. Klicken Sie in der ersten Zeile der Familie unter **Aktion** auf das Symbol, das sich anbietet:
-   - **Angaben entfernen**, der Radiergummi — nach dem Sprechtag an jeder Zeile, vorher an
-     stornierten Zeilen. Der Dialog **Angaben der Familie entfernen** nennt Kind, Eltern, Uhrzeit
+3. Klicken Sie in der ersten Zeile der Familie unter **Aktion** auf das Symbol, das sich anbietet.
+   Welches das ist, hängt vom Status des Sprechtags ab, nicht von der Uhrzeit: Bis zur Nacht nach
+   seinem Ende ist er noch *Aktiv*, erst dann *Abgeschlossen*.
+   - **Angaben entfernen**, der Radiergummi — im Status *Abgeschlossen* an jeder Zeile, im Status
+     *Aktiv* nur an stornierten Zeilen. Der Dialog **Angaben der Familie entfernen** nennt Kind, Eltern, Uhrzeit
      und Lehrkraft. Prüfen Sie daran die Zeile und bestätigen Sie mit **Angaben entfernen**.
 
      ![Dialog „Angaben der Familie entfernen“: Er sagt, dass die Namen von Eltern und Schüler/in sowie die E-Mail-Adresse durch Platzhalter ersetzt werden, die Notiz gelöscht wird und Termin, Klasse und Fach erhalten bleiben, und dass sich das nicht rückgängig machen lässt. Darunter die Zeile mit Kind, Eltern, Uhrzeit und Lehrkraft und der Hinweis, weitere Termine der Familie einzeln zu entfernen. Unten „Abbrechen“ und „Angaben entfernen“.](../../../assets/screenshots/einem-loeschverlangen-nachkommen/dialog.png)
 
-   - **Buchung stornieren**, das rote Kreuz — vor dem Sprechtag an einem geltenden Termin. Haken
+   - **Buchung stornieren**, das rote Kreuz — im Status *Aktiv* an einem geltenden Termin. Haken
      Sie im Dialog **Angaben der Familie entfernen** an und bestätigen Sie mit **Stornieren**.
 
 4. Unten erscheint *Angaben von … entfernt.* bzw. *Buchung von … storniert, Angaben der Familie
@@ -65,8 +66,8 @@ wird gelöscht. Uhrzeit, Lehrkraft, Klasse und Fach bleiben stehen.
   E-Mail-Adresse eine Adresse, die keine Post annimmt. Die Notiz ist gelöscht.
 - **Termin, Klasse, Fach und Lehrkraft bleiben.** Eine Zusage zählt weiter in **… Buchungen** mit;
   so bleibt sichtbar, wie gut der Sprechtag ausgelastet war.
-- **Vor dem Sprechtag** ist eine Buchung, die Sie mit Häkchen storniert haben, zugleich storniert. Ihr
-  Termin ist wieder frei, eine Erinnerung geht nicht mehr hinaus.
+- **Ein Storno mit Häkchen gibt außerdem den Termin frei.** Andere Familien können ihn buchen, eine
+  Erinnerung geht nicht mehr hinaus.
 - **Die Familie bekommt keine E-Mail.** Sagen Sie ihr selbst, dass ihre Angaben entfernt sind.
 - **Neu erstellte Tagespläne** zeigen in der Zeile ebenfalls Platzhalter. Schon gedruckte Blätter
   erreicht die Anwendung nicht; sie liegen bei den Lehrkräften.
@@ -79,24 +80,26 @@ wird gelöscht. Uhrzeit, Lehrkraft, Klasse und Fach bleiben stehen.
   deshalb suchen Sie nach dem Namen.
 - **Entfernen lässt sich nicht rückgängig machen.** Die Anwendung bewahrt die alten Angaben nicht
   auf und kann sie nicht wiederherstellen.
-- **Einen geltenden Termin vor dem Sprechtag entfernen Sie nur mit dem Storno.** Ohne Namen bliebe
-  ein belegter Termin stehen, zu dem niemand kommt. Deshalb bietet eine geltende Zeile am *Aktiven*
-  Sprechtag den Radiergummi nicht an.
+- **Einen geltenden Termin im Status *Aktiv* entfernen Sie nur mit dem Storno.** Ohne Namen bliebe
+  ein belegter Termin stehen, zu dem niemand kommt. Deshalb bietet eine geltende Zeile dort den
+  Radiergummi nicht an.
 - **Was stehen bleibt, ist gewollt.** Uhrzeit, Lehrkraft, Klasse und Fach zeigen, wie der
   Sprechtag ausgelastet war, und daraus plant die Schule den nächsten. In einer kleinen Klasse lässt
   sich eine einzelne Zeile mit der Klassenliste unter Umständen wieder einem Kind zuordnen. Ob das
   hinnehmbar ist, beurteilt die Schule als Verantwortliche.
 - **Ohne Verlangen entfernt die Anwendung die Angaben von selbst.** Nach Ablauf der
   Aufbewahrungsfrist, üblicherweise 30 Tage nach dem Ende des Sprechtags, ersetzt ein nächtlicher
-  Lauf die Angaben aller Buchungen, auch stornierter und auch an einem *Abgesagten* Sprechtag. Bis
+  Lauf die Angaben aller Buchungen, auch stornierter und auch im Status *Abgesagt*. Bis
   dahin steht in **Elternsprechtage verwalten** unter dem Titel **Personenbezogene Angaben bis …**,
   danach **Personenbezogene Angaben entfernt am …**. Die Auswertung zeigt dann den Hinweis
   **Personenbezogene Angaben entfernt**. Die Frist stellt die Schul-IT ein. Eine eigene, frühere
-  Frist für die Notiz gibt es bewusst nicht.
+  Frist für die Notiz gibt es bewusst nicht. Ebenso bewusst stellt die Anwendung den Abschluss
+  selbst fest, in der Nacht nach dem Ende; von Hand abschließen lässt sich ein Sprechtag nicht.
 - **Ein Sprechtag wird nicht gelöscht, um Daten loszuwerden.** Ist er veröffentlicht, abgesagt oder
   abgeschlossen, bleibt er in der Liste. Die Angaben entfernen Sie wie hier beschrieben oder
   überlassen sie der Frist.
-- **Weder die Familie noch Sie bekommen eine Löschmitteilung per E-Mail.** Die E-Mail-Adresse der
+- **Eine Vorwarnung oder Löschmitteilung per E-Mail gibt es bewusst nicht,** weder für die Familie
+  noch für Sie. Die Vorwarnung steht in der Liste der Sprechtage. Die E-Mail-Adresse der
   Eltern dient nur Bestätigung, Erinnerung und Absage. Ein Protokoll, wer wann entfernt hat, führt
   die Anwendung bewusst nicht; es gibt nur eine Anmeldung für alle im Sekretariat.
 
@@ -110,7 +113,7 @@ auch nach dem Namen des anderen Elternteils oder nur nach dem Nachnamen.
 
 ### … der Sprechtag abgesagt ist
 
-Im Menü **⋮** eines *Abgesagten* Sprechtags steht **Auswerten** nicht. In die Auswertung führt dann
+Im Status *Abgesagt* steht im Menü **⋮** kein **Auswerten**. In die Auswertung führt dann
 nur der Hinweis **… Nachricht nicht zugestellt** unter dem Titel, falls die Absage eine Familie
 nicht erreicht hat. Fehlt er, entfernt die Anwendung die Angaben mit Ablauf der Frist am Datum hinter
 **Personenbezogene Angaben bis …**. Sagen Sie der Familie dieses Datum.
