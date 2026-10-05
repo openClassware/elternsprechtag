@@ -244,7 +244,6 @@ angemeldet, in einem eigenen Browser-Kontext:
   aus Seed-Sprechtagen, die schon so sind. So bleibt der Seed unverändert und die Reihenfolge
   der Module beliebig.
 - Fenster 1280 × 800 bei `deviceScaleFactor: 2` (`screenshots/werkzeug.mjs`).
-
 - **Erzeugte Dateien**, die keine Ausschnitte sind, legt `ablegen(name, inhalt)` neben die Bilder,
   etwa das Beispiel-PDF des Tagesplans. Das Blatt selbst zeigt die Seite als Bild: Das Modul lädt
   das ZIP aus der Auswertung und zeichnet die erste PDF-Seite mit pdf.js im Browser
