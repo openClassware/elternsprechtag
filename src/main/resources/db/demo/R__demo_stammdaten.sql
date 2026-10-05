@@ -166,12 +166,20 @@ ON CONFLICT (sprechtag_id, klasse_id) DO NOTHING;
 -- mit einem Lehrauftrag in einer teilnehmenden Klasse ein Termin pro Slot; ein Rest-Slot, der
 -- nicht mehr voll ins Zeitfenster passt, entfällt. Der Entwurf bekommt keine. Die ids leiten sich
 -- deterministisch aus Sprechtag, Lehrkraft und Slot ab — die Buchungen unten rechnen genauso.
+--
+-- Am Sprechtag mit beendeter Anmeldung fällt Thomas Wagner ab 16 Uhr aus (Slot 4 und später): So
+-- zeigt die Auswertung entfallene Termine, wie sie die Sammelaktion „Lehrkraft fällt aus“
+-- hinterlässt (Issue #207).
 -- ---------------------------------------------------------------------------
 INSERT INTO termin (id, startzeit, endzeit, verfuegbarkeit, version, lehrer_id, sprechtag_id)
 SELECT md5('demo-termin:' || s.id || ':' || l.lehrer_id || ':' || slot)::uuid,
        s.start_date + s.start_time + make_interval(mins => slot * s.slot_in_minutes),
        s.start_date + s.start_time + make_interval(mins => (slot + 1) * s.slot_in_minutes),
-       'VERFUEGBAR', 1, l.lehrer_id, s.id
+       CASE WHEN s.id = '00000000-0000-0000-0005-000000000002'
+                 AND l.lehrer_id = '00000000-0000-0000-0003-000000000004'
+                 AND slot >= 4
+            THEN 'ENTFAELLT' ELSE 'VERFUEGBAR' END,
+       1, l.lehrer_id, s.id
   FROM sprechtage s
   CROSS JOIN LATERAL (
     SELECT DISTINCT la.lehrer_id
@@ -190,7 +198,8 @@ ON CONFLICT (id) DO NOTHING;
 -- aus Sprechtag, der Lehrkraft des Lehrauftrags und dem Slot (0 = erster Slot des Tages); Lehrkraft,
 -- Klasse und Fach stehen denormalisiert an der Buchung wie beim echten Buchen. Eine Buchung am
 -- aktiven Sprechtag ist storniert und ihr Termin wieder frei: Ohne sie fehlte der Auswertung der
--- Schalter „Stornierte anzeigen“, den die Anwender-Doku zeigt (Issue #206).
+-- Schalter „Stornierte anzeigen“, den die Anwender-Doku zeigt (Issue #206). Am Sprechtag mit
+-- beendeter Anmeldung hat der Ausfall von Thomas Wagner eine Buchung mitstorniert (Issue #207).
 -- ---------------------------------------------------------------------------
 INSERT INTO buchungen (id, erstellt_am, status, schueler_name, eltern_name, eltern_email, notiz,
                        lehrauftrag_id, termin_id, lehrkraft_id, lehrkraft_name, lehrkraft_kuerzel,
@@ -214,6 +223,7 @@ SELECT md5('demo-buchung:' || s.id || ':' || la.id || ':' || b.slot)::uuid,
     -- Anmeldung beendet
     ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000021', 0, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03', 'ZUGESAGT'),
     ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000024', 2, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000019', 6, 'Lina Vogel',    'Sven Vogel',     'vogel@exmaple.org',    NULL,                             CURRENT_DATE - 8 + time '21:47', 'STORNIERT'),
     -- Abgeschlossen
     ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000001', 0, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 35 + time '19:40', 'ZUGESAGT'),
     ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000003', 2, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 35 + time '19:40', 'ZUGESAGT'),
@@ -228,3 +238,16 @@ SELECT md5('demo-buchung:' || s.id || ':' || la.id || ':' || b.slot)::uuid,
   JOIN klassen k      ON k.id  = la.klasse_id
   JOIN faecher f      ON f.id  = la.fach_id
 ON CONFLICT (id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Zustellungen (Issue #207): Die Ausfall-Mail an Familie Vogel hat der Mailserver abgelehnt — die
+-- Adresse hat einen Tippfehler, der häufigste Grund. Ohne sie fehlten der Hinweis „1 Nachricht nicht
+-- zugestellt“ in der Liste und der Block „Nicht erreicht“ in der Auswertung, die die Anwender-Doku
+-- zeigt. Für alle übrigen Buchungen steht keine Zeile: Wo nichts gescheitert ist, zeigt die
+-- Anwendung nichts.
+-- ---------------------------------------------------------------------------
+INSERT INTO zustellungen (buchung_id, art, ergebnis, zeitpunkt)
+SELECT md5('demo-buchung:' || '00000000-0000-0000-0005-000000000002' || ':'
+           || '00000000-0000-0000-0004-000000000019' || ':' || 6)::uuid,
+       'AUSFALL', 'FEHLGESCHLAGEN', CURRENT_DATE - 1 + time '07:42'
+ON CONFLICT (buchung_id, art) DO NOTHING;

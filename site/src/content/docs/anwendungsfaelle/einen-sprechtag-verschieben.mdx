@@ -1,0 +1,102 @@
+---
+title: Einen Sprechtag verschieben
+description: Einen Sprechtag an einem anderen Tag nachholen — absagen, als Vorlage duplizieren und neu veröffentlichen; die Familien buchen neu.
+phase: kurz-vor-dem-termin
+order: 3
+wer: organisator
+wann: Kurz vor dem Termin — der Sprechtag kann am geplanten Tag nicht stattfinden, soll aber nachgeholt werden
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: zehn Minuten
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Einen Sprechtag auf einen anderen Tag legen. Einen Knopf dafür gibt es nicht: Sie sagen den
+bisherigen ab und veröffentlichen eine Kopie mit neuem Datum. Die Familien buchen dort neu.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Der Sprechtag soll an einem anderen Tag oder zu anderen Zeiten stattfinden, und es gibt schon Buchungen | Absagen, duplizieren, neu veröffentlichen — diese Seite |
+| Dasselbe, aber noch hat niemand gebucht | [Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/), dann das Datum ändern |
+| Nur der Raum oder der Hinweis ändert sich | [Einen Sprechtag bearbeiten](/anwendungsfaelle/einen-sprechtag-bearbeiten/) |
+| Der Sprechtag fällt ersatzlos aus | [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) |
+| Nur eine Lehrkraft kann am geplanten Tag nicht | [Eine Lehrkraft fällt aus](/anwendungsfaelle/eine-lehrkraft-faellt-aus/) |
+
+## Schritte
+
+<Steps>
+
+1. Sagen Sie den Sprechtag ab: In **Elternsprechtage verwalten** im Menü **⋮** der Zeile
+   **Absagen** wählen und mit **Absagen** bestätigen. Alle Familien mit Termin bekommen eine
+   E-Mail. Einzelheiten: [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/).
+
+2. Wählen Sie im Menü **⋮** desselben, jetzt abgesagten Sprechtags **Duplizieren**. Die Kopie ist
+   ein neuer *Entwurf* mit allen Einstellungen, aber ohne Buchungen, und ihr Formular **Sprechtag
+   bearbeiten** öffnet sich.
+
+3. Tragen Sie das neue **Datum** ein, bei Bedarf auch neue Zeiten. Klicken Sie auf **Speichern**.
+   Einzelheiten:
+   [Einen früheren Sprechtag als Vorlage nutzen](/anwendungsfaelle/einen-frueheren-sprechtag-als-vorlage-nutzen/).
+
+4. Veröffentlichen Sie die Kopie:
+   [Einen Sprechtag veröffentlichen](/anwendungsfaelle/einen-sprechtag-veroeffentlichen/).
+
+5. Geben Sie den **neuen** Zugangs-Link an die Eltern weiter, mit dem Hinweis, dass der Sprechtag
+   verschoben ist und neu gebucht werden muss:
+   [Den Zugangs-Link an die Eltern weitergeben](/anwendungsfaelle/den-zugangs-link-an-die-eltern-weitergeben/).
+
+</Steps>
+
+## Was danach passiert
+
+- **Die Familien mit Termin** bekommen die Absage-Mail, je Kind eine. Sie sagt nur, dass der
+  Sprechtag abgesagt ist — vom neuen Tag weiß die Anwendung nichts. Den erfahren die Familien über
+  Ihre Nachricht mit dem neuen Link.
+- **Der alte Zugangs-Link** zeigt nur noch *Dieser Elternsprechtag wurde abgesagt*, das alte Datum
+  und den Schulkontakt. Er führt nicht zum neuen Sprechtag.
+- **Der neue Sprechtag** beginnt leer. Keine Buchung, keine Notiz der Eltern geht mit; jede Familie
+  bucht neu, auch die, die schon einen Termin hatte.
+- **Lehrkräfte** bekommen keine Nachricht von der Anwendung. Informieren Sie sie auf dem üblichen
+  Weg.
+- **In der Liste** stehen danach beide: der alte mit Status *Abgesagt*, der neue mit *Aktiv*.
+
+## Regeln
+
+- **Ein Sprechtag lässt sich nicht verschieben, die Buchungen gehen nicht mit.** Ein Termin am
+  Dienstag um 16:20 sagt nichts darüber, ob dieselbe Familie zwei Wochen später um 16:20 kann. Ein
+  Verschieben mit Buchungen rettete einen Plan, der nicht mehr gilt; neu buchen ist die richtige
+  Antwort.
+- **Datum und Zeiten liegen ab dem Veröffentlichen fest.** Aus ihnen sind die Termine entstanden,
+  auf die die Familien gebucht haben.
+- **Die Absage lässt sich nicht zurücknehmen.** Prüfen Sie vor Schritt 1, dass der neue Tag
+  wirklich feststeht.
+
+## Wenn …
+
+### … noch niemand gebucht hat
+
+Dann brauchen Sie keine Absage. Nehmen Sie das Veröffentlichen zurück, ändern Sie das Datum und
+veröffentlichen Sie erneut:
+[Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/). Der
+Zugangs-Link bleibt dabei derselbe.
+
+### … eine Familie ihren alten Termin behalten möchte
+
+Das geht nicht automatisch. Ist die Anmeldung für den neuen Sprechtag offen, bucht die Familie
+selbst. Ruft sie an, tragen Sie sie ein:
+[Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/).
+
+### … der neue Tag so nah ist, dass die Anmeldung gleich wieder endet
+
+Die Anmeldefrist geht mit der Kopie als Zahl von Tagen mit. Liegt der neue Anmeldeschluss zu früh,
+verkürzen Sie die Frist im Formular der Kopie:
+[Die Anmeldung verlängern oder wieder öffnen](/anwendungsfaelle/die-anmeldung-verlaengern-oder-wieder-oeffnen/).
+
+## Verwandte Fälle
+
+- [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) — wenn der Sprechtag ersatzlos ausfällt
+- [Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/) — solange noch niemand gebucht hat
+- [Einen früheren Sprechtag als Vorlage nutzen](/anwendungsfaelle/einen-frueheren-sprechtag-als-vorlage-nutzen/) — der Schritt, der die Kopie anlegt
+- [Eine Lehrkraft fällt aus](/anwendungsfaelle/eine-lehrkraft-faellt-aus/) — wenn nur eine Lehrkraft am geplanten Tag fehlt

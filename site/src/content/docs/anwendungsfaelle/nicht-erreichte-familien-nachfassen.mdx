@@ -1,0 +1,117 @@
+---
+title: Nicht erreichte Familien nachfassen
+description: Familien anrufen, deren E-Mail der Mailserver nicht angenommen hat; die Auswertung listet sie im Block „Nicht erreicht“.
+phase: kurz-vor-dem-termin
+order: 4
+wer: organisator
+wann: Kurz vor dem Termin — oder sobald in der Liste ein Hinweis auf eine nicht zugestellte Nachricht steht
+voraussetzung: Eine E-Mail an eine Familie ist gescheitert (Hinweis in der Liste)
+dauer: einige Minuten je Familie
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Die Familien erreichen, die eine E-Mail der Anwendung nicht bekommen haben — eine Bestätigung,
+Erinnerung, Absage oder die Nachricht über den Ausfall einer Lehrkraft. Die Auswertung nennt sie;
+anrufen müssen Sie selbst.
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**. Ist eine Nachricht gescheitert, steht in der Zeile
+   des Sprechtags ein Hinweis, etwa **1 Nachricht nicht zugestellt**.
+
+   ![Zeile eines Sprechtags in der Liste „Elternsprechtage verwalten“: Unter Titel und Ort steht mit einem Briefumschlag-Symbol der Hinweis „1 Nachricht nicht zugestellt“, hervorgehoben durch einen Rahmen.](../../../assets/screenshots/nicht-erreichte-familien-nachfassen/hinweis-in-der-liste.png)
+
+2. Klicken Sie auf den Hinweis. Die **Auswertung** des Sprechtags öffnet sich.
+
+3. Lesen Sie oben den Block **Nicht erreicht**, etwa **Nicht erreicht (1)**. Je gescheiterter
+   Nachricht steht dort ein Eintrag mit Kind, Klasse und Eltern, der E-Mail-Adresse und welche
+   Nachricht es war, mit Datum und Uhrzeit.
+
+   ![Block „Nicht erreicht (1)“ oben in der Auswertung: Der Mailserver hat diese Nachrichten nicht angenommen, die betroffenen Familien sind daher nicht informiert. Darunter ein Eintrag „Lina Vogel (Klasse 7a) · Sven Vogel“, die Adresse vogel@exmaple.org mit einem Tippfehler und die Nachricht „Ausfall einer Lehrkraft“ mit Datum.](../../../assets/screenshots/nicht-erreichte-familien-nachfassen/block-nicht-erreicht.png)
+
+4. Prüfen Sie die Adresse. Ein Tippfehler, etwa *exmaple* statt *example*, ist der häufigste Grund.
+
+5. Rufen Sie die Familie an. Die Telefonnummer steht nicht in der Anwendung, sondern in den
+   Unterlagen der Schule. Sagen Sie ihr, was in der Nachricht stand:
+   - **Buchungsbestätigung** — ihre Termine; Sie finden sie mit der Suche nach **Name**.
+   - **Erinnerung** — dass der Sprechtag bevorsteht, und ihre Termine.
+   - **Absage** — dass der Sprechtag abgesagt ist.
+   - **Ausfall einer Lehrkraft** — welcher Termin entfällt. Braucht die Familie einen neuen Termin,
+     tragen Sie ihn gleich ein:
+     [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/).
+
+</Steps>
+
+## Was danach passiert
+
+- **Der Eintrag bleibt stehen.** Die Anwendung weiß nicht, dass Sie angerufen haben, und schickt
+  die Nachricht auch nicht noch einmal.
+- **Er verschwindet** bei einer Bestätigung oder Erinnerung, sobald die Buchung nicht mehr gilt,
+  etwa nach einem Storno. Ein Eintrag zu einer Absage oder einem Ausfall bleibt, bis die Anwendung
+  die Angaben der Familien nach dem Sprechtag entfernt.
+- **Die Familie** bekommt von der Anwendung keine weitere E-Mail über diesen Vorgang.
+- **In der Liste** zählt der Hinweis so lange mit, wie der Block den Eintrag zeigt.
+
+## Regeln
+
+- **„Nicht erreicht“ heißt: Der Mailserver hat die Nachricht sofort abgelehnt.** Kommt eine E-Mail
+  erst später als unzustellbar zurück, sieht die Anwendung das nicht. Fehlt eine Familie im Block,
+  ist ihre E-Mail also abgeschickt, aber nicht sicher angekommen.
+- **Die Adresse steht nur hier und nur bei gescheiterten Nachrichten.** Sie brauchen sie, um einen
+  Tippfehler zu erkennen; sonst zeigt die Auswertung keine Adressen.
+- **Der Block hängt nicht an Filtern.** Er steht immer oben, auch wenn Sie nach einer Lehrkraft
+  filtern, einen Namen suchen oder **Stornierte anzeigen** ausgeschaltet ist.
+- **Mehrere Familien an der Stellvertreteradresse** erscheinen je als eigener Eintrag, damit Sie
+  sehen, welches Kind betroffen ist.
+- **Eine Bestätigung der Adresse vor dem Buchen gibt es bewusst nicht.** Ein Code per E-Mail ließe
+  Buchungen hängen, deren Familie ihn nicht findet; die Bestätigungsmail prüft die Adresse ohnehin.
+
+## Wenn …
+
+### … die Adresse einen Tippfehler hat und es um eine Buchungsbestätigung geht
+
+Ändern lässt sich die Adresse einer Buchung nicht. Stornieren Sie die Buchung und tragen Sie die
+Familie gleich danach mit der richtigen Adresse in denselben Termin ein:
+[Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/), dann
+[Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/). Die Familie bekommt dann eine
+neue Bestätigung, und der Eintrag verschwindet. Tun Sie beides direkt nacheinander — zwischen
+Storno und Nachtrag ist der Termin für andere Eltern frei.
+
+### … der Hinweis an einem abgesagten Sprechtag steht
+
+Das Menü bietet dort **Auswerten** nicht mehr an. Der Hinweis in der Liste ist dann der einzige Weg
+in die Auswertung; klicken Sie direkt auf ihn.
+
+### … viele Nachrichten auf einmal gescheitert sind
+
+Dann liegt es selten an den Adressen, meist am Mailserver. Wenden Sie sich an die Schul-IT, bevor
+Sie alle Familien anrufen.
+
+### … die Nachricht an die Stellvertreteradresse gescheitert ist
+
+Dann hat das Sekretariat selbst nichts bekommen. Der Eintrag nennt Kind und Klasse; rufen Sie die
+Familie an und klären Sie mit der Schul-IT, warum die Stellvertreteradresse nicht angenommen wurde.
+
+## Wege drumherum
+
+- **Eine Nachricht erneut senden.** Einen Knopf dafür gibt es nicht. Rufen Sie an; bei einer
+  Bestätigung mit falscher Adresse hilft Stornieren und Nachtragen, wie oben unter *Wenn …*
+  beschrieben.
+- **Einen Eintrag als erledigt abhaken.** Das geht nicht. Arbeiten Sie die Liste in einem Zug ab,
+  oder notieren Sie sich, wen Sie schon erreicht haben.
+- **E-Mails, die erst später als unzustellbar zurückkommen.** Solche Rückläufer landen im Postfach
+  der Absenderadresse, nicht in der Anwendung. Hat die Schule Zugriff darauf, sehen Sie sie dort.
+- **Eine Familie sagt, sie habe nichts bekommen, steht aber nicht im Block.** Selten geht eine
+  Nachricht verloren, ohne dass die Anwendung einen Ausgang vermerkt, etwa bei einem Neustart des
+  Servers genau während des Versands. Suchen Sie die Familie mit **Name** in der Auswertung und
+  nennen Sie ihr die Termine am Telefon.
+
+## Verwandte Fälle
+
+- [Eine Lehrkraft fällt aus](/anwendungsfaelle/eine-lehrkraft-faellt-aus/) — wenn eine Ausfall-Mail die Ursache ist und weitere Termine entfallen
+- [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) — wenn eine Absage-Mail nicht angekommen ist
+- [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) — um einer Familie am Telefon einen neuen Termin zu geben
+- [Die Buchungen eines Sprechtags einsehen](/anwendungsfaelle/die-buchungen-eines-sprechtags-einsehen/) — um die Termine einer Familie nachzuschlagen
