@@ -1,14 +1,17 @@
 package de.openclassware.elternsprechtag;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.BuchungsZeile;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.NichtErreicht;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.Zugangsstand;
 import de.openclassware.elternsprechtag.sprechtag.domain.Mailart;
+import java.time.LocalTime;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,6 +131,37 @@ class DemoSeedMigrationTest {
         .singleElement()
         .extracting(NichtErreicht::art, NichtErreicht::schuelerName, NichtErreicht::email)
         .containsExactly(Mailart.AUSFALL, "Lina Vogel", "vogel@exmaple.org");
+  }
+
+  /**
+   * Issue #208 — die Anwender-Doku zeigt das Tagesplan-Blatt von Anna Krause für den Sprechtag in
+   * drei Tagen: belegte Termine, einer davon mit Notiz, und freie dazwischen. Gesucht wird am
+   * Telefon nach Hartmann, der bei zwei Lehrkräften einen Termin hat.
+   */
+  @Test
+  void derSprechtagMitBeendeterAnmeldungFuelltEinTagesplanBlatt() {
+    SprechtagAuswertung auswertung =
+        auswerten.werteAus(UUID.fromString("00000000-0000-0000-0005-000000000002")).orElseThrow();
+
+    LehrkraftPlan krause =
+        auswertung.plaene().stream()
+            .filter(plan -> plan.kuerzel().equals("KRA"))
+            .findFirst()
+            .orElseThrow();
+    assertThat(krause.zeilen())
+        .extracting(BuchungsZeile::startzeit, BuchungsZeile::schuelerName)
+        .containsExactly(
+            tuple(LocalTime.of(15, 0), "Noah Hartmann"),
+            tuple(LocalTime.of(15, 30), "Sophie Lange"),
+            tuple(LocalTime.of(16, 15), "Elias Brandt"));
+    assertThat(krause.zeilen()).anyMatch(zeile -> zeile.notiz() != null);
+
+    assertThat(auswertung.plaene())
+        .filteredOn(
+            plan ->
+                plan.zeilen().stream()
+                    .anyMatch(zeile -> zeile.elternName().equals("Jens Hartmann")))
+        .hasSize(2);
   }
 
   private Integer count(String tabelle) {

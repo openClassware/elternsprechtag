@@ -199,7 +199,9 @@ ON CONFLICT (id) DO NOTHING;
 -- Klasse und Fach stehen denormalisiert an der Buchung wie beim echten Buchen. Eine Buchung am
 -- aktiven Sprechtag ist storniert und ihr Termin wieder frei: Ohne sie fehlte der Auswertung der
 -- Schalter „Stornierte anzeigen“, den die Anwender-Doku zeigt (Issue #206). Am Sprechtag mit
--- beendeter Anmeldung hat der Ausfall von Thomas Wagner eine Buchung mitstorniert (Issue #207).
+-- beendeter Anmeldung hat der Ausfall von Thomas Wagner eine Buchung mitstorniert (Issue #207). Anna
+-- Krause hat dort drei Termine, einer mit Notiz, und freie dazwischen: Ihr Blatt ist das
+-- Beispielblatt der Anwender-Doku (Issue #208).
 -- ---------------------------------------------------------------------------
 INSERT INTO buchungen (id, erstellt_am, status, schueler_name, eltern_name, eltern_email, notiz,
                        lehrauftrag_id, termin_id, lehrkraft_id, lehrkraft_name, lehrkraft_kuerzel,
@@ -222,6 +224,8 @@ SELECT md5('demo-buchung:' || s.id || ':' || la.id || ':' || b.slot)::uuid,
     ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000001', 2, 'Ben Krüger',    'Petra Krüger',   'krueger@example.org',  NULL,                             CURRENT_DATE - 3 + time '17:20', 'STORNIERT'),
     -- Anmeldung beendet
     ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000021', 0, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000021', 2, 'Sophie Lange',  'Claudia Lange',  'lange@example.org',    'Versetzung gefährdet?',          CURRENT_DATE - 10 + time '20:15', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000021', 5, 'Elias Brandt',  'Murat Brandt',   'brandt@example.org',   NULL,                             CURRENT_DATE - 8 + time '16:58', 'ZUGESAGT'),
     ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000024', 2, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03', 'ZUGESAGT'),
     ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000019', 6, 'Lina Vogel',    'Sven Vogel',     'vogel@exmaple.org',    NULL,                             CURRENT_DATE - 8 + time '21:47', 'STORNIERT'),
     -- Abgeschlossen

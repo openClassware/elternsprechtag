@@ -1,0 +1,105 @@
+---
+title: Die Tagespläne drucken
+description: Ein ZIP mit einem PDF je Lehrkraft herunterladen — jedes Blatt zeigt alle Termine des Tages, belegte und freie.
+phase: am-tag
+order: 1
+wer: organisator
+wann: Am Tag — am Morgen oder am Vortag, wenn die Lehrkräfte ihre Pläne bekommen
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: wenige Minuten, dazu das Drucken
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Für jede Lehrkraft ein Blatt mit allen Terminen des Tages, als PDF zum Drucken oder Weitergeben.
+Sie laden alle Blätter auf einmal herunter, als ZIP.
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Auswerten**. Die
+   **Auswertung** öffnet sich.
+
+3. Klicken Sie oben rechts auf **Pläne herunterladen (ZIP)**. Der Browser speichert das ZIP.
+
+   ![Kopf der Auswertung des Elternsprechtags Klassen 7 und 8 mit Titel und Datum. Oben rechts ist der Knopf „Pläne herunterladen (ZIP)“ gerahmt, daneben „Familie nachtragen“.](../../../assets/screenshots/die-tagesplaene-drucken/kopf.png)
+
+4. Entpacken Sie das ZIP. Darin liegt ein PDF je Lehrkraft. Der Dateiname beginnt mit dem
+   Zeitpunkt des Herunterladens, dann folgen der Titel des Sprechtags und das Kürzel der Lehrkraft,
+   etwa `2026-10-02_1437_Herbstsprechtag_KRA.pdf`.
+
+5. Drucken Sie die Blätter — sie sind für A4 quer gesetzt — oder geben Sie jeder Lehrkraft ihre
+   Datei weiter. Was auf einem Blatt steht, erklärt
+   [Das Tagesplan-Blatt lesen](/anwendungsfaelle/das-tagesplan-blatt-lesen/); die Seite ist für die
+   Lehrkräfte geschrieben, Sie können ihnen den Link mitgeben.
+
+</Steps>
+
+## Was danach passiert
+
+- **Jede Lehrkraft** hat ein Blatt mit allen ihren Terminen: belegte mit Kind, Klasse, Fach, Eltern
+  und Notiz, freie mit dem Vermerk **frei**. Oben steht **Stand:** mit dem Zeitpunkt, zu dem Sie
+  das ZIP heruntergeladen haben.
+- **Auch eine Lehrkraft ohne Buchung** bekommt ein Blatt, mit lauter freien Terminen.
+- **Die Anwendung verschickt die Blätter nicht.** Die Lehrkräfte bekommen sie von Ihnen, auf
+  Papier oder als Datei.
+- **Die Familien** merken davon nichts.
+
+## Regeln
+
+- **Das ZIP enthält immer alle Lehrkräfte des Sprechtags.** Suche, Lehrkraft-Filter und
+  **Stornierte anzeigen** in der Auswertung wirken sich nicht aus. Wer die Pläne herunterlädt,
+  will die Pläne, keinen Ausschnitt des Bildschirms.
+- **Die Blätter zeigen den Stand beim Herunterladen,** frisch gelesen, auch wenn die Auswertung
+  schon länger offen ist. Was danach gebucht, storniert oder umgebucht wird, steht erst auf einem
+  neu heruntergeladenen Blatt.
+- **Ein Blatt zeigt, wer kommt.** Stornierte Buchungen und Termine, die durch den Ausfall einer
+  Lehrkraft entfallen sind, stehen nicht darauf.
+- **E-Mail-Adressen der Eltern stehen nicht auf dem Blatt.** Es liegt im Klassenzimmer, oft
+  offen; Kontaktdaten gehören dort nicht hin.
+- **Lehrkräfte haben keinen eigenen Zugang zur Anwendung.** Ihr Blatt ist ihr Plan; deshalb
+  kommt es von Ihnen.
+
+## Wenn …
+
+### … sich nach dem Drucken noch etwas ändert
+
+Laden Sie das ZIP neu herunter und geben Sie nur der betroffenen Lehrkraft ihr neues Blatt; ihre
+Datei nehmen Sie einzeln aus dem ZIP. Ob ein Blatt aktuell ist, zeigt der **Stand:** oben auf dem
+Blatt. Reicht die Zeit nicht, sagen Sie der Lehrkraft Bescheid; sie trägt die Familie von Hand ein.
+
+### … eine Familie am Tag selbst noch einen Termin bekommt
+
+Tragen Sie sie wie gewohnt nach: [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/).
+Auf schon gedruckten Blättern steht der Termin nicht. Die Lehrkraft schreibt den Namen in den
+freien Termin; dafür steht dort **frei** und sonst nichts.
+
+### … der Knopf **Pläne herunterladen (ZIP)** fehlt
+
+Der Sprechtag hat dann keine Lehrkraft mit Terminen. Das kommt vor, wenn keine der teilnehmenden
+Klassen einen Lehrauftrag hat; dann gibt es auch keine Termine.
+
+### … nach dem Sprechtag noch ein Blatt gebraucht wird
+
+Das geht auch, wenn der Sprechtag *Abgeschlossen* ist. Sind die Angaben der Familien nach Ablauf der
+Frist entfernt, stehen auf dem Blatt Platzhalter statt Namen, und der Kopf sagt es dazu.
+
+## Wege drumherum
+
+- **Änderungen nach dem Druck erreichen die Lehrkraft nicht von selbst.** Der **Stand:** auf dem
+  Blatt zeigt, wie alt es ist. Den Rest regeln Sie mündlich oder mit einem neuen Blatt.
+- **Entfallene Termine fehlen auf dem Blatt, statt durchgestrichen dazustehen.** Welche Termine
+  einer Lehrkraft entfallen sind, sehen Sie in der Auswertung mit **Stornierte anzeigen**; die
+  Zeilen tragen den Vermerk **entfallen**.
+- **Einen Aushang für die Tür druckt die Anwendung nicht.** Schreiben Sie ihn selbst, etwa mit
+  Lehrkraft, Raum und Uhrzeit; die Zeiten stehen in der Auswertung.
+
+## Verwandte Fälle
+
+- [Das Tagesplan-Blatt lesen](/anwendungsfaelle/das-tagesplan-blatt-lesen/) — was auf dem Blatt steht, für die Lehrkräfte geschrieben
+- [Einen Termin am Telefon nachschlagen](/anwendungsfaelle/einen-termin-am-telefon-nachschlagen/) — wenn eine Familie wissen will, wann sie dran ist
+- [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) — wenn am Tag selbst noch jemand einen Termin braucht
+- [Die Buchungen eines Sprechtags einsehen](/anwendungsfaelle/die-buchungen-eines-sprechtags-einsehen/) — um die Belegung am Bildschirm zu prüfen statt auf Papier

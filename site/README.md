@@ -233,8 +233,8 @@ unter `src/assets/screenshots/<slug>/<name>.png` (gitignored). CI erzeugt sie be
 
 **Ein Modul je Fallseite**, `screenshots/faelle/<slug>.mjs`, und nur, wenn die Seite Bilder hat.
 Ein Modul ohne passende `anwendungsfaelle/<slug>.mdx` lässt den Runner abbrechen. Das Modul
-exportiert eine Funktion, die `{ page, basis, foto, rahmen, bereit }` bekommt, schon angemeldet,
-in einem eigenen Browser-Kontext:
+exportiert eine Funktion, die `{ page, basis, foto, ablegen, rahmen, bereit }` bekommt, schon
+angemeldet, in einem eigenen Browser-Kontext:
 
 - **Ausschnitte statt ganzer Seiten:** `foto(locator, name)` nimmt genau ein Element auf, etwa
   einen Dialog, einen Formularblock oder eine Tabellenzeile. Greift der Selektor nicht, scheitert
@@ -245,9 +245,20 @@ in einem eigenen Browser-Kontext:
   der Module beliebig.
 - Fenster 1280 × 800 bei `deviceScaleFactor: 2` (`screenshots/werkzeug.mjs`).
 
+- **Erzeugte Dateien**, die keine Ausschnitte sind, legt `ablegen(name, inhalt)` neben die Bilder,
+  etwa das Beispiel-PDF des Tagesplans. Das Blatt selbst zeigt die Seite als Bild: Das Modul lädt
+  das ZIP aus der Auswertung und zeichnet die erste PDF-Seite mit pdf.js im Browser
+  (`screenshots/tagesplan.mjs`).
+
 Die Fallseite bindet das Bild mit Markdown-Syntax und beschreibendem Alt-Text ein:
 `![Dialog „…“: …](../../../assets/screenshots/<slug>/<name>.png)`. Fehlt die Datei, bricht der
-Build ab.
+Build ab. Eine abgelegte Datei zum Herunterladen kommt per Import mit `?url` auf die Seite:
+
+```mdx
+import beispielBlatt from '../../../assets/screenshots/<slug>/<datei>.pdf?url';
+
+<a href={beispielBlatt} download="<datei>.pdf">… herunterladen (PDF)</a>
+```
 
 `tools/screenshots/` bleibt das Werkzeug für die Responsive-Arbeit an der App.
 

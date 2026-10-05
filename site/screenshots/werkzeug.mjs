@@ -1,6 +1,6 @@
-// Was die Screenshot-Module teilen: Anmeldung, Warten auf Vaadin, Aufnahme eines Ausschnitts und
-// der Hervorhebungsrahmen. Ein Modul bekommt das fertig verdrahtet vom Runner.
-import { mkdir } from 'node:fs/promises';
+// Was die Screenshot-Module teilen: Anmeldung, Warten auf Vaadin, Aufnahme eines Ausschnitts, Ablage
+// erzeugter Dateien und der Hervorhebungsrahmen. Ein Modul bekommt das fertig verdrahtet vom Runner.
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 /** Wie die Seiten am Desktop erscheinen: ein Laptop-Fenster, scharf für Retina-Anzeigen. */
@@ -54,6 +54,20 @@ export function aufnahme(ziel) {
 		await locator.waitFor({ state: 'visible', timeout: 10_000 });
 		const datei = path.join(ziel, `${name}.png`);
 		await locator.screenshot({ path: datei, animations: 'disabled' });
+		return datei;
+	};
+}
+
+/**
+ * Liefert die Ablage eines Moduls für erzeugte Dateien, die keine Ausschnitte sind — etwa ein
+ * Beispiel-PDF zum Herunterladen. Sie liegen neben den Bildern unter `<ziel>/<name>`, ebenso
+ * gitignored und vor jedem Lauf des Moduls geleert.
+ */
+export function ablage(ziel) {
+	return async (name, inhalt) => {
+		await mkdir(ziel, { recursive: true });
+		const datei = path.join(ziel, name);
+		await writeFile(datei, inhalt);
 		return datei;
 	};
 }
