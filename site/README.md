@@ -217,6 +217,7 @@ unter `src/assets/screenshots/<slug>/<name>.png` (gitignored). CI erzeugt sie be
    SPRING_DOCKER_COMPOSE_ENABLED=false \
    SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/elternsprechtag_doku \
    ELTERNSPRECHTAG_OEFFENTLICHE_URL=http://localhost:8080 \
+   ELTERNSPRECHTAG_STELLVERTRETERADRESSE=sekretariat@example.org \
      ./mvnw spring-boot:run -Dspring-boot.run.profiles=demo
    ```
 

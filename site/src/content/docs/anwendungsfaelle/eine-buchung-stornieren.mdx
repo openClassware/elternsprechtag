@@ -1,0 +1,106 @@
+---
+title: Eine Buchung stornieren
+description: Eine einzelne Buchung zurücknehmen; der Termin wird wieder frei, die Familie bekommt keine E-Mail.
+phase: buchungsphase
+order: 4
+wer: organisator
+wann: Buchungsphase — eine Familie sagt ab oder hat doppelt gebucht
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Eine einzelne Buchung zurücknehmen, meist weil die Familie anruft und absagt. Der Termin wird
+wieder frei; die Familie bekommt keine E-Mail.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Eine Familie kommt zu einem Termin nicht | **Buchung stornieren** — diese Seite |
+| Eine Familie hat bei derselben Lehrkraft zweimal gebucht | **Buchung stornieren** — diese Seite, für eine der beiden Zeilen |
+| Die Familie will bei derselben Lehrkraft zu einer anderen Uhrzeit kommen | [Eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/) |
+| Eine Lehrkraft fällt aus, ihre Familien müssen es erfahren | *Eine Lehrkraft fällt aus* |
+| Der ganze Sprechtag fällt aus | [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) |
+| Die Familie verlangt, dass ihre Daten gelöscht werden | diese Seite, mit **Angaben der Familie entfernen** — siehe *Wenn …* unten |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie die Auswertung des Sprechtags: in **Elternsprechtage verwalten** das Menü **⋮** der
+   Zeile, dann **Auswerten**. Mit der Suche nach **Name** finden Sie die Buchung schnell.
+
+2. Klicken Sie in der Zeile unter **Aktion** auf **Buchung stornieren**, das rote Kreuz.
+
+3. Der Dialog **Buchung stornieren** nennt Kind, Uhrzeit und Lehrkraft. Prüfen Sie daran, dass es
+   die richtige Zeile ist.
+
+   ![Dialog „Buchung stornieren“: Er sagt, dass der Termin wieder frei wird und die Eltern nicht benachrichtigt werden, nennt Kind, Uhrzeit und Lehrkraft und bietet den nicht angehakten Schalter „Angaben der Familie entfernen“. Darunter „Abbrechen“ und „Stornieren“.](../../../assets/screenshots/eine-buchung-stornieren/dialog.png)
+
+4. Bestätigen Sie mit **Stornieren**. Unten erscheint *Buchung von … storniert.*
+
+</Steps>
+
+Hat die Familie mehrere Termine und sagt alle ab, stornieren Sie jede Zeile einzeln.
+
+## Was danach passiert
+
+- **Die Familie bekommt keine E-Mail.** Sagen Sie ihr am Telefon, dass der Termin storniert ist.
+- **Der Termin ist wieder frei,** für die Eltern über den Zugangs-Link ebenso wie für einen
+  Nachtrag.
+- **Die Zeile verschwindet aus dem Plan,** die Zahl der Buchungen der Lehrkraft sinkt um eins.
+  Mit **Stornierte anzeigen** sehen Sie sie wieder, mit dem Vermerk **storniert**.
+- **Die übrigen Termine der Familie** bleiben bestehen, ebenso die Erinnerungsmail dazu.
+- **Die Lehrkraft** bekommt keine Nachricht von der Anwendung.
+
+## Regeln
+
+- **Ein Storno verschickt nichts.** Anlass ist fast immer der Anruf der Familie selbst; sie weiß
+  Bescheid. Bei einer falsch eingegebenen Adresse ginge eine Mail an Fremde, und beim
+  Löschverlangen wäre sie widersinnig.
+- **Ein Storno lässt sich nicht zurücknehmen.** Der Termin ist sofort frei und kann vergeben sein.
+  Wer doch kommen will, wird neu eingetragen:
+  [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/).
+- **Nur an einem *aktiven* Sprechtag.** Danach bucht niemand mehr; „wieder frei“ hätte keinen Sinn.
+  Am abgesagten oder abgeschlossenen Sprechtag fehlt das Symbol.
+
+## Wenn …
+
+### … die Familie die Löschung ihrer Daten verlangt
+
+Haken Sie im Dialog **Angaben der Familie entfernen** an. Dann werden mit dem Storno die Namen
+und die E-Mail-Adresse durch Platzhalter ersetzt und die Notiz gelöscht. Die Meldung lautet
+*Buchung von … storniert, Angaben der Familie entfernt.* Hat die Familie weitere Termine,
+stornieren Sie jeden einzeln mit Häkchen. Nach dem Sprechtag geht das auf anderem Weg; siehe
+*Einem Löschverlangen nachkommen*.
+
+### … beim Stornieren eine Meldung erscheint
+
+- *Diese Buchung ist nicht mehr aktiv — sie wurde bereits storniert oder der Termin ist neu
+  vergeben.* — Die Zeile wurde an anderer Stelle schon geändert, etwa in einem zweiten Fenster.
+  Die Auswertung lädt sich neu; prüfen Sie die Zeile.
+- *Buchungen lassen sich nur an einem veröffentlichten Sprechtag ändern.* — Der Sprechtag wurde
+  inzwischen abgesagt oder abgeschlossen.
+
+## Wege drumherum
+
+- **Eltern wollen absagen.** Online geht das nicht: Der Zugangs-Link gehört dem ganzen
+  Sprechtag, nicht einer Familie, und verrät nicht, wessen Buchung es ist. Die Familie ruft über
+  den Schulkontakt aus ihrer Bestätigungsmail an, und Sie stornieren — genau diese Seite.
+- **Dieselbe Familie bucht zweimal.** Schickt eine Familie die Buchung zweimal ab, hat sie bei
+  derselben Lehrkraft zwei Termine; die Anwendung erkennt solche Dubletten nicht. Im Plan der
+  Lehrkraft stehen dann zwei Zeilen mit demselben Kind. Klären Sie mit der Familie, welcher Termin
+  gilt, und stornieren Sie den anderen.
+- **Die E-Mail-Adresse ist falsch eingegeben, die Bestätigung kommt nie an.** Eine Adresse lässt
+  sich nicht ändern. Stornieren Sie die Termine und tragen Sie die Familie mit der richtigen
+  Adresse neu nach: [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/). Die
+  Familie bekommt dann eine Bestätigung an die richtige Adresse.
+
+## Verwandte Fälle
+
+- [Eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/) — wenn die Familie nur eine andere Uhrzeit will
+- [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) — wenn die Familie nach dem Storno doch einen Termin braucht
+- *Eine Lehrkraft fällt aus* — wenn viele Termine einer Lehrkraft entfallen und die Familien eine E-Mail brauchen
+- [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) — wenn der ganze Sprechtag ausfällt

@@ -1,0 +1,122 @@
+---
+title: Eine Familie nachtragen
+description: Termine für eine Familie selbst buchen — am Telefon, ohne eigene E-Mail-Adresse oder nach dem Anmeldeschluss.
+phase: buchungsphase
+order: 2
+wer: organisator
+wann: Buchungsphase bis zum Tag selbst — eine Familie kann oder will nicht online buchen
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: zwei bis drei Minuten
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Für eine Familie selbst Termine buchen, etwa am Telefon. Es gelten dieselben Regeln wie beim
+Buchen der Eltern, nur ohne Anmeldeschluss. Die Familie bekommt eine Bestätigungsmail.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Eine Familie hat noch keinen Termin und braucht einen | **Familie nachtragen** — diese Seite |
+| Eine Familie hat schon einen Termin und braucht noch einen bei einer weiteren Lehrkraft | **Familie nachtragen** — diese Seite |
+| Eine Familie will bei derselben Lehrkraft zu einer anderen Uhrzeit kommen | [Eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/) |
+| Die Eltern sollen wieder selbst buchen können | [Die Anmeldung verlängern oder wieder öffnen](/anwendungsfaelle/die-anmeldung-verlaengern-oder-wieder-oeffnen/) |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie die Auswertung des Sprechtags: in **Elternsprechtage verwalten** das Menü **⋮** der
+   Zeile, dann **Auswerten**.
+
+2. Klicken Sie oben rechts auf **Familie nachtragen**. Es öffnet sich dieselbe Buchungsstrecke, die
+   die Eltern über den Zugangs-Link sehen; die Felder sind an die Eltern gerichtet.
+
+3. Füllen Sie **Ihre Angaben** aus: **Ihr Name** (der Elternname), **Name des Kindes**,
+   **Ihre E-Mail-Adresse**, **E-Mail-Adresse wiederholen** und **Klasse**. Hat die Familie keine
+   eigene E-Mail-Adresse, haken Sie **Familie hat keine eigene E-Mail-Adresse** an — siehe
+   *Wenn …* unten.
+
+   ![Block „Ihre Angaben“ im Nachtragen: Felder für Elternname, Name des Kindes, E-Mail-Adresse und deren Wiederholung, Auswahl der Klasse und darunter der Schalter „Familie hat keine eigene E-Mail-Adresse“.](../../../assets/screenshots/eine-familie-nachtragen/angaben.png)
+
+4. Wählen Sie unter **Lehrkräfte und Termine** je Lehrkraft einen freien Termin. Ins Feld
+   **Notiz für Lehrkraft** schreiben Sie, was die Familie besprechen möchte.
+
+5. Prüfen Sie **Ihre Auswahl** und klicken Sie unten auf den Knopf, etwa **2 Termine
+   nachtragen**. Solange etwas fehlt, nennt die Leiste daneben den Grund.
+
+6. Die Seite **Termine nachgetragen** fasst alles zusammen. Lesen Sie sie der Familie am Telefon
+   vor. **Zur Auswertung** führt zurück.
+
+</Steps>
+
+## Was danach passiert
+
+- **Die Familie bekommt eine Bestätigungsmail** mit genau den eben nachgetragenen Terminen und
+  Ihrem Schulkontakt — dieselbe Mail wie nach einer Buchung über den Zugangs-Link. Hat der
+  Sprechtag eine Erinnerung und wird sie erst noch verschickt, bekommt die Familie auch sie.
+- **Mit der Stellvertreteradresse** geht die Bestätigung ans Sekretariat, mit Name und Klasse des
+  Kindes. Ebenso alle späteren Nachrichten zu diesen Terminen.
+- **Die Auswertung** zeigt die Termine sofort in den Blöcken der Lehrkräfte.
+- **Für die anderen Eltern** sind die Termine ab jetzt belegt.
+- **Lehrkräfte** bekommen keine Nachricht von der Anwendung.
+
+## Regeln
+
+- **Dieselben Regeln wie beim Buchen der Eltern.** Ein Termin je Lehrkraft, keine zwei Termine zur
+  selben Uhrzeit, und alles oder nichts: Scheitert ein Termin, wird keiner gebucht. Verglichen
+  werden nur die Termine dieses Nachtrags — ob die Familie zur selben Uhrzeit schon einen anderen
+  Termin hat, prüft die Anwendung nicht. Sehen Sie im Zweifel vorher mit der Suche nach **Name**
+  in der Auswertung nach.
+- **Kein Anmeldeschluss, keine Uhrzeitprüfung.** Sie tragen auch nach, wenn die Eltern nicht mehr
+  selbst buchen können, und auch ein Gespräch, das am Tag selbst schon stattgefunden hat.
+- **Nur an einem *aktiven* Sprechtag.** Danach bucht niemand mehr, auch Sie nicht. Ein Sprechtag
+  wird in der Nacht nach seinem Ende *Abgeschlossen*; bis dahin geht das Nachtragen.
+- **Die E-Mail-Adresse ist Pflicht,** auch hier. Über sie erfährt die Familie von einer Absage oder
+  dem Ausfall einer Lehrkraft. Ohne eigene Adresse tritt die der Schule an ihre Stelle.
+- **Die Anwendung prüft nur die Form der Adresse.** Ob es sie gibt, sieht sie nicht; deshalb wird
+  sie zweimal eingegeben.
+
+## Wenn …
+
+### … die Familie keine eigene E-Mail-Adresse hat
+
+Haken Sie **Familie hat keine eigene E-Mail-Adresse** an. Die Anwendung setzt die
+Stellvertreteradresse der Schule ein, die Wiederholung entfällt. Jede Nachricht zu diesen Terminen
+landet dann im Sekretariat, eine je Kind, mit Name und Klasse. Wer sie dort liest, ruft die Familie
+an. Fehlt der Schalter, hat die Schul-IT keine Stellvertreteradresse eingerichtet.
+
+### … die Familie am Tag selbst anruft oder spontan vorbeikommt
+
+Tragen Sie sie wie gewohnt nach, auch für einen Termin, der schon begonnen hat oder vorbei ist.
+So steht das Gespräch in der Auswertung. Die Tagespläne, die Sie vorher gedruckt haben, kennen
+den Termin nicht; sagen Sie der Lehrkraft Bescheid.
+
+### … bei einer Lehrkraft „keine Termine frei“ steht
+
+Alle Termine dieser Lehrkraft sind belegt. Aufgeklappt steht dort *Bei dieser Lehrkraft ist kein
+Termin mehr frei.* Mehr Termine entstehen nicht; fragen Sie die Familie nach einer anderen
+Lehrkraft oder einem Gespräch außerhalb des Sprechtags.
+
+### … beim Nachtragen eine Meldung erscheint
+
+- *Ein gewählter Termin wurde soeben vergeben. Bitte prüfen Sie Ihre Auswahl und tragen Sie erneut
+  nach.* — Eine Familie hat in derselben Minute denselben Termin gebucht. Die übrige Auswahl bleibt
+  stehen; wählen Sie für diese Lehrkraft einen anderen Termin.
+- *Zwei der gewählten Termine liegen zur selben Uhrzeit. Bitte prüfen Sie Ihre Auswahl.* — Ändern
+  Sie einen der beiden.
+- *Dieser Sprechtag ist nicht mehr veröffentlicht — ein Nachtrag ist nicht mehr möglich.* — Der
+  Sprechtag wurde inzwischen abgesagt oder abgeschlossen.
+
+## Wege drumherum
+
+- **Die Bestätigung kommt nicht an, weil die Adresse falsch ist.** Ändern lässt sich die Adresse
+  einer Buchung nicht. Stornieren Sie die Termine und tragen Sie sie mit der richtigen Adresse
+  neu nach: [Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/).
+
+## Verwandte Fälle
+
+- [Eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/) — wenn die Familie schon einen Termin bei dieser Lehrkraft hat
+- [Die Anmeldung verlängern oder wieder öffnen](/anwendungsfaelle/die-anmeldung-verlaengern-oder-wieder-oeffnen/) — wenn viele Familien noch buchen wollen
+- [Den Zugangs-Link an die Eltern weitergeben](/anwendungsfaelle/den-zugangs-link-an-die-eltern-weitergeben/) — wenn die Familie selbst buchen kann und nur den Link braucht

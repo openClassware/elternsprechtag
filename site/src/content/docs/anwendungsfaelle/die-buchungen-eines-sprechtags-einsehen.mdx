@@ -1,0 +1,104 @@
+---
+title: Die Buchungen eines Sprechtags einsehen
+description: In der Auswertung sehen, wer bei welcher Lehrkraft wann einen Termin hat — gefiltert nach Lehrkraft oder gesucht nach Namen.
+phase: buchungsphase
+order: 1
+wer: organisator
+wann: Buchungsphase — jederzeit, etwa bei einem Anruf oder um die Belegung zu prüfen
+voraussetzung: Der Sprechtag ist veröffentlicht oder abgeschlossen (Status Aktiv oder Abgeschlossen)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+In der Auswertung sehen Sie alle Buchungen eines Sprechtags, nach Lehrkraft geordnet. Von hier aus
+stornieren, buchen um und tragen nach Sie auch.
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Auswerten**. Die
+   **Auswertung** öffnet sich.
+
+3. Lesen Sie den Plan. Je Lehrkraft gibt es einen Block mit Name, Kürzel und der Zahl ihrer
+   Buchungen, etwa **3 Buchungen**. Darunter stehen die Termine mit **Zeit**, **Schüler/in**,
+   **Klasse**, **Fach**, **Eltern** und der **Notiz**, die die Eltern beim Buchen hinterlassen
+   haben.
+
+4. Grenzen Sie den Plan bei Bedarf ein:
+   - **Name** — sucht schon beim Tippen in Schüler- und Elternnamen.
+   - **Lehrkraft** — zeigt nur den Block einer Lehrkraft. Leer heißt **Alle Lehrkräfte**.
+   - **Stornierte anzeigen** — blendet stornierte Buchungen in den Plan ein. Der Schalter
+     erscheint nur, wenn es am Sprechtag eine stornierte Buchung gibt.
+
+   ![Filterzeile der Auswertung: Suchfeld „Name“ mit dem Platzhalter „Schüler- oder Elternname“, die Auswahl „Lehrkraft“ und der eingeschaltete Schalter „Stornierte anzeigen“.](../../../assets/screenshots/die-buchungen-eines-sprechtags-einsehen/filter.png)
+
+   Mit **Stornierte anzeigen** stehen die stornierten Buchungen zwischen den geltenden, mit dem
+   Vermerk **storniert** unter der Uhrzeit:
+
+   ![Block der Lehrkraft Anna Krause in der Auswertung: Kopf mit Name, Kürzel und der Zahl der geltenden Buchungen, darunter die Tabelle mit Zeit, Schüler/in, Klasse, Fach, Eltern, Notiz und den Aktionen. Eine Zeile trägt unter der Uhrzeit den Vermerk „storniert“.](../../../assets/screenshots/die-buchungen-eines-sprechtags-einsehen/plan-mit-stornierter.png)
+
+</Steps>
+
+## Was danach passiert
+
+- **Nichts.** Einsehen ändert nichts; Suche, Filter und Schalter merkt sich die Auswertung nur,
+  solange Sie auf ihr bleiben.
+- **Die Auswertung zeigt den Stand beim Öffnen.** Was Eltern danach buchen, sehen Sie nach dem
+  Neuladen der Seite.
+- **Die Eltern** sehen von alldem nichts. Die Buchungsseite zeigt ihnen nur, welche Termine frei
+  und welche belegt sind, ohne Namen.
+
+## Regeln
+
+- **Gezählt werden die geltenden Buchungen.** Eine stornierte Buchung zählt in **3 Buchungen**
+  nicht mit; ihr Termin ist wieder frei.
+- **Termine, die durch den Ausfall einer Lehrkraft entfallen sind,** zählt der Block eigens, etwa
+  **2 Termine entfallen**. Die Zeilen tragen dann den Vermerk **entfallen** statt **storniert**.
+- **Was Sie in einer Zeile tun können, hängt vom Status ab.** Solange der Sprechtag *Aktiv* ist,
+  bietet die Spalte **Aktion** **Buchung umbuchen** und **Buchung stornieren**. Ist er
+  *Abgeschlossen*, gibt es nur noch **Angaben entfernen**.
+- **Ein *Entwurf* hat noch keine Auswertung.** Auch an einem Sprechtag im Status *Abgesagt* bietet
+  das Menü **Auswerten** nicht mehr an. Dorthin führt dann nur noch der Hinweis in der Liste, wenn eine
+  Absage nicht zugestellt wurde, etwa **1 Nachricht nicht zugestellt**.
+
+## Wenn …
+
+### … eine Familie anruft und wissen will, wann sie Termine hat
+
+Tippen Sie den Namen des Kindes oder der Eltern in **Name**. Es bleiben nur die Zeilen, die
+passen, über alle Lehrkräfte hinweg. Trifft die Suche auch eine stornierte Buchung, steht darunter
+etwa *1 stornierte Buchung passt ebenfalls.*; ein Klick auf **Stornierte anzeigen** daneben holt sie
+in den Plan.
+
+### … die Suche nichts findet
+
+Die Auswertung meldet *Keine Buchung passt zu „…“.* Versuchen Sie einen Teil des Namens, etwa nur
+den Nachnamen; Eltern schreiben Namen beim Buchen nicht immer gleich.
+
+### … oben der Block „Nicht erreicht“ steht
+
+Eine E-Mail an eine Familie ist nicht angekommen. Der Block nennt Kind, Klasse, Eltern, Adresse und
+welche Nachricht es war. Rufen Sie die Familie an; siehe *Nicht erreichte Familien nachfassen*.
+
+## Wege drumherum
+
+- **Eltern wollen ihre Buchung später noch einmal sehen.** Eine Ansicht dafür haben die Eltern
+  nicht; ihr Beleg ist die Bestätigungsmail. Ist sie nicht mehr da, rufen sie in der Schule an,
+  und Sie lesen die Termine mit der Suche nach **Name** vor.
+- **Geschwisterkinder zur selben Uhrzeit.** Eltern buchen je Kind einzeln, und die Anwendung prüft
+  nicht, ob zwei Kinder derselben Familie zur selben Zeit bei verschiedenen Lehrkräften sitzen.
+  Auch der Plan zeigt das nicht, weil er nach Lehrkraft geordnet ist; von selbst fällt es
+  niemandem auf. Meldet sich die Familie, suchen Sie nach dem Elternnamen: Dann stehen beide Kinder
+  untereinander, und Sie verschieben einen Termin mit
+  [Eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/).
+
+## Verwandte Fälle
+
+- [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) — wenn eine Familie im Plan fehlt
+- [Eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/) — wenn eine Familie zu einer anderen Uhrzeit kommen will
+- [Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/) — wenn eine Familie nicht kommt oder doppelt gebucht hat
+- *Einen Termin am Telefon nachschlagen* — die Namenssuche am Tag selbst

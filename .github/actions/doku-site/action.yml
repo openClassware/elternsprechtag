@@ -60,6 +60,9 @@ runs:
         SPRING_PROFILES_ACTIVE: demo
         SPRING_DOCKER_COMPOSE_ENABLED: 'false'
         ELTERNSPRECHTAG_OEFFENTLICHE_URL: http://localhost:8080
+        # Ohne sie fehlt im Nachtragen der Schalter „Familie hat keine eigene E-Mail-Adresse“, den
+        # die Fallseite zeigt. Gebucht wird in den Screenshots nie, es geht keine Mail hinaus.
+        ELTERNSPRECHTAG_STELLVERTRETERADRESSE: sekretariat@example.org
       run: |
         jar=$(ls target/*.jar | head -n 1)
         nohup java -jar "$jar" > "$RUNNER_TEMP/app.log" 2>&1 &
