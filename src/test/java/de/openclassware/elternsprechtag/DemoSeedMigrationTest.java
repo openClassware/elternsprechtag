@@ -2,8 +2,14 @@ package de.openclassware.elternsprechtag;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.LehrkraftPlan;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.NichtErreicht;
+import de.openclassware.elternsprechtag.sprechtag.application.port.in.Auswerten.SprechtagAuswertung;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.Zugangsstand;
+import de.openclassware.elternsprechtag.sprechtag.domain.Mailart;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +40,7 @@ class DemoSeedMigrationTest {
 
   @Autowired private JdbcTemplate jdbcTemplate;
   @Autowired private Sprechtagszugang sprechtagszugang;
+  @Autowired private Auswerten auswerten;
 
   @Test
   void migrationskettePlusSeedErgibtDieDemoStammdaten() {
@@ -96,6 +103,31 @@ class DemoSeedMigrationTest {
                 """,
                 Integer.class))
         .isOne();
+  }
+
+  /**
+   * Issue #207 — die Anwender-Doku zeigt einen Teilausfall und eine Familie, die die Ausfall-Mail
+   * nicht erreicht hat. Geprüft über die Auswertung, wie der Organisator sie sieht: Die Zustellung
+   * hängt an einer Buchungs-Id, die der Seed nur errechnet, und ein Rechenfehler ließe den Block
+   * „Nicht erreicht“ still leer.
+   */
+  @Test
+  void derSprechtagMitBeendeterAnmeldungZeigtAusfallUndNichtErreichteFamilie() {
+    SprechtagAuswertung auswertung =
+        auswerten.werteAus(UUID.fromString("00000000-0000-0000-0005-000000000002")).orElseThrow();
+
+    LehrkraftPlan wagner =
+        auswertung.plaene().stream()
+            .filter(plan -> plan.kuerzel().equals("WAG"))
+            .findFirst()
+            .orElseThrow();
+    assertThat(wagner.entfalleneAnzahl()).isEqualTo(8);
+    assertThat(wagner.stornierte()).singleElement().matches(zeile -> zeile.entfallen());
+
+    assertThat(auswertung.nichtErreicht())
+        .singleElement()
+        .extracting(NichtErreicht::art, NichtErreicht::schuelerName, NichtErreicht::email)
+        .containsExactly(Mailart.AUSFALL, "Lina Vogel", "vogel@exmaple.org");
   }
 
   private Integer count(String tabelle) {

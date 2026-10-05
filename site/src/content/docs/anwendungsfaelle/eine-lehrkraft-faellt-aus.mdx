@@ -1,0 +1,135 @@
+---
+title: Eine Lehrkraft fällt aus
+description: Die Termine einer Lehrkraft ganz oder ab einer Uhrzeit entfallen lassen; jede betroffene Familie bekommt eine E-Mail.
+phase: kurz-vor-dem-termin
+order: 1
+wer: organisator
+wann: Kurz vor dem Termin — eine Lehrkraft ist krank oder kann nur einen Teil des Nachmittags da sein
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: zwei Minuten
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Die Termine einer Lehrkraft entfallen lassen, ganz oder ab einer Uhrzeit. Gebuchte Termine werden
+storniert, und jede betroffene Familie bekommt eine E-Mail.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Eine Lehrkraft fehlt, den ganzen Tag oder ab einer Uhrzeit | **Lehrkraft fällt aus** — diese Seite |
+| Der ganze Sprechtag fällt aus | [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) |
+| Eine Familie braucht bei derselben Lehrkraft eine andere Uhrzeit | [Eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/) |
+| Eine einzelne Familie kommt nicht | [Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/) |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Auswerten**.
+
+3. Klicken Sie im Kopf des Blocks der Lehrkraft, hinter Name und Zahl der Buchungen, auf
+   **Lehrkraft fällt aus**. Der Dialog
+   **Lehrkraft fällt aus** listet alle ihre Termine an diesem Sprechtag, mit dem Zustand
+   **frei**, **gebucht** samt Namen des Kindes oder **bereits entfallen**.
+
+4. Wählen Sie die Termine, die entfallen:
+   - Fehlt die Lehrkraft den ganzen Tag, setzen Sie **Alle auswählen**.
+   - Fehlt sie nur einen Teil, haken Sie die Termine einzeln an, etwa alle ab 16 Uhr.
+
+   Wählen Sie auch die freien Termine, sonst bucht dort noch eine Familie.
+
+5. Lesen Sie, was unter der Liste steht: wie viele Termine Sie gewählt haben, **etwa wie viele
+   Kinder** betroffen sind und ob die Familien selbst neu buchen können.
+
+   ![Dialog „Lehrkraft fällt aus“: Liste der Termine von Anna Krause mit Uhrzeit und Zustand, zwei gebuchte Termine sind angehakt. Darunter „2 Termine ausgewählt · etwa 2 Kinder betroffen“, der Hinweis, dass die Familien mit der Mail den Elternlink erhalten und selbst neu buchen können, und die Warnung, dass sich der Vorgang nicht rückgängig machen lässt.](../../../assets/screenshots/eine-lehrkraft-faellt-aus/dialog.png)
+
+6. Bestätigen Sie mit **Termine entfallen lassen**. Die Anwendung meldet etwa *3 Termine
+   entfallen, 2 Familien benachrichtigt.*
+
+</Steps>
+
+## Was danach passiert
+
+- **Jede betroffene Familie bekommt eine E-Mail** — je Kind eine, mit Name, Klasse und allen
+  entfallenden Terminen dieses Kindes, auch wenn es mehrere sind. Betreff: *Sprechtag „…“ am …:
+  Termin entfällt*. Darunter steht der Schulkontakt.
+- **Solange die Anmeldung läuft,** enthält die E-Mail den Zugangs-Link: *Über den folgenden Link
+  sehen Sie, welche Termine noch frei sind, und können selbst einen neuen Termin buchen.* Nach dem
+  Anmeldeschluss fehlt dieser Absatz; die Familien wenden sich dann an die Schule.
+- **Familien ohne eigene E-Mail-Adresse**: Die Nachricht geht an die Stellvertreteradresse der
+  Schule, je Kind eine. Das Sekretariat gibt sie weiter.
+- **Der Zugangs-Link** zeigt die entfallenen Termine als **belegt**. Buchen kann sie niemand mehr,
+  auch nicht über **Familie nachtragen** oder **Buchung umbuchen**.
+- **Die Auswertung** zählt im Block der Lehrkraft die entfallenen Termine, etwa **8 Termine
+  entfallen**. Die stornierten Buchungen tragen mit **Stornierte anzeigen** den Vermerk
+  **entfallen**.
+- **Die übrigen Termine der Familie** bei anderen Lehrkräften bleiben bestehen. Für die entfallenen
+  geht keine Erinnerung mehr hinaus.
+- **Die Lehrkraft** bekommt keine Nachricht von der Anwendung, ebenso wenig die Kolleginnen und
+  Kollegen. Informieren Sie sie auf dem üblichen Weg.
+
+## Regeln
+
+- **Ein entfallener Termin lässt sich nicht zurückholen.** Die Familien haben gelesen, dass er
+  ausfällt, und anders geplant. Wählen Sie deshalb nur die Termine, in denen die Lehrkraft sicher
+  fehlt.
+- **Die Termine entfallen, statt frei zu werden.** Ein Storno von Hand gäbe sie frei, und eine andere
+  Familie buchte einen Termin, der nicht stattfindet. Außerdem erführe die gebuchte Familie nichts —
+  ein Storno verschickt keine E-Mail.
+- **Ob die E-Mail zurück in die Buchung führt, entscheidet der Zeitpunkt.** Vor dem Anmeldeschluss
+  können die Familien selbst neu buchen. Danach nimmt der Zugangs-Link keine Buchungen mehr an, und
+  ein Link in der E-Mail verspräche, was die Seite nicht hält. Der Dialog sagt vor dem Bestätigen,
+  welcher Fall eintritt.
+- **Die Zahl der Kinder im Dialog ist eine Schätzung** auf dem Stand, mit dem Sie die Auswertung
+  geöffnet haben. Hat inzwischen jemand gebucht, wird beim Bestätigen auch diese Familie
+  benachrichtigt.
+- **Einen Ersatztermin teilt die Anwendung nicht von selbst zu.** Welcher Termin passt, entscheidet
+  die Familie; ein zugeteilter Termin, zu dem niemand kommt, blockiert ihn für andere.
+- **Die Lehrkraft meldet ihren Ausfall nicht selbst in der Anwendung.** Sie meldet sich ohnehin im
+  Sekretariat krank; einen zweiten Meldeweg daneben gibt es bewusst nicht.
+
+## Wenn …
+
+### … die Anmeldung schon beendet ist
+
+Der Dialog sagt dann: *Die Anmeldung ist beendet. Die Familien können nicht selbst neu buchen;
+Ersatztermine vergeben Sie über „Familie nachtragen“.* Die E-Mail verweist auf den Schulkontakt.
+
+Sollen die Familien selbst neu wählen, öffnen Sie die Anmeldung **vor** dem Ausfall wieder:
+[Die Anmeldung verlängern oder wieder öffnen](/anwendungsfaelle/die-anmeldung-verlaengern-oder-wieder-oeffnen/).
+Sonst buchen Sie einer Familie, die anruft, einen neuen Termin bei einer anderen Lehrkraft oder
+einer Vertretung: [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/).
+
+### … die Lehrkraft nur ab einer Uhrzeit fehlt
+
+Haken Sie nur die Termine ab dieser Uhrzeit an. Die früheren bleiben buchbar und gebucht. Fällt
+später noch mehr aus, öffnen Sie den Dialog erneut; die schon entfallenen Termine stehen dort als
+**bereits entfallen** und lassen sich nicht noch einmal wählen.
+
+### … die Lehrkraft keine Termine hat
+
+Der Dialog meldet *Diese Lehrkraft hat an diesem Sprechtag keine Termine.* Es gibt nichts
+entfallen zu lassen.
+
+### … eine E-Mail nicht angekommen ist
+
+Oben in der Auswertung steht dann der Block **Nicht erreicht**, mit der Nachricht **Ausfall einer
+Lehrkraft**. Rufen Sie die Familie an:
+[Nicht erreichte Familien nachfassen](/anwendungsfaelle/nicht-erreichte-familien-nachfassen/).
+
+## Wege drumherum
+
+- **Eine Familie will nach dem Anmeldeschluss neu buchen.** Selbst kann sie es nicht mehr, auch
+  wenn ihr Termin entfallen ist. Vergeben Sie den Ersatztermin am Telefon:
+  [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/).
+
+## Verwandte Fälle
+
+- [Einen Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/) — wenn nicht eine Lehrkraft, sondern der ganze Tag ausfällt
+- [Eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/) — wenn nur eine Familie zu einer anderen Uhrzeit bei derselben Lehrkraft kommen soll
+- [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) — um einer betroffenen Familie einen Ersatztermin zu geben
+- [Nicht erreichte Familien nachfassen](/anwendungsfaelle/nicht-erreichte-familien-nachfassen/) — wenn eine Ausfall-Mail nicht angekommen ist
