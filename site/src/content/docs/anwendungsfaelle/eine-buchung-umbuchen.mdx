@@ -1,0 +1,91 @@
+---
+title: Eine Buchung umbuchen
+description: Eine Buchung auf einen anderen freien Termin derselben Lehrkraft legen; die Familie bekommt eine E-Mail mit der neuen Uhrzeit.
+phase: buchungsphase
+order: 3
+wer: organisator
+wann: Buchungsphase — eine Familie kann zur gebuchten Uhrzeit nicht
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Eine Buchung auf einen anderen freien Termin derselben Lehrkraft legen. Der alte Termin wird frei,
+die Familie bekommt eine E-Mail mit der neuen Uhrzeit.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Die Familie will bei derselben Lehrkraft zu einer anderen Uhrzeit kommen | **Buchung umbuchen** — diese Seite |
+| Die Familie will zu einer anderen Lehrkraft | [Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/), dann [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) |
+| Die Familie kommt gar nicht | [Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/) |
+| Die Lehrkraft fällt aus, alle ihre Familien brauchen einen neuen Termin | *Eine Lehrkraft fällt aus* |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie die Auswertung des Sprechtags: in **Elternsprechtage verwalten** das Menü **⋮** der
+   Zeile, dann **Auswerten**. Mit der Suche nach **Name** finden Sie die Buchung schnell.
+
+2. Klicken Sie in der Zeile unter **Aktion** auf **Buchung umbuchen**, das Symbol mit den zwei
+   Pfeilen.
+
+3. Der Dialog **Buchung umbuchen** nennt Kind und Lehrkraft. Wählen Sie unter **Neuer Termin**
+   eine der freien Uhrzeiten.
+
+   ![Dialog „Buchung umbuchen“: Er nennt Kind und Lehrkraft, kündigt eine Mail an die Familie an und hat das Auswahlfeld „Neuer Termin“ mit dem Platzhalter „Termin wählen“. Darunter „Abbrechen“ und das noch gesperrte „Umbuchen“.](../../../assets/screenshots/eine-buchung-umbuchen/dialog.png)
+
+4. Bestätigen Sie mit **Umbuchen**. Unten erscheint *Buchung von … umgebucht.*
+
+</Steps>
+
+## Was danach passiert
+
+- **Die Familie bekommt eine E-Mail**: *Einer Ihrer Termine wurde verschoben.* Sie nennt nur den
+  geänderten Termin mit der neuen Uhrzeit; die übrigen Termine der Familie bleiben, wie sie waren.
+- **Der alte Termin ist wieder frei,** für die Eltern ebenso wie für einen Nachtrag.
+- **Name, Klasse, Fach und Notiz** gehen auf den neuen Termin über.
+- **Die alte Zeile** verschwindet aus dem Plan. Unter **Stornierte anzeigen** steht sie noch, mit
+  Platzhaltern statt Namen und dem Vermerk **Angaben entfernt am …**: Die Angaben der Familie
+  leben nur in der neuen Buchung weiter.
+- **Die Lehrkraft** bekommt keine Nachricht von der Anwendung.
+
+## Regeln
+
+- **Nur auf einen freien Termin derselben Lehrkraft.** Ein Wechsel zu einer anderen Lehrkraft ist
+  ein anderes Gespräch, mit anderem Fach.
+- **Der alte Termin wird erst frei, wenn der neue steht.** Scheitert das Umbuchen, behält die
+  Familie ihren bisherigen Termin; zwischendurch kann ihn niemand wegbuchen.
+- **Die Anwendung prüft nicht, ob die Familie zur neuen Uhrzeit schon bei einer anderen Lehrkraft
+  sitzt.** Sehen Sie im Zweifel vorher mit der Suche nach **Name** nach.
+- **Nur an einem *aktiven* Sprechtag.** Ist er abgesagt oder abgeschlossen, fehlt das Symbol.
+
+## Wenn …
+
+### … der Dialog keinen freien Termin anbietet
+
+Er zeigt dann *Diese Lehrkraft hat an diesem Sprechtag keinen weiteren freien Termin.* und
+**Umbuchen** bleibt grau. Fragen Sie die Familie, ob ein Gespräch außerhalb des Sprechtags
+passt, oder stornieren Sie die Buchung, wenn sie nicht kommen kann.
+
+### … beim Umbuchen eine Meldung erscheint
+
+Jemand war schneller. Die Auswertung lädt sich danach neu; die Familie behält ihren bisherigen
+Termin.
+
+- *Der gewählte Termin wurde soeben vergeben. Bitte wählen Sie einen anderen Slot.* — Eine Familie
+  hat ihn in derselben Minute gebucht. Öffnen Sie den Dialog erneut.
+- *Diese Buchung ist nicht mehr aktiv — sie wurde bereits storniert oder der Termin ist neu
+  vergeben.* — Die Buchung wurde an anderer Stelle schon geändert, etwa in einem zweiten Fenster.
+  Prüfen Sie die Zeile.
+- *Buchungen lassen sich nur an einem veröffentlichten Sprechtag ändern.* — Der Sprechtag wurde
+  inzwischen abgesagt oder abgeschlossen.
+
+## Verwandte Fälle
+
+- [Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/) — wenn die Familie nicht kommt
+- [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) — wenn sie zusätzlich zu einer anderen Lehrkraft will
+- *Eine Lehrkraft fällt aus* — wenn nicht eine Familie, sondern die Lehrkraft die Uhrzeit nicht halten kann

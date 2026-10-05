@@ -188,37 +188,40 @@ ON CONFLICT (id) DO NOTHING;
 -- ---------------------------------------------------------------------------
 -- Buchungen: ein paar Familien, damit Auswertung und Belegung etwas zeigen. Der Termin ergibt sich
 -- aus Sprechtag, der Lehrkraft des Lehrauftrags und dem Slot (0 = erster Slot des Tages); Lehrkraft,
--- Klasse und Fach stehen denormalisiert an der Buchung wie beim echten Buchen.
+-- Klasse und Fach stehen denormalisiert an der Buchung wie beim echten Buchen. Eine Buchung am
+-- aktiven Sprechtag ist storniert und ihr Termin wieder frei: Ohne sie fehlte der Auswertung der
+-- Schalter „Stornierte anzeigen“, den die Anwender-Doku zeigt (Issue #206).
 -- ---------------------------------------------------------------------------
 INSERT INTO buchungen (id, erstellt_am, status, schueler_name, eltern_name, eltern_email, notiz,
                        lehrauftrag_id, termin_id, lehrkraft_id, lehrkraft_name, lehrkraft_kuerzel,
                        klasse_name, fach_name)
 SELECT md5('demo-buchung:' || s.id || ':' || la.id || ':' || b.slot)::uuid,
-       b.erstellt_am, 'ZUGESAGT', b.kind, b.eltern, b.email, b.notiz,
+       b.erstellt_am, b.status, b.kind, b.eltern, b.email, b.notiz,
        la.id,
        md5('demo-termin:' || s.id || ':' || la.lehrer_id || ':' || b.slot)::uuid,
        l.id, l.vorname || ' ' || l.nachname, l.kuerzel, k.name, f.name
   FROM (VALUES
     -- Aktiv
-    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000001', 0, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 2 + time '19:12'),
-    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000002', 2, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 2 + time '19:12'),
-    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000006', 3, 'Lena Neumann',  'Sandra Neumann', 'neumann@example.org',  NULL,                             CURRENT_DATE - 1 + time '20:41'),
-    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000008', 5, 'Lena Neumann',  'Sandra Neumann', 'neumann@example.org',  'Leseförderung besprechen',       CURRENT_DATE - 1 + time '20:41'),
-    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000012', 4, 'Paul Becker',   'Thomas Becker',  'becker@example.org',   NULL,                             CURRENT_DATE - 1 + time '07:55'),
-    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000014', 1, 'Paul Becker',   'Thomas Becker',  'becker@example.org',   NULL,                             CURRENT_DATE - 1 + time '07:55'),
-    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000001', 1, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   NULL,                             CURRENT_DATE - 1 + time '06:30'),
-    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000005', 6, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   'Knieverletzung, Sportbefreiung', CURRENT_DATE - 1 + time '06:30'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000001', 0, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 2 + time '19:12', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000002', 2, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 2 + time '19:12', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000006', 3, 'Lena Neumann',  'Sandra Neumann', 'neumann@example.org',  NULL,                             CURRENT_DATE - 1 + time '20:41', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000008', 5, 'Lena Neumann',  'Sandra Neumann', 'neumann@example.org',  'Leseförderung besprechen',       CURRENT_DATE - 1 + time '20:41', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000012', 4, 'Paul Becker',   'Thomas Becker',  'becker@example.org',   NULL,                             CURRENT_DATE - 1 + time '07:55', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000014', 1, 'Paul Becker',   'Thomas Becker',  'becker@example.org',   NULL,                             CURRENT_DATE - 1 + time '07:55', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000001', 1, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   NULL,                             CURRENT_DATE - 1 + time '06:30', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000005', 6, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   'Knieverletzung, Sportbefreiung', CURRENT_DATE - 1 + time '06:30', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000001', '00000000-0000-0000-0004-000000000001', 2, 'Ben Krüger',    'Petra Krüger',   'krueger@example.org',  NULL,                             CURRENT_DATE - 3 + time '17:20', 'STORNIERT'),
     -- Anmeldung beendet
-    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000021', 0, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03'),
-    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000024', 2, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03'),
+    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000021', 0, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000002', '00000000-0000-0000-0004-000000000024', 2, 'Noah Hartmann', 'Jens Hartmann',  'hartmann@example.org', NULL,                             CURRENT_DATE - 9 + time '18:03', 'ZUGESAGT'),
     -- Abgeschlossen
-    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000001', 0, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 35 + time '19:40'),
-    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000003', 2, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 35 + time '19:40'),
-    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000016', 1, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15'),
-    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000019', 3, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     'Nachprüfung im Frühjahr?',       CURRENT_DATE - 33 + time '12:15'),
-    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000017', 5, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15'),
-    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000002', 4, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   NULL,                             CURRENT_DATE - 30 + time '21:02')
-  ) AS b(sprechtag_id, lehrauftrag_id, slot, kind, eltern, email, notiz, erstellt_am)
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000001', 0, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 35 + time '19:40', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000003', 2, 'Emre Yilmaz',   'Ayşe Yilmaz',    'yilmaz@example.org',   NULL,                             CURRENT_DATE - 35 + time '19:40', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000016', 1, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000019', 3, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     'Nachprüfung im Frühjahr?',       CURRENT_DATE - 33 + time '12:15', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000017', 5, 'Jonas Wolf',    'Martina Wolf',   'wolf@example.org',     NULL,                             CURRENT_DATE - 33 + time '12:15', 'ZUGESAGT'),
+    ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0004-000000000002', 4, 'Mia Schulz',    'Katrin Schulz',  'schulz@example.org',   NULL,                             CURRENT_DATE - 30 + time '21:02', 'ZUGESAGT')
+  ) AS b(sprechtag_id, lehrauftrag_id, slot, kind, eltern, email, notiz, erstellt_am, status)
   JOIN sprechtage s   ON s.id  = b.sprechtag_id::uuid
   JOIN lehrauftrag la ON la.id = b.lehrauftrag_id::uuid
   JOIN lehrer l       ON l.id  = la.lehrer_id

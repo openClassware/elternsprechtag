@@ -1,0 +1,87 @@
+---
+title: Die Anmeldung verlängern oder wieder öffnen
+description: Die Anmeldefrist ändern, damit die Eltern länger oder wieder selbst buchen können — oder die Anmeldung früher schließen.
+phase: buchungsphase
+order: 5
+wer: organisator
+wann: Buchungsphase — der Anmeldeschluss naht oder ist vorbei, und es fehlen noch Buchungen
+voraussetzung: Der Sprechtag ist veröffentlicht (Status Aktiv)
+dauer: unter einer Minute
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Den Anmeldeschluss verschieben, indem Sie die Anmeldefrist ändern. Ist er schon vorbei, öffnet eine
+kürzere Frist die Anmeldung wieder.
+
+## Ist das der richtige Fall?
+
+| Ihre Lage | Ihr Weg |
+|---|---|
+| Viele Familien sollen noch selbst buchen können | **Bearbeiten** — diese Seite |
+| Eine oder zwei Familien brauchen noch einen Termin | [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) — das geht auch ohne offene Anmeldung |
+| Die Anmeldung soll früher schließen | **Bearbeiten** — diese Seite, siehe *Wenn …* unten |
+
+## Schritte
+
+<Steps>
+
+1. Öffnen Sie **Elternsprechtage verwalten**.
+
+2. Öffnen Sie in der Zeile des Sprechtags das Menü **⋮** und wählen Sie **Bearbeiten**.
+
+3. Ändern Sie im Block **Termin & Zeiten** die **Anmeldefrist (Tage vor dem Sprechtag)**. Eine
+   kleinere Zahl hält die Anmeldung länger offen. Unter dem Feld steht, bis wann die Eltern dann
+   buchen können, etwa **Anmeldung bis …**.
+
+   ![Feld „Anmeldefrist (Tage vor dem Sprechtag)“ mit den Knöpfen „−“ und „+“ zum Herunter- und Hochzählen. Darunter steht das Datum, das sich aus der Frist ergibt: „Anmeldung bis …“.](../../../assets/screenshots/die-anmeldung-verlaengern-oder-wieder-oeffnen/anmeldefrist.png)
+
+4. Klicken Sie auf **Speichern**.
+
+</Steps>
+
+## Was danach passiert
+
+- **Der Zugangs-Link** nimmt sofort wieder Buchungen an, bis zum neuen Anmeldeschluss. War die
+  Anmeldung schon beendet, zeigt er wieder die Buchungsseite statt *Die Anmeldung ist beendet*.
+- **Die Buchungsseite** nennt den neuen Anmeldeschluss im Kopf, etwa *Anmeldung bis einschließlich
+  …*.
+- **Die Familien bekommen keine E-Mail.** Dass die Anmeldung wieder offen ist, sagen Sie ihnen auf
+  dem üblichen Weg der Schule. Der Zugangs-Link ist derselbe wie vorher.
+- **Bestehende Buchungen** bleiben, wie sie sind.
+
+## Regeln
+
+- **Die Anmeldefrist zählt Tage vor dem Sprechtag, zwischen 0 und 28.** Bei 1 können die Eltern
+  bis einschließlich zum Vortag buchen, bei 7 bis eine Woche vorher.
+- **Länger als bis zum Beginn des Sprechtags geht es nicht.** 0 heißt: Die Anmeldung schließt mit
+  dem ersten Termin. So kann niemand online einen Termin buchen, der schon begonnen hat.
+- **Die Frist bleibt nach dem Veröffentlichen änderbar,** anders als Datum, Zeiten und Klassen. Sie
+  erzeugt keinen Termin und macht keine Buchung ungültig.
+- **Ist der Sprechtag *Abgeschlossen*, öffnet sich nichts mehr.** Das Formular lässt sich dann nicht
+  mehr speichern.
+
+## Wenn …
+
+### … die Anmeldung früher schließen soll
+
+Setzen Sie die Frist höher. Liegt der neue Anmeldeschluss schon in der Vergangenheit, ist die
+Anmeldung sofort beendet. Wer gerade bucht, bekommt beim Abschicken *Ihre Termine wurden nicht
+gebucht – die Anmeldung ist inzwischen beendet.* Gebuchte Termine bleiben.
+
+### … eine Lehrkraft ausfällt und die Anmeldung schon beendet ist
+
+Die Ausfall-Mail führt die Familien nur zurück in die Buchung, solange die Anmeldung offen ist.
+Öffnen Sie sie vorher wieder, können die Familien selbst einen Ersatztermin wählen. Sonst vergeben
+Sie die Ersatztermine mit [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/).
+Siehe *Eine Lehrkraft fällt aus*.
+
+### … Sie beim Veröffentlichen die Meldung bekommen haben, dass der Anmeldeschluss vorbei ist
+
+Die Frist war für das Datum zu lang. Verkürzen Sie sie wie oben beschrieben.
+
+## Verwandte Fälle
+
+- [Eine Familie nachtragen](/anwendungsfaelle/eine-familie-nachtragen/) — wenn nur einzelne Familien noch einen Termin brauchen
+- [Einen Sprechtag bearbeiten](/anwendungsfaelle/einen-sprechtag-bearbeiten/) — was sich sonst nach dem Veröffentlichen noch ändern lässt
+- [Den Zugangs-Link an die Eltern weitergeben](/anwendungsfaelle/den-zugangs-link-an-die-eltern-weitergeben/) — wenn Sie die Familien auf die offene Anmeldung hinweisen
