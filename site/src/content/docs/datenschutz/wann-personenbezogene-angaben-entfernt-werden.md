@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 Die Angaben der Familien bleiben nur eine begrenzte Zeit nach dem Sprechtag gespeichert. Danach
-ersetzt die Anwendung sie in der Nacht von selbst durch Platzhalter. Niemand muss dafür etwas tun.
+ersetzt die Anwendung sie in der Nacht von selbst durch Platzhalter. Sie müssen dafür nichts tun.
 
 ## Die Aufbewahrungsfrist
 
@@ -29,7 +29,7 @@ und löscht die **Notiz**. Das gilt auch für stornierte Buchungen.
 **Stehen bleiben** der Termin, die Lehrkraft, die Klasse und das Fach. Daraus sieht die Schule,
 wie der Sprechtag ausgelastet war, und plant den nächsten. In einer kleinen Klasse lässt sich eine
 einzelne Zeile mit der Klassenliste unter Umständen wieder einem Kind zuordnen. Ob das hinnehmbar
-ist, beurteilt die Schule als Verantwortliche.
+ist, beurteilen Sie als Verantwortliche.
 
 Das Entfernen ist **endgültig**. Auch eine später verlängerte Frist holt die Namen nicht zurück.
 
@@ -45,14 +45,14 @@ Das Entfernen ist **endgültig**. Auch eine später verlängerte Frist holt die 
 ## Was das Entfernen nicht erfasst
 
 - **Datensicherungen.** Eine Sicherung der Datenbank, die vor dem Entfernen entstand, enthält die
-  Angaben weiter. Wie lange Sicherungen aufbewahrt werden, regelt die Schule.
+  Angaben weiter. Wie lange Sie Sicherungen aufbewahren, regeln Sie selbst.
 - **Versandte E-Mails.** Was in den Postfächern der Eltern, im Sekretariat oder beim Mailanbieter
   liegt, erreicht die Anwendung nicht.
-- **Ausgedruckte Tagespläne und heruntergeladene Dateien.** Was die Schule ausgedruckt oder
-  gespeichert hat, entsorgt sie selbst.
+- **Ausgedruckte Tagespläne und heruntergeladene Dateien.** Was Sie ausgedruckt oder gespeichert
+  haben, entsorgen Sie selbst.
 
 ## Früher entfernen
 
-Verlangt eine Familie die Löschung ihrer Daten vor Ablauf der Frist, entfernt der Organisator ihre
-Angaben sofort. Es wirkt dieselbe Ersetzung wie nach der Frist. Siehe
+Verlangt eine Familie die Löschung ihrer Daten vor Ablauf der Frist, entfernen Sie als Organisator
+ihre Angaben sofort. Es wirkt dieselbe Ersetzung wie nach der Frist. Siehe
 [Löschverlangen](/datenschutz/loeschverlangen/).

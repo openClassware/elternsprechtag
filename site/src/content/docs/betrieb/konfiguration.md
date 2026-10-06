@@ -29,7 +29,7 @@ Zwei Mechanismen greifen dabei nebeneinander:
   `ELTERNSPRECHTAG_SCHOOLNAME` → `elternsprechtag.schoolname`. So lassen sich auch Werte setzen,
   für die in `application.properties` kein Platzhalter steht.
 
-Die Defaults sind **Entwicklungswerte**. Eine echte Instanz setzt mindestens die
+Die Defaults sind **Entwicklungswerte**. Für eine echte Instanz setzen Sie mindestens die
 Datenbankverbindung und den Zugang des Organisators. Ohne jeden Default ist die
 [öffentliche Adresse](#öffentliche-adresse): Ohne sie startet die Anwendung gar nicht.
 
@@ -74,7 +74,7 @@ bereits **fest in `application.properties`**, direkt vor dem Platzhalter:
 elternsprechtag.security.organizer.password={bcrypt}${ORGANIZER_PASSWORD_HASH:…}
 ```
 
-Grund ist Springs Platzhalter-Parser: Der Default eines `${VAR:default}` darf selbst kein `}`
+Der Grund: Der Default eines Platzhalters `${VAR:default}` darf selbst kein `}`
 enthalten — stünde `{bcrypt}` im Platzhalter, endete der Ausdruck zu früh. Die Umgebungsvariable
 liefert deshalb **nur den Hash**. Wer das Präfix mitgibt, erzeugt `{bcrypt}{bcrypt}$2a$…` und kann
 sich nicht anmelden.
@@ -99,7 +99,7 @@ die kurzen Namen sind richtig.
 ### Fallstrick: Der Default-Zugang ist öffentlich bekannt
 
 Ohne gesetzte Variablen gilt `user` mit dem im Quellcode hinterlegten Hash. Dieser Zugang ist für
-die Entwicklung gedacht und für jeden nachlesbar. Eine erreichbare Instanz setzt beide Werte.
+die Entwicklung gedacht und für jeden nachlesbar. Für eine erreichbare Instanz setzen Sie beide Werte.
 
 ## Mail
 
@@ -151,9 +151,10 @@ gesetzt. Er ist der Wert, den jede Schule an sich anpasst.
 
 ## Öffentliche Adresse
 
-Die Adresse, unter der die **Eltern** die Anwendung erreichen. Aus ihr entsteht der Zugangs-Link:
-im Dialog **Link teilen** der Sprechtag-Liste, im Formular des Sprechtags und in der E-Mail beim Ausfall
-einer Lehrkraft, die vor dem Anmeldeschluss zurück in die Buchung führt.
+Die Adresse, unter der die **Eltern** die Anwendung erreichen. Mit ihr beginnt der Zugangs-Link
+jedes Sprechtags: im Dialog **Link teilen** unter **Elternsprechtage verwalten**, im Formular des
+Sprechtags und in der E-Mail beim Ausfall einer Lehrkraft, die vor dem Anmeldeschluss zurück in die
+Buchung führt.
 
 | Umgebungsvariable | Default | Bedeutung |
 |---|---|---|
@@ -186,8 +187,8 @@ Schule. Ein Beispielwert wäre hier kein harmloser Platzhalter: Echte Absagen gi
 erfundene Adresse.
 
 Ist die Variable nicht gesetzt, bietet das Nachtragen das Häkchen
-**Familie hat keine eigene E-Mail-Adresse** deshalb gar nicht erst an. Der Organisator muss dann
-für jede nachgetragene Familie eine echte E-Mail-Adresse erfassen.
+**Familie hat keine eigene E-Mail-Adresse** deshalb gar nicht erst an. Für jede nachgetragene
+Familie ist dann eine echte E-Mail-Adresse nötig.
 
 ## Aufbewahrungsfrist
 
@@ -202,8 +203,6 @@ Schule bedeutet, steht unter
 | `ELTERNSPRECHTAG_AUFBEWAHRUNGSFRIST_TAGE` | `30` | Frist in Tagen, mindestens 1. |
 | `ELTERNSPRECHTAG_ANONYMISIERUNG_EMAIL` | `noreply@openclassware.de` | Die E-Mail-Adresse, die jede Buchung nach dem Entfernen statt der Elternadresse trägt — nach Ablauf der Frist wie nach einem Löschverlangen. Sie sollte keine Post annehmen und darf nicht leer sein. |
 
-Das Entfernen ist endgültig: Eine nachträglich verlängerte Frist holt ersetzte Namen nicht zurück.
-
 ## Zeitgesteuerte Läufe
 
 Drei Vorgänge startet die Anwendung von selbst, jeder zu einer eigenen Uhrzeit. Die Zeiten sind
@@ -212,7 +211,7 @@ Spring-Cron-Ausdrücke mit sechs Feldern: Sekunde, Minute, Stunde, Tag, Monat, W
 | Umgebungsvariable | Default | Bedeutung |
 |---|---|---|
 | `ELTERNSPRECHTAG_ERINNERUNG_CRON` | `0 0 7 * * *` | Versand der Erinnerungen, täglich um 7 Uhr. |
-| `ELTERNSPRECHTAG_ABSCHLUSS_CRON` | `0 30 0 * * *` | Abschluss: Jeder aktive Sprechtag, dessen Ende vorbei ist, wird *Abgeschlossen*. Täglich um 0:30 Uhr. |
+| `ELTERNSPRECHTAG_ABSCHLUSS_CRON` | `0 30 0 * * *` | Abschluss: Jeder Sprechtag im Status *Aktiv*, dessen Ende vorbei ist, wird *Abgeschlossen*. Täglich um 0:30 Uhr. |
 | `ELTERNSPRECHTAG_ANONYMISIERUNG_CRON` | `0 0 1 * * *` | Entfernen der personenbezogenen Angaben nach Ablauf der [Aufbewahrungsfrist](#aufbewahrungsfrist). Täglich um 1 Uhr. |
 
 Ein verpasster Lauf wird nicht nachgeholt; der nächste Lauf erledigt, was dann fällig ist. Eine

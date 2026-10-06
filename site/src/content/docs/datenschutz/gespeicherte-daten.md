@@ -10,7 +10,7 @@ ist **keine Muster-Datenschutzerklärung**; warum es keine gibt, steht unter
 
 ## Stammdaten
 
-Die Schul-IT legt sie an, sie beschreiben die Schule:
+Die Schul-IT legt sie an. Sie beschreiben die Schule:
 
 - **Lehrkräfte**: Vorname, Nachname, Kürzel.
 - **Klassen**: Bezeichnung, etwa `10a`.
@@ -41,8 +41,8 @@ Dazu speichert die Anwendung den Zeitpunkt der Buchung, den gebuchten Termin und
 Trägt der Organisator eine Familie nach, gibt er dieselben Angaben ein.
 
 Die Notiz ist ein freies Textfeld: Was Eltern hineinschreiben, bestimmt mit, wie sensibel die
-Daten sind. Ein Hinweis an die Eltern, dort keine Angaben zur Gesundheit oder andere besonders
-schützenswerte Daten einzutragen, ist zu empfehlen.
+Daten sind. Weisen Sie die Eltern deshalb darauf hin, dort keine Angaben zur Gesundheit oder
+andere besonders schützenswerte Daten einzutragen.
 
 ## Weitere Verarbeitung
 
