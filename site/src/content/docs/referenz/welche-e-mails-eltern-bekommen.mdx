@@ -1,0 +1,108 @@
+---
+title: Welche E-Mails Eltern bekommen
+description: Bestätigung, Umbuchung, Erinnerung, Ausfall und Absage im Wortlaut, mit dem Anlass, der sie auslöst — und wann keine E-Mail hinausgeht.
+sidebar:
+  order: 4
+---
+
+import { Code } from '@astrojs/starlight/components';
+import bestaetigung from '../../../assets/screenshots/welche-e-mails-eltern-bekommen/bestaetigung.txt?raw';
+import umbuchung from '../../../assets/screenshots/welche-e-mails-eltern-bekommen/umbuchung.txt?raw';
+import erinnerung from '../../../assets/screenshots/welche-e-mails-eltern-bekommen/erinnerung.txt?raw';
+import ausfall from '../../../assets/screenshots/welche-e-mails-eltern-bekommen/ausfall.txt?raw';
+import ausfallNachAnmeldeschluss from '../../../assets/screenshots/welche-e-mails-eltern-bekommen/ausfall-nach-anmeldeschluss.txt?raw';
+import absage from '../../../assets/screenshots/welche-e-mails-eltern-bekommen/absage.txt?raw';
+
+Die Anwendung schreibt Eltern nur aus fünf Anlässen, immer an die Adresse, die bei der Buchung
+angegeben wurde. Die Texte unten sind keine Abschrift: Sie entstehen bei jedem Bau dieser Site
+in einer Beispielinstanz und stimmen deshalb Wort für Wort mit dem überein, was die Anwendung
+verschickt. Nur Sprechtag, Kind, Termine und Schulkontakt stammen aus dem Beispiel; die Grußformel
+trägt den Namen Ihrer Schule.
+
+| Anlass | E-Mail | Auslöser |
+|---|---|---|
+| Eine Familie bucht, oder Sie tragen nach | [Bestätigung](#bestätigung-nach-dem-buchen) | Sofort |
+| Sie buchen einen Termin um | [Umbuchung](#umbuchung) | Sofort |
+| Der Sprechtag steht bevor | [Erinnerung](#erinnerung) | Die Anwendung, am Morgen, so viele Tage vorher wie eingestellt |
+| Eine Lehrkraft fällt aus | [Ausfall](#ausfall-einer-lehrkraft) | Sofort |
+| Sie sagen den Sprechtag ab | [Absage](#absage) | Sofort |
+
+## Für alle E-Mails gilt
+
+- **Eine E-Mail je Kind.** Hat ein Kind mehrere Termine, stehen sie in einer E-Mail. Geschwister
+  bekommen je eine eigene, auch an dieselbe Adresse.
+- **Der Schulkontakt steht in jeder E-Mail.** Er ist der Weg der Eltern zurück zur Schule — für
+  alles, was sie über den Zugangs-Link nicht selbst erledigen können.
+- **Familien ohne eigene E-Mail-Adresse:** Haben Sie beim Nachtragen die Stellvertreteradresse der
+  Schule eingetragen, landen alle E-Mails dieser Familie im Sekretariat. Von dort geben Sie sie
+  weiter, meist per Telefon.
+- **Kommt eine E-Mail nicht an**, weil der Mailserver sie ablehnt, gilt der Vorgang trotzdem. Die
+  Auswertung zeigt die Familie dann unter **Nicht erreicht**:
+  [Nicht erreichte Familien nachfassen](/anwendungsfaelle/nicht-erreichte-familien-nachfassen/).
+- **Keine E-Mail enthält eine Aktion.** Abbestellen, Stornieren oder Umbuchen per Link gibt es
+  nicht. Nur die Ausfall-Mail enthält, solange die Anmeldung läuft, den Zugangs-Link zum
+  Neubuchen.
+
+## Bestätigung nach dem Buchen
+
+Geht hinaus, sobald eine Familie über den Zugangs-Link gebucht hat oder Sie sie
+[nachgetragen](/anwendungsfaelle/eine-familie-nachtragen/) haben. Sie ist der einzige Beleg der
+Familie über ihre Termine und listet alle Termine dieses Vorgangs, jeweils mit Notiz.
+
+<Code code={bestaetigung} lang="txt" title="Bestätigung" wrap />
+
+## Umbuchung
+
+Geht hinaus, wenn Sie [eine Buchung umbuchen](/anwendungsfaelle/eine-buchung-umbuchen/). Sie nennt
+nur den geänderten Termin; die übrigen Termine des Kindes gelten unverändert weiter. Eine Absage
+für den alten Termin gibt es nicht — eine E-Mail für einen Vorgang.
+
+<Code code={umbuchung} lang="txt" title="Umbuchung" wrap />
+
+## Erinnerung
+
+Verschickt die Anwendung selbst, am Morgen des Tages, der so viele Tage vor dem Sprechtag liegt,
+wie unter **Erinnerung (Tage vor dem Sprechtag)** eingetragen sind. Bei 0 geht keine hinaus. Sie
+fasst die geltenden Termine zusammen, ohne Notizen.
+
+<Code code={erinnerung} lang="txt" title="Erinnerung" wrap />
+
+Wer erst nach dem Versand bucht, bekommt keine Erinnerung — an einem abgesagten Sprechtag
+ohnehin nicht.
+
+## Ausfall einer Lehrkraft
+
+Geht hinaus, wenn Sie Termine einer Lehrkraft entfallen lassen:
+[Eine Lehrkraft fällt aus](/anwendungsfaelle/eine-lehrkraft-faellt-aus/). Die Familie erfährt,
+welche Termine entfallen. **Solange die Anmeldung läuft**, enthält die E-Mail den Zugangs-Link,
+über den die Familie selbst einen neuen Termin buchen kann:
+
+<Code code={ausfall} lang="txt" title="Ausfall, Anmeldung läuft noch" wrap />
+
+Im Beispiel steht dort die Adresse der Beispielinstanz; bei Ihnen ist es der Zugangs-Link Ihres
+Sprechtags.
+
+**Nach dem Anmeldeschluss** fehlt dieser Absatz. Einen Ersatztermin vergeben Sie dann selbst, per
+[Nachtragen](/anwendungsfaelle/eine-familie-nachtragen/):
+
+<Code code={ausfallNachAnmeldeschluss} lang="txt" title="Ausfall, Anmeldung beendet" wrap />
+
+## Absage
+
+Geht hinaus, wenn Sie [den Sprechtag absagen](/anwendungsfaelle/einen-sprechtag-absagen/), an jede
+Familie, die zu diesem Zeitpunkt noch einen Termin hat. Sie listet die entfallenden Termine.
+
+<Code code={absage} lang="txt" title="Absage" wrap />
+
+## Wann keine E-Mail hinausgeht
+
+- **Beim Stornieren** einer Buchung. Der Anlass ist fast immer der Anruf der Familie selbst; sie
+  weiß schon Bescheid. Siehe [Eine Buchung stornieren](/anwendungsfaelle/eine-buchung-stornieren/).
+- **Beim Entfernen der Angaben** einer Familie, ob auf ihren Wunsch oder nach Ablauf der
+  Aufbewahrungsfrist.
+- **Beim Abschluss** des Sprechtags in der Nacht danach.
+- **Bei Änderungen** an Titel, Ort, Beschreibung oder Schulkontakt eines veröffentlichten
+  Sprechtags. Ist eine Änderung wichtig, informieren Sie die Familien auf dem üblichen Weg der
+  Schule.
+- **An Lehrkräfte.** Die Anwendung schreibt nur Eltern. Lehrkräfte bekommen ihren Plan als
+  [Tagesplan-Blatt](/anwendungsfaelle/die-tagesplaene-drucken/).

@@ -1,7 +1,9 @@
 // Was die Screenshot-Module teilen: Anmeldung, Warten auf Vaadin, Aufnahme eines Ausschnitts, Ablage
-// erzeugter Dateien und der Hervorhebungsrahmen. Ein Modul bekommt das fertig verdrahtet vom Runner.
-import { mkdir, writeFile } from 'node:fs/promises';
+// erzeugter Dateien, der Hervorhebungsrahmen und das Postfach mit den Mails der App. Ein Modul bekommt
+// das fertig verdrahtet vom Runner.
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { leseMail, neueDateien } from './mails.mjs';
 
 /** Wie die Seiten am Desktop erscheinen: ein Laptop-Fenster, scharf für Retina-Anzeigen. */
 export const FENSTER = { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 };
@@ -26,10 +28,15 @@ export async function anmelden(page, { basis, benutzer, passwort }) {
 
 /**
  * Vaadin baut die View erst nach dem ersten Roundtrip auf, `networkidle` allein greift zu früh.
- * Gewartet wird, bis die Custom Elements definiert sind, dazu ein kurzer Puffer fürs Layout.
+ * Gewartet wird, bis die Vaadin-Komponenten definiert sind, dazu ein kurzer Puffer fürs Layout.
+ * Nur `vaadin-*`: Auf der Elternseite bleibt Flows eigener Container (`flow-container-root-…`) für
+ * immer undefiniert — die Bedingung würde nie wahr, jeder Aufruf liefe in den Timeout, und das
+ * Abfragen im Takt der Bildwiederholung brachte den Tab nach einer Weile zum Absturz.
  */
 export async function bereit(page) {
-	await page.waitForFunction(() => document.querySelectorAll(':not(:defined)').length === 0).catch(() => {});
+	await page
+		.waitForFunction(() => ![...document.querySelectorAll(':not(:defined)')].some((e) => e.localName.startsWith('vaadin-')))
+		.catch(() => {});
 	await page.waitForTimeout(300);
 }
 
@@ -69,5 +76,44 @@ export function ablage(ziel) {
 		const datei = path.join(ziel, name);
 		await writeFile(datei, inhalt);
 		return datei;
+	};
+}
+
+/**
+ * Das Postfach eines Laufs: die Mail-Ablage der App, wenn sie mit ELTERNSPRECHTAG_MAIL_ABLAGE
+ * läuft. `stand()` merkt sich, was schon da ist; `warte(stand, betreff)` liefert die erste danach
+ * abgelegte Mail, deren Betreff passt. Die App verschickt nach dem Speichern im Hintergrund, die
+ * Mail kommt also einen Moment nach dem Klick — beim Erinnerungs-Scheduler erst mit seinem
+ * nächsten Lauf.
+ *
+ * Ohne Verzeichnis scheitert erst der Zugriff, nicht der Lauf: Nur ein Modul, das Mails braucht,
+ * braucht die Ablage.
+ */
+export function postfach(verzeichnis) {
+	const fehlt = () => {
+		throw new Error(
+			'MAIL_ABLAGE ist nicht gesetzt — ohne die Mail-Ablage der App gibt es keine Mailtexte.\n' +
+				'Die App muss mit ELTERNSPRECHTAG_MAIL_ABLAGE auf dasselbe Verzeichnis laufen, siehe site/README.md.',
+		);
+	};
+	if (!verzeichnis) return { stand: fehlt, warte: fehlt };
+
+	const liste = async () => {
+		await mkdir(verzeichnis, { recursive: true });
+		return readdir(verzeichnis);
+	};
+	return {
+		stand: liste,
+		async warte(vorher, betreff, { timeout = 30_000 } = {}) {
+			const ende = Date.now() + timeout;
+			while (Date.now() < ende) {
+				for (const datei of neueDateien(vorher, await liste())) {
+					const mail = leseMail(await readFile(path.join(verzeichnis, datei), 'utf8'));
+					if (betreff.test(mail.betreff)) return mail;
+				}
+				await new Promise((weiter) => setTimeout(weiter, 250));
+			}
+			throw new Error(`Keine Mail mit Betreff ${betreff} in ${verzeichnis} nach ${timeout / 1000} s.`);
+		},
 	};
 }

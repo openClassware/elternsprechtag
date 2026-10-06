@@ -64,17 +64,25 @@ class DemoSeedMigrationTest {
     assertThat(
             jdbcTemplate.queryForList(
                 "select status from sprechtage order by status", String.class))
-        .containsExactly("ABGESCHLOSSEN", "ENTWURF", "VEROEFFENTLICHT", "VEROEFFENTLICHT");
+        .containsExactly(
+            "ABGESAGT", "ABGESCHLOSSEN", "ENTWURF", "VEROEFFENTLICHT", "VEROEFFENTLICHT");
     assertThat(count("termin")).isPositive();
     assertThat(count("buchungen")).isPositive();
   }
 
+  /** Jede Seite, die ein Elternlink zeigen kann — die Anwender-Doku fotografiert sie alle. */
   @Test
-  void dieElternlinksDerDemoZeigenBuchbarUndAnmeldungBeendet() {
+  void dieElternlinksDerDemoZeigenJedenZugangsstand() {
     assertThat(sprechtagszugang.oeffne("demo-aktiv").orElseThrow().stand())
         .isEqualTo(Zugangsstand.BUCHBAR);
     assertThat(sprechtagszugang.oeffne("demo-anmeldung-beendet").orElseThrow().stand())
         .isEqualTo(Zugangsstand.ANMELDUNG_BEENDET);
+    assertThat(sprechtagszugang.oeffne("demo-abgeschlossen").orElseThrow().stand())
+        .isEqualTo(Zugangsstand.VORBEI);
+    assertThat(sprechtagszugang.oeffne("demo-abgesagt").orElseThrow().stand())
+        .isEqualTo(Zugangsstand.ABGESAGT);
+    assertThat(sprechtagszugang.oeffne("demo-entwurf").orElseThrow().stand())
+        .isEqualTo(Zugangsstand.NICHT_VERFUEGBAR);
   }
 
   /** Ein Entwurf hat noch keine Termine — sie entstehen erst beim Veröffentlichen. */

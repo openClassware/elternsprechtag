@@ -1,4 +1,4 @@
--- Demo-Daten: Stammdaten (Fächer, Klassen, Lehrer, Lehraufträge) und dahinter vier Sprechtage mit
+-- Demo-Daten: Stammdaten (Fächer, Klassen, Lehrer, Lehraufträge) und dahinter fünf Sprechtage mit
 -- Terminen und Buchungen, je einer in jedem Zustand (Issue #123).
 --
 -- Diese Migration liegt bewusst NICHT unter `db/migration`, sondern in einem eigenen Verzeichnis,
@@ -112,7 +112,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- Sprechtage (Issue #123): je einer in jedem Zustand, den ein Besucher sehen will — aktiv,
--- Anmeldung beendet, abgeschlossen, Entwurf.
+-- Anmeldung beendet, abgeschlossen, Entwurf, abgesagt.
 --
 -- Alle Daten stehen relativ zu CURRENT_DATE: Der Demo-Deploy setzt die Datenbank täglich zurück
 -- und seedet neu, so stimmen die Zustände an jedem Tag. Die Zugangs-Tokens sind fest und
@@ -144,6 +144,13 @@ INSERT INTO sprechtage (id, titel, start_date, start_time, end_time, slot_in_min
    CURRENT_DATE + 56, '14:00', '18:00', 10, 'demo-entwurf',
    'Hauptgebäude, Erdgeschoss', NULL,
    'ENTWURF', E'Sekretariat, Frau Albers\nTel. 0123 456789\nMo–Fr 7:30–13:00 Uhr',
+   'KEINE', 7),
+  -- Abgesagt: in zehn Tagen, schon vor dem Anmeldeschluss abgesagt. Ohne ihn fehlte die
+  -- Hinweisseite „abgesagt“, die die Anwender-Doku unter dem Zugangs-Link zeigt (Issue #210).
+  ('00000000-0000-0000-0005-000000000005', 'Elternsprechtag Winter',
+   CURRENT_DATE + 10, '15:00', '18:00', 15, 'demo-abgesagt',
+   'Neubau, 1. Obergeschoss', NULL,
+   'ABGESAGT', E'Sekretariat, Frau Albers\nTel. 0123 456789\nMo–Fr 7:30–13:00 Uhr',
    'KEINE', 7)
 ON CONFLICT (id) DO NOTHING;
 
@@ -158,7 +165,8 @@ INSERT INTO sprechtage_klassen (sprechtag_id, klasse_id) VALUES
   ('00000000-0000-0000-0005-000000000003', '00000000-0000-0000-0002-000000000004'), -- 7a
   ('00000000-0000-0000-0005-000000000004', '00000000-0000-0000-0002-000000000001'), -- 5a
   ('00000000-0000-0000-0005-000000000004', '00000000-0000-0000-0002-000000000002'), -- 5b
-  ('00000000-0000-0000-0005-000000000004', '00000000-0000-0000-0002-000000000003')  -- 6a
+  ('00000000-0000-0000-0005-000000000004', '00000000-0000-0000-0002-000000000003'), -- 6a
+  ('00000000-0000-0000-0005-000000000005', '00000000-0000-0000-0002-000000000006')  -- 8a
 ON CONFLICT (sprechtag_id, klasse_id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -190,7 +198,8 @@ SELECT md5('demo-termin:' || s.id || ':' || l.lehrer_id || ':' || slot)::uuid,
     0, (extract(epoch FROM s.end_time - s.start_time) / 60)::int / s.slot_in_minutes - 1) AS slot
  WHERE s.id IN ('00000000-0000-0000-0005-000000000001',
                 '00000000-0000-0000-0005-000000000002',
-                '00000000-0000-0000-0005-000000000003')
+                '00000000-0000-0000-0005-000000000003',
+                '00000000-0000-0000-0005-000000000005')
 ON CONFLICT (id) DO NOTHING;
 
 -- ---------------------------------------------------------------------------

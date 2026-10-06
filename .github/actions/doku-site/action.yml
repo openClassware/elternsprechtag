@@ -61,8 +61,13 @@ runs:
         SPRING_DOCKER_COMPOSE_ENABLED: 'false'
         ELTERNSPRECHTAG_OEFFENTLICHE_URL: http://localhost:8080
         # Ohne sie fehlt im Nachtragen der Schalter „Familie hat keine eigene E-Mail-Adresse“, den
-        # die Fallseite zeigt. Gebucht wird in den Screenshots nie, es geht keine Mail hinaus.
+        # die Fallseite zeigt. Am Seed selbst wird nie gebucht.
         ELTERNSPRECHTAG_STELLVERTRETERADRESSE: sekretariat@example.org
+        # Die Mails gehen nicht hinaus, sondern als Dateien in die Ablage: Daraus greift das
+        # Screenshot-Modul der Seite „Welche E-Mails Eltern bekommen“ die Texte ab.
+        ELTERNSPRECHTAG_MAIL_ABLAGE: ${{ runner.temp }}/mails
+        # Die Erinnerung kommt sonst einmal am Morgen; im Lauf muss sie nach Sekunden kommen.
+        ELTERNSPRECHTAG_ERINNERUNG_CRON: '*/5 * * * * *'
       run: |
         jar=$(ls target/*.jar | head -n 1)
         nohup java -jar "$jar" > "$RUNNER_TEMP/app.log" 2>&1 &
@@ -87,6 +92,8 @@ runs:
     - name: Screenshots erzeugen
       shell: bash
       working-directory: site
+      env:
+        MAIL_ABLAGE: ${{ runner.temp }}/mails
       run: npm run screenshots
 
     - name: Site bauen
