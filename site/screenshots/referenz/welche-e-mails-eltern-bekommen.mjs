@@ -7,12 +7,10 @@
 // liegt der Sprechtag genau so viele Tage voraus, wie die Erinnerung vorher läuft, und die App
 // läuft mit einem Takt von Sekunden statt einmal am Morgen (ELTERNSPRECHTAG_ERINNERUNG_CRON).
 import { alsTextblock } from '../mails.mjs';
-import { bucheAlsFamilie, legeSprechtagAn, sageAb } from '../eigener-sprechtag.mjs';
+import { EIGENER_SPRECHTAG, FAMILIE as MUELLER, bucheAlsFamilie, legeSprechtagAn, sageAb, setzeFeld } from '../eigener-sprechtag.mjs';
 
 const FAMILIE = {
-	name: 'Anna Müller',
-	kind: 'Lukas Müller',
-	email: 'anna.mueller@example.org',
+	...MUELLER,
 	klasse: '8a',
 	// Drei Lehrkräfte: Eine Buchung wird umgebucht, zwei entfallen nacheinander — einmal vor und
 	// einmal nach dem Anmeldeschluss —, und für die Absage muss danach noch eine gelten.
@@ -28,7 +26,7 @@ export default async function (werkzeug) {
 	const sichere = async (name, mail) => ablegen(`${name}.txt`, alsTextblock(mail));
 
 	const sprechtag = await legeSprechtagAn(page, werkzeug, {
-		titel: 'Elternsprechtag Frühjahr',
+		titel: EIGENER_SPRECHTAG,
 		inTagen: 2,
 		erinnerung: 2,
 		anmeldefrist: 1,
@@ -66,8 +64,7 @@ export default async function (werkzeug) {
 	// … und nach dem Anmeldeschluss ohne ihn. Die längere Frist schließt die Anmeldung sofort.
 	await page.goto(`${basis}/sprechtag/${sprechtag.id}`, { waitUntil: 'networkidle' });
 	await bereit(page);
-	await page.getByLabel('Anmeldefrist (Tage vor dem Sprechtag)', { exact: true }).fill('3');
-	await page.getByLabel('Anmeldefrist (Tage vor dem Sprechtag)', { exact: true }).blur();
+	await setzeFeld(page.getByLabel('Anmeldefrist (Tage vor dem Sprechtag)', { exact: true }), '3');
 	await bereit(page);
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await page.waitForURL((url) => !url.pathname.startsWith('/sprechtag/'));

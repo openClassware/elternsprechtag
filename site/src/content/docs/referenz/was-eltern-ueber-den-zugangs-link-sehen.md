@@ -37,12 +37,12 @@ Darunter buchen Eltern in drei Schritten:
    einer anderen Lehrkraft lässt sich nicht wählen — niemand sitzt an zwei Tischen zugleich. Zu jedem
    Termin können Eltern eine **Notiz für Lehrkraft** schreiben.
 
-   ![Schritt „Lehrkräfte und Termine“ für die Klasse 5a: fünf Lehrkräfte mit Kürzel und Fach. Bei Michael Kern ist 14:10 gewählt und die Termine sind aufgeklappt, belegte Termine sind ausgegraut, darunter das Feld „Notiz für Lehrkraft“. Bei Anna Krause zeigt ein Abzeichen den gewählten Termin 14:20.](../../../assets/screenshots/was-eltern-ueber-den-zugangs-link-sehen/termine.png)
+   ![Schritt „Lehrkräfte und Termine“: die Lehrkräfte der Klasse mit Kürzel und Fach. Bei einer Lehrkraft sind die Termine aufgeklappt, einer ist gewählt, belegte sind ausgegraut, darunter das Feld „Notiz für Lehrkraft“. Bei einer zweiten Lehrkraft zeigt ein Abzeichen den gewählten Termin.](../../../assets/screenshots/was-eltern-ueber-den-zugangs-link-sehen/termine.png)
 
 3. **Ihre Auswahl**: Die gewählten Termine mit Uhrzeit und Notiz. Mit dem Kreuz nehmen Eltern einen
    wieder heraus.
 
-   ![Schritt „Ihre Auswahl“: Michael Kern um 14:10 Uhr und Anna Krause um 14:20 Uhr mit der Notiz „Leseförderung besprechen“, jede Zeile mit einem Kreuz zum Entfernen.](../../../assets/screenshots/was-eltern-ueber-den-zugangs-link-sehen/auswahl.png)
+   ![Schritt „Ihre Auswahl“: zwei gewählte Termine mit Lehrkraft, Uhrzeit und Fach, einer mit der Notiz „Leseförderung besprechen“, jede Zeile mit einem Kreuz zum Entfernen.](../../../assets/screenshots/was-eltern-ueber-den-zugangs-link-sehen/auswahl.png)
 
 Unten zählt die Leiste mit, was gewählt ist. Gebucht wird erst mit dem Knopf, und zwar alle
 gewählten Termine auf einmal. Fehlt noch eine Angabe, sagt die Leiste, welche.

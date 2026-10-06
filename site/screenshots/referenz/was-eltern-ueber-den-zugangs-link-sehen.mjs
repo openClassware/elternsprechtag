@@ -3,13 +3,8 @@
 // den Sprechtagen des Demo-Seeds, deren Zugangs-Links sprechend sind (`demo-aktiv` …) — dort wird
 // nichts abgeschickt. Die Bestätigung braucht eine echte Buchung, die entsteht an einem eigenen
 // Sprechtag, der am Ende abgesagt wird.
-import { bucheAlsFamilie, fuelleAus, legeSprechtagAn, sageAb } from '../eigener-sprechtag.mjs';
+import { EIGENER_SPRECHTAG, FAMILIE, bucheAlsFamilie, fuelleAus, legeSprechtagAn, sageAb } from '../eigener-sprechtag.mjs';
 
-const FAMILIE = {
-	name: 'Anna Müller',
-	kind: 'Lukas Müller',
-	email: 'anna.mueller@example.org',
-};
 
 export default async function (werkzeug) {
 	const { page, basis, foto, bereit } = werkzeug;
@@ -44,7 +39,7 @@ export default async function (werkzeug) {
 
 	// Die Bestätigung nach dem Buchen, an einem eigenen Sprechtag.
 	const sprechtag = await legeSprechtagAn(page, werkzeug, {
-		titel: 'Elternsprechtag Frühjahr',
+		titel: EIGENER_SPRECHTAG,
 		inTagen: 14,
 		erinnerung: 1,
 		anmeldefrist: 1,

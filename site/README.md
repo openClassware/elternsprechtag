@@ -238,7 +238,8 @@ die Mailtexte der Seite *Welche E-Mails Eltern bekommen*. CI erzeugt alles bei j
    ```
 
    `ORGANIZER_USERNAME` (Default `user`) und `BASE_URL` (Default `http://localhost:8080`) gehen
-   ebenfalls. `MAIL_ABLAGE` ist dasselbe Verzeichnis wie `ELTERNSPRECHTAG_MAIL_ABLAGE` der App. Gebraucht wird ein lokal installiertes Chrome.
+   ebenfalls. `MAIL_ABLAGE` ist dasselbe Verzeichnis wie `ELTERNSPRECHTAG_MAIL_ABLAGE` der App.
+   Gebraucht wird ein lokal installiertes Chrome.
 
 **Ein Modul je Seite**, und nur, wenn die Seite Bilder oder Mailtexte hat:
 `screenshots/faelle/<slug>.mjs` für eine Fallseite, `screenshots/referenz/<slug>.mjs` für eine

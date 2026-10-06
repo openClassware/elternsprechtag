@@ -11,6 +11,13 @@
 /** Der abgesagte Sprechtag aus dem Demo-Seed, Vorlage jeder Kopie. */
 const VORLAGE = 'Elternsprechtag Winter';
 
+/** Titel des eigenen Sprechtags. Alle Module, die einen brauchen, teilen ihn — `legeSprechtagAn` räumt
+ * vorher auf, was ein anderes Modul darunter hinterlassen hat. */
+export const EIGENER_SPRECHTAG = 'Elternsprechtag Frühjahr';
+
+/** Die Familie, die an einem eigenen Sprechtag bucht. */
+export const FAMILIE = { name: 'Anna Müller', kind: 'Lukas Müller', email: 'anna.mueller@example.org' };
+
 /** Eine Zeile der Sprechtag-Liste, deren Titel genau so lautet. */
 function zeileMit(page, titel) {
 	return page
@@ -54,7 +61,8 @@ function alsEingabe(datum) {
 	return `${zweistellig(datum.getDate())}.${zweistellig(datum.getMonth() + 1)}.${datum.getFullYear()}`;
 }
 
-async function setzeFeld(eingabe, wert) {
+/** Füllt ein Feld des Formulars und verlässt es, damit der Wert gilt. */
+export async function setzeFeld(eingabe, wert) {
 	await eingabe.fill(wert);
 	await eingabe.press('Enter');
 	await eingabe.blur();
