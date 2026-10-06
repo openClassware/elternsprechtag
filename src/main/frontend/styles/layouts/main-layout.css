@@ -62,12 +62,39 @@
   color: #111827;
 }
 
-/* Right side: school, current user, logout. Never shrinks: avatar and logout stay tappable. */
+/* Right side: help, school, current user, logout. Never shrinks: avatar and logout stay tappable. */
 .main-header__user {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex: 0 0 auto;
+}
+
+/* Help link to the user docs: icon plus label, collapses to the icon on phones. */
+.main-header__help {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+  color: #4b5563;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.main-header__help:hover {
+  color: var(--aura-accent-color);
+}
+
+.main-header__help:focus-visible {
+  outline: 2px solid var(--aura-accent-color);
+  outline-offset: 2px;
+}
+
+.main-header__help vaadin-icon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .main-header__school {
@@ -108,11 +135,12 @@
 
   /*
    * Secondary header info is redundant on small screens; logout collapses to its icon.
-   * The account stays recognizable by the avatar initials; logout carries its aria-label.
+   * The account stays recognizable by the avatar initials; logout and help carry their aria-label.
    */
   .main-header__school,
   .main-header__divider,
   .main-header__logout-label,
+  .main-header__help-label,
   .main-header__username {
     display: none;
   }
