@@ -2,6 +2,7 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.out.mail;
 
 import com.vaadin.flow.i18n.DefaultI18NProvider;
 import com.vaadin.flow.i18n.I18NProvider;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 /**
  * Wählt die aktive {@link BenachrichtigungSender}-Implementierung: Ist SMTP konfiguriert
  * ({@code spring.mail.host} gesetzt), versendet der {@link JavaMailBenachrichtigungSender} echte
- * Mails; sonst greift die {@link LoggingBenachrichtigungSender Log-Attrappe} (Entwicklung/Test).
+ * Mails. Ohne SMTP legt der {@link DateiBenachrichtigungSender} sie als Dateien ab, sofern
+ * {@code elternsprechtag.mail.ablage} gesetzt ist (Doku-Lauf); sonst greift die {@link
+ * LoggingBenachrichtigungSender Log-Attrappe} (Entwicklung/Test).
  */
 @Configuration
 class BenachrichtigungConfig {
@@ -24,6 +27,19 @@ class BenachrichtigungConfig {
   BenachrichtigungSender javaMailBenachrichtigungSender(
       JavaMailSender mailSender, @Value("${elternsprechtag.mail.absender}") String absender) {
     return new JavaMailBenachrichtigungSender(mailSender, absender);
+  }
+
+  /**
+   * Ohne SMTP, aber mit gesetzter Ablage: jede Nachricht als Datei. Das braucht der Doku-Lauf, der
+   * die Mailtexte für die Anwender-Doku abgreift. Steht nach dem JavaMail-Sender, damit ein
+   * konfigurierter Mailserver immer gewinnt.
+   */
+  @Bean
+  @ConditionalOnProperty(prefix = "elternsprechtag.mail", name = "ablage")
+  @ConditionalOnMissingBean(BenachrichtigungSender.class)
+  BenachrichtigungSender dateiBenachrichtigungSender(
+      @Value("${elternsprechtag.mail.ablage}") Path ablage) {
+    return new DateiBenachrichtigungSender(ablage);
   }
 
   @Bean

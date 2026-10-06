@@ -106,8 +106,10 @@ setzen.
 
 ## Mail / SMTP
 
-Die Anwendung verschickt zwei Arten von Mails an Eltern: die **Buchungsbestätigung** nach der
-Buchung und die **Absage-Benachrichtigung**, wenn ein Sprechtag abgesagt wird.
+Die Anwendung verschickt Mails an Eltern: die **Buchungsbestätigung** nach der Buchung oder einer
+Umbuchung, die **Erinnerung** vor dem Sprechtag, die Nachricht beim **Ausfall** einer Lehrkraft und
+die **Absage-Benachrichtigung**, wenn ein Sprechtag abgesagt wird. Ihr Wortlaut steht auf der
+Doku-Site unter *Referenz › Welche E-Mails Eltern bekommen*.
 
 | Umgebungsvariable             | Default                        | Bedeutung                                                              |
 |-------------------------------|--------------------------------|-------------------------------------------------------------------------|
@@ -118,6 +120,7 @@ Buchung und die **Absage-Benachrichtigung**, wenn ein Sprechtag abgesagt wird.
 | `SPRING_MAIL_SMTP_AUTH`       | `true`                         | SMTP-Authentifizierung verwenden.                                       |
 | `SPRING_MAIL_STARTTLS_ENABLE` | `true`                         | Verbindung per STARTTLS verschlüsseln.                                  |
 | `ELTERNSPRECHTAG_MAIL_ABSENDER` | `elternsprechtag@example.com` | Absenderadresse der Mails.                                              |
+| `ELTERNSPRECHTAG_MAIL_ABLAGE` | *(nicht gesetzt)*              | Nur für den Bau der Doku-Site: Verzeichnis, in das die Anwendung ohne SMTP jede Mail als Textdatei legt. In einer Schulinstanz nicht setzen. |
 
 `spring.mail.default-encoding` ist fest auf `UTF-8` gesetzt, damit Umlaute und `ß` unabhängig vom
 Plattform-Charset korrekt ankommen.
@@ -131,6 +134,10 @@ auswählt:
 - **`SPRING_MAIL_HOST` gesetzt** → echter Versand über JavaMail.
 - **nicht gesetzt** → **Log-Attrappe**: Empfänger und Betreff landen nur im Anwendungslog, es geht
   keine Mail hinaus. Die Oberfläche verhält sich unverändert, Eltern bekommen aber nichts.
+- **nicht gesetzt, aber `ELTERNSPRECHTAG_MAIL_ABLAGE`** → **Ablage**: Jede Mail landet als
+  Textdatei im angegebenen Verzeichnis, auch hier geht nichts hinaus. Das braucht nur der Bau der
+  Doku-Site, der die Mailtexte daraus abgreift (`site/README.md`). Ein gesetzter Mailhost hat
+  immer Vorrang.
 
 Ein *leer* gesetztes `SPRING_MAIL_HOST=` ist der schlimmste Fall: Spring wertet die Property dann
 als gesetzt, aktiviert den echten Sender und der Versand scheitert zur Laufzeit. Die Variable

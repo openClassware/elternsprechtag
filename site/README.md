@@ -26,6 +26,7 @@ selben PR.
 
   Wer die Vorlage ändert, ändert Code, Beispiele unter `test/beispiele/` und diese Datei zusammen.
 - Vorbild ist `anwendungsfaelle/einen-sprechtag-absagen.mdx`, samt Screenshot-Modul.
+- Die übrigen Bereiche haben keine Vorlage. Ihre Seiten ordnet `sidebar.order` im Frontmatter.
 
 ## Eine Fallseite anlegen
 
@@ -194,7 +195,7 @@ npm ci
 npm run screenshots   # braucht die laufende App, siehe unten
 npm run dev           # Vorschau unter http://localhost:4321
 npm run build         # wie in CI, Ergebnis in dist/
-npm test              # Prüfregeln der Vorlage und der Screenshot-Auswahl
+npm test              # Prüfregeln der Vorlage, Screenshot-Auswahl und Mail-Ablage
 ```
 
 Der Build bricht ab bei einem toten internen Link, bei einer Fallseite, die die Vorlage verletzt,
@@ -203,8 +204,9 @@ fehlenden Screenshot. Die Meldung nennt Datei, Zeile und verletzte Regel.
 
 ## Screenshots
 
-Die Bilder der Fallseiten entstehen per Playwright aus einer laufenden `demo`-Instanz und liegen
-unter `src/assets/screenshots/<slug>/<name>.png` (gitignored). CI erzeugt sie bei jedem Lauf neu.
+Die Bilder der Fallseiten und der Referenz entstehen per Playwright aus einer laufenden
+`demo`-Instanz und liegen unter `src/assets/screenshots/<slug>/<name>.png` (gitignored), ebenso
+die Mailtexte der Seite *Welche E-Mails Eltern bekommen*. CI erzeugt alles bei jedem Lauf neu.
 **Ändert sich eine Seite, zieht ihr Screenshot-Modul mit.**
 
 1. App mit Profil `demo` starten. Der Demo-Seed ist der einzige Datenstand; fehlt einem Fall ein
@@ -218,23 +220,32 @@ unter `src/assets/screenshots/<slug>/<name>.png` (gitignored). CI erzeugt sie be
    SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/elternsprechtag_doku \
    ELTERNSPRECHTAG_OEFFENTLICHE_URL=http://localhost:8080 \
    ELTERNSPRECHTAG_STELLVERTRETERADRESSE=sekretariat@example.org \
+   ELTERNSPRECHTAG_MAIL_ABLAGE=/tmp/doku-mails \
+   ELTERNSPRECHTAG_ERINNERUNG_CRON='*/5 * * * * *' \
      ./mvnw spring-boot:run -Dspring-boot.run.profiles=demo
    ```
+
+   Die letzten beiden Variablen braucht nur die Seite *Welche E-Mails Eltern bekommen*: Die App legt
+   jede Mail als Datei in die Ablage, statt sie zu versenden, und erinnert alle fünf Sekunden statt
+   einmal am Morgen.
 
 2. Screenshots erzeugen — alle oder einzelne:
 
    ```sh
    ORGANIZER_PASSWORD=... npm run screenshots
    ORGANIZER_PASSWORD=... npm run screenshots -- einen-sprechtag-absagen
+   ORGANIZER_PASSWORD=... MAIL_ABLAGE=/tmp/doku-mails npm run screenshots -- welche-e-mails-eltern-bekommen
    ```
 
    `ORGANIZER_USERNAME` (Default `user`) und `BASE_URL` (Default `http://localhost:8080`) gehen
-   ebenfalls. Gebraucht wird ein lokal installiertes Chrome.
+   ebenfalls. `MAIL_ABLAGE` ist dasselbe Verzeichnis wie `ELTERNSPRECHTAG_MAIL_ABLAGE` der App.
+   Gebraucht wird ein lokal installiertes Chrome.
 
-**Ein Modul je Fallseite**, `screenshots/faelle/<slug>.mjs`, und nur, wenn die Seite Bilder hat.
-Ein Modul ohne passende `anwendungsfaelle/<slug>.mdx` lässt den Runner abbrechen. Das Modul
-exportiert eine Funktion, die `{ page, basis, foto, ablegen, rahmen, bereit }` bekommt, schon
-angemeldet, in einem eigenen Browser-Kontext:
+**Ein Modul je Seite**, und nur, wenn die Seite Bilder oder Mailtexte hat:
+`screenshots/faelle/<slug>.mjs` für eine Fallseite, `screenshots/referenz/<slug>.mjs` für eine
+Seite der Referenz. Ein Modul ohne passende Seite im zugehörigen Bereich lässt den Runner abbrechen.
+Das Modul exportiert eine Funktion, die `{ page, basis, foto, ablegen, rahmen, bereit, mails }`
+bekommt, schon angemeldet, in einem eigenen Browser-Kontext:
 
 - **Ausschnitte statt ganzer Seiten:** `foto(locator, name)` nimmt genau ein Element auf, etwa
   einen Dialog, einen Formularblock oder eine Tabellenzeile. Greift der Selektor nicht, scheitert
@@ -243,6 +254,15 @@ angemeldet, in einem eigenen Browser-Kontext:
 - **Zerstörerisches** nur bis zum offenen Dialog fotografieren, dann abbrechen. Endzustände kommen
   aus Seed-Sprechtagen, die schon so sind. So bleibt der Seed unverändert und die Reihenfolge
   der Module beliebig.
+- **Was wirklich geschehen muss** — eine Buchung, damit die Bestätigung erscheint, eine Absage,
+  damit ihre Mail hinausgeht —, geschieht an einem **eigenen Sprechtag**
+  (`screenshots/eigener-sprechtag.mjs`): `legeSprechtagAn` dupliziert den abgesagten
+  Seed-Sprechtag und veröffentlicht die Kopie, `bucheAlsFamilie` bucht über ihren Zugangs-Link,
+  `sageAb` sagt sie am Ende ab. Was ein abgebrochener Lauf unter dem Titel hinterlässt, räumt der
+  nächste vorher auf.
+- **Mailtexte** liefert `mails`, das Postfach der App: `mails.stand()` vor dem Auslösen,
+  `mails.warte(stand, /Betreff/)` danach. Die Seite bindet den abgelegten Text per Import mit
+  `?raw` in eine `<Code>`-Komponente ein; fehlt die Datei, bricht der Build ab.
 - Fenster 1280 × 800 bei `deviceScaleFactor: 2` (`screenshots/werkzeug.mjs`).
 - **Erzeugte Dateien**, die keine Ausschnitte sind, legt `ablegen(name, inhalt)` neben die Bilder,
   etwa das Beispiel-PDF des Tagesplans. Das Blatt selbst zeigt die Seite als Bild: Das Modul lädt
