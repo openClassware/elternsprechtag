@@ -38,7 +38,8 @@ weiter nachtragen. Siehe [Die Anmeldung verlängern oder wieder
 
 **Aufbewahrungsfrist** — Wie lange die Angaben der Familien nach dem Ende eines Sprechtags
 gespeichert bleiben, üblicherweise 30 Tage. Danach ersetzt die Anwendung sie in der Nacht durch
-Platzhalter. Die Schul-IT stellt die Frist ein; im Formular des Sprechtags gibt es sie nicht.
+Platzhalter. Die Schul-IT stellt die Frist ein; im Formular des Sprechtags gibt es sie nicht. Siehe
+[Wann personenbezogene Angaben entfernt werden](/datenschutz/wann-personenbezogene-angaben-entfernt-werden/).
 
 **Ausfall** — Eine Lehrkraft kann einzelne oder alle ihre Termine nicht wahrnehmen. Diese Termine
 *entfallen*, Buchungen darauf werden storniert, und die Familien bekommen eine E-Mail. Siehe [Eine
