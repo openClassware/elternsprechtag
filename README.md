@@ -65,7 +65,8 @@ Instanzen.
 Technisch ist es eine Spring-Boot-Anwendung mit Vaadin-Oberfläche und PostgreSQL-Datenbank,
 konfiguriert über Umgebungsvariablen und als Docker-Image ausrollbar. Welche Anwendungsdaten dabei
 entstehen — und damit, ob eine Datenschutzprüfung nötig ist — steht in
-[Konfiguration & gespeicherte Daten](docs/konfiguration.md).
+[Gespeicherte Daten](https://docs.openclassware.de/datenschutz/gespeicherte-daten/) auf der
+Doku-Site.
 
 ## Lokal starten
 
@@ -83,7 +84,7 @@ Default: Aus ihr entsteht der Elternlink, und ohne sie startet die Anwendung nic
 gelten ohne gesetzte Umgebungsvariablen die Entwicklungs-Defaults aus
 [`application.properties`](src/main/resources/application.properties), inklusive eines für jeden
 nachlesbaren Organizer-Zugangs — für eine erreichbare Instanz müssen Datenbankverbindung und
-Organizer-Zugang gesetzt werden (siehe [Konfiguration](docs/konfiguration.md)).
+Organizer-Zugang gesetzt werden (siehe [Konfiguration](https://docs.openclassware.de/betrieb/konfiguration/)).
 
 Eine frische Datenbank ist leer. Mit dem `demo`-Profil kommen Beispiel-Stammdaten (Lehrkräfte,
 Klassen, Fächer, Lehraufträge) dazu:
@@ -158,7 +159,7 @@ docker exec elternsprechtag-database-1 psql -U myuser -d elternsprechtag \
 
 | Dokument                                             | Inhalt                                                          |
 |------------------------------------------------------|-----------------------------------------------------------------|
-| [Konfiguration & gespeicherte Daten](docs/konfiguration.md) | Alle Umgebungsvariablen, Defaults, Profile und die Frage, welche Daten entstehen |
+| [Doku-Site](https://docs.openclassware.de)            | Anwender-Doku: Anwendungsfälle, Betrieb mit Konfiguration, Datenschutz, Referenz |
 | [Deploy](docs/deploy.md)                              | Wie die öffentliche Demo betrieben wird                          |
 | [CI](docs/ci.md)                                      | Was auf dem Weg nach `main` geprüft wird                         |
 | [Context Map](CONTEXT-MAP.md)                         | Die zwei Kontexte und ihre Grenze; von dort je ein Glossar          |

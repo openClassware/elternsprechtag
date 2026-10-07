@@ -79,7 +79,7 @@ Drei Abläufe laufen ohne Ihr Zutun, jeweils einmal am Tag:
   ebenso wie für abgesagte Sprechtage. In der Liste steht bis dahin
   *Personenbezogene Angaben bis …*.
 
-Die Uhrzeiten stellt die Schul-IT ein.
+Die Uhrzeiten stellt die Schul-IT ein, siehe [Konfiguration](/betrieb/konfiguration/#zeitgesteuerte-läufe).
 
 ## Termin
 

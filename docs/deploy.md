@@ -12,7 +12,8 @@ steht in [`.github/workflows/deploy-demo.yml`](../.github/workflows/deploy-demo.
 Server-Stack in [`deploy/`](../deploy).
 
 Die vollständige Liste aller Konfigurationswerte samt Umgebungsvariablen, Defaults und Profilen
-— unabhängig von dieser Demo-Umgebung — steht in [`konfiguration.md`](konfiguration.md). Was
+— unabhängig von dieser Demo-Umgebung — steht auf der Doku-Site unter
+[Betrieb › Konfiguration](https://docs.openclassware.de/betrieb/konfiguration/). Was
 auf dem Weg **nach** `main` passiert (PR-Workflow, Branch Protection), steht in
 [`ci.md`](ci.md).
 
