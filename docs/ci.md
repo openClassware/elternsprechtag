@@ -72,8 +72,9 @@ Postgres und das Production-JAR mit Profil `demo` starten, die Prüfregeln teste
 erzeugen und die Site bauen. Rot wird er bei einer verletzten Fallseiten-Vorlage, einem Bild ohne
 Alt-Text, einem toten internen Link und einem Screenshot-Modul, dessen Selektor nicht mehr greift.
 Deshalb läuft er auch bei Änderungen an `src/main/` und `pom.xml`: Ändert ein PR einen
-fotografierten Dialog oder hebt Vaadin, fällt das hier auf und nicht erst auf `main`. Berührt der
-PR nichts davon, überspringt der Job seine Schritte und ist grün. Ein betroffener PR kostet etwa 3–5 Minuten mehr.
+fotografierten Dialog oder hebt Vaadin, fällt das hier auf und nicht erst auf `main`. Ebenso bei
+[`ABDECKUNG.md`](arc/ABDECKUNG.md): Die Prüfregeln verlangen jedes „bewusst nein“ von dort auf der
+Seite *Was die Anwendung kann – und was nicht*. Berührt der PR nichts davon, überspringt der Job seine Schritte und ist grün. Ein betroffener PR kostet etwa 3–5 Minuten mehr.
 
 Den Organisator-Zugang erzeugt der Lauf selbst: ein Wegwerf-Passwort, maskiert, die App bekommt
 nur den bcrypt-Hash. Ein Secret braucht der Job nicht.

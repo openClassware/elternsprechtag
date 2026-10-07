@@ -76,8 +76,10 @@ jobs:
   # (`.github/actions/doku-site`): Demo-Instanz starten, Screenshots erzeugen, Site bauen, samt
   # Prüfung auf Vorlage, Alt-Texte und tote interne Links. Mit `src/main/` und `pom.xml` zählt
   # auch eine Änderung an der App oder ihren Abhängigkeiten (etwa ein Vaadin-Upgrade): Greift ein
-  # Screenshot-Selektor nicht mehr, wird der PR hier rot und nicht erst `main`. Berührt der PR keins von beiden, bleiben die Schritte übersprungen und der Job ist
-  # grün. Bewusst ein Filter im Job statt `paths` am Trigger: der gälte für den ganzen Workflow und
+  # Screenshot-Selektor nicht mehr, wird der PR hier rot und nicht erst `main`. Mit
+  # `docs/arc/ABDECKUNG.md` zählt eine neue Einstufung „bewusst nein“: `npm test` verlangt sie auf
+  # der Seite *Was die Anwendung kann – und was nicht*. Berührt der PR nichts davon, bleiben die
+  # Schritte übersprungen und der Job ist grün. Bewusst ein Filter im Job statt `paths` am Trigger: der gälte für den ganzen Workflow und
   # damit auch für das Test-Gate, und eine Pflichtprüfung, die nie startet, ließe jeden PR ohne
   # passende Änderung ewig warten.
   doku:
@@ -91,7 +93,7 @@ jobs:
       - name: Berührt der PR die Doku oder die App?
         id: doku_betroffen
         run: |
-          if git diff --quiet HEAD^1 HEAD -- site/ src/main/ pom.xml .github/actions/doku-site/; then
+          if git diff --quiet HEAD^1 HEAD -- site/ src/main/ pom.xml docs/arc/ABDECKUNG.md .github/actions/doku-site/; then
             echo "doku=false" >> "$GITHUB_OUTPUT"
           else
             echo "doku=true" >> "$GITHUB_OUTPUT"

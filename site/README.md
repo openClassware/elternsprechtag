@@ -27,6 +27,11 @@ selben PR.
   Wer die Vorlage ändert, ändert Code, Beispiele unter `test/beispiele/` und diese Datei zusammen.
 - Vorbild ist `anwendungsfaelle/einen-sprechtag-absagen.mdx`, samt Screenshot-Modul.
 - Die übrigen Bereiche haben keine Vorlage. Ihre Seiten ordnet `sidebar.order` im Frontmatter.
+- Eine Ausnahme mit Prüfung: *Einstieg › Was die Anwendung kann – und was nicht* führt jedes „bewusst
+  nein“ aus [`docs/arc/ABDECKUNG.md`](../docs/arc/ABDECKUNG.md) als eigene `###` unter `## Was sie
+  bewusst nicht kann`, in Anwendersprache und mit Begründung. `npm test` zählt beide gegeneinander
+  (`test/einstieg.test.mjs`): Kommt in `ABDECKUNG.md` ein „bewusst nein“ hinzu, bleibt der Test rot,
+  bis die Seite es nennt.
 
 ## Eine Fallseite anlegen
 
@@ -195,7 +200,7 @@ npm ci
 npm run screenshots   # braucht die laufende App, siehe unten
 npm run dev           # Vorschau unter http://localhost:4321
 npm run build         # wie in CI, Ergebnis in dist/
-npm test              # Prüfregeln der Vorlage, Screenshot-Auswahl und Mail-Ablage
+npm test              # Prüfregeln der Vorlage und des Einstiegs, Screenshot-Auswahl, Mail-Ablage
 ```
 
 Der Build bricht ab bei einem toten internen Link, bei einer Fallseite, die die Vorlage verletzt,
