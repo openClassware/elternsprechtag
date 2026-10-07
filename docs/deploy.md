@@ -159,9 +159,9 @@ eingegebene Namen und Adressen sind spätestens am nächsten Tag verschwunden.
 Zurückgesetzt wird im Ausrollschritt selbst, und zwar bei **jedem** Lauf: Die App wird
 angehalten, das Schema der Demo-Datenbank verworfen und neu angelegt, danach fährt der Stack
 wieder hoch. Beim Hochfahren spielt Flyway die Migrationskette auf die leere Datenbank ein
-und seedet dabei über `db/demo/R__demo_stammdaten.sql` die Demo-Daten: Stammdaten und vier
+und seedet dabei über `db/demo/R__demo_stammdaten.sql` die Demo-Daten: Stammdaten und fünf
 Sprechtage, deren Daten relativ zum Tag des Resets stehen — so zeigt die Demo jeden Tag einen
-aktiven, einen mit beendeter Anmeldung, einen abgeschlossenen und einen Entwurf.
+aktiven, einen mit beendeter Anmeldung, einen abgeschlossenen, einen abgesagten und einen Entwurf.
 
 ```
 docker compose up -d --wait database   # Datenbank muss laufen und Verbindungen annehmen

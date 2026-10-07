@@ -1,10 +1,11 @@
 # Elternsprechtag
 
-Terminbuchung für den Elternsprechtag einer Schule. Das Sekretariat legt den Sprechtag an,
-veröffentlicht ihn und teilt einen Link; Eltern wählen darüber ohne Anmeldung ihre Gesprächstermine
-bei den Lehrkräften ihres Kindes und bekommen eine Bestätigung per E-Mail. Am Sprechtag selbst hat
-jede Lehrkraft ihren fertigen Terminplan — statt Listen auf Papier, Rückrufen und doppelt vergebenen
-Zeiten.
+Terminbuchung für den Elternsprechtag einer Schule: Das Sekretariat veröffentlicht den Sprechtag,
+Eltern buchen ohne Anmeldung über einen Link, jede Lehrkraft bekommt ihren Terminplan.
+
+> **Benutzen oder betreiben?** Die Anleitung für Sekretariat, Lehrkräfte, Schulleitung und Schul-IT
+> — samt Demo, Installation und Datenschutz — steht unter **<https://docs.openclassware.de>**.
+> Diese README richtet sich an Entwickler.
 
 > [!WARNING]
 > **Version 0.x — noch nicht für den Echtbetrieb an einer Schule freigegeben.**
@@ -16,57 +17,8 @@ Zeiten.
 > Zum Ausprobieren, Bewerten und Mitentwickeln ist das Projekt gedacht — für den Sprechtag im
 > nächsten Monat noch nicht.
 
-## So sieht es aus
-
-Die Ansicht des Organizers: alle Sprechtage mit Status, von der Vorbereitung bis zum Abschluss.
-
-![Sprechtag-Übersicht des Organizers](docs/images/organizer-sprechtage.png)
-
-Die Buchungsansicht der Eltern — Klasse wählen, Lehrkraft wählen, freien Termin anklicken. Mehrere
-Gespräche an einem Nachmittag sind eine einzige Buchung; belegte Zeiten sind gesperrt.
-
-![Buchungsansicht der Eltern](docs/images/eltern-buchung.png)
-
-Die Auswertung: der Terminplan je Lehrkraft — die Liste, die am Sprechtag tatsächlich benutzt wird.
-
-![Auswertung je Lehrkraft](docs/images/organizer-auswertung.png)
-
-## Demo ausprobieren
-
-Eine laufende Instanz mit erfundenen Stammdaten und Beispiel-Sprechtagen steht unter **<https://demo.openclassware.de>**.
-
-| Zugang    | Benutzername | Passwort     |
-|-----------|--------------|--------------|
-| Organizer | `demo`       | `password`   |
-
-Diese Zugangsdaten sind **absichtlich öffentlich**. Die Demo baut ihr Datenbankschema bei jedem
-Start neu auf und wird zusätzlich täglich zurückgesetzt, sie verschickt keine echten E-Mails (der
-Mailversand ist dort durch eine Log-Attrappe ersetzt), und alle Daten sind erfunden. Es gibt dort
-nichts zu schützen — probieren Sie ruhig alles aus, auch das Absagen eines Sprechtags.
-
-Die Demo bringt je einen Sprechtag in jedem Zustand mit — aktiv, Anmeldung beendet,
-abgeschlossen und Entwurf. Die Elternansicht der ersten beiden erreichen Sie direkt über
-[`/elternsprechtag/demo-aktiv`](https://demo.openclassware.de/elternsprechtag/demo-aktiv) und
-[`/elternsprechtag/demo-anmeldung-beendet`](https://demo.openclassware.de/elternsprechtag/demo-anmeldung-beendet);
-für einen eigenen Sprechtag bietet Ihnen die Anwendung den Zugangs-Link beim Veröffentlichen an.
-Eltern brauchen kein Konto — der Link ist der gesamte Zugang.
-
-**Was Sie dort eingeben, ist für alle sichtbar** und verschwindet spätestens beim nächsten
-nächtlichen Reset. Bitte keine echten Namen oder Adressen.
-
-## Betriebsmodell
-
-**Jede Schule betreibt ihre eigene Instanz.** Es gibt keinen von uns betriebenen Dienst, keine
-Mandantenfähigkeit und keine Registrierung: Sie installieren die Anwendung auf eigener
-Infrastruktur, und die Daten bleiben dort. Datenschutzrechtlich verantwortlich ist damit die
-betreibende Schule; das Projekt liefert ausschließlich Software und hat keinen Zugriff auf laufende
-Instanzen.
-
 Technisch ist es eine Spring-Boot-Anwendung mit Vaadin-Oberfläche und PostgreSQL-Datenbank,
-konfiguriert über Umgebungsvariablen und als Docker-Image ausrollbar. Welche Anwendungsdaten dabei
-entstehen — und damit, ob eine Datenschutzprüfung nötig ist — steht in
-[Gespeicherte Daten](https://docs.openclassware.de/datenschutz/gespeicherte-daten/) auf der
-Doku-Site.
+konfiguriert über Umgebungsvariablen und als Docker-Image ausrollbar.
 
 ## Lokal starten
 
@@ -159,11 +111,12 @@ docker exec elternsprechtag-database-1 psql -U myuser -d elternsprechtag \
 
 | Dokument                                             | Inhalt                                                          |
 |------------------------------------------------------|-----------------------------------------------------------------|
-| [Doku-Site](https://docs.openclassware.de)            | Anwender-Doku: Anwendungsfälle, Betrieb mit Konfiguration, Datenschutz, Referenz |
+| [Doku-Site](https://docs.openclassware.de)            | Anwender-Doku: Einstieg mit Demo, Anwendungsfälle, Betrieb, Datenschutz, Referenz; Schreibanleitung in [`site/README.md`](site/README.md) |
 | [Deploy](docs/deploy.md)                              | Wie die öffentliche Demo betrieben wird                          |
 | [CI](docs/ci.md)                                      | Was auf dem Weg nach `main` geprüft wird                         |
 | [Context Map](CONTEXT-MAP.md)                         | Die zwei Kontexte und ihre Grenze; von dort je ein Glossar          |
 | [Architektur](docs/arc/ARCHITECTURE.md)               | Schichtung, Auth-Modell, Entscheidungen                          |
+| [Abdeckung](docs/arc/ABDECKUNG.md)                    | Was das Produkt jenseits des Happy Path abdecken muss — und was bewusst nicht |
 
 ## Lizenz
 
