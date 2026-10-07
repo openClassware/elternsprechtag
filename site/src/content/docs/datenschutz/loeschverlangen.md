@@ -24,8 +24,10 @@ Plan, zu dem niemand kommt. Vor dem Sprechtag stornieren Sie sie deshalb zugleic
   Zeile darüber noch einem Kind zuzuordnen ist, bewertet die Schule.
 - **Festgehalten wird der Zeitpunkt**, nicht wer die Angaben entfernt hat. Die Auswertung zeigt an
   der Zeile **Angaben entfernt am …**.
-- **Datensicherungen und versandte E-Mails** erfasst das Entfernen nicht, ebenso wenig wie nach
-  Ablauf der Frist.
+- **Datensicherungen, versandte E-Mails und das Anwendungslog** erfasst das Entfernen nicht,
+  ebenso wenig wie nach Ablauf der Frist. Spielt die Schul-IT später eine ältere Sicherung zurück,
+  sind die Angaben wieder da, siehe
+  [Datensicherung und Wiederherstellung](/betrieb/datensicherung-und-wiederherstellung/#sicherungen-und-datenschutz).
 
 ## Auskunft statt Löschung
 

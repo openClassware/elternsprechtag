@@ -7,7 +7,7 @@ sidebar:
 Diese Seite listet jeden Wert, den die Anwendung aus der Konfiguration liest: mit
 Umgebungsvariable, Default und Bedeutung. Sie richtet sich an die Schul-IT, die eine eigene Instanz
 einrichtet. Wie eine Instanz mit Datenbank, Reverse Proxy und TLS aufgesetzt wird, steht unter
-*Installation*.
+[Installation](/betrieb/installation/).
 
 Quelle der Angaben ist die Datei
 [`application.properties`](https://github.com/openClassware/elternsprechtag/blob/main/src/main/resources/application.properties)
@@ -122,6 +122,9 @@ die **Absage**, wenn ein Sprechtag abgesagt wird. Ihren Wortlaut zeigt
 Die Zeichenkodierung der E-Mails ist fest UTF-8, damit Umlaute und `ß` unabhängig vom System
 richtig ankommen.
 
+Weitere Eigenschaften der Mail-Bibliothek setzen Sie über `SPRING_MAIL_PROPERTIES_…`, etwa
+Zeitgrenzen und SMTPS auf Port 465. Welche sinnvoll sind, steht unter [Mail](/betrieb/mail/#anbinden).
+
 ### Fallstrick: Ohne Mailhost verschickt die Anwendung nichts
 
 `SPRING_MAIL_HOST` hat **absichtlich keinen Default**. Davon hängt ab, wohin eine E-Mail geht:
@@ -230,6 +233,7 @@ läuft. Ein Lauf am Abend fände die Angaben schon an diesem letzten Tag fällig
 | `SPRING_PROFILES_ACTIVE` | *(keins)* | Aktive [Profile](#profile), durch Komma getrennt. |
 | `SERVER_FORWARD_HEADERS_STRATEGY` | *(keins)* | Auf `framework` setzen, wenn ein Reverse Proxy TLS terminiert — sonst leitet die Anwendung auf `http://` und den internen Port weiter. |
 | `VAADIN_LAUNCH_BROWSER` | `true` | Öffnet beim Start einen Browser. Im Container auf `false` setzen; das Profil `demo` tut das bereits. |
+| `TZ` | *(die des Systems, im Container UTC)* | Zeitzone, in der die Anwendung rechnet, etwa `Europe/Berlin`. Danach richten sich Anmeldeschluss, Erinnerungstag, Abschluss und die Uhrzeiten der [zeitgesteuerten Läufe](#zeitgesteuerte-läufe). Im Container Pflicht, sonst verschiebt sich alles um ein bis zwei Stunden. |
 | `SERVER_PORT` | `8080` | Port, auf dem die Anwendung lauscht (Spring-Boot-Standard, nicht eigens gesetzt). |
 
 ## Profile

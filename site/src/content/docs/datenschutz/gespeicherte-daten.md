@@ -52,9 +52,9 @@ andere besonders schützenswerte Daten einzutragen.
   Kindes und die Klasse, die gebuchten Zeiten mit Lehrkraft und Fach sowie die Notiz. Alle E-Mails
   gehen über den Mailserver, den die Schul-IT einträgt — dessen Anbieter verarbeitet die Daten mit.
   Den Wortlaut zeigt [Welche E-Mails Eltern bekommen](/referenz/welche-e-mails-eltern-bekommen/).
-- **Logs.** Ist kein Mailserver eingetragen, schreibt die Anwendung Empfängeradresse und Betreff
-  jeder nicht versandten E-Mail ins Anwendungslog. Siehe
-  [Konfiguration](/betrieb/konfiguration/#mail).
+- **Logs.** Scheitert eine E-Mail, schreibt die Anwendung die Empfängeradresse ins Anwendungslog.
+  Ist kein Mailserver eingetragen, schreibt sie Empfängeradresse und Betreff jeder nicht versandten
+  E-Mail dorthin. Siehe [Logs und Fehlersuche](/betrieb/logs-und-fehlersuche/#wie-lange-logs-bleiben).
 - **Kein Tracking.** Die Anwendung bindet keine externen Dienste, keine Analysewerkzeuge und keine
   Inhalte fremder Server ein. Die Sitzung hält der Server; dafür setzt die Anwendung ein
   Sitzungs-Cookie.

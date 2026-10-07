@@ -45,7 +45,10 @@ Das Entfernen ist **endgültig**. Auch eine später verlängerte Frist holt die 
 ## Was das Entfernen nicht erfasst
 
 - **Datensicherungen.** Eine Sicherung der Datenbank, die vor dem Entfernen entstand, enthält die
-  Angaben weiter. Wie lange Sie Sicherungen aufbewahren, regeln Sie selbst.
+  Angaben weiter. Wie lange Sie Sicherungen aufbewahren, regeln Sie selbst; siehe
+  [Datensicherung und Wiederherstellung](/betrieb/datensicherung-und-wiederherstellung/#sicherungen-und-datenschutz).
+- **Das Anwendungslog.** Es kann E-Mail-Adressen von Eltern enthalten, siehe
+  [Logs und Fehlersuche](/betrieb/logs-und-fehlersuche/#wie-lange-logs-bleiben).
 - **Versandte E-Mails.** Was in den Postfächern der Eltern, im Sekretariat oder beim Mailanbieter
   liegt, erreicht die Anwendung nicht.
 - **Ausgedruckte Tagespläne und heruntergeladene Dateien.** Was Sie ausgedruckt oder gespeichert
