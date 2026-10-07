@@ -3,6 +3,8 @@ package de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts;
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.AnchorTarget;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Header;
@@ -19,6 +21,9 @@ import jakarta.annotation.security.RolesAllowed;
 @Layout
 @CssImport("./styles/layouts/main-layout.css")
 public class MainLayout extends VerticalLayout implements RouterLayout {
+
+  /** Startseite der Anwender-Doku. Fest verdrahtet: Hilfe je Ansicht gibt es nicht. */
+  private static final String HELP_URL = "https://docs.openclassware.de";
 
   private final Main content = new Main();
 
@@ -89,8 +94,21 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
       logout.getElement().setAttribute("aria-label", getTranslation("main.logout"));
       logout.addClickListener(event -> presenter.logout());
 
-      user.add(school, divider, avatar, username, logout);
+      user.add(createHelp(), school, divider, avatar, username, logout);
       return user;
+    }
+
+    private Anchor createHelp() {
+      Anchor help = new Anchor(HELP_URL);
+      help.setTarget(AnchorTarget.BLANK);
+      help.getElement().setAttribute("rel", "noopener");
+      help.addClassName("main-header__help");
+      Span helpLabel = new Span(getTranslation("main.help"));
+      helpLabel.addClassName("main-header__help-label");
+      help.add(VaadinIcon.QUESTION_CIRCLE_O.create(), helpLabel);
+      // Wie beim Abmelden bleibt auf schmalen Schirmen nur das Icon — daher aria-label.
+      help.getElement().setAttribute("aria-label", getTranslation("main.help.aria-label"));
+      return help;
     }
   }
 }
