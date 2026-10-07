@@ -10,7 +10,7 @@ Nicht-Happy-Path abdecken muss, damit künftige Features sich daran messen lasse
 fertig, wenn die Fälle seiner Phase, die auf `muss` stehen, sich verhalten wie hier beschrieben.
 Wer eine Einstufung ändert oder einen Fall auf **erfüllt** setzt, prüft die Fallseiten dieser Phase
 in der [Anwender-Doku](https://docs.openclassware.de/anwendungsfaelle/); die Phasen 2–6 verlinken
-unten ihren Block im Katalog.
+unten ihren Block im Katalog, Phase 1 ihre Seite unter *Betrieb*.
 
 **Was dieses Dokument nicht ist:** eine Liste überwachter Bedingungen. Es ist eine
 **Momentaufnahme**. Es gibt genau **einen Revisionsanlass** für die gesamte Stufe `darf fehlen`:
@@ -80,6 +80,8 @@ Oberfläche. Diese Phase wird hier **bewusst nicht eingestuft**: Es ist kein Vor
 bekannt und damit auch keine Schnittstelle; ob die Stammdaten künftig importiert, gepflegt oder
 weiter geskriptet werden, ist derzeit nicht entscheidbar. Der Maßstab beginnt dort, wo ein
 Organizer einen Sprechtag anlegt.
+
+Anwender-Doku: [Betrieb › Stammdaten anlegen](https://docs.openclassware.de/betrieb/stammdaten-anlegen/)
 
 ---
 

@@ -7,7 +7,7 @@ sidebar:
 Diese Seite listet jeden Wert, den die Anwendung aus der Konfiguration liest: mit
 Umgebungsvariable, Default und Bedeutung. Sie richtet sich an die Schul-IT, die eine eigene Instanz
 einrichtet. Wie eine Instanz mit Datenbank, Reverse Proxy und TLS aufgesetzt wird, steht unter
-*Installation*.
+[Installation](/betrieb/installation/).
 
 Quelle der Angaben ist die Datei
 [`application.properties`](https://github.com/openClassware/elternsprechtag/blob/main/src/main/resources/application.properties)
@@ -121,6 +121,9 @@ die **Absage**, wenn ein Sprechtag abgesagt wird. Ihren Wortlaut zeigt
 
 Die Zeichenkodierung der E-Mails ist fest UTF-8, damit Umlaute und `ß` unabhängig vom System
 richtig ankommen.
+
+Weitere Eigenschaften der Mail-Bibliothek setzen Sie über `SPRING_MAIL_PROPERTIES_…`, etwa
+Zeitgrenzen und SMTPS auf Port 465. Welche sinnvoll sind, steht unter [Mail](/betrieb/mail/#anbinden).
 
 ### Fallstrick: Ohne Mailhost verschickt die Anwendung nichts
 
