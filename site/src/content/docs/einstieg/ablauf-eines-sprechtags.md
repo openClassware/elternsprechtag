@@ -46,14 +46,14 @@ Lehrkraft. Ruft eine Familie an oder hat sie keine E-Mail-Adresse,
 [buchen Sie um](/anwendungsfaelle/eine-buchung-umbuchen/); kann eine Familie nicht kommen,
 [stornieren Sie die Buchung](/anwendungsfaelle/eine-buchung-stornieren/).
 
-Einige Tage vor dem Sprechtag schließt die Anmeldung, je nach der Anmeldefrist, die Sie gewählt
-haben. Danach buchen Eltern nicht mehr selbst, Sie aber können weiter nachtragen. Brauchen die
+Vor dem Sprechtag schließt die Anmeldung, so viele Tage vorher, wie es die Anmeldefrist sagt; bei
+einer Frist von 0 Tagen buchen Eltern bis zum Beginn. Danach buchen Eltern nicht mehr selbst, Sie aber können weiter nachtragen. Brauchen die
 Eltern mehr Zeit, [verlängern Sie die Anmeldung oder öffnen sie wieder](/anwendungsfaelle/die-anmeldung-verlaengern-oder-wieder-oeffnen/).
 
 ## Kurz vor dem Termin
 
 Haben Sie eine Erinnerung gewählt, schickt die Anwendung sie den Familien von selbst, morgens
-einige Tage vor dem Sprechtag.
+so viele Tage vor dem Sprechtag, wie Sie eingestellt haben.
 
 Wird eine Lehrkraft krank, [lassen Sie ihre Termine entfallen](/anwendungsfaelle/eine-lehrkraft-faellt-aus/),
 ganz oder ab einer Uhrzeit. Jede betroffene Familie bekommt eine E-Mail und kann, solange die

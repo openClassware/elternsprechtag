@@ -79,9 +79,9 @@ jobs:
   # Screenshot-Selektor nicht mehr, wird der PR hier rot und nicht erst `main`. Mit
   # `docs/arc/ABDECKUNG.md` zählt eine neue Einstufung „bewusst nein“: `npm test` verlangt sie auf
   # der Seite *Was die Anwendung kann – und was nicht*. Berührt der PR nichts davon, bleiben die
-  # Schritte übersprungen und der Job ist grün. Bewusst ein Filter im Job statt `paths` am Trigger: der gälte für den ganzen Workflow und
-  # damit auch für das Test-Gate, und eine Pflichtprüfung, die nie startet, ließe jeden PR ohne
-  # passende Änderung ewig warten.
+  # Schritte übersprungen und der Job ist grün. Bewusst ein Filter im Job statt `paths` am
+  # Trigger: der gälte für den ganzen Workflow und damit auch für das Test-Gate, und eine
+  # Pflichtprüfung, die nie startet, ließe jeden PR ohne passende Änderung ewig warten.
   doku:
     name: doku
     runs-on: ubuntu-latest

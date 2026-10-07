@@ -1,10 +1,10 @@
 ---
 title: Anmelden als Organisator
-description: Wie das Sekretariat sich an der Anwendung anmeldet, woher Benutzername und Passwort kommen und was nach der Anmeldung zu sehen ist.
+description: Wie das Sekretariat sich an der Anwendung anmeldet, woher Nutzername und Passwort kommen und was nach der Anmeldung zu sehen ist.
 sidebar:
   order: 4
 ---
-Wer den Sprechtag organisiert — meist das Sekretariat —, meldet sich mit Benutzername und Passwort
+Wer den Sprechtag organisiert — meist das Sekretariat —, meldet sich mit Nutzername und Passwort
 an. Eltern melden sich nie an: Sie erreichen den Sprechtag über den Zugangs-Link, ohne Konto.
 Lehrkräfte haben keinen Zugang zur Anwendung; sie bekommen ihr
 [Tagesplan-Blatt](/anwendungsfaelle/das-tagesplan-blatt-lesen/).
@@ -15,7 +15,7 @@ Lehrkräfte haben keinen Zugang zur Anwendung; sie bekommen ihr
    Adresse nennt Ihnen die Schul-IT.
 2. Die Seite **Anmeldung** erscheint. Tragen Sie **Nutzername** und **Passwort** ein und klicken
    Sie **Anmelden**.
-3. Die Startseite begrüßt Sie mit **Guten Tag** und Ihrem Benutzernamen. Von hier geht es mit
+3. Die Startseite begrüßt Sie mit **Guten Tag** und Ihrem Nutzernamen. Von hier geht es mit
    **Neuen Elternsprechtag anlegen** zu einem neuen Sprechtag und mit **Bestehende verwalten** zur
    Liste **Elternsprechtage verwalten**.
 
@@ -29,17 +29,17 @@ Zum Ausprobieren ohne eigene Instanz gibt es einen öffentlichen Zugang zur
 ## Ein Zugang für alle im Sekretariat
 
 Die Anwendung kennt **genau einen** Zugang für die Organisation. Arbeiten mehrere Personen am
-Sprechtag, teilen sie sich Benutzernamen und Passwort. Persönliche Konten gibt es nicht, und die
+Sprechtag, teilen sie sich Nutzernamen und Passwort. Persönliche Konten gibt es nicht, und die
 Anwendung hält auch nicht fest, wer von ihnen etwas geändert hat.
 
-Benutzername und Passwort legt die Schul-IT beim Einrichten der Anwendung fest, siehe
+Nutzername und Passwort legt die Schul-IT beim Einrichten der Anwendung fest, siehe
 [Konfiguration › Zugang des Organisators](/betrieb/konfiguration/#zugang-des-organisators).
 
 ## Wenn …
 
 ### … die Anmeldung fehlschlägt
 
-Die Meldung **Anmeldung fehlgeschlagen** heißt: Benutzername oder Passwort stimmen nicht. Achten Sie
+Die Meldung **Anmeldung fehlgeschlagen** heißt: Nutzername oder Passwort stimmen nicht. Achten Sie
 auf Groß- und Kleinschreibung und versuchen Sie es erneut.
 
 ### … Sie das Passwort vergessen haben

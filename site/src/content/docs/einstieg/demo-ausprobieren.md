@@ -17,7 +17,7 @@ Namen und keine echten E-Mail-Adressen** ein.
 
 Melden Sie sich als Organisator an:
 
-| Benutzername | Passwort |
+| Nutzername | Passwort |
 |---|---|
 | `demo` | `password` |
 

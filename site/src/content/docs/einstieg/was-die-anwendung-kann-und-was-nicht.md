@@ -77,13 +77,13 @@ Ob eine Familie zu einer anderen Zeit kann, entscheidet die Familie, keine Rechn
 zugeteilter Termin, zu dem niemand kommt, ist schlechter als eine Lücke, weil er anderen den Platz
 nimmt. Fällt eine Lehrkraft aus, führt die E-Mail die Familie deshalb zurück in die Buchung.
 
-### Lehrkräfte melden ihren Ausfall selbst
+### Lehrkräfte ihren Ausfall selbst melden lassen
 
 Wer ausfällt, meldet sich ohnehin im Sekretariat krank, weil der Vertretungsplan daran hängt. Ein
 zweiter Meldeweg daneben brächte nichts, bräuchte aber einen eigenen Zugang für Lehrkräfte. Den
 Ausfall trägt deshalb das Sekretariat ein.
 
-### Ein eigener Zugang für Lehrkräfte
+### Lehrkräften einen eigenen Zugang geben
 
 Lehrkräfte haben kein Konto und kein Passwort. Ein eigener Zugang wäre ein zweites Zugangskonzept
 neben dem Sekretariat und dem Zugangs-Link der Eltern. Ihren Tag bekommen Lehrkräfte stattdessen
@@ -100,7 +100,7 @@ die Anwendung deshalb die Zahl der Betroffenen.
 Ohne Gerät am Tisch müsste das Sekretariat die Häkchen hinterher vom Papier abtippen — Aufwand,
 den niemand auswertet. Für Notizen am Tag hat das Tagesplan-Blatt eine Spalte zum Schreiben.
 
-### Die E-Mail-Adresse der Eltern auf dem Tagesplan-Blatt
+### Die E-Mail-Adresse der Eltern auf das Tagesplan-Blatt drucken
 
 Ein Blatt, das im Klassenraum liegen bleibt, soll keine Kontaktdaten tragen. Die Lehrkraft braucht
 sie für das Gespräch nicht.
@@ -151,7 +151,7 @@ ohnehin ab dem Ende des Sprechtags.
   Registrierung; verantwortlich für die Daten ist die Schule. Siehe
   [Verantwortlichkeit](/datenschutz/verantwortlichkeit/).
 - **Ein Zugang für das Sekretariat.** Alle, die den Sprechtag organisieren, teilen sich einen
-  Benutzernamen und ein Passwort. Siehe [Anmelden als Organisator](/einstieg/anmelden-als-organisator/).
+  Nutzernamen und ein Passwort. Siehe [Anmelden als Organisator](/einstieg/anmelden-als-organisator/).
 - **Lehrkräfte, Klassen, Fächer und Lehraufträge** legt die Schul-IT in der Datenbank an; eine
   Pflege in der Oberfläche oder einen Import gibt es nicht. Siehe
   [Stammdaten anlegen](/betrieb/stammdaten-anlegen/).
