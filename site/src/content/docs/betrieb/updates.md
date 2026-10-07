@@ -50,7 +50,7 @@ eine Meldung über die unterbrochene Verbindung und lädt neu.
 
 Bringt die neue Fassung Änderungen am Datenbankschema mit, spielt die Anwendung sie beim Start
 selbst ein. Das übernimmt **Flyway**: Es vergleicht die Skripte der neuen Fassung mit der Tabelle
-`flyway_schema_history` in der Datenbank und führt nur die aus, die noch fehlen. Im Log steht dann:
+`flyway_schema_history` in der Datenbank und führt nur die aus, die noch fehlen. Im Log steht dann etwas wie:
 
 ```
 Successfully applied 1 migration to schema "public", now at version v13

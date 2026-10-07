@@ -71,7 +71,7 @@ Lehnt der Mailserver eine E-Mail ab oder ist er nicht erreichbar:
   `Buchungsbestätigung an anna@example.org fehlgeschlagen: Mail server connection failed`.
 - **Der Organisator sieht es in der Anwendung.** In **Elternsprechtage verwalten** steht beim
   Sprechtag ein Hinweis wie **1 Nachricht nicht zugestellt**, und die Auswertung listet die Familie
-  im Block **Nicht erreicht**. Was er dann tut, steht unter
+  im Block **Nicht erreicht (1)**, die Zahl in Klammern zählt die Einträge. Was er dann tut, steht unter
   [Nicht erreichte Familien nachfassen](/anwendungsfaelle/nicht-erreichte-familien-nachfassen/).
 
 **Nicht erkannt** wird, was erst später scheitert: Nimmt der Mailserver die E-Mail an und meldet
@@ -80,7 +80,7 @@ Anwendung. Ein Postfach, das jemand liest, fängt sie auf.
 
 ### Wenn der Mailserver länger ausfällt
 
-Jede E-Mail, die in dieser Zeit fällig wird, scheitert und erscheint unter **Nicht erreicht**.
+Jede E-Mail, die in dieser Zeit fällig wird, scheitert und erscheint im Block **Nicht erreicht** der Auswertung.
 Erinnerungen werden nicht nachgeholt; ihr Tag ist danach verpasst. Sagen Sie dem Organisator
 Bescheid, damit er die betroffenen Familien anruft.
 

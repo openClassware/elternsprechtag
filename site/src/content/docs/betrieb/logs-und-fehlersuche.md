@@ -17,7 +17,7 @@ docker compose logs caddy              # Reverse Proxy: Zertifikat, Weiterleitun
 docker compose logs database           # Datenbank
 ```
 
-Jede Zeile beginnt mit Zeitpunkt in UTC und Stufe: `INFO` für den gewöhnlichen Betrieb, `WARN` für
+Jede Zeile beginnt mit dem Zeitpunkt, in der Zeitzone aus `TZ`, und der Stufe: `INFO` für den gewöhnlichen Betrieb, `WARN` für
 etwas, das nicht geklappt hat, ohne die Anwendung aufzuhalten, etwa eine gescheiterte E-Mail, und
 `ERROR` für einen Fehler, dem Sie nachgehen sollten.
 
@@ -85,7 +85,7 @@ Die Anmeldeseite meldet falsche Zugangsdaten, obwohl Benutzername und Passwort s
   `ELTERNSPRECHTAG_SECURITY_ORGANIZER_PASSWORD`. Das Log meldet dann
   `There is no default password encoder configured`.
 
-Alle drei beschreibt [Konfiguration › Zugang des Organisators](/betrieb/konfiguration/#zugang-des-organisators).
+Die Hintergründe beschreibt [Konfiguration › Zugang des Organisators](/betrieb/konfiguration/#zugang-des-organisators).
 Nach einer Änderung an der `.env` starten Sie neu: `docker compose up -d`.
 
 ### Der Browser meldet ein ungültiges Zertifikat
@@ -116,7 +116,7 @@ kurzer Zeit. Mit Caddy wie in der Installation tritt das nicht auf; bei einem an
 Suchen Sie im Log nach `fehlgeschlagen` und `kein SMTP`. Was die Meldungen bedeuten und was dann
 zu tun ist, steht unter [Mail](/betrieb/mail/#wenn-der-versand-scheitert).
 
-### Der Link im Elternbrief führt ins Leere
+### Der Zugangs-Link, den die Eltern bekommen haben, führt ins Leere
 
 Der Zugangs-Link beginnt mit `ELTERNSPRECHTAG_OEFFENTLICHE_URL`. Stimmt die Adresse dort nicht mit
 der überein, unter der die Anwendung von außen erreichbar ist, zeigt jeder Link daneben. Korrigieren

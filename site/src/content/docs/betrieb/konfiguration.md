@@ -233,6 +233,7 @@ läuft. Ein Lauf am Abend fände die Angaben schon an diesem letzten Tag fällig
 | `SPRING_PROFILES_ACTIVE` | *(keins)* | Aktive [Profile](#profile), durch Komma getrennt. |
 | `SERVER_FORWARD_HEADERS_STRATEGY` | *(keins)* | Auf `framework` setzen, wenn ein Reverse Proxy TLS terminiert — sonst leitet die Anwendung auf `http://` und den internen Port weiter. |
 | `VAADIN_LAUNCH_BROWSER` | `true` | Öffnet beim Start einen Browser. Im Container auf `false` setzen; das Profil `demo` tut das bereits. |
+| `TZ` | *(die des Systems, im Container UTC)* | Zeitzone, in der die Anwendung rechnet, etwa `Europe/Berlin`. Danach richten sich Anmeldeschluss, Erinnerungstag, Abschluss und die Uhrzeiten der [zeitgesteuerten Läufe](#zeitgesteuerte-läufe). Im Container Pflicht, sonst verschiebt sich alles um ein bis zwei Stunden. |
 | `SERVER_PORT` | `8080` | Port, auf dem die Anwendung lauscht (Spring-Boot-Standard, nicht eigens gesetzt). |
 
 ## Profile

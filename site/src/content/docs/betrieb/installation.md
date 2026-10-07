@@ -56,6 +56,9 @@ services:
       # TLS endet bei Caddy: Die Anwendung soll ihre Adressen aus den X-Forwarded-Headern bauen.
       SERVER_FORWARD_HEADERS_STRATEGY: framework
       VAADIN_LAUNCH_BROWSER: 'false'
+      # Ohne Zeitzone rechnet der Container in UTC: Anmeldeschluss und nächtliche Läufe
+      # verschöben sich um ein bis zwei Stunden.
+      TZ: Europe/Berlin
     expose:
       - '8080'
     logging:

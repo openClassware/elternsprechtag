@@ -135,17 +135,26 @@ UPDATE lehrer SET stillgelegt = true WHERE kuerzel = 'BEC';
 
 Sie erscheint in keinem neuen Sprechtag mehr, auch nicht über ihre Lehraufträge.
 
-### … eine Klasse wegfällt
+### … eine Klasse oder ein Fach dauerhaft wegfällt
 
 ```sql
 UPDATE klassen SET stillgelegt = true WHERE name = '5b';
+UPDATE faecher SET stillgelegt = true WHERE short_name = 'E';
 ```
 
-Der Organisator kann sie beim Anlegen eines Sprechtags nicht mehr ankreuzen.
+Der Organisator kann die Klasse beim Anlegen eines Sprechtags nicht mehr ankreuzen; das Fach
+erscheint in keinem neuen Sprechtag.
+
+Legen Sie nur still, was es **endgültig** nicht mehr gibt. Klassennamen und Fachnamen sind über
+alle Zeilen eindeutig, auch über die stillgelegten: Eine Klasse `5b` lässt sich danach nicht neu
+anlegen, und einen Weg zurück aus dem Stilllegen gibt es nicht. Zum Schuljahreswechsel bleiben die
+Klassen deshalb, wie sie sind; nur die Lehraufträge wechseln.
 
 ### … die Meldung kommt, dass keine Termine erzeugt wurden
 
-Hat keine der gewählten Klassen einen Lehrauftrag, entstehen beim Veröffentlichen keine Termine.
+Beim Veröffentlichen sieht der Organisator:
+*Der Sprechtag ist veröffentlicht, aber es wurden keine Termine erzeugt — entweder hat keine der
+gewählten Klassen einen Lehrauftrag, oder das Zeitfenster ist kürzer als eine Slot-Dauer.*
 Prüfen Sie mit der Abfrage oben, ob die Klassen Lehraufträge haben, und legen Sie die fehlenden an.
 Danach nimmt der Organisator das Veröffentlichen zurück und veröffentlicht erneut, siehe
 [Ein Veröffentlichen zurücknehmen](/anwendungsfaelle/ein-veroeffentlichen-zuruecknehmen/).
