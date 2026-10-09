@@ -210,6 +210,19 @@ docker compose logs -f app
 docker compose logs -f caddy   # bei TLS-/ACME-Problemen
 ```
 
+`docker compose logs` beginnt bei jedem Deploy und jedem nächtlichen Reset von vorn, weil der
+Container neu entsteht. Deshalb schreibt die Demo-App ihr Log zusätzlich in eine Datei im Volume
+`app_logs` (`/app/logs/elternsprechtag.log`, gesetzt über `LOGGING_FILE_NAME` in
+`deploy/compose.yaml`). Sie rolliert täglich um Mitternacht UTC; die Vortage liegen gepackt als
+`elternsprechtag.log.<Datum>.<n>.gz` daneben und fallen nach sieben Tagen weg, höchstens aber
+200 MB insgesamt. Länger nicht, weil die Log-Attrappe jede Mail samt der eingetragenen Adresse
+protokolliert.
+
+```bash
+docker compose exec app tail -f /app/logs/elternsprechtag.log
+docker compose exec app ls -l /app/logs
+```
+
 ## Doku-Site
 
 Die Anwender-Doku aus [`site/`](../site) liegt nicht auf dem VPS, sondern auf GitHub Pages unter
