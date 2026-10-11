@@ -31,6 +31,10 @@ WORKDIR /app
 
 # Als Nicht-Root laufen (Angriffsfläche minimieren).
 RUN useradd --system --user-group --no-create-home app
+# Schreibbares Verzeichnis für eine optionale Logdatei (LOGGING_FILE_NAME). Ohne die Variable
+# bleibt es leer, und die Anwendung loggt wie gehabt nur auf die Standardausgabe. Ein Volume,
+# das hier eingehängt wird, übernimmt beim ersten Anlegen Eigentümer `app` von diesem Verzeichnis.
+RUN mkdir /app/logs && chown app:app /app/logs
 USER app
 
 # spring-boot-repackage hinterlässt genau ein *.jar (das Original wird *.jar.original).

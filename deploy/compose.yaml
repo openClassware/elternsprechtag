@@ -42,6 +42,19 @@ services:
       ORGANIZER_USERNAME: ${ORGANIZER_USERNAME:?ORGANIZER_USERNAME fehlt in .env}
       # Nackter bcrypt-Hash ohne {bcrypt}-Präfix — den setzt application.properties.
       ORGANIZER_PASSWORD_HASH: ${ORGANIZER_PASSWORD_HASH:?ORGANIZER_PASSWORD_HASH fehlt in .env}
+      # Logdatei zusätzlich zur Standardausgabe, täglich um Mitternacht (UTC) rolliert: Springs
+      # Standard-Muster `<Datei>.%d{yyyy-MM-dd}.%i.gz` schneidet nach Datum, die alte Datei wird
+      # gepackt. Anders als `docker compose logs` überlebt sie das Neuanlegen des Containers bei
+      # jedem Deploy und nächtlichen Reset. Bewusst hier und nicht in application-demo.properties:
+      # ein lokaler Start mit `local,demo` soll keine Datei anlegen.
+      LOGGING_FILE_NAME: /app/logs/elternsprechtag.log
+      # Sieben Tage Verlauf. Das Log enthält die E-Mail-Adressen, die Besucher eintragen (die
+      # Log-Attrappe protokolliert jede Mail) — länger als eine Woche soll es sie nicht halten.
+      LOGGING_LOGBACK_ROLLINGPOLICY_MAX_HISTORY: 7
+      # Obergrenze für die kleine Platte, falls ein Tag ungewöhnlich viel protokolliert.
+      LOGGING_LOGBACK_ROLLINGPOLICY_TOTAL_SIZE_CAP: 200MB
+    volumes:
+      - 'app_logs:/app/logs'
     # Kein Port-Mapping: die App ist ausschließlich über Caddy erreichbar.
     expose:
       - '8080'
@@ -92,6 +105,7 @@ services:
       - internal
 
 volumes:
+  app_logs:
   postgres_data:
   caddy_data:
   caddy_config:
