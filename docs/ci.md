@@ -66,7 +66,7 @@ ist das bewusst andersherum.
 ### Job `doku`
 
 Daneben baut ein zweiter Job **`doku`** die Anwender-Doku aus `site/` — derselbe Ablauf wie im
-Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Pages-Deploy und Image-Push. Beide teilen ihn
+Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Image-Push. Beide teilen ihn
 über die Composite-Action [`.github/actions/doku-site`](../.github/actions/doku-site/action.yml):
 Postgres und das Production-JAR mit Profil `demo` starten, die Prüfregeln testen, die Screenshots
 erzeugen und die Site bauen. Rot wird er bei einer verletzten Fallseiten-Vorlage, einem Bild ohne
@@ -80,7 +80,7 @@ Den Organisator-Zugang erzeugt der Lauf selbst: ein Wegwerf-Passwort, maskiert, 
 nur den bcrypt-Hash. Ein Secret braucht der Job nicht.
 
 `doku` ist neben `Test-Gate` **Pflichtprüfung** (siehe [Branch Protection](#branch-protection-auf-main)).
-Ein roter Site-Build auf `main` würde jeden folgenden Pages-Deploy scheitern lassen, bis jemand
+Ein roter Site-Build auf `main` würde jedes folgende Doku-Image ausbleiben lassen, bis jemand
 ihn repariert — das gehört vor den Merge, gerade bei den gesammelten Starlight-Upgrades von
 Dependabot. Deshalb sitzt der Filter im Job und nicht als `paths` am Trigger: Ein Workflow, der
 gar nicht startet, meldet keine Prüfung, und die Branch Protection würde auf jedem PR ohne

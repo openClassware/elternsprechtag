@@ -225,11 +225,12 @@ docker compose exec app ls -l /app/logs
 
 ## Doku-Site
 
-Die Anwender-Doku aus [`site/`](../site) liegt nicht auf dem VPS, sondern auf GitHub Pages unter
-<https://docs.openclassware.de>. [`.github/workflows/docs.yml`](../.github/workflows/docs.yml)
-baut sie bei jedem Push auf `main` und per `workflow_dispatch`, veröffentlicht sie als Image nach
-GHCR (siehe unten) und deployt das Pages-Artefakt. Vor dem Build startet er die App mit Profil
-`demo` und erzeugt daraus die Screenshots — im Repo liegt kein Bild der Site.
+Die Anwender-Doku aus [`site/`](../site) steht unter <https://docs.openclassware.de>; ausgeliefert
+wird sie vom Hosting. Dieses Repo liefert nur das Image:
+[`.github/workflows/docs.yml`](../.github/workflows/docs.yml) baut sie bei jedem Push auf `main`
+und per `workflow_dispatch` und schiebt sie als Image nach GHCR (siehe unten). Vor dem Build
+startet er die App mit Profil `demo` und erzeugt daraus die Screenshots — im Repo liegt kein Bild
+der Site.
 
 ### Doku-Image
 
@@ -262,17 +263,3 @@ verweigert; ausgeführt wird es nie.
 Einmalig von Hand: Ein neu angelegtes GHCR-Paket ist privat. Damit das Hosting das Image ohne
 Anmeldung zieht, unter *Packages → elternsprechtag-docs → Package settings → Change visibility*
 auf **Public** stellen.
-
-### GitHub Pages
-
-Der Pages-Deploy bleibt, bis das Hosting die Doku aus dem Image ausliefert. Einmalig von Hand:
-
-- *Settings → Pages → Build and deployment → Source* auf **GitHub Actions**.
-- *Settings → Pages → Custom domain* auf `docs.openclassware.de`, danach **Enforce HTTPS**.
-  Beim Deploy über Actions wirkt nur diese Einstellung; `site/public/CNAME` hält die Domain
-  lediglich im Repo fest.
-- Beim Domain-Anbieter:
-
-  ```
-  docs.openclassware.de.   CNAME   openclassware.github.io.
-  ```
