@@ -227,11 +227,45 @@ docker compose exec app ls -l /app/logs
 
 Die Anwender-Doku aus [`site/`](../site) liegt nicht auf dem VPS, sondern auf GitHub Pages unter
 <https://docs.openclassware.de>. [`.github/workflows/docs.yml`](../.github/workflows/docs.yml)
-baut sie bei jedem Push auf `main`, der `site/`, `src/main/`, `pom.xml` oder den Workflow berührt, und per
-`workflow_dispatch`, und deployt das Pages-Artefakt. Vor dem Build startet er die App mit Profil
+baut sie bei jedem Push auf `main` und per `workflow_dispatch`, veröffentlicht sie als Image nach
+GHCR (siehe unten) und deployt das Pages-Artefakt. Vor dem Build startet er die App mit Profil
 `demo` und erzeugt daraus die Screenshots — im Repo liegt kein Bild der Site.
 
-Einmalig von Hand:
+### Doku-Image
+
+Derselbe Lauf schiebt die gebaute Site als Image `ghcr.io/openclassware/elternsprechtag-docs` nach
+GHCR, damit ein Hosting sie abholen kann, ohne dass dieses Repo weiß, wo sie läuft. Die Tags folgen
+dem App-Image:
+
+| Tag       | Stand                                          |
+|-----------|------------------------------------------------|
+| `:latest` | letzter Push auf `main`                        |
+| `:<sha>`  | genau dieser Commit auf `main`, unveränderlich |
+
+Kommen mehrere Pushes während eines Laufs, baut GitHub nur den letzten nach — die Commits
+dazwischen bekommen keinen eigenen Tag, wie beim App-Image auch. Ein Lauf per `workflow_dispatch`
+außerhalb von `main` baut die Site, pusht aber kein Image.
+
+Das Image ([`site/Dockerfile`](../site/Dockerfile)) ist `FROM scratch` und enthält nur die
+statischen Dateien aus `site/dist` unter **`/site`** — `/site/index.html` ist die Startseite. Es
+gibt darin weder Webserver noch Shell; es ist ein Transportbehälter. Herausholen:
+
+```bash
+docker create --name doku ghcr.io/openclassware/elternsprechtag-docs:latest
+docker cp doku:/site/. ./doku
+docker rm doku
+```
+
+Das Kommando im Image (`/site/index.html`) ist ein Platzhalter, ohne den `docker create` das Image
+verweigert; ausgeführt wird es nie.
+
+Einmalig von Hand: Ein neu angelegtes GHCR-Paket ist privat. Damit das Hosting das Image ohne
+Anmeldung zieht, unter *Packages → elternsprechtag-docs → Package settings → Change visibility*
+auf **Public** stellen.
+
+### GitHub Pages
+
+Der Pages-Deploy bleibt, bis das Hosting die Doku aus dem Image ausliefert. Einmalig von Hand:
 
 - *Settings → Pages → Build and deployment → Source* auf **GitHub Actions**.
 - *Settings → Pages → Custom domain* auf `docs.openclassware.de`, danach **Enforce HTTPS**.

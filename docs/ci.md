@@ -66,7 +66,7 @@ ist das bewusst andersherum.
 ### Job `doku`
 
 Daneben baut ein zweiter Job **`doku`** die Anwender-Doku aus `site/` — derselbe Ablauf wie im
-Pages-Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Deploy. Beide teilen ihn
+Workflow [`docs.yml`](../.github/workflows/docs.yml), nur ohne Pages-Deploy und Image-Push. Beide teilen ihn
 über die Composite-Action [`.github/actions/doku-site`](../.github/actions/doku-site/action.yml):
 Postgres und das Production-JAR mit Profil `demo` starten, die Prüfregeln testen, die Screenshots
 erzeugen und die Site bauen. Rot wird er bei einer verletzten Fallseiten-Vorlage, einem Bild ohne
