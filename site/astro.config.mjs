@@ -5,8 +5,7 @@ import starlightLinksValidator from 'starlight-links-validator';
 import { satteri } from '@astrojs/markdown-satteri';
 import { vorlagenPruefung, vorlagenPruefungMarkdown } from './src/vorlage/pruefung.mjs';
 
-// Ohne Basis-Pfad: die Site liegt auf eigener Subdomain. Beim Deploy über Actions wirkt die
-// Custom Domain aus den Pages-Einstellungen; public/CNAME hält sie nur im Repo fest.
+// Ohne Basis-Pfad: die Site liegt auf eigener Subdomain.
 export default defineConfig({
 	site: 'https://docs.openclassware.de',
 	// Die Vorlage der Fallseiten und die Alt-Texte der ganzen Site als Build-Prüfung: Ein Verstoß

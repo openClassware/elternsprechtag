@@ -1,23 +1,21 @@
-# Veröffentlicht die Anwender-Doku aus `site/` auf GitHub Pages (https://docs.openclassware.de)
-# und als Image `ghcr.io/openclassware/elternsprechtag-docs` nach GHCR.
+# Veröffentlicht die Anwender-Doku aus `site/` als Image `ghcr.io/openclassware/elternsprechtag-docs`
+# nach GHCR.
 #
 #   Demo-Instanz starten -> Screenshots erzeugen -> Site bauen -> Image nach GHCR
-#                                                              -> Pages-Artefakt -> Pages deployt
 #
 # Alles bis zum gebauten `site/dist` steht in `.github/actions/doku-site`; denselben Ablauf ohne
-# Deploy fährt der Job `doku` in `ci.yml` auf jedem Pull Request, der `site/` oder `src/main/`
-# berührt. Der Build prüft Vorlage, Alt-Texte und tote interne Links und bricht ab, bevor etwas
-# veröffentlicht wird.
+# Veröffentlichen fährt der Job `doku` in `ci.yml` auf jedem Pull Request, der `site/` oder
+# `src/main/` berührt. Der Build prüft Vorlage, Alt-Texte und tote interne Links und bricht ab,
+# bevor etwas veröffentlicht wird.
 #
 # Das Image trägt wie das App-Image aus `deploy-demo.yml` `latest` und den Commit-SHA. Damit es
 # zum App-Image eines Commits auf `main` den passenden Doku-Stand gibt, läuft der Workflow bei
 # jedem Push, nicht nur bei Änderungen an `site/` — die Screenshots kommen ohnehin aus der App.
 # Wie beim App-Image gilt: Kommen mehrere Pushes während eines Laufs, wartet nur der letzte, die
-# dazwischen bekommen keinen eigenen Tag. Wo das Image ausgeliefert wird, weiß dieses Repo nicht;
-# das Hosting holt es ab. Der Pages-Deploy bleibt, bis das Hosting die Doku ausliefert.
+# dazwischen bekommen keinen eigenen Tag. Unter https://docs.openclassware.de liefert das Hosting
+# die Site aus; auf welchem Server das Image läuft, weiß dieses Repo nicht.
 #
-# Was einmalig von Hand eingestellt ist (Pages-Quelle, Custom Domain, DNS, Sichtbarkeit des
-# GHCR-Pakets), steht in
+# Was einmalig von Hand eingestellt ist (Sichtbarkeit des GHCR-Pakets), steht in
 # `docs/deploy.md` unter „Doku-Site“.
 name: Doku-Site
 
@@ -26,9 +24,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Ein laufendes Pages-Deployment wird nicht abgebrochen, der nächste Lauf reiht sich ein.
+# Ein laufender Lauf wird nicht abgebrochen, der nächste reiht sich ein — so überholt kein
+# älterer Stand das `latest` eines neueren.
 concurrency:
-  group: pages
+  group: doku-site
   cancel-in-progress: false
 
 permissions:
@@ -46,13 +45,14 @@ jobs:
 
       - uses: ./.github/actions/doku-site
 
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
+          name: doku-site
           path: site/dist
+          retention-days: 1
 
   # Ein eigener Job, damit das Schreibrecht auf GHCR nicht in dem Job liegt, der npm, Maven und
-  # die App ausführt, und damit ein gescheiterter Push den Pages-Deploy nicht mitreißt. Er nimmt
-  # die Site aus dem Pages-Artefakt — dasselbe `site/dist`, nur als `artifact.tar`.
+  # die App ausführt. Er nimmt die Site aus dem Artefakt des Jobs `build`.
   image:
     name: Doku-Image bauen & pushen
     needs: build
@@ -68,13 +68,8 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: github-pages
-          path: ${{ runner.temp }}/pages
-
-      - name: Site auspacken
-        run: |
-          mkdir -p site/dist
-          tar -xf "$RUNNER_TEMP/pages/artifact.tar" -C site/dist
+          name: doku-site
+          path: site/dist
 
       - uses: docker/setup-buildx-action@v4
 
@@ -96,17 +91,3 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
-
-  deploy:
-    name: Auf Pages veröffentlichen
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
