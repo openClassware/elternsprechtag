@@ -14,15 +14,15 @@
     "screenshots": "node screenshots/runner.mjs"
   },
   "dependencies": {
-    "@astrojs/markdown-satteri": "0.4.2",
-    "@astrojs/starlight": "0.42.5",
-    "astro": "7.3.5",
-    "satteri": "0.10.5",
-    "starlight-links-validator": "0.26.0"
+    "@astrojs/markdown-satteri": "0.4.6",
+    "@astrojs/starlight": "0.42.7",
+    "astro": "7.4.4",
+    "satteri": "0.11.6",
+    "starlight-links-validator": "0.27.0"
   },
   "devDependencies": {
     "fflate": "0.8.3",
     "pdfjs-dist": "6.4.299",
-    "playwright-core": "1.62.1"
+    "playwright-core": "1.64.1"
   }
 }
