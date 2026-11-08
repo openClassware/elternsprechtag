@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.1</version>
+        <version>4.1.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>de.openclassware</groupId>
@@ -33,7 +33,7 @@
     <properties>
         <java.version>25</java.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
-        <vaadin.version>25.3.0</vaadin.version>
+        <vaadin.version>25.3.4</vaadin.version>
         <archunit.version>1.5.1</archunit.version>
         <openpdf.version>3.0.5</openpdf.version>
     </properties>
