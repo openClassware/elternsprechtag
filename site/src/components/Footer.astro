@@ -1,0 +1,33 @@
+---
+// Starlight-Override: Der Standard-Footer bleibt, darunter stehen auf jeder Seite Impressum und
+// Datenschutzerklärung von openClassware. Die URLs stehen fest drin wie `site:` — die Doku ist die
+// Veröffentlichung von openClassware, keine Build-Variable.
+import Default from '@astrojs/starlight/components/Footer.astro';
+
+const LINKS = [
+	{ label: 'Impressum', href: 'https://openclassware.de/impressum' },
+	{ label: 'Datenschutzerklärung', href: 'https://openclassware.de/datenschutz' },
+];
+---
+
+<Default />
+<nav class="rechtliches" aria-label="Rechtliches">
+	{LINKS.map(({ label, href }) => <a class="rechtliches__link" href={href}>{label}</a>)}
+</nav>
+
+<style>
+	.rechtliches {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.5rem 1.5rem;
+		margin-top: 1.5rem;
+		font-size: var(--sl-text-sm);
+	}
+	.rechtliches__link {
+		color: var(--sl-color-gray-3);
+	}
+	.rechtliches__link:hover {
+		color: var(--sl-color-white);
+	}
+</style>
