@@ -1,0 +1,54 @@
+/*
+ * Äußerster Rahmen jeder View (Issue #230): Inhalt füllt mindestens die Fensterhöhe abzüglich
+ * Footer, der Footer steht darunter im Fluss — nie fixiert, damit er auf keinem Schirm Inhalt
+ * oder die Absende-Leiste der Buchung überdeckt.
+ */
+.seiten-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Hält die geroutete View (MainLayout, Login, Eltern-Buchung). */
+.seiten-layout__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-width: 0;
+}
+
+/* Footer mit den Links auf Impressum und Datenschutzerklärung; umbricht statt zu scrollen. */
+.seiten-layout__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1.5rem;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+}
+
+.seiten-layout__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: #4b5563;
+  text-decoration: none;
+}
+
+.seiten-layout__link:hover {
+  color: var(--aura-accent-color);
+  text-decoration: underline;
+}
+
+.seiten-layout__link:focus-visible {
+  outline: 2px solid var(--aura-accent-color);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .seiten-layout__footer {
+    padding: 0.5rem 1rem;
+  }
+}

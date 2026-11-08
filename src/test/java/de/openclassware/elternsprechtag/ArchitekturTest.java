@@ -4,13 +4,21 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.router.ParentLayout;
+import com.vaadin.flow.router.Route;
 import de.openclassware.elternsprechtag.schulorganisation.domain.Aggregat;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.MainLayout;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.SeitenLayout;
 import de.openclassware.elternsprechtag.sprechtag.domain.AggregateRoot;
 import de.openclassware.elternsprechtag.sprechtag.domain.Buchung;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -252,5 +260,37 @@ class ArchitekturTest {
         .bePublic()
         .as("Ein Presenter gehört seinem View — nicht dem Projekt")
         .check(klassen);
+  }
+
+  /**
+   * Impressum und Datenschutzerklärung stehen im Footer jeder Web-View (Issue #230). Den Footer
+   * trägt das {@link SeitenLayout}; jede Route muss deshalb — direkt oder über ihr Layout — darin
+   * hängen. Eine neue View mit {@code autoLayout = false} oder eigenem Layout fiele sonst still
+   * aus dem Footer.
+   */
+  @Test
+  void jedeRouteHaengtAmSeitenlayout() {
+    List<String> ohneFooter =
+        klassen.stream()
+            .filter(klasse -> klasse.isAnnotatedWith(Route.class))
+            .map(JavaClass::reflect)
+            .filter(view -> aeusserstesLayout(view) != SeitenLayout.class)
+            .map(Class::getName)
+            .toList();
+
+    assertThat(ohneFooter).as("Routen außerhalb des Seitenlayouts").isEmpty();
+  }
+
+  private static Class<?> aeusserstesLayout(Class<?> view) {
+    Route route = view.getAnnotation(Route.class);
+    Class<?> layout = route.layout();
+    if (layout == UI.class && route.autoLayout()) {
+      // Ohne ausdrückliches Layout greift das @Layout der Anwendung — das MainLayout.
+      layout = MainLayout.class;
+    }
+    while (layout.isAnnotationPresent(ParentLayout.class)) {
+      layout = layout.getAnnotation(ParentLayout.class).value();
+    }
+    return layout;
   }
 }

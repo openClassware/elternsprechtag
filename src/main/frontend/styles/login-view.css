@@ -7,17 +7,11 @@
  * Das CSS setzt ein hochformatiges Motiv mit dunklem, ruhigem unterem Bildbereich
  * voraus. Siehe META-INF/resources/images/README.md.
  */
+/* Füllt den Inhaltsbereich des Seitenlayouts: Fensterhöhe abzüglich Footer (#230). */
 .login-view {
     position: relative;
     display: flex;
-    min-height: 100dvh;
-}
-
-/* Fallback für Browser ohne dvh: bewusst nach der dvh-Regel, damit sie nicht gewinnt. */
-@supports not (height: 100dvh) {
-    .login-view {
-        min-height: 100%;
-    }
+    flex: 1 0 auto;
 }
 
 .login-view__media {

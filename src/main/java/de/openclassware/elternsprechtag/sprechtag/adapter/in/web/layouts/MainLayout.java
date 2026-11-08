@@ -13,12 +13,14 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Layout;
+import com.vaadin.flow.router.ParentLayout;
 import com.vaadin.flow.router.RouterLayout;
 import de.openclassware.elternsprechtag.security.Roles;
 import jakarta.annotation.security.RolesAllowed;
 
 @RolesAllowed(Roles.ORGANIZER)
 @Layout
+@ParentLayout(SeitenLayout.class)
 @CssImport("./styles/layouts/main-layout.css")
 public class MainLayout extends VerticalLayout implements RouterLayout {
 

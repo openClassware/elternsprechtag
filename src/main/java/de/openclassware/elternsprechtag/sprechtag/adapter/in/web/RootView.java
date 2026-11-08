@@ -4,12 +4,13 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.SeitenLayout;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @PermitAll
-@Route(value = "", autoLayout = false)
+@Route(value = "", layout = SeitenLayout.class)
 public class RootView extends Div implements BeforeEnterObserver {
 
   @Override

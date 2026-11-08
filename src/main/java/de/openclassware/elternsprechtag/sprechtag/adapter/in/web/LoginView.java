@@ -8,9 +8,10 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.SeitenLayout;
 
 @AnonymousAllowed
-@Route(value = "login", autoLayout = false)
+@Route(value = "login", layout = SeitenLayout.class)
 @CssImport("./styles/login-view.css")
 public class LoginView extends Div implements BeforeEnterObserver {
 
@@ -42,7 +43,6 @@ public class LoginView extends Div implements BeforeEnterObserver {
     add(media(), panel(), brand());
 
     addClassName("login-view");
-    setSizeFull();
   }
 
   private Div media() {

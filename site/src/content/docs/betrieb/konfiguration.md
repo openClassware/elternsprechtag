@@ -152,6 +152,24 @@ Eltern über ihre Termine bekommen.
 Für diesen Wert steht in `application.properties` kein Platzhalter, er wird über Relaxed Binding
 gesetzt. Er ist der Wert, den jede Schule an sich anpasst.
 
+## Impressum und Datenschutzerklärung
+
+Ist eine der beiden Adressen gesetzt, zeigt jede Seite der Anwendung unten einen Link darauf: die
+Buchungsseite der Eltern, die Anmeldung und jede Seite des Organisators. Der Link öffnet in einem
+neuen Tab. In den E-Mails und auf dem Tagesplan-Blatt erscheinen die Links nicht.
+
+| Umgebungsvariable | Default | Bedeutung |
+|---|---|---|
+| `ELTERNSPRECHTAG_IMPRESSUM_URL` | *(nicht gesetzt)* | Adresse des Impressums, etwa `https://www.schule.de/impressum`. Link „Impressum“. |
+| `ELTERNSPRECHTAG_DATENSCHUTZERKLAERUNG_URL` | *(nicht gesetzt)* | Adresse der Datenschutzerklärung. Link „Datenschutzerklärung“. |
+
+Beide Werte sind optional: Fehlt einer, entfällt nur sein Link. Fehlen beide, zeigt keine Seite
+einen Footer. Der Start der Anwendung hängt an keinem der beiden.
+
+Ist die Instanz **öffentlich erreichbar**, sollten Sie beide setzen und auf das Impressum und die
+Datenschutzerklärung der Schule bzw. des Schulträgers verlinken. Die Anwendung bringt keine eigenen
+Texte dafür mit.
+
 ## Öffentliche Adresse
 
 Die Adresse, unter der die **Eltern** die Anwendung erreichen. Mit ihr beginnt der Zugangs-Link
