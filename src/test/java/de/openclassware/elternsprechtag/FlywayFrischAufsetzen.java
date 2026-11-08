@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 
 /**
  * Lässt Flyway beim Kontextstart erst das Schema verwerfen und dann neu migrieren — der Ablauf
- * eines Demo-Deploys (siehe {@code .github/workflows/deploy-demo.yml}) in einem Testlauf.
+ * einer Demo, deren Datenbank vor dem Start geleert wird, in einem Testlauf.
  *
  * <p>Ohne das wären die Migrationstests von der Reihenfolge der Suite abhängig: Die Test-Datenbank
  * überlebt den Testlauf, Flyway spielt eine bereits vermerkte Migration nicht erneut ein, und die
