@@ -28,6 +28,7 @@ export default defineConfig({
 			],
 			components: {
 				PageTitle: './src/components/PageTitle.astro',
+				Footer: './src/components/Footer.astro',
 			},
 			// Die fünf Bereiche nach Dokumentart, in fester Reihenfolge. Seiten eines Bereichs
 			// kommen von selbst hinzu, sobald sie in seinem Verzeichnis liegen.

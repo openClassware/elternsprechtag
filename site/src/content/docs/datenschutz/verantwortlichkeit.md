@@ -27,3 +27,7 @@ des Servers und der Anbieter des Mailservers. Welche Daten dabei anfallen, steht
 Das Projekt stellt bewusst **keine** Muster-Datenschutzerklärung bereit. Sie wäre ohne Kenntnis
 von Hosting, Mailanbieter und schulischen Abläufen falsch. Die Seiten dieses Bereichs liefern die
 Angaben, die Sie dafür brauchen.
+
+Nicht zu verwechseln mit der *Datenschutzerklärung* im Fuß jeder Seite: Dieser Bereich beschreibt,
+wie die Anwendung bei Ihrer Schule Daten verarbeitet. Die Datenschutzerklärung beschreibt, was beim
+Besuch der Websites von openClassware geschieht.
