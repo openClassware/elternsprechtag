@@ -19,4 +19,13 @@ public class ElternsprechtagProperties {
      */
     public String stellvertreteradresse;
 
+    /**
+     * Adresse des Impressums der Schule bzw. des Schulträgers — optional (Issue #230). Gesetzt,
+     * verlinkt der Footer jeder Web-View darauf; {@code null}/leer lässt den Link weg.
+     */
+    public String impressumUrl;
+
+    /** Adresse der Datenschutzerklärung — optional wie {@link #impressumUrl}. */
+    public String datenschutzerklaerungUrl;
+
 }

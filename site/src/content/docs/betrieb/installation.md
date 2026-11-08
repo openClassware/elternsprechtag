@@ -152,6 +152,8 @@ ORGANIZER_PASSWORD_HASH=
 # Ihre Schule
 ELTERNSPRECHTAG_SCHOOLNAME=Gesamtschule Musterstadt
 ELTERNSPRECHTAG_STELLVERTRETERADRESSE=sekretariat@schule.de
+ELTERNSPRECHTAG_IMPRESSUM_URL=https://www.schule.de/impressum
+ELTERNSPRECHTAG_DATENSCHUTZERKLAERUNG_URL=https://www.schule.de/datenschutz
 
 # Mailserver
 SPRING_MAIL_HOST=smtp.schule.de

@@ -25,6 +25,7 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.layouts.SeitenLayout;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Klassenauswahl.KlasseOption;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Sprechtagszugang.OeffentlicherSprechtag;
 import de.openclassware.elternsprechtag.sprechtag.application.port.in.Buchen.BuchungsAnfrage;
@@ -40,7 +41,7 @@ import de.openclassware.elternsprechtag.sprechtag.adapter.in.web.components.Term
 import java.util.List;
 import java.util.UUID;
 
-@Route(value = ElternsprechtagView.ROUTE, autoLayout = false)
+@Route(value = ElternsprechtagView.ROUTE, layout = SeitenLayout.class)
 @AnonymousAllowed
 @CssImport("./styles/elternsprechtag-view.css")
 public class ElternsprechtagView extends Div implements HasUrlParameter<String> {
