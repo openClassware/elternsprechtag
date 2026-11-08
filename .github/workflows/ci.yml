@@ -1,9 +1,9 @@
 # Prüf-Lauf für jeden Pull Request gegen `main` — auch aus einem Fork.
 #
-# Bewusst getrennt vom Deploy-Workflow: der hängt an `push: main` und darf hier nicht
-# mitlaufen. Das Test-Gate ist trotzdem eine Spiegelung des Gates aus
-# `deploy-demo.yml` — gleicher Service-Container, gleiche Verbindungswerte —, damit ein
-# Fork-Lauf dieselbe Umgebung sieht wie der Lauf vor einem Deploy und rote wie grüne
+# Bewusst getrennt vom Image-Workflow: der hängt an `push: main`, schreibt nach GHCR und darf
+# hier nicht mitlaufen. Das Test-Gate ist trotzdem eine Spiegelung des Gates aus
+# `image.yml` — gleicher Service-Container, gleiche Verbindungswerte —, damit ein
+# Fork-Lauf dieselbe Umgebung sieht wie der Lauf vor dem Veröffentlichen und rote wie grüne
 # Ergebnisse vergleichbar bleiben.
 #
 # Die Jobs `Test-Gate` und `doku` sind die Pflichtprüfungen der Branch Protection auf
@@ -16,8 +16,9 @@ on:
   pull_request:
     branches: [main]
 
-# Ein überholter PR-Lauf hat keinen Wert: neuer Push, alter Lauf raus. (Im Deploy ist das
-# absichtlich andersherum — dort würde ein Abbruch einen halb ausgerollten Stack hinterlassen.)
+# Ein überholter PR-Lauf hat keinen Wert: neuer Push, alter Lauf raus. (Beim Veröffentlichen
+# ist das absichtlich andersherum — dort reiht sich jeder Lauf ein, damit kein älterer Stand
+# das `latest` eines neueren überholt.)
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -37,7 +38,7 @@ jobs:
     # gegen eine untergeschobene In-Memory-Instanz. Fehlt dieser Container, ist die Suite rot
     # — sie weicht nicht auf einen Ersatz aus. Lokal bedient die Entwickler-Postgres aus
     # `compose.yaml` denselben Zweck. Werte, Port und Datenbankname stimmen deshalb
-    # absichtlich mit `compose.yaml` und mit dem Test-Gate in `deploy-demo.yml` überein.
+    # absichtlich mit `compose.yaml` und mit dem Test-Gate in `image.yml` überein.
     services:
       database:
         image: postgres:17

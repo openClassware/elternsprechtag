@@ -8,7 +8,7 @@
 # `src/main/` berührt. Der Build prüft Vorlage, Alt-Texte und tote interne Links und bricht ab,
 # bevor etwas veröffentlicht wird.
 #
-# Das Image trägt wie das App-Image aus `deploy-demo.yml` `latest` und den Commit-SHA. Damit es
+# Das Image trägt wie das App-Image aus `image.yml` `latest` und den Commit-SHA. Damit es
 # zum App-Image eines Commits auf `main` den passenden Doku-Stand gibt, läuft der Workflow bei
 # jedem Push, nicht nur bei Änderungen an `site/` — die Screenshots kommen ohnehin aus der App.
 # Wie beim App-Image gilt: Kommen mehrere Pushes während eines Laufs, wartet nur der letzte, die

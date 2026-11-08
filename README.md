@@ -112,7 +112,7 @@ docker exec elternsprechtag-database-1 psql -U myuser -d elternsprechtag \
 | Dokument                                             | Inhalt                                                          |
 |------------------------------------------------------|-----------------------------------------------------------------|
 | [Doku-Site](https://docs.openclassware.de)            | Anwender-Doku: Einstieg mit Demo, Anwendungsfälle, Betrieb, Datenschutz, Referenz; Schreibanleitung in [`site/README.md`](site/README.md) |
-| [Deploy](docs/deploy.md)                              | Wie die öffentliche Demo betrieben wird                          |
+| [Veröffentlichen](docs/deploy.md)                     | Welche Images dieses Repo nach GHCR veröffentlicht               |
 | [CI](docs/ci.md)                                      | Was auf dem Weg nach `main` geprüft wird                         |
 | [Context Map](CONTEXT-MAP.md)                         | Die zwei Kontexte und ihre Grenze; von dort je ein Glossar          |
 | [Architektur](docs/arc/ARCHITECTURE.md)               | Schichtung, Auth-Modell, Entscheidungen                          |

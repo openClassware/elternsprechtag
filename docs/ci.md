@@ -2,7 +2,7 @@
 
 Jeder Pull Request gegen `main` läuft durch die vollständige Testsuite, und nach `main` kommt
 nichts anderes hinein als ein Pull Request mit grüner Prüfung. Damit landet kein ungetesteter
-Stand auf der öffentlichen [Demo](deploy.md), und ein fremder Beitrag muss nicht von Hand
+Stand in einem [veröffentlichten Image](deploy.md), und ein fremder Beitrag muss nicht von Hand
 durchgetestet werden.
 
 Zwei Teile: der Workflow im Repository und die Branch Protection als Repository-Einstellung.
@@ -20,10 +20,10 @@ Was diese Prüfung monatlich von allein zu tun bekommt, steht unter
 Pull Request gegen main ─► Postgres-Service-Container hochfahren ─► ./mvnw -B verify
 ```
 
-Der Job spiegelt das Test-Gate aus [`deploy-demo.yml`](../.github/workflows/deploy-demo.yml):
+Der Job spiegelt das Test-Gate aus [`image.yml`](../.github/workflows/image.yml):
 gleiches `postgres:17`, gleiche Verbindungswerte (`elternsprechtag` / `myuser` / `mysecret`
 auf 5432), gleicher Healthcheck. Das ist Absicht — ein PR-Lauf soll dieselbe Umgebung sehen wie
-der Lauf unmittelbar vor einem Deploy.
+der Lauf unmittelbar vor dem Veröffentlichen des Images.
 
 **Der Service-Container ist keine Bequemlichkeit, sondern Voraussetzung.** Nicht nur
 `ElternsprechtagApplicationTests` startet den echten Spring-Context — auch die Service-Tests laufen
@@ -52,16 +52,17 @@ Service-Container ab, der bei jedem Lauf frisch ist.
 Lokal gilt dieselbe Voraussetzung; dort bedient sie der Container aus
 [`compose.yaml`](../compose.yaml) (siehe [README](../README.md#lokal-starten)).
 
-Getrennte Workflows statt eines gemeinsamen: der Deploy hängt an `push: main`,
-`workflow_dispatch` und dem [nächtlichen Zeitplan](deploy.md#täglicher-reset) und darf auf
-einem Pull Request nicht mitlaufen — schon gar nicht auf einem aus einem Fork.
+Getrennte Workflows statt eines gemeinsamen: das Veröffentlichen hängt an `push: main` und
+`workflow_dispatch`, schreibt nach GHCR und darf auf einem Pull Request nicht mitlaufen — schon
+gar nicht auf einem aus einem Fork.
 
 **Fork-Pull-Requests** laufen ohne Zutun mit. Der Trigger ist `pull_request`, der Job braucht
-keine Secrets, und das Token ist auf `contents: read` beschränkt; die Deploy-Secrets sind für
-ihn nicht erreichbar.
+keine Secrets, und das Token ist auf `contents: read` beschränkt; Schreibrechte auf GHCR hat er
+nicht.
 
-Ein neuer Push auf denselben PR bricht den vorigen Lauf ab (`cancel-in-progress`). Im Deploy
-ist das bewusst andersherum.
+Ein neuer Push auf denselben PR bricht den vorigen Lauf ab (`cancel-in-progress`). Beim
+Veröffentlichen ist das bewusst andersherum: Dort reiht sich jeder Lauf ein, damit kein älterer
+Stand das `latest` eines neueren überholt.
 
 ### Job `doku`
 

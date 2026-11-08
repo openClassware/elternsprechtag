@@ -28,7 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
  * <p>Der Seed hängt an einer einzigen Zeile — {@code spring.flyway.locations} in {@code
  * application-demo.properties}. Fällt {@code db/demo} dort heraus, startet die Anwendung weiterhin
  * anstandslos, nur eben ohne Stammdaten; fiele {@code db/migration} heraus, fehlte das Schema.
- * Beides zeigte sich sonst erst auf demo.openclassware.de.
+ * Beides zeigte sich sonst erst in einer laufenden Demo.
  *
  * <p>Die erwarteten Zahlen stehen absichtlich als feste Werte da und nicht als „mehr als null“:
  * Die Demo soll nach jedem Reset exakt dieselben Stammdaten zeigen.
