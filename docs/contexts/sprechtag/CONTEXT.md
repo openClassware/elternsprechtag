@@ -24,7 +24,7 @@ Die Kernkette lautet:
 
 **Sprechtag → Termin → Buchung**, mit dem **Lehrauftrag** als Buchungsziel.
 
-Ein Sprechtag bietet Termine an; eine Buchung belegt genau einen Termin und richtet sich dabei
+Ein Sprechtag bietet Termine an; eine Buchung gilt genau einem Termin und richtet sich dabei
 auf einen Lehrauftrag — also auf die konkrete Kombination aus Lehrkraft, Klasse und Fach, über
 die gesprochen werden soll.
 
@@ -38,13 +38,15 @@ Was er von ihnen kennt, sind ihre Ids und die Namen, die er anzeigt.
 
 Das Ereignis selbst: ein Datum mit Zeitfenster (Start-/Endzeit), einer **Slot-Dauer** in Minuten,
 optional Ort und Hinweistext, dem verpflichtenden **Schulkontakt**, den teilnehmenden Klassen und einem
-**Access-Token** für den Eltern-Link.
+**Access-Token** für den Zugangs-Link.
 
 Der Sprechtag setzt den **Rahmen**: Aus Zeitfenster, Slot-Dauer und teilnehmenden Klassen entstehen
 beim Veröffentlichen die Termine. Danach steht der Rahmen fest — Datum, Zeitfenster, Slot-Dauer und
 Klassenliste sind ab `VEROEFFENTLICHT` unveränderlich, weil die bereits erzeugten Termine sonst aus
 ihm herausfielen. Titel, Ort und Hinweistext bleiben änderbar. Ein Sprechtag, der so nicht mehr
 stattfinden kann, wird **abgesagt**, nicht umgeschrieben.
+
+Sprachgebrauch: **Rahmen**, nicht „Zeitstruktur" — zu ihm gehört auch die Klassenliste.
 
 Statuswerte (`SprechtagStatus`) und die erlaubten Übergänge — durchgesetzt vom Aggregat, nicht
 vom Aufrufer:
@@ -76,13 +78,13 @@ Zwei Begriffe, einer gespeichert, einer errechnet:
   Beginn — sonst stünden am Tag selbst Slots zur Wahl, die schon begonnen haben (#118). Im Code
   ist der Anmeldeschluss der erste Moment, in dem der Link **nicht mehr** annimmt.
 
-Der Anmeldeschluss schließt **nur den Elternlink** — beim Öffnen der Seite ebenso wie beim
+Der Anmeldeschluss schließt **nur den Zugangs-Link** — beim Öffnen der Seite ebenso wie beim
 Abschicken. Die Organizer-Strecke (**Nachtragen**) bleibt bis zum Abschluss offen: Wer am Tag
 selbst anruft oder vor der Tür steht, bekommt über den Organizer noch einen Termin. Ob der Link
 bucht, entscheidet genau eine Stelle, `Sprechtag.nimmtElternbuchungenAn(jetzt)`: veröffentlicht
 **und** der Anmeldeschluss nicht erreicht. Eine Zeitprüfung je Slot gibt es deshalb nicht.
 
-Die Anmeldefrist gehört **nicht** zur Zeitstruktur — sie erzeugt keinen Termin und macht keine
+Die Anmeldefrist gehört **nicht** zum Rahmen — sie erzeugt keinen Termin und macht keine
 Buchung ungültig. Deshalb bleibt sie wie der Erinnerungsvorlauf auch nach dem Veröffentlichen
 änderbar, ausdrücklich auch, um eine abgelaufene Frist wieder zu öffnen; erst die Endzustände
 `ABGESAGT` und `ABGESCHLOSSEN` frieren sie ein.
@@ -103,7 +105,7 @@ Nicht „Deadline".
 - **Anonymisierung** — was nach Ablauf der Frist geschieht: Elternname, Schülername und E-Mail
   jeder Buchung, auch einer stornierten, weichen einem **Pseudonym** des Laufs (`Eltern-<seed>-001`,
   `Schueler-<seed>-001`, eine eingestellte Ersatz-E-Mail, Default `noreply@openclassware.de`), die
-  Notiz wird geleert. Die Buchung bleibt, ihr Status und die Belegung des Termins auch — übrig
+  Notiz wird geleert. Die Buchung und ihr Status bleiben, am Termin ändert sich nichts — übrig
   bleibt die Auslastung.
 - **`anonymisiertAm`** — der Zeitpunkt am Sprechtag, an dem der Lauf fertig war. Gesetzt erst,
   nachdem alle Termine anonymisiert sind; fehlt er, ist der Sprechtag noch nicht (vollständig)
@@ -164,7 +166,7 @@ und nach der Buchung dessen festgehaltener Stand.
 
 ### Termin
 
-Ein **materialisierter** Zeit-Slot einer Lehrkraft an einem Sprechtag: Start- und Endzeitpunkt,
+Ein einzelner Zeit-Slot einer Lehrkraft an einem Sprechtag: Start- und Endzeitpunkt,
 Lehrkraft, Sprechtag. Termine sind echte Datensätze, keine berechneten Zeitfenster.
 
 Ein Termin ist genau dann **buchbar**, wenn er nicht entfällt und keine aktive Buchung trägt:
@@ -175,21 +177,22 @@ Ein Termin ist genau dann **buchbar**, wenn er nicht entfällt und keine aktive 
 | **vergeben**   | Trägt eine aktive Buchung                                                   |
 | **entfällt**   | Vom Organizer zurückgezogen — die Lehrkraft steht in diesem Slot nicht bereit |
 
-**Vergeben ist kein eigener Zustand, sondern eine Folge.** Ob ein Termin belegt ist, ergibt sich aus
+**Vergeben ist kein eigener Zustand, sondern eine Folge.** Ob ein Termin vergeben ist, ergibt sich aus
 seinen Buchungen und wird nicht daneben geführt — sonst gäbe es zwei Wahrheiten, die auseinanderlaufen
 können. Nur **entfällt** ist eine eigene Angabe, denn das ist eine Entscheidung des Organizers.
 
 *Noch nicht gebaut:* **entfällt** ist beschlossen
 ([`ABDECKUNG.md`](../../arc/ABDECKUNG.md) Z. 230), aber noch nicht umgesetzt.
 
-**Materialisierung:** Beim Veröffentlichen erzeugt der Sprechtag für jede teilnehmende Lehrkraft
-× jeden Zeit-Slot einen freien Termin. Jede Lehrkraft bekommt **einen** Slot-Satz, geteilt über
+**Termine entstehen beim Veröffentlichen:** Der Sprechtag erzeugt für jede teilnehmende Lehrkraft
+× jeden Zeit-Slot einen buchbaren Termin. Jede Lehrkraft bekommt **einen** Slot-Satz, geteilt über
 all ihre Fächer und Klassen an diesem Sprechtag — sie kann pro Zeitfenster nur ein Gespräch
 führen. Teilnehmend ist, wer über einen Lehrauftrag an einer der Sprechtag-Klassen hängt.
 
 Sprachgebrauch: **Termin** ist der Datensatz, **Slot** dasselbe aus Sicht der Auswahl-UI
 (`SlotOption`, `slotInMinutes`). Beides ist in Ordnung; „Zeitfenster" meint dagegen die
-Öffnungszeit des ganzen Sprechtags, nicht den einzelnen Termin.
+Öffnungszeit des ganzen Sprechtags, nicht den einzelnen Termin. Der Fachbegriff für den Zustand ist
+**buchbar**; „frei" bleibt das Alltagswort in Texten für Eltern und auf dem Tagesplan.
 
 ### Buchung
 
@@ -206,7 +209,7 @@ verschiedene Vorgänge und heißen deshalb verschieden — auch in Statuswerten 
 
 **Wer storniert:** ausschließlich der Organizer, aus der Auswertung heraus. Eltern rufen an; ein
 Eltern-Storno bräuchte ein Token je Buchung und ist bewusst nicht vorgesehen (ADR 0002). Das Storno
-gibt den Termin auf `FREI` zurück und ist der Endzustand der Buchung — ein zweites Storno derselben
+macht den Termin wieder buchbar und ist der Endzustand der Buchung — ein zweites Storno derselben
 Buchung scheitert. Der Datensatz bleibt erhalten, die Zeile verschwindet nur aus dem Plan — der
 Schalter „Stornierte anzeigen" holt sie in die Auswertung zurück, damit ihre Angaben auf Verlangen
 der Familie entfernt werden können. Verlangt die Familie die Löschung schon beim Anruf, hakt der
@@ -219,22 +222,38 @@ nichts weiß (Ausfall einer Lehrkraft), ist eine eigene Strecke mit eigenem Term
 
 Eigenschaften, die zur Domäne gehören (nicht nur zur Technik):
 
-- **Alles oder nichts:** Ein Eltern-Submit umfasst mehrere Wünsche (mehrere Lehrkräfte an einem
-  Nachmittag) und wird als Einheit gebucht. Ist auch nur ein Slot inzwischen vergeben, kommt
+- **Alles oder nichts:** Ein **Buchungsvorgang** umfasst mehrere Wünsche (mehrere Lehrkräfte an
+  einem Nachmittag) und wird als Einheit gebucht. Ist auch nur ein Slot inzwischen vergeben, kommt
   **keine** der Buchungen zustande und die Eltern wählen neu.
 - **Kein Zeitkonflikt:** Zwei Buchungen derselben Auswahl dürfen nicht auf dieselbe Uhrzeit
   fallen — man kann nicht an zwei Tischen gleichzeitig sitzen. Die Regel wird beim Speichern
-  durchgesetzt (`Buchen`-Use-Case, `ZeitkonfliktException`) und gilt innerhalb eines Vorgangs;
+  durchgesetzt (`Buchen`-Use-Case, `ZeitkonfliktException`) und gilt innerhalb eines
+  Buchungsvorgangs;
   `BookingSession` zeigt sie zusätzlich vorab an, damit Eltern gar nicht erst in den Konflikt
   laufen.
 - **Die Buchung hält alles fest, was sie bezeugt.** Weder die Familie noch das Buchungsziel sind
   Verweise: Beides steht an der Buchung selbst, mit dem Stand vom Buchungszeitpunkt. Eine Buchung
   bleibt dadurch vollständig lesbar, auch wenn sich die Stammdaten später ändern.
 
+### Wunsch und Buchungsvorgang
+
+Ein **Wunsch** ist ein gewählter Termin zu einem Lehrauftrag, samt optionaler Notiz, und noch nicht
+gebucht. Der **Buchungsvorgang** ist die Menge der Wünsche, die zusammen abgeschickt werden: Aus ihm
+werden alle Buchungen oder keine, und keine zwei seiner Wünsche dürfen auf dieselbe Uhrzeit fallen.
+Eltern-Submit und Nachtragen sind zwei Wege in denselben Buchungsvorgang.
+
+Sprachgebrauch: **Buchungsvorgang**, nicht bloß „Vorgang" — das Wort allein meint irgendetwas, das
+geschieht.
+
+### Notiz
+
+Die optionale Nachricht der Eltern an die Lehrkraft, je Wunsch und damit je Buchung. Sie steht auf
+dem Tagesplan und fällt bei der Anonymisierung weg.
+
 ### Nachtragen
 
 Der Organizer bucht **im Namen einer Familie**, die noch keine Buchung hat: Sie ruft an, steht vor
-der Tür, hat kein Gerät oder keine E-Mail-Adresse. Fachlich ist es derselbe Vorgang wie der
+der Tür, hat kein Gerät oder keine E-Mail-Adresse. Fachlich ist es derselbe Buchungsvorgang wie der
 Eltern-Submit — mehrere Wünsche, alles oder nichts, kein Zeitkonflikt —, nur tippt ihn jemand
 anderes. Ohne diesen Weg gäbe es für eine Familie ohne Gerät **keinen** Zugang zu einem Termin;
 das ist eine Zugangsfrage, kein Komfort.
@@ -275,6 +294,14 @@ nicht vorgesehener Vorgang. Die neue Buchung ist eine **neue** Buchung; die alte
 
 Noch nicht gebaut ([#104](https://github.com/openClassware/elternsprechtag/issues/104)).
 
+### Nachbuchen
+
+Nach dem **Ausfall** einer Lehrkraft bucht die betroffene Familie selbst einen neuen Termin über den
+Zugangs-Link. **Nachbuchbar** ist ein Ausfall, wenn der Sprechtag in diesem Moment noch
+Elternbuchungen annimmt; sonst bleibt der Familie der Weg über die Schule.
+
+Sprachgebrauch: **Nachbuchen** tun die Eltern selbst, **Nachtragen** tut der Organizer für sie.
+
 ### Familie
 
 Wer bucht und für wen: Name des buchenden Elternteils, Name des Kindes und die Pflicht-**E-Mail der
@@ -290,12 +317,13 @@ Adresse (siehe **Benachrichtigungen**).
 Sprachgebrauch: **Familie** für die buchende Seite. Nicht **Anmeldung** — das Wort ist im Projekt
 doppelt vergeben (das Organizer-Login heißt so, und der **Anmeldeschluss** meint den Buchungsschluss
 der Eltern). „Eltern" bleibt richtig, wo wirklich die Erwachsenen gemeint sind (Eltern-Ansicht,
-E-Mail der Eltern, Eltern-Zugang).
+E-Mail der Eltern, Eltern-Zugang). **Schüler** ist das Kind einer Familie im Modell; „Kind" bleibt
+das Wort in Texten für Eltern.
 
 ### Organizer
 
 Die einzige angemeldete Rolle: legt Sprechtage an, pflegt sie, veröffentlicht, schließt ab oder
-sagt ab, teilt den Eltern-Link und sieht die Auswertung. Genau **eine** Identität, in-memory
+sagt ab, teilt den Zugangs-Link und sieht die Auswertung. Genau **eine** Identität, in-memory
 konfiguriert — bewusst kein Multi-User-Modell (siehe „Auth" in `ARCHITECTURE.md`).
 
 Sprachgebrauch: **Organizer**, nicht „Admin" und nicht „Sekretariat".
@@ -317,12 +345,18 @@ Schulkontakt als Hauptaussage, nie eine Buchungsauskunft — das Token hängt am
 der Familie.
 
 Sprachgebrauch: **Access-Token** (Feldname) bzw. **Zugangs-Link** (was die Eltern bekommen).
-Nicht „Einladungscode", nicht „Passwort".
+Nicht „Elternlink", nicht „Einladungscode", nicht „Passwort".
 
 ### Auswertung
 
 Die Organizer-Sicht auf einen Sprechtag: pro Lehrkraft der Terminplan mit den gebuchten
 Gesprächen — die Liste, die am Sprechtag tatsächlich benutzt wird.
+
+### Tagesplan
+
+Die Termine **einer Lehrkraft** an einem Sprechtag in zeitlicher Folge, für sie gedruckt: wer kommt
+und welche Slots noch frei sind. Stornierte und entfallene Termine stehen nicht darauf. Das
+**Tagesplan-Blatt** ist nur seine gedruckte Form, kein eigener Begriff.
 
 ### Benachrichtigungen
 
@@ -347,6 +381,13 @@ bei mehreren Lehrkräften stehen in einer Mail, Geschwister und Familien an der 
 bekommen je eine eigene. Jede Zahl „wie viele werden benachrichtigt" zählt Kinder, nicht Familien —
 eine Familie kennt das Modell nicht.
 
+### Zustellung
+
+Hält fest, wie eine Benachrichtigung an die Familie einer Buchung ausgegangen ist: je Buchung und
+Art der Benachrichtigung höchstens ein Eintrag, eine neue Nachricht derselben Art ersetzt ihn.
+**Abgeschickt** bezeugt nur das Abschicken, nicht den Empfang. **Fehlgeschlagen** ist der Anlass, die
+Familie anzurufen.
+
 ## Begriffe, die wir nicht benutzen
 
 | Nicht                            | Sondern                                                        |
@@ -363,3 +404,7 @@ eine Familie kennt das Modell nicht.
 | Buchung verschieben              | Buchung **umbuchen** — „verschieben" meint den ganzen Sprechtag |
 | Deadline                         | **Anmeldeschluss** (das Datum) bzw. **Anmeldefrist** (die Tage davor) |
 | Organizer-Buchung                | **Nachtragen** — gebucht wird für die Familie, nicht für den Organizer |
+| Elternlink                       | **Zugangs-Link**                                               |
+| Zeitstruktur                     | **Rahmen**                                                     |
+| Materialisierung                 | Termine **entstehen beim Veröffentlichen**                     |
+| Vorgang (für einen Submit)       | **Buchungsvorgang**                                            |
